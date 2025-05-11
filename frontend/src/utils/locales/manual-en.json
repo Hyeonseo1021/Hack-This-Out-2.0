@@ -1,0 +1,60 @@
+{
+  "manualPage": {
+    "mainTitle": "New here? Here's how to use our service step by step",
+    "description": "This page is designed to help first-time visitors understand the flow of how to use the service. Through a diagram layout, you can visually follow each step and eliminate confusion by reading the explanations. A tutorial machine is also provided so you can try it yourself comfortably.",
+    "learning": {
+      "title": "What you can learn from this page",
+      "item1": "Visually understand the entire process of using the hacking lab.",
+      "item2": "Click each step to get detailed explanations via popup or enlarged view.",
+      "item3": "Naturally learn the service by following the manual step by step.",
+      "item4": "Experience the real flow using the tutorial machine."
+    },
+    "tryTutorial": "Now try the tutorial to learn how to play with a machine.",
+    "tutorialTitle": "Now Playing: Tutorial Machine",
+    "connect": {
+      "title": "Connect",
+      "description": "Connect using OpenVPN.\nDownload your VPN configuration and connect from your environment.",
+      "button": "Download",
+      "done": "Downloaded"
+    },
+    "spawn": {
+      "title": "Spawn Machine",
+      "description": "Create a machine and start hacking.",
+      "button": "Start Instance",
+      "done": "Instance Started",
+      "loading": "Starting...",
+      "wait": "Please wait..."
+    },
+    "hints": {
+      "title": "Hints",
+      "description": "If you need a hint, press the button.",
+      "button": "View Hint",
+      "hintText": "💡 Try using nmap first!"
+    },
+    "flag": {
+      "title": "Submit Flag",
+      "placeholder": "Enter flag here",
+      "button": "Submit",
+      "correct": "Correct! 🎉",
+      "incorrect": "Incorrect. Please try again."
+    },
+    "steps": {
+    "0": {
+        "title": "How to Play",
+        "description": "A page to learn the overall flow before starting. Try the simulator!"
+    },
+    "1": {
+        "title": "LeaderBoard",
+        "description": "You can check user rankings, which are based on score and experience."
+    },
+    "2": {
+        "title": "Contests",
+        "description": "A timed competition mode where you hack machines to earn points."
+    },
+    "3": {
+        "title": "Machines",
+        "description": "A page where you can freely choose and play various hacking machines."
+    }
+    }
+  }
+}

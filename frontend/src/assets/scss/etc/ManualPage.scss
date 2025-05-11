@@ -63,6 +63,47 @@
   }
 }
 
+.language-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0;
+  margin-bottom: 10px;
+
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    height: 36px;
+
+    input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ffffff;
+      color: #010101;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.4s;
+    }
+
+    input:checked + .slider {
+      background-color: #fcfcfc;
+    }
+  }
+}
+
 .flow-container {
   display: flex;
   justify-content: center;
