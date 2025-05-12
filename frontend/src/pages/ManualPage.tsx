@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation} from 'react-i18next';
 import Main from '../components/main/Main';
 import '../assets/scss/etc/ManualPage.scss';
@@ -18,6 +18,17 @@ const ManualPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isSpawned, setIsSpawned] = useState(false);
   const { t, i18n } = useTranslation('manual', { keyPrefix: 'manualPage' });
+
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.manual-page-container') as HTMLElement;
+    if (scrollContainer) {
+      scrollContainer.style.overflow = selectedStep !== null ? 'hidden' : 'auto';
+    }
+
+    return () => {
+      if (scrollContainer) scrollContainer.style.overflow = 'auto';
+    };
+  }, [selectedStep]);
 
   const handleChangeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -73,7 +84,6 @@ const ManualPage: React.FC = () => {
             <li><FaCheck className="check-icon" /> {t('learning.item1')}</li>
             <li><FaCheck className="check-icon" /> {t('learning.item2')}</li>
             <li><FaCheck className="check-icon" /> {t('learning.item3')}</li>
-            <li><FaCheck className="check-icon" /> {t('learning.item4')}</li>
           </ul>
         </section>
 
@@ -86,7 +96,13 @@ const ManualPage: React.FC = () => {
             <div
               key={index}
               className={`flow-box ${selectedStep === index ? 'active' : ''}`}
-              onClick={() => setSelectedStep(index)}
+              onClick={() => {
+                setSelectedStep(index);
+                const scrollContainer = document.querySelector('.manual-page-container') as HTMLElement;
+                if (scrollContainer) {
+                  scrollContainer.scrollTop = 0; // ← 요게 핵심
+                }
+              }}
             >
               {t(`steps.${index}.title`)}
             </div>

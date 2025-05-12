@@ -5,9 +5,8 @@
     "learning": {
       "title": "What you can learn from this page",
       "item1": "Visually understand the entire process of using the hacking lab.",
-      "item2": "Click each step to get detailed explanations via popup or enlarged view.",
-      "item3": "Naturally learn the service by following the manual step by step.",
-      "item4": "Experience the real flow using the tutorial machine."
+      "item2": "Try running the tutorial machine to experience the full process in action.",
+      "item3": "Click a box below to view a detailed explanation of each sidebar menu item."
     },
     "tryTutorial": "Now try the tutorial to learn how to play with a machine.",
     "tutorialTitle": "Now Playing: Tutorial Machine",
@@ -41,11 +40,11 @@
     "steps": {
     "0": {
         "title": "How to Play",
-        "description": "A page to learn the overall flow before starting. Try the simulator!"
+        "description": "Learn about Hack This Out, its rules, and game modes. For more details, check out the YouTube video."
     },
     "1": {
         "title": "LeaderBoard",
-        "description": "You can check user rankings, which are based on score and experience."
+        "description": "You can view all user rankings based on score and experience."
     },
     "2": {
         "title": "Contests",
