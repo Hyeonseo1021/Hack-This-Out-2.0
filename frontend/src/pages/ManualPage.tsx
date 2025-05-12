@@ -7,6 +7,7 @@ import { TbBrandOpenvpn } from "react-icons/tb";
 import { AiOutlineCloudServer } from "react-icons/ai";
 import { IoIosPlay } from "react-icons/io";
 import '../assets/scss/play/DownloadVPNProfile.scss';
+import '../assets/scss/play/StartInstanceButton.scss';
 
 const ManualPage: React.FC = () => {
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
@@ -158,8 +159,8 @@ const ManualPage: React.FC = () => {
                   {loading ? <span className="loading-spinner" /> : <IoIosPlay size={20} color="white" />}
                   <div className="download-square"></div>
                 </span>
-                <p className="download-title">{loading ? t('spawn.loading') : t('spawn.button')}</p>
-                <p className="download-title">{loading ? t('spawn.wait') : t('spawn.done')}</p>
+                 <p className="download-title">{loading ? t('spawn.loading') : t('spawn.button')}</p>
+                 <p className="download-title">{loading ? t('spawn.wait') : t('spawn.done')}</p>
               </label>
             </div>
           </div>

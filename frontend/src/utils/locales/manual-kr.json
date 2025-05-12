@@ -15,13 +15,13 @@
       "title": "Connect",
       "description": "OpenVPN을 통해 연결합니다.\nVPN 설정 파일을 다운로드하여 사용자의 환경에서 연결합니다.",
       "button": "다운로드",
-      "done": "다운로드 완료"
+      "done": "완료"
     },
     "spawn": {
       "title": "Spawn Machine",
       "description": "머신을 생성하고 해킹을 시작하세요. 머신을 생성하면 IP가 여기 표시됩니다.",
       "button": "인스턴스 시작",
-      "done": "IP",
+      "done": "인스턴스 시작됨",
       "loading": "시작 중...",
       "wait": "잠시만 기다려주세요..."
     },

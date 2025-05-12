@@ -209,6 +209,7 @@
   border: 1px solid #444;
   border-radius: 10px;
   padding: 20px;
+  margin-top: 10px;
   margin-bottom: 20px;
   color: #f0f0f0;
   transition: all 0.3s ease;
@@ -265,6 +266,34 @@
   }
   .download-btn {
     margin-top: 0; // 위 설명 바로 옆에 위치하도록
+  }
+}
+
+
+.download-btn {
+  display: flex;
+  justify-content: flex-end; // 오른쪽 정렬
+  margin-top: 1rem; // 여유 공간
+
+  .download-label {
+    .download-title {
+      margin: auto;
+    }
+  }
+}
+
+.start-instance-btn {
+  display: flex;
+  justify-content: flex-end; // 오른쪽 정렬
+  margin-top: 1rem; // 여유 공간
+
+  .download-label {
+    .download-title {
+      margin-bottom: 0;
+      margin-top: 0;
+      text-align: center;
+      position: absolute;
+    }    
   }
 }
 
