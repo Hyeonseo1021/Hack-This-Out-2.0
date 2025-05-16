@@ -107,19 +107,32 @@
 .flow-container {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
   margin-top: 20px;
 }
 
 .flow-box {
-  background: #2b2f3a;
-  padding: 16px 24px;
+  width: 100px;
+  height: 100px; /* 라벨 공간 확보 */
   border-radius: 12px;
+  background: #2361d3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  gap: 4px;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.step-label {
+  font-size: 16px;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .flow-box:hover {
@@ -129,6 +142,15 @@
 
 .flow-box.active {
   background: #6c63ff;
+}
+
+.icon-wrapper {
+  margin-bottom: 4px;
+}
+
+.icon-label {
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .step-detail-overlay {

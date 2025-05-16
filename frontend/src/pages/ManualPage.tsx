@@ -2,17 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation} from 'react-i18next';
 import Main from '../components/main/Main';
 import '../assets/scss/etc/ManualPage.scss';
-import { FaCheck } from "react-icons/fa";
+import { PiHandWaving } from "react-icons/pi";
 import { TbBrandOpenvpn } from "react-icons/tb";
 import { AiOutlineCloudServer } from "react-icons/ai";
 import { IoIosPlay } from "react-icons/io";
+import { HiArrowNarrowRight } from 'react-icons/hi';
+import { MdOutlineRuleFolder } from "react-icons/md";
+import { IoInvertMode } from "react-icons/io5";
+import { PiRanking } from "react-icons/pi";
+import { GrVirtualMachine } from "react-icons/gr";
+import { GiCrossedSwords } from "react-icons/gi";
+import { FaRegQuestionCircle } from 'react-icons/fa';
+import { CiLock } from 'react-icons/ci';
+import LoadingIcon from '../components/public/LoadingIcon';
 import '../assets/scss/play/DownloadVPNProfile.scss';
 import '../assets/scss/play/StartInstanceButton.scss';
+import '../assets/scss/play/GetHints.scss';
 
 const ManualPage: React.FC = () => {
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
   const [step, setStep] = useState(0);
   const [hintShown, setHintShown] = useState(false);
+  const [shownHints, setShownHints] = useState<string[]>([]);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [disabled, setDisabled] = useState(false);
+  const [error, setError] = useState(null);
   const [flagInput, setFlagInput] = useState('');
   const [flagResult, setFlagResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,6 +48,34 @@ const ManualPage: React.FC = () => {
     i18n.changeLanguage(lng);
   };
 
+  const steps = [
+    { icon: <PiHandWaving size={40} />, key: 0 },
+    { icon: <MdOutlineRuleFolder size={40} />, key: 1 },
+    { icon: <IoInvertMode size={40} />, key: 2 },
+    { icon: <PiRanking size={40} />, key: 3 },
+    { icon: <GrVirtualMachine size={40} />, key: 4 },
+    { icon: <GiCrossedSwords size={40} />, key: 5 }
+  ];
+
+  const fakeHints = [
+    { content: 'nmap을 사용하여 열린 포트를 스캔해보세요.' },
+    { content: '서비스 버전을 식별하여 취약점을 찾아보세요.' },
+    { content: '취약점에 맞는 익스플로잇을 찾아보세요.' },
+  ];
+
+  const remainingHints = fakeHints.length - hintsUsed;
+  const hints = fakeHints.slice(0, hintsUsed);
+
+  const fetchHint = () => {
+    if (remainingHints <= 0) return;
+    setLoading(true);
+
+    setTimeout(() => {
+      setHintsUsed(prev => prev + 1);
+      setLoading(false);
+    }, 500); // 애니메이션용 딜레이
+  };
+
   const handleFakeSpawn = () => {
     setLoading(true);
     setTimeout(() => {
@@ -44,10 +86,6 @@ const ManualPage: React.FC = () => {
   };
 
   const handleNext = () => setStep(prev => prev + 1);
-  const handleShowHint = () => {
-    setHintShown(true);
-    handleNext();
-  };
 
   const handleSubmitFlag = () => {
     if (flagInput === 'HTO{correct_flag}') {
@@ -56,8 +94,6 @@ const ManualPage: React.FC = () => {
       setFlagResult(t('flag.incorrect'));
     }
   };
-
-  const sidebarStepIndices = [0, 1, 2, 3]; // How to Play, LeaderBoard, Contests, Machines
 
   return (
     <Main>
@@ -78,43 +114,43 @@ const ManualPage: React.FC = () => {
 
         <h1 className="main-title">{t('mainTitle')}</h1>
 
-        <section className="learning-outcomes">
-          <h3>{t('learning.title')}</h3>
-          <ul>
-            <li><FaCheck className="check-icon" /> {t('learning.item1')}</li>
-            <li><FaCheck className="check-icon" /> {t('learning.item2')}</li>
-            <li><FaCheck className="check-icon" /> {t('learning.item3')}</li>
-          </ul>
-        </section>
-
-        <section className="description">
-          <p>{t('description')}</p>
-        </section>
-
         <div className="flow-container">
-          {sidebarStepIndices.map((index) => (
-            <div
-              key={index}
-              className={`flow-box ${selectedStep === index ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedStep(index);
-                const scrollContainer = document.querySelector('.manual-page-container') as HTMLElement;
-                if (scrollContainer) {
-                  scrollContainer.scrollTop = 0; // ← 요게 핵심
-                }
-              }}
-            >
-              {t(`steps.${index}.title`)}
-            </div>
+          {steps.map((step, index) => (
+            <React.Fragment key={step.key}>
+              <div
+                className={`flow-box ${selectedStep === step.key ? 'active' : ''}`}
+                onClick={() => setSelectedStep(step.key)}
+              >
+                {step.icon}
+                <span className="step-label">{t(`steps.${step.key}.short`)}</span>
+              </div>
+
+              {index < steps.length - 1 && (
+                <div className="flow-arrow">
+                  <HiArrowNarrowRight size={24} color="#888" />
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
+
 
         {selectedStep !== null && (
           <div className="step-detail-overlay" onClick={() => setSelectedStep(null)}>
             <div className="step-detail" onClick={e => e.stopPropagation()}>
               <button className="close-btn" onClick={() => setSelectedStep(null)}>X</button>
               <h1>{t(`steps.${selectedStep}.title`)}</h1>
-              <p>{t(`steps.${selectedStep}.description`)}</p>
+
+              {/* description_list 우선 처리 */}
+              {Array.isArray(t(`steps.${selectedStep}.descriptions`, { returnObjects: true })) ? (
+                <ul>
+                  {(t(`steps.${selectedStep}.descriptions`, { returnObjects: true }) as string[]).map((line, idx) => (
+                    <li key={idx}>{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>{t(`steps.${selectedStep}.description`)}</p>
+              )}
             </div>
           </div>
         )}
@@ -183,14 +219,53 @@ const ManualPage: React.FC = () => {
 
           {/* Hints */}
           <div className={`step-card ${step >= 2 ? 'active' : ''}`}>
-            <h3>{t('hints.title')}</h3>
-            <p>{t('hints.description')}</p>
-            <button onClick={handleShowHint} disabled={step !== 2 || hintShown}>
-              {t('hints.button')}
-            </button>
-            {hintShown && <p className="hint-text">💡 {t('hints.hintText')}</p>}
-          </div>
+            <div className="get-hints-container">
+              <div className="upper-text">
+                <FaRegQuestionCircle size={40} color="white" />
+                {remainingHints > 0 ? <h2>Hints</h2> : <h2>No More Hints</h2>}
+              </div>
+              <div className="lower-text">
+                {remainingHints > 0 ? (
+                  <h3>If you need a hint, Press the button</h3>
+                ) : (
+                  <h3>You have used all the hints for this machine.</h3>
+                )}
+              </div>
 
+              {loading && <LoadingIcon />}
+
+              {!loading && !error && hintsUsed > 0 && (
+                <div className="used-hints">
+                  <ul className="hints-list">
+                    {hints.map((hint, index) => (
+                      <li
+                        className="list hint-animate"
+                        key={index}
+                        style={{ animationDelay: `${index * 0.2}s` }}
+                      >
+                        {hint.content}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <button
+                onClick={fetchHint}
+                disabled={loading || remainingHints === 0 || disabled || step < 2}
+                className={`get-hints-button ${disabled || remainingHints === 0 || step < 2 ? 'disabled' : ''}`}
+              >
+                {loading ? (
+                  <LoadingIcon />
+                ) : disabled || remainingHints === 0 ? (
+                  <CiLock size={40} color="#ccc" />
+                ) : (
+                  'Hint'
+                )}
+                {!disabled && remainingHints > 0 && step >= 2 && ` (${remainingHints})`}
+              </button>
+            </div>
+          </div>
           {/* Submit Flag */}
           <div className={`step-card ${step >= 3 ? 'active' : ''}`}>
             <h3>{t('flag.title')}</h3>

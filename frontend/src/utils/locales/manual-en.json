@@ -1,13 +1,6 @@
 {
   "manualPage": {
     "mainTitle": "New here? Here's how to use our service step by step",
-    "description": "This page is designed to help first-time visitors understand the flow of how to use the service. Through a diagram layout, you can visually follow each step and eliminate confusion by reading the explanations. A tutorial machine is also provided so you can try it yourself comfortably.",
-    "learning": {
-      "title": "What you can learn from this page",
-      "item1": "Visually understand the entire process of using the hacking lab.",
-      "item2": "Try running the tutorial machine to experience the full process in action.",
-      "item3": "Click a box below to view a detailed explanation of each sidebar menu item."
-    },
     "tryTutorial": "Now try the tutorial to learn how to play with a machine.",
     "tutorialTitle": "Now Playing: Tutorial Machine",
     "connect": {
@@ -38,22 +31,43 @@
       "incorrect": "Incorrect. Please try again."
     },
     "steps": {
-    "0": {
-        "title": "How to Play",
-        "description": "Learn about Hack This Out, its rules, and game modes. For more details, check out the YouTube video."
-    },
-    "1": {
-        "title": "LeaderBoard",
-        "description": "You can view all user rankings based on score and experience."
-    },
-    "2": {
-        "title": "Contests",
-        "description": "A timed competition mode where you hack machines to earn points."
-    },
-    "3": {
+      "0": {
+        "title": "Introduction",
+        "description": "Welcome to the web-based hacking lab, Hack This Out!",
+        "short": "First Visit"
+      },
+      "1": {
+        "title": "Rules",
+        "descriptions": [
+          "1. Complete a machine by capturing the flag through hacking.",
+          "2. You will earn experience points (EXP) upon completing a machine.",
+          "3. You can use hints for each machine, but penalties will apply."
+        ],
+        "short": "Rules"
+      },
+      "2": {
+        "title": "Modes",
+        "descriptions": [
+          "Basic Mode: Hack a vulnerable machine.",
+          "Competition Mode: Complete all given machines as fast as possible within the time limit."
+        ],
+        "short": "Modes"
+      },
+      "3": {
+        "title": "Ranking",
+        "description": "Your rank is determined by your accumulated experience points!",
+        "short": "Ranking"
+      },
+      "4": {
         "title": "Machines",
-        "description": "A page where you can freely choose and play various hacking machines."
-    }
+        "description": "Create and play machines. You can leave reviews on them. Machine creation is subject to admin approval.",
+        "short": "Machines"
+      },
+      "5": {
+        "title": "Contests",
+        "description": "Hack machines in real-time competitive events!",
+        "short": "Contests"
+      }
     }
   }
 }
