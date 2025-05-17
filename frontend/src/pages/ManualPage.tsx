@@ -14,10 +14,12 @@ import { GrVirtualMachine } from "react-icons/gr";
 import { GiCrossedSwords } from "react-icons/gi";
 import { FaRegQuestionCircle } from 'react-icons/fa';
 import { CiLock } from 'react-icons/ci';
+import { LuFlag } from "react-icons/lu";
 import LoadingIcon from '../components/public/LoadingIcon';
 import '../assets/scss/play/DownloadVPNProfile.scss';
 import '../assets/scss/play/StartInstanceButton.scss';
 import '../assets/scss/play/GetHints.scss';
+import '../assets/scss/play/SubmitFlagForm.scss';
 
 const ManualPage: React.FC = () => {
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
@@ -31,6 +33,10 @@ const ManualPage: React.FC = () => {
   const [flagResult, setFlagResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSpawned, setIsSpawned] = useState(false);
+  const [flag, setFlag] = useState('');
+  const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState<string[]>([]);
+  const correctFlag = 'HTO{correct_flag}';
   const { t, i18n } = useTranslation('manual', { keyPrefix: 'manualPage' });
 
   useEffect(() => {
@@ -87,13 +93,22 @@ const ManualPage: React.FC = () => {
 
   const handleNext = () => setStep(prev => prev + 1);
 
-  const handleSubmitFlag = () => {
-    if (flagInput === 'HTO{correct_flag}') {
-      setFlagResult(t('flag.correct'));
+  const handleFakeSubmit = () => {
+    setErrors([]);
+    setMessage('');
+
+    if (!flag.trim()) {
+      setErrors(['Flag cannot be empty.']);
+      return;
+    }
+
+    if (flag === correctFlag) {
+      setMessage('🎉 Correct flag!');
     } else {
-      setFlagResult(t('flag.incorrect'));
+      setErrors(['❌ Incorrect flag. Try again.']);
     }
   };
+
 
   return (
     <Main>
@@ -163,6 +178,8 @@ const ManualPage: React.FC = () => {
 
           {/* Connect */}
           <div className={`step-card ${step >= 0 ? 'active' : ''}`}>
+          <div className="download-container">
+          <div className='text-button-container'>
             <div className="upper-text">
               <TbBrandOpenvpn color="white" size={40} />
               <h2><b>{t('connect.title')}</b></h2>
@@ -189,9 +206,12 @@ const ManualPage: React.FC = () => {
               </label>
             </div>
           </div>
+          </div>
+          </div>
 
           {/* Spawn Machine */}
           <div className={`step-card ${step >= 1 ? 'active' : ''}`}>
+            <div className="start-instance-button-container">
             <div className="upper-text">
               <AiOutlineCloudServer size={40} color="white" />
               <h2><b>{t('spawn.title')}</b></h2>
@@ -214,6 +234,7 @@ const ManualPage: React.FC = () => {
                  <p className="download-title">{loading ? t('spawn.loading') : t('spawn.button')}</p>
                  <p className="download-title">{loading ? t('spawn.wait') : t('spawn.done')}</p>
               </label>
+            </div>
             </div>
           </div>
 
@@ -266,21 +287,47 @@ const ManualPage: React.FC = () => {
               </button>
             </div>
           </div>
+
           {/* Submit Flag */}
-          <div className={`step-card ${step >= 3 ? 'active' : ''}`}>
-            <h3>{t('flag.title')}</h3>
-            <input
-              type="text"
-              placeholder={t('flag.placeholder')}
-              value={flagInput}
-              onChange={(e) => setFlagInput(e.target.value)}
-              disabled={step !== 3}
-            />
-            <button onClick={handleSubmitFlag} disabled={step !== 3}>
-              {t('flag.button')}
-            </button>
-            {flagResult && <p>{flagResult}</p>}
+           <div className={`step-card ${step >= 3 ? 'active' : ''}`}>
+            <div className="submit-flag-form">
+              <div className='upper-text'>
+                <LuFlag size={40} color="white" />
+                <h2>Submit Flag</h2>
+              </div>
+
+              {message && <p className="message">{message}</p>}
+
+              {errors.length > 0 && (
+                <div className="error-messages">
+                  {errors.map((msg, index) => (
+                    <p key={index} className="error-text">{msg}</p>
+                  ))}
+                </div>
+              )}
+
+              <div className="flag-form">
+                <input
+                  className={`flag-input ${disabled ? "disabled" : ""} ${errors.length ? "error shake-error" : ""}`}
+                  id="flag"
+                  type="text"
+                  value={flag}
+                  onChange={(e) => setFlag(e.target.value)}
+                  placeholder="Enter flag here"
+                  disabled={disabled}
+                />
+                <button
+                  type="button"
+                  className={`submit-flag-button ${disabled ? "disabled" : ""}`}
+                  disabled={disabled}
+                  onClick={handleFakeSubmit}
+                >
+                  {disabled ? <CiLock size={40} color="#ccc" /> : 'Submit Flag'}
+                </button>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
     </Main>
