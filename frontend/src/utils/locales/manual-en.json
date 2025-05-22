@@ -1,0 +1,73 @@
+{
+  "manualPage": {
+    "mainTitle": "New here? Here's how to use our service step by step",
+    "tryTutorial": "Now try the tutorial to learn how to play with a machine.",
+    "tutorialTitle": "Now Playing: Tutorial Machine",
+    "connect": {
+      "title": "Connect",
+      "description": "Connect using OpenVPN.\nDownload your VPN configuration and connect from your environment.",
+      "button": "Download",
+      "done": "Downloaded"
+    },
+    "spawn": {
+      "title": "Spawn Machine",
+      "description": "Create a machine and start hacking.",
+      "button": "Start Instance",
+      "done": "Instance Started",
+      "loading": "Starting...",
+      "wait": "Please wait..."
+    },
+    "hints": {
+      "title": "Hints",
+      "description": "If you need a hint, press the button.",
+      "button": "View Hint",
+      "hintText": "💡 Try using nmap first!"
+    },
+    "flag": {
+      "title": "Submit Flag",
+      "placeholder": "Enter flag here",
+      "button": "Submit",
+      "correct": "Correct! 🎉",
+      "incorrect": "Incorrect. Please try again."
+    },
+    "steps": {
+      "0": {
+        "title": "Introduction",
+        "description": "Welcome to the web-based hacking lab, Hack This Out!",
+        "short": "First Visit"
+      },
+      "1": {
+        "title": "Rules",
+        "descriptions": [
+          "1. Complete a machine by capturing the flag through hacking.",
+          "2. You will earn experience points (EXP) upon completing a machine.",
+          "3. You can use hints for each machine, but penalties will apply."
+        ],
+        "short": "Rules"
+      },
+      "2": {
+        "title": "Modes",
+        "descriptions": [
+          "Basic Mode: Hack a vulnerable machine.",
+          "Competition Mode: Complete all given machines as fast as possible within the time limit."
+        ],
+        "short": "Modes"
+      },
+      "3": {
+        "title": "Ranking",
+        "description": "Your rank is determined by your accumulated experience points!",
+        "short": "Ranking"
+      },
+      "4": {
+        "title": "Machines",
+        "description": "Create and play machines. You can leave reviews on them. Machine creation is subject to admin approval.",
+        "short": "Machines"
+      },
+      "5": {
+        "title": "Contests",
+        "description": "Hack machines in real-time competitive events!",
+        "short": "Contests"
+      }
+    }
+  }
+}

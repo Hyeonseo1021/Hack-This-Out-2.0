@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MdOutlineLeaderboard, MdLeaderboard } from "react-icons/md";
-import { FaQuestionCircle, FaRegQuestionCircle } from "react-icons/fa";
+import { FaQuestionCircle, FaRegQuestionCircle, FaBook } from "react-icons/fa";
 import { PiComputerTowerBold, PiComputerTowerFill } from "react-icons/pi";
 import { RiArrowLeftDoubleFill, RiArrowRightDoubleFill } from "react-icons/ri";
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
@@ -86,6 +86,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
               >
                 {getMenuIcon('/tutorial', <FaQuestionCircle className={styles.menuIcon} />, <FaRegQuestionCircle className={styles.menuIcon} />)}
                 <div className={styles.label}>How to Play</div>
+              </Link>
+              <Link
+                to="/manual"
+                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/manual') ? styles.selected : ''}`}
+                data-tooltip="Manual"
+              >
+                {getMenuIcon('/manual', <FaBook className={styles.menuIcon} />, <FaBook className={styles.menuIcon} />)}
+                <div className={styles.label}>Manual</div>
               </Link>
               <Link
                 to="/leaderboard"
