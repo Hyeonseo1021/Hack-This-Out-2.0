@@ -39,17 +39,6 @@ const ManualPage: React.FC = () => {
   const correctFlag = 'HTO{correct_flag}';
   const { t, i18n } = useTranslation('manual', { keyPrefix: 'manualPage' });
 
-  useEffect(() => {
-    const scrollContainer = document.querySelector('.manual-page-container') as HTMLElement;
-    if (scrollContainer) {
-      scrollContainer.style.overflow = selectedStep !== null ? 'hidden' : 'auto';
-    }
-
-    return () => {
-      if (scrollContainer) scrollContainer.style.overflow = 'auto';
-    };
-  }, [selectedStep]);
-
   const handleChangeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
   };
@@ -134,7 +123,19 @@ const ManualPage: React.FC = () => {
             <React.Fragment key={step.key}>
               <div
                 className={`flow-box ${selectedStep === step.key ? 'active' : ''}`}
-                onClick={() => setSelectedStep(step.key)}
+                onClick={() => {
+                  const container = document.querySelector('.manual-page-container');
+                  if (container) {
+                    container.scrollTo({ top: 0, behavior: 'auto' });
+                  }
+                  setSelectedStep(step.key);
+                }}
+                {...(step.key === 0 ? { 'data-tooltip': t('stepCard.firstVisit') } : {})}
+                {...(step.key === 1 ? { 'data-tooltip': t('stepCard.Rules') } : {})}
+                {...(step.key === 2 ? { 'data-tooltip': t('stepCard.Modes') } : {})}
+                {...(step.key === 3 ? { 'data-tooltip': t('stepCard.Ranking') } : {})}
+                {...(step.key === 4 ? { 'data-tooltip': t('stepCard.Machines') } : {})}
+                {...(step.key === 5 ? { 'data-tooltip': t('stepCard.Contests') } : {})}
               >
                 {step.icon}
                 <span className="step-label">{t(`steps.${step.key}.short`)}</span>
@@ -147,6 +148,11 @@ const ManualPage: React.FC = () => {
               )}
             </React.Fragment>
           ))}
+
+          <br />
+          <div className="now-tutorial">
+            {t('tryTutorial')}
+          </div>
         </div>
 
 
@@ -169,9 +175,6 @@ const ManualPage: React.FC = () => {
             </div>
           </div>
         )}
-
-        <br />
-        {t('tryTutorial')}
 
         <div className='tutorial'>
           <h2>{t('tutorialTitle')}</h2>

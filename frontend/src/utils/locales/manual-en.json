@@ -3,6 +3,14 @@
     "mainTitle": "New here? Here's how to use our service step by step",
     "tryTutorial": "Now try the tutorial to learn how to play with a machine.",
     "tutorialTitle": "Now Playing: Tutorial Machine",
+    "stepCard" : {
+      "firstVisit": "Platform Overview",
+      "Rules": "Check the Rules",
+      "Modes": "Explore Modes",
+      "Ranking": "View Rankings",
+      "Machines": "Play Machines",
+      "Contests": "Join Contests"
+    },
     "connect": {
       "title": "Connect",
       "description": "Connect using OpenVPN.\nDownload your VPN configuration and connect from your environment.",

@@ -3,6 +3,14 @@
     "mainTitle": "처음 방문하셨나요? 전체 이용 흐름을 안내합니다",
     "tryTutorial": "이제 직접 튜토리얼을 진행해 머신을 플레이하는 방법을 알아보세요",
     "tutorialTitle": "플레이: 튜토리얼 머신",
+    "stepCard" : {
+      "firstVisit" : "플랫폼 소개",
+      "Rules" : "게임 규칙 확인",
+      "Modes" : "모드 소개",
+      "Ranking" : "랭킹 안내",
+      "Machines" : "머신 플레이 방법",
+      "Contests" : "대회 안내"
+    },
     "connect": {
       "title": "Connect",
       "description": "OpenVPN을 통해 연결합니다.\nVPN 설정 파일을 다운로드하여 사용자의 환경에서 연결합니다.",
