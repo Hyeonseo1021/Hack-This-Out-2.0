@@ -16,6 +16,7 @@ import { FaRegQuestionCircle } from 'react-icons/fa';
 import { CiLock } from 'react-icons/ci';
 import { LuFlag } from "react-icons/lu";
 import LoadingIcon from '../components/public/LoadingIcon';
+import logo_light from "../assets/img/icon/HTO LIGHT RECOLORED_crop_filled.png";
 import '../assets/scss/play/DownloadVPNProfile.scss';
 import '../assets/scss/play/StartInstanceButton.scss';
 import '../assets/scss/play/GetHints.scss';
@@ -161,6 +162,12 @@ const ManualPage: React.FC = () => {
             <div className="step-detail" onClick={e => e.stopPropagation()}>
               <button className="close-btn" onClick={() => setSelectedStep(null)}>X</button>
               <h1>{t(`steps.${selectedStep}.title`)}</h1>
+
+              {selectedStep === 0 && (
+                <div className="logo-container">
+                  <img id="tutorialImg" className="tutorial-page-img-dark" alt="" src={logo_light}></img> 
+                </div>
+              )}
 
               {/* description_list 우선 처리 */}
               {Array.isArray(t(`steps.${selectedStep}.descriptions`, { returnObjects: true })) ? (
