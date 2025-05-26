@@ -40,6 +40,24 @@ const ManualPage: React.FC = () => {
   const correctFlag = 'HTO{correct_flag}';
   const { t, i18n } = useTranslation('manual', { keyPrefix: 'manualPage' });
 
+  useEffect(() => {
+    const container = document.querySelector('.manual-page-container') as HTMLElement;
+
+    // body 스크롤도 함께 제어
+    if (selectedStep !== null) {
+      document.body.style.overflow = 'hidden';
+      if (container) container.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      if (container) container.style.overflow = 'auto';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      if (container) container.style.overflow = 'auto';
+    };
+  }, [selectedStep]);
+
   const handleChangeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
   };
