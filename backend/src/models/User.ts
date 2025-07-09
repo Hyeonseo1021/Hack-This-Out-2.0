@@ -26,6 +26,14 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
+    rating: {
+        type: Number,
+        default: 0
+    },
+    tier: {
+        type: Number,
+        default: 1
+    },
     isAdmin: { // Add this field
         type: Boolean,
         default: false
@@ -55,6 +63,24 @@ UserSchema.methods.updateLevel = function() {
     return Promise.resolve(this);
 };
 
+// Method to update tier based on rating
+UserSchema.methods.updateTier = function () {
+    const r = this.rating;
+    let tier = 1;
+
+    if (r >= 1000 && r < 2000) tier = 2;
+    else if (r >= 2000 && r < 3000) tier = 3;
+    else if (r >= 3000 && r < 4000) tier = 4;
+    else if (r >= 4000 && r < 5000) tier = 5;
+    else if (r >= 5000) tier = 6;
+
+    if (this.tier !== tier) {
+        this.tier = tier;
+        return this.save();
+    }
+
+    return Promise.resolve(this);
+}
 const User = mongoose.model('user', UserSchema);
 
 export default User;
