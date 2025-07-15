@@ -1,59 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
+import Joyride, { Step } from 'react-joyride';
 import Main from '../components/main/Main';
 import '../assets/scss/etc/ManualPage.scss';
-import { PiHandWaving } from "react-icons/pi";
-import { TbBrandOpenvpn } from "react-icons/tb";
-import { AiOutlineCloudServer } from "react-icons/ai";
-import { IoIosPlay } from "react-icons/io";
+import { PiHandWaving } from 'react-icons/pi';
+import { TbBrandOpenvpn } from 'react-icons/tb';
+import { AiOutlineCloudServer } from 'react-icons/ai';
+import { IoIosPlay } from 'react-icons/io';
 import { HiArrowNarrowRight } from 'react-icons/hi';
-import { MdOutlineRuleFolder } from "react-icons/md";
-import { IoInvertMode } from "react-icons/io5";
-import { PiRanking } from "react-icons/pi";
-import { GrVirtualMachine } from "react-icons/gr";
-import { GiCrossedSwords } from "react-icons/gi";
+import { MdOutlineRuleFolder } from 'react-icons/md';
+import { IoInvertMode } from 'react-icons/io5';
+import { PiRanking } from 'react-icons/pi';
+import { GrVirtualMachine } from 'react-icons/gr';
+import { GiCrossedSwords } from 'react-icons/gi';
 import { FaRegQuestionCircle } from 'react-icons/fa';
 import { CiLock } from 'react-icons/ci';
-import { LuFlag } from "react-icons/lu";
+import { LuFlag } from 'react-icons/lu';
 import LoadingIcon from '../components/public/LoadingIcon';
+import logo_light from '../assets/img/icon/HTO LIGHT RECOLORED_crop_filled.png';
 import '../assets/scss/play/DownloadVPNProfile.scss';
 import '../assets/scss/play/StartInstanceButton.scss';
 import '../assets/scss/play/GetHints.scss';
 import '../assets/scss/play/SubmitFlagForm.scss';
 
 const ManualPage: React.FC = () => {
+  const { t, i18n } = useTranslation('manual', { keyPrefix: 'manualPage' });
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
   const [step, setStep] = useState(0);
-  const [hintShown, setHintShown] = useState(false);
-  const [shownHints, setShownHints] = useState<string[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [disabled, setDisabled] = useState(false);
-  const [error, setError] = useState(null);
-  const [flagInput, setFlagInput] = useState('');
-  const [flagResult, setFlagResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSpawned, setIsSpawned] = useState(false);
   const [flag, setFlag] = useState('');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
+  const [runTutorial, setRunTutorial] = useState(false);
+
   const correctFlag = 'HTO{correct_flag}';
-  const { t, i18n } = useTranslation('manual', { keyPrefix: 'manualPage' });
 
-  useEffect(() => {
-    const scrollContainer = document.querySelector('.manual-page-container') as HTMLElement;
-    if (scrollContainer) {
-      scrollContainer.style.overflow = selectedStep !== null ? 'hidden' : 'auto';
-    }
+  // Joyride steps (flow-container 내 단계만)
+  const joyrideSteps: Step[] = [
+    { target: '.flow-box:nth-child(1)', content: t('joyride.firstVisit') },
+    { target: '.flow-box:nth-child(3)', content: t('joyride.rules') },
+    { target: '.flow-box:nth-child(5)', content: t('joyride.modes') },
+    { target: '.flow-box:nth-child(7)', content: t('joyride.ranking') },
+    { target: '.flow-box:nth-child(9)', content: t('joyride.machines') },
+    { target: '.flow-box:nth-child(11)', content: t('joyride.contests') }
+  ];
 
-    return () => {
-      if (scrollContainer) scrollContainer.style.overflow = 'auto';
-    };
-  }, [selectedStep]);
-
-  const handleChangeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
-
+  // flow-container 에 쓰일 단계 아이콘
   const steps = [
     { icon: <PiHandWaving size={40} />, key: 0 },
     { icon: <MdOutlineRuleFolder size={40} />, key: 1 },
@@ -63,24 +57,20 @@ const ManualPage: React.FC = () => {
     { icon: <GiCrossedSwords size={40} />, key: 5 }
   ];
 
+  // 힌트용 더미 데이터
   const fakeHints = [
     { content: 'nmap을 사용하여 열린 포트를 스캔해보세요.' },
     { content: '서비스 버전을 식별하여 취약점을 찾아보세요.' },
-    { content: '취약점에 맞는 익스플로잇을 찾아보세요.' },
+    { content: '취약점에 맞는 익스플로잇을 찾아보세요.' }
   ];
-
   const remainingHints = fakeHints.length - hintsUsed;
   const hints = fakeHints.slice(0, hintsUsed);
 
-  const fetchHint = () => {
-    if (remainingHints <= 0) return;
-    setLoading(true);
+  // 언어 토글
+  const handleChangeLanguage = (lng: string) => i18n.changeLanguage(lng);
 
-    setTimeout(() => {
-      setHintsUsed(prev => prev + 1);
-      setLoading(false);
-    }, 500); // 애니메이션용 딜레이
-  };
+  // Connect → Spawn → Hints → Submit 흐름 함수
+  const handleNext = () => setStep(prev => prev + 1);
 
   const handleFakeSpawn = () => {
     setLoading(true);
@@ -91,17 +81,22 @@ const ManualPage: React.FC = () => {
     }, 1500);
   };
 
-  const handleNext = () => setStep(prev => prev + 1);
+  const fetchHint = () => {
+    if (remainingHints <= 0) return;
+    setLoading(true);
+    setTimeout(() => {
+      setHintsUsed(x => x + 1);
+      setLoading(false);
+    }, 500);
+  };
 
   const handleFakeSubmit = () => {
     setErrors([]);
     setMessage('');
-
     if (!flag.trim()) {
       setErrors(['Flag cannot be empty.']);
       return;
     }
-
     if (flag === correctFlag) {
       setMessage('🎉 Correct flag!');
     } else {
@@ -109,10 +104,44 @@ const ManualPage: React.FC = () => {
     }
   };
 
+  // 모달용 스텝 상세 보이기/숨기기
+  useEffect(() => {
+    const container = document.querySelector('.manual-page-container') as HTMLElement;
+    if (selectedStep !== null) {
+      document.body.style.overflow = 'hidden';
+      container && (container.style.overflow = 'hidden');
+    } else {
+      document.body.style.overflow = '';
+      container && (container.style.overflow = 'auto');
+    }
+    return () => {
+      document.body.style.overflow = '';
+      container && (container.style.overflow = 'auto');
+    };
+  }, [selectedStep]);
 
   return (
     <Main>
       <div className="manual-page-container">
+        {/* Joyride 튜토리얼 */}
+        <Joyride
+          steps={joyrideSteps}
+          run={runTutorial}
+          continuous
+          scrollToFirstStep
+          showProgress
+          showSkipButton
+          styles={{ options: { primaryColor: '#4caf50', zIndex: 9999 } }}
+          locale={{
+            back: t('joyride.back'),
+            close: t('joyride.close'),
+            last: t('joyride.last'),
+            next: t('joyride.next'),
+            skip: t('joyride.skip')
+          }}
+        />
+
+        {/* 언어 토글 */}
         <div className="language-toggle">
           <label className="toggle-switch">
             <input
@@ -126,37 +155,52 @@ const ManualPage: React.FC = () => {
           </label>
         </div>
 
-
         <h1 className="main-title">{t('mainTitle')}</h1>
 
-        <div className="flow-container">
-          {steps.map((step, index) => (
-            <React.Fragment key={step.key}>
-              <div
-                className={`flow-box ${selectedStep === step.key ? 'active' : ''}`}
-                onClick={() => setSelectedStep(step.key)}
-              >
-                {step.icon}
-                <span className="step-label">{t(`steps.${step.key}.short`)}</span>
-              </div>
-
-              {index < steps.length - 1 && (
-                <div className="flow-arrow">
-                  <HiArrowNarrowRight size={24} color="#888" />
-                </div>
-              )}
-            </React.Fragment>
-          ))}
+        {/* 튜토리얼 시작 버튼 */}
+        <div style={{ textAlign: 'right', marginBottom: '10px' }}>
+          <button onClick={() => setRunTutorial(true)} className="start-joyride-btn">
+            {t('joyride.startTutorial')}
+          </button>
         </div>
 
+        {/* Flow 박스 */}
+        <div className="flow-container">
+          {steps.map((s, i) => (
+            <React.Fragment key={s.key}>
+              <div
+                className={`flow-box ${selectedStep === s.key ? 'active' : ''}`}
+                onClick={() => {
+                  document.querySelector('.manual-page-container')?.scrollTo({ top: 0, behavior: 'auto' });
+                  setSelectedStep(s.key);
+                }}
+                {...(s.key === 0 ? { 'data-tooltip': t('stepCard.firstVisit') } : {})}
+                {...(s.key === 1 ? { 'data-tooltip': t('stepCard.Rules') } : {})}
+                {...(s.key === 2 ? { 'data-tooltip': t('stepCard.Modes') } : {})}
+                {...(s.key === 3 ? { 'data-tooltip': t('stepCard.Ranking') } : {})}
+                {...(s.key === 4 ? { 'data-tooltip': t('stepCard.Machines') } : {})}
+                {...(s.key === 5 ? { 'data-tooltip': t('stepCard.Contests') } : {})}
+              >
+                {s.icon}
+                <span className="step-label">{t(`steps.${s.key}.short`)}</span>
+              </div>
+              {i < steps.length - 1 && <HiArrowNarrowRight size={24} color="#888" className="flow-arrow" />}
+            </React.Fragment>
+          ))}
+          <div className="now-tutorial">{t('tryTutorial')}</div>
+        </div>
 
+        {/* 모달 상세 보기 */}
         {selectedStep !== null && (
           <div className="step-detail-overlay" onClick={() => setSelectedStep(null)}>
             <div className="step-detail" onClick={e => e.stopPropagation()}>
               <button className="close-btn" onClick={() => setSelectedStep(null)}>X</button>
               <h1>{t(`steps.${selectedStep}.title`)}</h1>
-
-              {/* description_list 우선 처리 */}
+              {selectedStep === 0 && (
+                <div className="logo-container">
+                  <img src={logo_light} alt="" className="tutorial-page-img-dark" />
+                </div>
+              )}
               {Array.isArray(t(`steps.${selectedStep}.descriptions`, { returnObjects: true })) ? (
                 <ul>
                   {(t(`steps.${selectedStep}.descriptions`, { returnObjects: true }) as string[]).map((line, idx) => (
@@ -170,71 +214,69 @@ const ManualPage: React.FC = () => {
           </div>
         )}
 
-        <br />
-        {t('tryTutorial')}
-
-        <div className='tutorial'>
+        {/* Connect → Spawn → Hints → Submit Flag UI 복원 */}
+        <div className="tutorial">
           <h2>{t('tutorialTitle')}</h2>
 
           {/* Connect */}
           <div className={`step-card ${step >= 0 ? 'active' : ''}`}>
-          <div className="download-container">
-          <div className='text-button-container'>
-            <div className="upper-text">
-              <TbBrandOpenvpn color="white" size={40} />
-              <h2><b>{t('connect.title')}</b></h2>
+            <div className="download-container">
+              <div className="text-button-container">
+                <div className="upper-text">
+                  <TbBrandOpenvpn size={40} color="white" />
+                  <h2><b>{t('connect.title')}</b></h2>
+                </div>
+                <h3>{t('connect.description')}</h3>
+                <div className="download-btn">
+                  <label className={`download-label ${step > 0 ? 'clicked' : ''}`}>
+                    <input
+                      type="checkbox"
+                      className="download-input"
+                      onClick={handleNext}
+                      disabled={step !== 0}
+                      checked={step > 0}
+                      readOnly
+                    />
+                    <span className="download-circle">
+                      <svg className="download-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
+                          d="M12 19V5m0 14-4-4m4 4 4-4" />
+                      </svg>
+                    </span>
+                    <p className="download-title">{t('connect.button')}</p>
+                    <p className="download-title">{t('connect.done')}</p>
+                  </label>
+                </div>
+              </div>
             </div>
-            <h3>{t('connect.description')}</h3>
-            <div className='download-btn'>
-              <label className={`download-label ${step > 0 ? 'clicked' : ''}`}>
-                <input
-                  type="checkbox"
-                  className="download-input"
-                  onClick={handleNext}
-                  disabled={step !== 0}
-                  checked={step > 0}
-                  readOnly
-                />
-                <span className="download-circle">
-                  <svg className="download-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-                      d="M12 19V5m0 14-4-4m4 4 4-4" />
-                  </svg>
-                </span>
-                <p className="download-title">{t('connect.button')}</p>
-                <p className="download-title">{t('connect.done')}</p>
-              </label>
-            </div>
-          </div>
-          </div>
           </div>
 
           {/* Spawn Machine */}
           <div className={`step-card ${step >= 1 ? 'active' : ''}`}>
             <div className="start-instance-button-container">
-            <div className="upper-text">
-              <AiOutlineCloudServer size={40} color="white" />
-              <h2><b>{t('spawn.title')}</b></h2>
-            </div>
-            <p>{t('spawn.description')}</p>
-            <div className={`start-instance-btn ${loading ? 'disabled' : ''}`}>
-              <label className={`download-label ${isSpawned ? 'clicked' : ''}`}>
-                <input
-                  type="checkbox"
-                  className="download-input"
-                  onClick={handleFakeSpawn}
-                  disabled={loading || step !== 1}
-                  checked={isSpawned}
-                  readOnly
-                />
-                <span className="download-circle">
-                  {loading ? <span className="loading-spinner" /> : <IoIosPlay size={20} color="white" />}
-                  <div className="download-square"></div>
-                </span>
-                 <p className="download-title">{loading ? t('spawn.loading') : t('spawn.button')}</p>
-                 <p className="download-title">{loading ? t('spawn.wait') : t('spawn.done')}</p>
-              </label>
-            </div>
+              <div className="upper-text">
+                <AiOutlineCloudServer size={40} color="white" />
+                <h2><b>{t('spawn.title')}</b></h2>
+              </div>
+              <p>{t('spawn.description')}</p>
+              <div className={`start-instance-btn ${loading ? 'disabled' : ''}`}>
+                <label className={`download-label ${isSpawned ? 'clicked' : ''}`}>
+                  <input
+                    type="checkbox"
+                    className="download-input"
+                    onClick={handleFakeSpawn}
+                    disabled={loading || step !== 1}
+                    checked={isSpawned}
+                    readOnly
+                  />
+                  <span className="download-circle">
+                    {loading ? <span className="loading-spinner" /> : <IoIosPlay size={20} color="white" />}
+                    <div className="download-square" />
+                  </span>
+                  <p className="download-title">{loading ? t('spawn.loading') : t('spawn.button')}</p>
+                  <p className="download-title">{loading ? t('spawn.wait') : t('spawn.done')}</p>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -246,23 +288,19 @@ const ManualPage: React.FC = () => {
                 {remainingHints > 0 ? <h2>Hints</h2> : <h2>No More Hints</h2>}
               </div>
               <div className="lower-text">
-                {remainingHints > 0 ? (
-                  <h3>If you need a hint, Press the button</h3>
-                ) : (
-                  <h3>You have used all the hints for this machine.</h3>
-                )}
+                {remainingHints > 0
+                  ? <h3>If you need a hint, press the button</h3>
+                  : <h3>You have used all the hints for this machine.</h3>}
               </div>
-
               {loading && <LoadingIcon />}
-
-              {!loading && !error && hintsUsed > 0 && (
+              {!loading && !errors && hintsUsed > 0 && (
                 <div className="used-hints">
                   <ul className="hints-list">
-                    {hints.map((hint, index) => (
+                    {hints.map((hint, idx) => (
                       <li
                         className="list hint-animate"
-                        key={index}
-                        style={{ animationDelay: `${index * 0.2}s` }}
+                        key={idx}
+                        style={{ animationDelay: `${idx * 0.2}s` }}
                       >
                         {hint.content}
                       </li>
@@ -270,66 +308,55 @@ const ManualPage: React.FC = () => {
                   </ul>
                 </div>
               )}
-
               <button
                 onClick={fetchHint}
-                disabled={loading || remainingHints === 0 || disabled || step < 2}
-                className={`get-hints-button ${disabled || remainingHints === 0 || step < 2 ? 'disabled' : ''}`}
+                disabled={loading || remainingHints === 0 || step < 2}
+                className={`get-hints-button ${loading || remainingHints === 0 || step < 2 ? 'disabled' : ''}`}
               >
-                {loading ? (
-                  <LoadingIcon />
-                ) : disabled || remainingHints === 0 ? (
-                  <CiLock size={40} color="#ccc" />
-                ) : (
-                  'Hint'
-                )}
-                {!disabled && remainingHints > 0 && step >= 2 && ` (${remainingHints})`}
+                {loading
+                  ? <LoadingIcon />
+                  : remainingHints === 0
+                    ? <CiLock size={40} color="#ccc" />
+                    : 'Hint'}
+                {remainingHints > 0 && step >= 2 && ` (${remainingHints})`}
               </button>
             </div>
           </div>
 
           {/* Submit Flag */}
-           <div className={`step-card ${step >= 3 ? 'active' : ''}`}>
+          <div className={`step-card ${step >= 3 ? 'active' : ''}`}>
             <div className="submit-flag-form">
-              <div className='upper-text'>
+              <div className="upper-text">
                 <LuFlag size={40} color="white" />
                 <h2>Submit Flag</h2>
               </div>
-
               {message && <p className="message">{message}</p>}
-
               {errors.length > 0 && (
                 <div className="error-messages">
-                  {errors.map((msg, index) => (
-                    <p key={index} className="error-text">{msg}</p>
-                  ))}
+                  {errors.map((e, i) => <p key={i} className="error-text">{e}</p>)}
                 </div>
               )}
-
               <div className="flag-form">
                 <input
-                  className={`flag-input ${disabled ? "disabled" : ""} ${errors.length ? "error shake-error" : ""}`}
+                  className={`flag-input ${errors.length ? 'error shake-error' : ''}`}
                   id="flag"
                   type="text"
                   value={flag}
-                  onChange={(e) => setFlag(e.target.value)}
+                  onChange={e => setFlag(e.target.value)}
                   placeholder="Enter flag here"
-                  disabled={disabled}
                 />
                 <button
                   type="button"
-                  className={`submit-flag-button ${disabled ? "disabled" : ""}`}
-                  disabled={disabled}
+                  className="submit-flag-button"
                   onClick={handleFakeSubmit}
                 >
-                  {disabled ? <CiLock size={40} color="#ccc" /> : 'Submit Flag'}
+                  Submit Flag
                 </button>
               </div>
             </div>
           </div>
-
-        </div>
-      </div>
+        </div> {/* tutorial */}
+      </div>{/* manual-page-container */}
     </Main>
   );
 };
