@@ -109,7 +109,7 @@
         box-sizing: border-box;
         transition: all 0.3s ease-in-out;
         &:hover {
-          background-color: #3F4147;
+          background-color: #000000;
           transform: translateY(-2px);
         }
 
@@ -179,21 +179,21 @@
 }
 
 .selected {
-  background-color: #D1D1D1;
+  background-color: #000000;
   /* 선택된 항목의 배경 색상 */
   border-radius: 5px;
-
+  border: 1px solid var(--color-gainsboro); // 선택된 항목의 테두리 색상
   .label {
-    color: #393939;
+    color: var(--color-gainsboro);
   }
 
   .menuIcon {
-    color: #000000;
+    color: var(--color-gainsboro);
   }
 
   &:hover {
     .label {
-      color: var(--color-white);
+      color:#ff419a;
     }
   }
 }

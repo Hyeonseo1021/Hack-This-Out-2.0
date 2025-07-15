@@ -28,13 +28,13 @@ body {
 
 
 	/* component size */
-	--sidebar-width: 340px;
+	--sidebar-width: 330px;
 	--sidebar-collapsed: 80px;
 
-	--container-width: 70dvw;
-	--container-min-width: 800px;
+	--container-width: 80dvw;
+	--container-min-width: 1000px;
 	--container-height: 84dvh;
-	--container-min-height: 700px;
+	--container-min-height: 750px;
 
 	--profile-width: 360px;
 
@@ -51,9 +51,10 @@ body {
 	--font-title : 3rem;						// Title급 글자 사이즈
 
 	/* Colors */
-	--color-background-transparent: #13151a;
-	--color-layout: #13151a;
-	--secondary-layout: #263037;
+	--color-background-transparent: #000000;
+	--color-layout: #181818;
+	--secondary-layout: #000000;
+	--pink:#ff419a;
 	--blue-200: #8686AC;
 	--blue-300: #505081;
 	--blue-400: #272757;
@@ -69,7 +70,7 @@ body {
 	--color-dimgray: #63666e;
 	--color-white: #fff;
 	--colors-others-color-blue-gray-200: #8ea6bf;
-	--color-gainsboro: #e3e3e4;
+	--color-gainsboro: #1BD207;
 	--color-gray-400: #88909f;
 	--color-red-rosso: #D10000;
 

@@ -195,8 +195,8 @@
       gap: 15px;
       transition: all 0.3s ease-in-out;
       &:hover {
-        background-color: #202227;
-        outline: 1px solid #383e4b;
+        background-color: #000000;
+        outline: 1px solid #181818;
         transform: translateX(3px);
         color: var(--danger);
         .logout_icon {
