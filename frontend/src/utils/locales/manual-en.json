@@ -3,7 +3,7 @@
     "mainTitle": "New here? Here's how to use our service step by step",
     "tryTutorial": "Now try the tutorial to learn how to play with a machine.",
     "tutorialTitle": "Now Playing: Tutorial Machine",
-    "stepCard" : {
+    "stepCard": {
       "firstVisit": "Platform Overview",
       "Rules": "Check the Rules",
       "Modes": "Explore Modes",
@@ -42,7 +42,7 @@
       "0": {
         "title": "Introduction",
         "description": "Welcome to the web-based hacking lab, Hack This Out!",
-        "short": "First Visit"
+        "short": "Hack This Out"
       },
       "1": {
         "title": "Rules",
@@ -76,6 +76,22 @@
         "description": "Hack machines in real-time competitive events!",
         "short": "Contests"
       }
+    },
+    "joyride": {
+    "startTutorial": "Start Tutorial",
+    "firstVisit": "Check this guide if it's your first visit.",
+    "rules": "Review the game rules.",
+    "modes": "Explore different play modes.",
+    "ranking": "Compete through our ranking system.",
+    "machines": "Spawn machines and try hacking them.",
+    "contests": "Join CTF contests and challenge yourself.",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "last": "Finish",
+    "close": "Close"
     }
   }
 }
+  
+  

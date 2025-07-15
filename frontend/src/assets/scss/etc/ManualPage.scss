@@ -343,4 +343,30 @@
   }
 }
 
+.start-joyride-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4caf50, #388e3c);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 
+  &:hover {
+    background: linear-gradient(135deg, #66bb6a, #43a047);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: scale(0.97);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
