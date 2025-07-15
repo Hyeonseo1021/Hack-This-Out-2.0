@@ -182,13 +182,13 @@
   background-color: #000000;
   /* 선택된 항목의 배경 색상 */
   border-radius: 5px;
-  border: 1px solid #1BD207; // 선택된 항목의 테두리 색상
+  border: 1px solid var(--color-gainsboro); // 선택된 항목의 테두리 색상
   .label {
-    color: #1BD207;
+    color: var(--color-gainsboro);
   }
 
   .menuIcon {
-    color: #1BD207;
+    color: var(--color-gainsboro);
   }
 
   &:hover {

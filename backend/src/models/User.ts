@@ -34,6 +34,10 @@ const UserSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
+    htoCoin: {
+        type: Number,
+        default: 0
+    },
     isAdmin: { // Add this field
         type: Boolean,
         default: false
