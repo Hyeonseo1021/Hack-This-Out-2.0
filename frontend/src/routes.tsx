@@ -34,6 +34,7 @@ const InstancesManagement = lazy(() => import('./pages/admin/InstancesManagement
 const TutorialPage = lazy(() => import('./pages/TutorialPage'));
 const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const ManualPage = lazy(() => import('./pages/ManualPage'));
+const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 
 const routes: RouteObject[] = [
   {
@@ -93,6 +94,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <MyStats />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'battle',
+        element: (
+          <ProtectedRoute>
+            <BattlePage />
           </ProtectedRoute>
         ),
       },

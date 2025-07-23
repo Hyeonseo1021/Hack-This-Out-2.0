@@ -1,0 +1,19 @@
+@use "../style" as *;
+
+.battle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 10rem);
+  padding: 2rem;
+  padding-left: 120px;
+  box-sizing: border-box;
+  flex-wrap: nowrap; 
+  overflow-x: hidden;
+  flex-shrink: 1;
+  min-height: 65vh;
+
+  @media (max-width: 1024px) {
+    padding-left: 2rem;
+  }
+}

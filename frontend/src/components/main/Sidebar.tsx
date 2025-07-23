@@ -4,6 +4,7 @@ import { MdOutlineLeaderboard, MdLeaderboard } from "react-icons/md";
 import { FaQuestionCircle, FaRegQuestionCircle, FaBook } from "react-icons/fa";
 import { PiComputerTowerBold, PiComputerTowerFill } from "react-icons/pi";
 import { RiArrowLeftDoubleFill, RiArrowRightDoubleFill } from "react-icons/ri";
+import { GiCrossedSwords } from "react-icons/gi";
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import EmojiEventsIconRounded from '@mui/icons-material/EmojiEventsRounded';
 import styles from '../../assets/scss/section/_sidebar.module.scss';
@@ -104,12 +105,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
                 <div className={styles.label}>LeaderBoard</div>
               </Link>
               <Link
-                to="/contest"
-                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/contest') ? styles.selected : ''}`}
-                data-tooltip="Contests"
+                to="/battle"
+                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/battle') ? styles.selected : ''}`}
+                data-tooltip="Battle"
               >
-                {getMenuIcon('/contest', <EmojiEventsIconRounded className={styles.menuIcon} />, <EmojiEventsOutlinedIcon className={styles.menuIcon} />)}
-                <div className={styles.label}>Contests</div>
+                {getMenuIcon('/battle', <GiCrossedSwords className={styles.menuIcon} />, <GiCrossedSwords className={styles.menuIcon} />)}
+                <div className={styles.label}>Battle</div>
               </Link>
               <Link
                 to="/machine"
