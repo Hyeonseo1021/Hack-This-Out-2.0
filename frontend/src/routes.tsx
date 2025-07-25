@@ -35,6 +35,8 @@ const TutorialPage = lazy(() => import('./pages/TutorialPage'));
 const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const ManualPage = lazy(() => import('./pages/ManualPage'));
 const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
+const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
+const MatchPage = lazy(() => import('./pages/match/MatchPage'));
 
 const routes: RouteObject[] = [
   {
@@ -150,6 +152,22 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <ContestCompleteModal onClose={() => {}} expEarned={9999} />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'arena',
+        element: (
+          <ProtectedRoute>
+            <ArenaPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'match',
+        element: (   
+          <ProtectedRoute>
+            <MatchPage />
           </ProtectedRoute>
         ),
       },

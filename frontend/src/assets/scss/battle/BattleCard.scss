@@ -1,5 +1,6 @@
 .battle-card {
   width: clamp(180px, 25vw, 350px);
+  height: clamp(150px, 40vw, 500px);
   aspect-ratio: 1 / 2; 
   perspective: 900px;
   flex-shrink: 1;
@@ -35,11 +36,14 @@
   .card-front {
     background-color: #1e1e1e;
     color: white;
-    border: 2px solid #00ff95;
+    border: 2px solid #00ff84;
+    .card-title {
+      font-size: clamp(1.5rem, 2.5vw, 3rem);
+    }
   }
 
   .card-back {
-    background-color: #00ff95;
+    background-color: #00ff84;
     color: black;
     transform: rotateY(180deg);
   }

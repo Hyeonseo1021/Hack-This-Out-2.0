@@ -6,12 +6,12 @@ import '../../assets/scss/battle/BattlePage.scss';
 const BattlePage: React.FC = () => {
   return (
     <Main>
-      <div className="battle-page">
-        <h1 className="battle-title">BATTLE</h1>
-        <div className="battle-container">
+      <div className="battle-container">
+          <h1 className="battle-title">Battle</h1>
+        
           <BattleCard
             title="CONTESTS"
-            description="제한 기간 내 문제 풀이 경쟁"
+            description="기간 내 문제 풀이 경쟁"
             route="/contest"
           />
           <BattleCard
@@ -24,7 +24,6 @@ const BattlePage: React.FC = () => {
             description="티어 기반 자동 매칭"
             route="/match"
           />
-        </div>
       </div>
     </Main>
   );
