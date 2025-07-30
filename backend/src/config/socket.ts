@@ -1,7 +1,7 @@
 // socket.ts
 import { Server } from 'socket.io';
 import { Server as HTTPServer } from 'http';
-import { } from '../controllers/ArenaController';
+import { registerArenaSocketHandlers } from '../controllers/ArenaController';
 
 interface ClientToServerEvents {
 // Arena 관련
@@ -43,8 +43,6 @@ export const initSocketServer = (server: HTTPServer): void => {
 
   io.on('connection', (socket) => {
     console.log(`✅ Socket connected: ${socket.id}`);
-
-    // Arena 관련 socket 이벤트 연결
-    //registerArenaSocketHandlers(socket);
+    registerArenaSocketHandlers(socket, io);
   });
 };

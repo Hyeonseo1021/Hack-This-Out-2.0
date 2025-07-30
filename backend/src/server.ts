@@ -9,6 +9,7 @@ import userRoutes from "./routes/UserRoutes";
 import InstRoutes from "./routes/InstRoutes";
 import MachineRoutes from './routes/MachineRoutes';
 import ContestRoutes from './routes/ContestRoutes';
+import ArenaRoutes from './routes/ArenaRoutes';
 import { initSocketServer } from './config/socket';
 
 // **Import the Instance Cleanup Scheduler**
@@ -40,6 +41,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/inst', InstRoutes);
 app.use('/api/machines', MachineRoutes);
 app.use('/api/contest', ContestRoutes);
+app.use('/api/arena', ArenaRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => res.send('API is running'));
