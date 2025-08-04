@@ -11,14 +11,24 @@ const ArenaSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    instanceId: {
+        type: String
+    },
+    publicIp: {
+        type: String
+    },
     participants: [{
         user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
         },
         isReady: {
-        type: Boolean,
-        default: false
+            type: Boolean,
+            default: false
+        },
+        hasLeft: {
+            type: Boolean,
+            default: false
         }
     }],
     maxParticipants: {

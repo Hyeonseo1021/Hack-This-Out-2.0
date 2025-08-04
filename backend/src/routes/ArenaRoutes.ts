@@ -1,12 +1,11 @@
 import express from 'express';
 import { verifyToken } from '../middlewares/Token.js';
-import { createArena, joinArena, readyArena, startArena } from '../controllers/ArenaController.js';
+import { createArena, getArenaList, getArenaById } from '../controllers/ArenaController';
 
 const ArenaRoutes = express.Router();
 
-ArenaRoutes.post('/create', createArena);
-ArenaRoutes.post('/:arenaId/join', joinArena);
-ArenaRoutes.post('/:arenaId/ready', readyArena);
-ArenaRoutes.post('/:arenaId/start', startArena);
+ArenaRoutes.post('/create', verifyToken, createArena);
+ArenaRoutes.get('/list', getArenaList);
+ArenaRoutes.get('/:arenaId', getArenaById);
 
 export default ArenaRoutes;

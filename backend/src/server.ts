@@ -10,7 +10,7 @@ import InstRoutes from "./routes/InstRoutes";
 import MachineRoutes from './routes/MachineRoutes';
 import ContestRoutes from './routes/ContestRoutes';
 import ArenaRoutes from './routes/ArenaRoutes';
-import { initSocketServer } from './config/socket';
+import { initializeSocket } from './config/socket';
 
 // **Import the Instance Cleanup Scheduler**
 import './middlewares/instanceCleanup';
@@ -49,7 +49,7 @@ app.get('/', (req, res) => res.send('API is running'));
 // Server Port
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
-initSocketServer(server);
+initializeSocket(server, app);
 // Start Server
 server.listen(PORT, () => {
     console.log(`Server starts on port ${PORT}`);
