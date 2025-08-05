@@ -5,11 +5,11 @@ import Arena from '../models/Arena';
 import User from '../models/User';
 import Instance from '../models/Instance';
 import config from '../config/config';
-import DuelMachine from '../models/DuelMachine';
 import { param } from 'express-validator';
 import { isReadable } from 'stream';
 import { start } from 'repl';
 import { startInstance } from './InstController';
+import Machine from '../models/Machine';
 
 const ec2Client = new EC2Client({
   region: config.aws.region,
@@ -98,36 +98,6 @@ export const registerArenaSocketHandlers = (socket, io) => {
       console.error('arena:start error:', err); 
     }
   });*/
-
-
-  socket.on('arena:submit-flag', async ({ arenaId, userId, flag }) => {
-    try {
-      const arena = await Arena.findById(arenaId);
-      if (!arena) return;
-
-      const duelMachine = await DuelMachine.findById(arena.machines[0]);
-      if (!duelMachine) return;
-
-      const isCorrect = await bcrypt.compare(flag, duelMachine.flag);
-      if (!isCorrect) {
-        socket.emit('arena:flag-incorrect');
-        return;
-      }
-
-      arena.status = 'ended';
-      arena.endTime = new Date();
-      await arena.save();
-
-      io.to(arenaId).emit('arena:ended', {
-        winner: userId,
-        endTime: arena.endTime,
-      });
-
-      await Instance.deleteMany({ arena: arenaId }); // EC2 종료는 나중에
-    } catch (err) {
-      console.error('arena:submit-flag error:', err);
-    }
-  });
   
   socket.on('arena:leave', async ({ arenaId, userId }) => {
     try {
@@ -155,6 +125,7 @@ export const registerArenaSocketHandlers = (socket, io) => {
   });
 };
 
+// 나중에 difficulty 추가
 export const createArena = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = res.locals.jwtData?.id;
@@ -163,93 +134,41 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const { name, category, difficulty, maxParticipants, duration } = req.body;
-    if (!name || !category || !difficulty || !maxParticipants || !duration) {
+    const { name, category,  maxParticipants, duration } = req.body;
+    if (!name || !category || !maxParticipants || !duration) {
       res.status(400).json({ message: 'Missing required fields' });
       return;
     }
 
-    // ✅ 1. AMI 찾기 (태그 기반)
-    const describeCommand = new DescribeImagesCommand({
-      Filters: [
-        { Name: "tag:Category", Values: [category] },
-        { Name: "tag:Difficulty", Values: [difficulty] }
-      ],
-      Owners: ["self"]
-    });
+    const candidtae = await Machine.aggregate([
+      { $match: { category, isBattleOnly: true } },
+      { $sample: { size: 1 } }
+    ]);
 
-    const describeRes = await ec2Client.send(describeCommand);
-    const ami = describeRes.Images?.[0];
-    if (!ami?.ImageId) {
-      res.status(400).json({ message: "No AMI found for given category and difficulty" });
+    if (candidtae.length === 0) {
+      res.status(404).json({ message: 'No suitable arena machine found.' });
       return;
     }
 
-    // ✅ 2. EC2 인스턴스 생성 (곧바로 stop 예정)
-    const runCommand = new RunInstancesCommand({
-      ImageId: ami.ImageId,
-      InstanceType: "t3.micro",
-      MinCount: 1,
-      MaxCount: 1,
-      KeyName: "your-key-name",
-      SecurityGroupIds: ["sg-xxxxxxx"],
-      TagSpecifications: [
-        {
-          ResourceType: "instance",
-          Tags: [
-            { Key: "ArenaName", Value: name },
-            { Key: "Category", Value: category },
-            { Key: "Difficulty", Value: difficulty }
-          ]
-        }
-      ]
-    });
+    const machine = candidtae[0]
 
-    const runRes = await ec2Client.send(runCommand);
-    const instance = runRes.Instances?.[0];
-    if (!instance?.InstanceId) {
-      res.status(500).json({ message: "Failed to create EC2 instance" });
-      return;
-    }
-
-    // ✅ 3. 생성 직후 중지 (비용 절약)
-    await ec2Client.send(new StopInstancesCommand({
-      InstanceIds: [instance.InstanceId]
-    }));
-
-    // ✅ 4. DuelMachine 자동 생성
-    const duelMachine = await DuelMachine.create({
-      name: `${category}-${difficulty}-${Date.now()}`,
-      description: `Auto-generated for ${category}-${difficulty}`,
-      amiId: ami.ImageId,
-      instanceId: instance.InstanceId,
-      flag: "$2b$10$PLACEHOLDERFLAG", // 실제 사용할 경우 update 필요
-      category,
-      difficulty,
-      enabled: true
-    });
-
-    // ✅ 5. Arena 생성
     const newArena = await Arena.create({
-      name,
+      name, 
       host: userId,
-      instanceId: instance.InstanceId,
-      publicIp: instance.PublicIpAddress ?? 'pending',
-      category,
-      difficulty,
+      category, 
       maxParticipants,
       duration,
-      machines: [duelMachine._id],
+      machine: [machine._id],
       participants: [{ user: userId, isReady: false, hasLeft: false }],
       status: 'waiting'
     });
 
     req.app.get('io')?.emit('arena:new-room', newArena);
-    res.status(201).json(newArena);
+    res.status(201).json(newArena)
 
   } catch (err) {
-    console.error('createArena error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Create arena error:', err);
+    res.status(500).json({ message: 'Internal server error'});
   }
 };
 
@@ -267,8 +186,8 @@ export const getArenaList = async (req: Request, res: Response): Promise<void> =
 
 export const getArenaById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
-    const arena = await Arena.findById(id).populate('participants.user', 'username');
+    const { arenaId } = req.params;
+    const arena = await Arena.findById(arenaId).populate('participants.user', 'username');
 
     if (!arena) {
       res.status(404).json({ message: 'Arena not found' });

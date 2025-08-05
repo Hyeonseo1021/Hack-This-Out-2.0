@@ -59,7 +59,7 @@ const ArenaPage = () => {
                 {/* 헤더 */}
                 <div className="room-card" style={{ fontWeight: 'bold', background: 'transparent', border: 'none', cursor: 'default' }}>
                   <div className="col name">Room</div>
-                  <div className="col category">Category / Difficulty</div>
+                  <div className="col category">Category</div>
                   <div className="col players">Players</div>
                   <div className="col status">Status</div>
                 </div>
@@ -72,7 +72,7 @@ const ArenaPage = () => {
                     onClick={() => handleEnterArena(arena._id)}
                   >
                     <div className="col name">{arena.name}</div>
-                    <div className="col category">{arena.category} / {arena.difficulty}</div>
+                    <div className="col category">{arena.category}</div>
                     <div className="col players">{arena.participants.length} / {arena.maxParticipants}</div>
                     <div className="col status">{arena.status}</div>
                   </div>

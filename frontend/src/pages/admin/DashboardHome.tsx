@@ -30,6 +30,11 @@ interface DashboardStats {
     pending: number;
     terminated: number;
   };
+  /*battleMachines: {
+    total: number,
+    active: number,
+    inactive: number
+  }*/
 }
 
 const DashboardHome: React.FC = () => {
@@ -38,6 +43,7 @@ const DashboardHome: React.FC = () => {
     machines: { total: 0, active: 0, inactive: 0 },
     contests: { total: 0, active: 0, inactive: 0 },
     instances: { total: 0, running: 0, pending: 0, terminated: 0 },
+    //battleMachines: { total: 0, active: 0, inactive: 0 }
   });
   const [error, setError] = useState<string | null>(null);
 

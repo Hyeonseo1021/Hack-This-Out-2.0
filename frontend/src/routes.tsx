@@ -37,7 +37,9 @@ const ManualPage = lazy(() => import('./pages/ManualPage'));
 const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
 const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
+const ArenaRoomPage = lazy(() => import('./pages/arena/ArenaRoomPage'));
 const MatchPage = lazy(() => import('./pages/match/MatchPage'));
+const BattleMachinesManagement = lazy(() => import('./pages/admin/BattleMachinesManagement'));
 
 
 const routes: RouteObject[] = [
@@ -174,6 +176,14 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        path: 'arena/:id',
+        element: (
+          <ProtectedRoute>
+            <ArenaRoomPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'match',
         element: (   
           <ProtectedRoute>
@@ -304,6 +314,18 @@ const routes: RouteObject[] = [
                 <div className="admin-dashboard">
                   <div className="admin-content">
                     <InstancesManagement />
+                  </div>
+                </div>
+              </AdminProtectedRoute>
+            ),
+          },
+          {
+            path: 'battle-machines',
+            element: (
+              <AdminProtectedRoute>
+                <div className="admin-dashboard">
+                  <div className="admin-content">
+                    <BattleMachinesManagement />
                   </div>
                 </div>
               </AdminProtectedRoute>

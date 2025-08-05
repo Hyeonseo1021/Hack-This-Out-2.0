@@ -85,6 +85,6 @@ UserSchema.methods.updateTier = function () {
 
     return Promise.resolve(this);
 }
-const User = mongoose.model('user', UserSchema);
+const User = mongoose.model('User', UserSchema);
 
 export default User;

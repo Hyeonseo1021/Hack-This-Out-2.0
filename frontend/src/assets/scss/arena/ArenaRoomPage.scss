@@ -1,69 +1,83 @@
-// src/pages/arena/ArenaRoomPage.scss
-
 .arena-room {
-  padding: 2rem;
-  color: #00ffff;
-  background-color: #0d0d0d;
-  min-height: 100vh;
-  font-family: 'Orbitron', sans-serif;
+  width: 100vw;
+  height: 88vh;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-  .arena-title {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid #00ffff;
-    padding-bottom: 0.5rem;
-  }
-
-  .arena-status {
-    margin-bottom: 1.5rem;
-    font-style: italic;
-    color: #88ffff;
-  }
-
-  .participants-list {
+  .arena-frame {
+    width: 1250px;
+    height: 800px;
+    background-image: url('../../img/arena/room.png');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 2rem;
+    align-items: center;
+    justify-content: flex-start; // 상단부터 쌓기
+    padding: 2rem;
+    box-sizing: border-box;
+    position: relative;
+  }
 
-    .participant {
-      background-color: #111;
-      border: 1px solid #00ffff66;
-      padding: 1rem;
+  .arena-title {
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .participants-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1rem;
+    width: 60%;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+
+    .participant-card {
+      border: 2px solid #00ffff;
       border-radius: 10px;
+      height: 100px;
+      background-color: #111;
+      color: #00ffff;
       display: flex;
-      justify-content: space-between;
-      transition: all 0.3s ease;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
 
       &.ready {
-        border-color: #00ff95;
-        background-color: #002f2f;
+        border-color: #00ff88;
       }
     }
   }
 
-  .arena-actions {
+  .action-buttons {
     display: flex;
-    gap: 1rem;
+    justify-content: center;
 
     .btn {
-      background: #00ffff;
-      color: #111;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
       border: none;
       border-radius: 8px;
-      padding: 0.75rem 1.5rem;
-      font-weight: bold;
+      background-color: #00ffff;
+      color: black;
       cursor: pointer;
-      transition: 0.2s ease;
 
-      &:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 10px #00ffffaa;
+      &.start-btn {
+        background-color: #ff00ff;
+        color: white;
       }
-    }
 
-    .start-btn {
-      background: #00ff95;
+      &:disabled {
+        background-color: #555;
+        cursor: not-allowed;
+      }
     }
   }
 }

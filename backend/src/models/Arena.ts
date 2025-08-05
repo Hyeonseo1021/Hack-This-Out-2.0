@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+//나중에 difficulty추가
 const ArenaSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -42,16 +43,11 @@ const ArenaSchema = new mongoose.Schema({
         enum: ['Web', 'Network', 'Database', 'Crypto', 'Cloud', 'AI', 'OS', 'Random'],
         required: true
     },
-    difficulty: {
-        type: String,
-        enum: ['Easy', 'Medium', 'Hard', 'Random'],
-        required: true
-    },
-    machines: [{
+    machine: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Machine',
         required: true
-    }],
+    },
     duration: {
         type: Number,
         required: true,

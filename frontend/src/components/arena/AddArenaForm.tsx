@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { createArena } from '../../api/axiosArena';
 import '../../assets/scss/arena/AddArenaForm.scss';
 
+//나중에 difficulty추가
 const AddArenaForm: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     category: 'Web',
-    difficulty: 'Easy',
     maxParticipants: 2,
     duration: 10,
   });
@@ -30,6 +30,7 @@ const AddArenaForm: React.FC = () => {
       navigate(`/arena/${arena._id}`);
     } catch (err: any) {
       console.error(err);
+      alert(err?.msg || 'Failed to create arena');
       setError(err?.msg || 'Failed to create arena');
     }
   };
@@ -38,9 +39,9 @@ const AddArenaForm: React.FC = () => {
   return (
     <div className="arena-form-frame">
       <form className="add-arena-form" onSubmit={handleSubmit}>
-        <h2>Create Arena</h2>
+        <div className='title'>CREATE ARENA</div>
 
-        <label>Room Name *</label>
+        <label>ROOM NAME</label>
         <input
           type="text"
           name="name"
@@ -50,21 +51,14 @@ const AddArenaForm: React.FC = () => {
           required
         />
 
-        <label>Category *</label>
+        <label>CATEGORY</label>
         <select name="category" value={formData.category} onChange={handleChange}>
           {['Web', 'Network', 'Crypto', 'OS', 'Database', 'Cloud', 'AI', 'Random'].map(cat => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
 
-        <label>Difficulty *</label>
-        <select name="difficulty" value={formData.difficulty} onChange={handleChange}>
-          {['Easy', 'Medium', 'Hard', 'Random'].map(diff => (
-            <option key={diff} value={diff}>{diff}</option>
-          ))}
-        </select>
-
-        <label>Max Participants *</label>
+        <label>MAX PARTICIPANTS</label>
         <input
           type="number"
           name="maxParticipants"
@@ -74,7 +68,7 @@ const AddArenaForm: React.FC = () => {
           max={4}
         />
 
-        <label>Duration (minutes) *</label>
+        <label>DURATION (minutes)</label>
         <input
           type="number"
           name="duration"
@@ -84,9 +78,7 @@ const AddArenaForm: React.FC = () => {
           max={60}
         />
 
-        {error && <p className="form-error">{error}</p>}
-
-        <button type="submit">Create Arena</button>
+        <button type="submit">CREATE ARENA</button>
       </form>
     </div>
   );
