@@ -1,6 +1,7 @@
 // socket.ts
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import { registerArenaSocketHandlers } from '../controllers/ArenaController';
 
 export const initializeSocket = (server: HTTPServer, app: any) => {
   const io = new Server(server, {
@@ -14,8 +15,7 @@ export const initializeSocket = (server: HTTPServer, app: any) => {
   io.on('connection', (socket: Socket) => {
     console.log('✅ New client connected:', socket.id);
 
-    // 이후 이벤트 핸들러 등록
-    // 예: registerArenaSocketHandlers(socket, io);
+    registerArenaSocketHandlers(socket, io);
   });
   app.set('io', io);
 

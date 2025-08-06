@@ -10,6 +10,8 @@ type Participant = {
   user: { _id: string; username: string } | string;
   isReady: boolean;
   hasLeft?: boolean;
+  startTime?: Date;
+  endTime?: Date;
 };
 
 const ArenaRoomPage: React.FC = () => {
@@ -28,10 +30,19 @@ const ArenaRoomPage: React.FC = () => {
     if (!arenaId) return;
     (async () => {
       const { user } = await getUserStatus();
+      console.log('user status:', user);
       setCurrentUserId(user._id);
 
       // 소켓 방 입장
-      socket.emit('arena:join', { arenaId, userId: user._id });
+      console.log('socket.emit join', arenaId, user._id);
+      if (socket.connected) {
+        socket.emit('arena:join', { arenaId, userId: user._id });
+      } else {
+        socket.once('connect', () => {
+          socket.emit('arena:join', { arenaId, userId: user._id });
+        });
+      }
+
 
       // 초기 아레나 정보
       const arenaData = await getArenaById(arenaId);
@@ -59,6 +70,7 @@ const ArenaRoomPage: React.FC = () => {
       status: 'waiting' | 'started' | 'ended';
     }) => {
       // 떠난 사람 필터링(hasLeft 플래그)
+      console.log('[소켓] arena:update', list);
       setParticipants(list.filter(p => !p.hasLeft));
       setHostId(host);
       setIsHost(currentUserId === host);
@@ -82,6 +94,18 @@ const ArenaRoomPage: React.FC = () => {
     };
   }, [arenaId, currentUserId, navigate]);
 
+ /* useEffect(() => {
+    socket.on('arena:start', ({ startTime, endTime }) => {
+      // 이동: /arena/play/:arenaId
+      navigate(`/arena/play/${arenaId}`);
+    });
+
+    return () => {
+      socket.off('arena:start');
+    };
+  }, []);*/
+
+
   // 내 준비 상태 찾기
   const me = participants.find(p => {
     const uid = typeof p.user === 'string' ? p.user : p.user._id;
@@ -89,11 +113,14 @@ const ArenaRoomPage: React.FC = () => {
   });
   const amReady = me?.isReady ?? false;
 
+  // 전체 참가자 준비 완료 여부
+  const allReady = participants.length > 0 && participants.every(p => p.isReady && !p.hasLeft);
+
+
   return (
     <Main>
       <div className="arena-frame">
         <h2 className="arena-title">{arenaName}</h2>
-        <p className="arena-status">상태: {status}</p>
 
         <div className="participants-list">
           {participants.map(p => {
@@ -107,13 +134,16 @@ const ArenaRoomPage: React.FC = () => {
                 key={uid}
                 className={`participant-card ${readyFlag ? 'ready' : ''}`}
               >
-                <span>{name}</span>
+                <span className="participant-name">{name}</span>
                 {isHostUser ? (
                   <span className="host-label">👑 Host</span>
                 ) : (
-                  <span>{readyFlag ? '✅ Ready' : '❌ Not Ready'}</span>
+                  <span className={`participant-status ${readyFlag ? 'ready' : 'not-ready'}`}>
+                    {readyFlag ? '✅ Ready' : '❌ Not Ready'}
+                  </span>
                 )}
               </div>
+
             );
           })}
         </div>
@@ -122,6 +152,7 @@ const ArenaRoomPage: React.FC = () => {
           {isHost ? (
             <button
               className="btn start-btn"
+              disabled={!allReady} // 🔒 준비 안된 사람 있으면 비활성화
               onClick={() =>
                 socket.emit('arena:start', { arenaId, userId: currentUserId })
               }
@@ -142,6 +173,7 @@ const ArenaRoomPage: React.FC = () => {
               {amReady ? '준비 취소' : '준비'}
             </button>
           )}
+
         </div>
       </div>
     </Main>

@@ -40,6 +40,7 @@ const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
 const ArenaRoomPage = lazy(() => import('./pages/arena/ArenaRoomPage'));
 const MatchPage = lazy(() => import('./pages/match/MatchPage'));
 const BattleMachinesManagement = lazy(() => import('./pages/admin/BattleMachinesManagement'));
+const ShopPage = lazy(() => import('./pages/shop/ShopPage'));
 
 
 const routes: RouteObject[] = [
@@ -228,6 +229,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <MachinePlayPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'shop',
+        element: (
+          <ProtectedRoute>
+            <ShopPage />
           </ProtectedRoute>
         ),
       },
