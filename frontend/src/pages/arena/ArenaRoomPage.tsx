@@ -1,148 +1,147 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
 import Main from '../../components/main/Main';
 import { getArenaById } from '../../api/axiosArena';
+import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaRoomPage.scss';
 
-interface Participant {
-  user: {
-    _id: string;
-    username: string;
-  };
+type Participant = {
+  user: { _id: string; username: string } | string;
   isReady: boolean;
   hasLeft?: boolean;
-}
-
-interface Arena {
-  _id: string;
-  name: string;
-  host: string;
-  status: string;
-  participants: Participant[];
-}
+};
 
 const ArenaRoomPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [arena, setArena] = useState<Arena | null>(null);
-  const [participants, setParticipants] = useState<Participant[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [hostId, setHostId] = useState<string | null>(null);
+  const [isHost, setIsHost] = useState(false);
+  const [arenaName, setArenaName] = useState('');
+  const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
-  // arena 정보 불러오기
+  // 1) 초기화: 유저 상태 가져오고 join → 초기 API 로드
   useEffect(() => {
     if (!arenaId) return;
+    (async () => {
+      const { user } = await getUserStatus();
+      setCurrentUserId(user._id);
 
-    const fetchArena = async () => {
-      try {
-        const data = await getArenaById(arenaId);
-        setArena(data);
-        setParticipants(data.participants);
-      } catch (err) {
-        alert('해당 아레나를 불러올 수 없습니다.');
-        navigate('/arena');
-      }
-    };
+      // 소켓 방 입장
+      socket.emit('arena:join', { arenaId, userId: user._id });
 
-    fetchArena();
-  }, [arenaId, navigate]);
+      // 초기 아레나 정보
+      const arenaData = await getArenaById(arenaId);
+      setArenaName(arenaData.name);
+      setStatus(arenaData.status);
+      setHostId(arenaData.host);
+      setIsHost(user._id === arenaData.host);
+      setParticipants(arenaData.participants);
+    })();
+  }, [arenaId]);
 
-  // 소켓 이벤트 등록
+  // 2) 소켓 이벤트 구독: 업데이트 / 삭제
   useEffect(() => {
-    if (!arenaId) return;
+    if (!arenaId || !currentUserId) return;
 
-    console.log('📤 socket.emit("arena:join") 실행됨:', arenaId);
-    socket.emit('arena:join', { arenaId });
-
-    const handleUpdate = (newParticipants: Participant[]) => {
-      console.log('📥 participants 업데이트 수신됨:', newParticipants);
-      setParticipants(newParticipants);
+    // 서버에서 broadcastUpdate 로 보낸 객체 구조:
+    // { participants: Participant[], host: string, status: 'waiting'|'started'|'ended' }
+    const handleUpdate = ({
+      participants: list,
+      host,
+      status: newStatus,
+    }: {
+      participants: Participant[];
+      host: string;
+      status: 'waiting' | 'started' | 'ended';
+    }) => {
+      // 떠난 사람 필터링(hasLeft 플래그)
+      setParticipants(list.filter(p => !p.hasLeft));
+      setHostId(host);
+      setIsHost(currentUserId === host);
+      setStatus(newStatus);
     };
 
     const handleDeleted = ({ arenaId: deleted }: { arenaId: string }) => {
       if (deleted === arenaId) {
-        alert('방이 삭제되었습니다.');
-        navigate('/arena');
+        navigate('/arenas');
       }
     };
 
-    const handleSelfId = ({ userId }: { userId: string }) => {
-      console.log('✅ socket.on("arena:self-id") 수신:', userId);
-      setCurrentUserId(userId);
-    };
-
-    socket.on('arena:self-id', handleSelfId);
-    socket.on('arena:update-participants', handleUpdate);
+    socket.on('arena:update', handleUpdate);
     socket.on('arena:deleted', handleDeleted);
 
     return () => {
-      socket.off('arena:self-id', handleSelfId);
-      socket.off('arena:update-participants', handleUpdate);
+      // 언마운트 시 leave emit → 서버가 곧 update나 deleted를 보내줌
+      socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      socket.off('arena:update', handleUpdate);
       socket.off('arena:deleted', handleDeleted);
     };
-  }, [arenaId, navigate]);
+  }, [arenaId, currentUserId, navigate]);
 
-  const currentUser = useMemo(() => {
-    return participants.find((p) => String(p.user._id) === String(currentUserId));
-  }, [participants, currentUserId]);
-
-  const isReady = currentUser?.isReady ?? false;
-
-  const isHost = useMemo(() => {
-    if (!arena || !currentUserId) return false;
-    return String(arena.host) === String(currentUserId);
-  }, [arena, currentUserId]);
-
-  const allReady = useMemo(() => {
-    return participants.length > 0 && participants.every((p) => p.isReady);
-  }, [participants]);
-
-  const toggleReady = () => {
-    if (!arenaId || !currentUserId) return;
-    socket.emit('arena:ready', {
-      arenaId,
-      userId: currentUserId,
-      isReady: !isReady,
-    });
-  };
-
-  const handleStart = () => {
-    if (!arenaId || !currentUserId) return;
-    socket.emit('arena:start', {
-      arenaId,
-      userId: currentUserId,
-    });
-  };
-
-  if (!arena) return <div className="arena-room">로딩 중...</div>;
+  // 내 준비 상태 찾기
+  const me = participants.find(p => {
+    const uid = typeof p.user === 'string' ? p.user : p.user._id;
+    return uid === currentUserId;
+  });
+  const amReady = me?.isReady ?? false;
 
   return (
     <Main>
-      <div className="arena-room">
-        <div className="arena-frame">
-          <h2 className="arena-title">{arena.name}</h2>
+      <div className="arena-frame">
+        <h2 className="arena-title">{arenaName}</h2>
+        <p className="arena-status">상태: {status}</p>
 
-          <div className="participants-grid">
-            {participants.map((p) => (
-              <div key={p.user._id} className={`participant-card ${p.isReady ? 'ready' : ''}`}>
-                <span className="username">{p.user.username}</span>
-                <span className="status">{p.isReady ? 'Ready' : 'Not Ready'}</span>
+        <div className="participants-list">
+          {participants.map(p => {
+            const uid = typeof p.user === 'string' ? p.user : p.user._id;
+            const name = typeof p.user === 'string' ? p.user : p.user.username;
+            const readyFlag = p.isReady;
+            const isHostUser = uid === hostId;
+
+            return (
+              <div
+                key={uid}
+                className={`participant-card ${readyFlag ? 'ready' : ''}`}
+              >
+                <span>{name}</span>
+                {isHostUser ? (
+                  <span className="host-label">👑 Host</span>
+                ) : (
+                  <span>{readyFlag ? '✅ Ready' : '❌ Not Ready'}</span>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
-          <div className="action-buttons">
-            {isHost ? (
-              <button className="btn start-btn" onClick={handleStart} disabled={!allReady}>
-                START
-              </button>
-            ) : (
-              <button className="btn ready-btn" onClick={toggleReady}>
-                {isReady ? 'CANCEL' : 'READY'}
-              </button>
-            )}
-          </div>
+        <div className="action-buttons">
+          {isHost ? (
+            <button
+              className="btn start-btn"
+              onClick={() =>
+                socket.emit('arena:start', { arenaId, userId: currentUserId })
+              }
+            >
+              게임 시작
+            </button>
+          ) : (
+            <button
+              className="btn"
+              onClick={() =>
+                socket.emit('arena:ready', {
+                  arenaId,
+                  userId: currentUserId,
+                  isReady: !amReady,
+                })
+              }
+            >
+              {amReady ? '준비 취소' : '준비'}
+            </button>
+          )}
         </div>
       </div>
     </Main>
