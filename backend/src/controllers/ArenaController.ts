@@ -22,7 +22,9 @@ const ec2Client = new EC2Client({
 export const registerArenaSocketHandlers = (socket, io) => {
   socket.on('arena:join', async ({ arenaId, userId }) => {
     try {
+      console.log('✅ arena:join 요청 받음, userId:', userId);
       const arena = await Arena.findById(arenaId);
+      
       if (!arena) return;
 
       if (arena.participants.length >= arena.maxParticipants) {
@@ -40,12 +42,16 @@ export const registerArenaSocketHandlers = (socket, io) => {
 
       socket.join(arenaId);
 
+      // ✅ 참가 완료 후 본인에게 userId 전송
+      socket.emit('arena:self-id', { userId });
+
       io.to(arenaId).emit('arena:update-participants', arena.participants); 
     } catch (err) {
       console.error('arena:join error:', err);
       socket.emit('arena:join-failed', { reason: '오류 발생' });
     }
   });
+
 
   socket.on('arena:ready', async ({ arenaId, userId, isReady }) => {
     try {
@@ -187,13 +193,14 @@ export const getArenaList = async (req: Request, res: Response): Promise<void> =
 export const getArenaById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { arenaId } = req.params;
-    const arena = await Arena.findById(arenaId).populate('participants.user', 'username');
+    const arena = await Arena.findById(arenaId)
+      .populate('participants.user', 'username')
 
     if (!arena) {
       res.status(404).json({ message: 'Arena not found' });
       return;
     }
-
+    console.log('arena.host:', arena?.host);
     res.json(arena);
   } catch (err) {
     console.error('getArenaById error:', err);

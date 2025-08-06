@@ -25,20 +25,12 @@ interface Arena {
 const ArenaRoomPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId');
 
   const [arena, setArena] = useState<Arena | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const currentUser = useMemo(
-    () => participants.find((p) => p.user._id === userId),
-    [participants, userId]
-  );
-
-  const isReady = currentUser?.isReady ?? false;
-  const isHost = arena?.host === userId;
-  const allReady = participants.length > 0 && participants.every((p) => p.isReady);
-
+  // arena 정보 불러오기
   useEffect(() => {
     if (!arenaId) return;
 
@@ -47,9 +39,6 @@ const ArenaRoomPage: React.FC = () => {
         const data = await getArenaById(arenaId);
         setArena(data);
         setParticipants(data.participants);
-        console.log('arena.host:', arena?.host);
-        console.log('userId:', userId);
-
       } catch (err) {
         alert('해당 아레나를 불러올 수 없습니다.');
         navigate('/arena');
@@ -59,12 +48,15 @@ const ArenaRoomPage: React.FC = () => {
     fetchArena();
   }, [arenaId, navigate]);
 
+  // 소켓 이벤트 등록
   useEffect(() => {
-    if (!arenaId || !userId) return;
+    if (!arenaId) return;
 
-    socket.emit('arena:join', { arenaId, userId });
+    console.log('📤 socket.emit("arena:join") 실행됨:', arenaId);
+    socket.emit('arena:join', { arenaId });
 
     const handleUpdate = (newParticipants: Participant[]) => {
+      console.log('📥 participants 업데이트 수신됨:', newParticipants);
       setParticipants(newParticipants);
     };
 
@@ -75,27 +67,51 @@ const ArenaRoomPage: React.FC = () => {
       }
     };
 
+    const handleSelfId = ({ userId }: { userId: string }) => {
+      console.log('✅ socket.on("arena:self-id") 수신:', userId);
+      setCurrentUserId(userId);
+    };
+
+    socket.on('arena:self-id', handleSelfId);
     socket.on('arena:update-participants', handleUpdate);
     socket.on('arena:deleted', handleDeleted);
 
     return () => {
+      socket.off('arena:self-id', handleSelfId);
       socket.off('arena:update-participants', handleUpdate);
       socket.off('arena:deleted', handleDeleted);
     };
-  }, [arenaId, userId, navigate]);
+  }, [arenaId, navigate]);
+
+  const currentUser = useMemo(() => {
+    return participants.find((p) => String(p.user._id) === String(currentUserId));
+  }, [participants, currentUserId]);
+
+  const isReady = currentUser?.isReady ?? false;
+
+  const isHost = useMemo(() => {
+    if (!arena || !currentUserId) return false;
+    return String(arena.host) === String(currentUserId);
+  }, [arena, currentUserId]);
+
+  const allReady = useMemo(() => {
+    return participants.length > 0 && participants.every((p) => p.isReady);
+  }, [participants]);
 
   const toggleReady = () => {
+    if (!arenaId || !currentUserId) return;
     socket.emit('arena:ready', {
       arenaId,
-      userId,
+      userId: currentUserId,
       isReady: !isReady,
     });
   };
 
   const handleStart = () => {
+    if (!arenaId || !currentUserId) return;
     socket.emit('arena:start', {
       arenaId,
-      userId,
+      userId: currentUserId,
     });
   };
 
@@ -118,11 +134,7 @@ const ArenaRoomPage: React.FC = () => {
 
           <div className="action-buttons">
             {isHost ? (
-              <button
-                className="btn start-btn"
-                onClick={handleStart}
-                disabled={!allReady}
-              >
+              <button className="btn start-btn" onClick={handleStart} disabled={!allReady}>
                 START
               </button>
             ) : (
