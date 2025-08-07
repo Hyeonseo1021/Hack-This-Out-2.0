@@ -1,181 +1,201 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Main from '../../components/main/Main';
-import DownloadVPNProfile from '../../components/play/DownloadVPNProfile';
-import InstanceInfo from '../../components/play/InstanceInfo';
-import SubmitFlagForm from '../../components/play/SubmitFlagForm';
-import StatusIcon from '../../components/play/StatusIcon';
-import LoadingIcon from '../../components/public/LoadingIcon';
-import ErrorIcon from '../../components/public/ErrorIcon';
-import '../../assets/scss/arena/ArenaPlayPage.scss'; // 재활용
-import { usePlayContext } from '../../contexts/PlayContext';
 import socket from '../../utils/socket';
+import Main from '../../components/main/Main';
+import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
-import { getArenaById } from '../../api/axiosArena'; // 추가: 아레나 정보 초기 로드
+import '../../assets/scss/arena/ArenaRoomPage.scss';
 
-const ArenaPlayPage: React.FC = () => {
-  const { arenaId } = useParams<{ arenaId: string }>();
+type Participant = {
+  user: { _id: string; username: string } | string;
+  isReady: boolean;
+  hasLeft?: boolean;
+};
+
+const ArenaRoomPage: React.FC = () => {
+  const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const containerRef = useRef<HTMLDivElement>(null);
+
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [machineId, setMachineId] = useState<string | null>(null);
-  const [endTime, setEndTime] = useState<Date | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [instanceInfo, setInstanceInfo] = useState<{ instanceId: string; publicIp: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [hostId, setHostId] = useState<string | null>(null);
+  const [isHost, setIsHost] = useState(false);
+  const [arenaName, setArenaName] = useState('');
+  const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isStarting, setIsStarting] = useState(false);
 
-  const {
-    instanceStatus,
-    setInstanceStatus,
-    submitStatus,
-    setSubmitStatus,
-  } = usePlayContext();
+  const joinedRef = useRef(false); // 중복 join 방지
 
-  const handleFlagSuccess = () => {
-    setSubmitStatus('flag-success');
-  };
-
-
-  // 1) 초기화 및 인스턴스 요청: 유저 상태를 가져오고, 인스턴스 생성 요청
   useEffect(() => {
     if (!arenaId) return;
-
-    // 서버로부터 인스턴스 정보 수신
-    const handleInstanceReady = ({ publicIp, instanceId }: { publicIp: string; instanceId: string }) => {
-      console.log('[클라이언트] 인스턴스 생성 완료:', publicIp);
-      setInstanceInfo({ publicIp, instanceId });
-      setInstanceStatus('running');
-      setLoading(false);
-    };
-
-    // 서버로부터 인스턴스 생성 실패 수신
-    const handleInstanceFailed = ({ reason }: { reason: string }) => {
-      console.error('[클라이언트] 인스턴스 생성 실패:', reason);
-      setError(reason);
-      setLoading(false);
-    };
-    
-    // 서버로부터 아레나 종료 시그널 수신
-    const handleArenaEnded = () => {
-      console.log('[클라이언트] 아레나 종료 이벤트 수신');
-      navigate(`/arena/result/${arenaId}`);
-    };
-    
-    // socket 이벤트 리스너 등록
-    socket.on('arena:instance-ready', handleInstanceReady);
-    socket.on('arena:instance-failed', handleInstanceFailed);
-    socket.on('arena:ended', handleArenaEnded);
-
     (async () => {
-      try {
-        const { user } = await getUserStatus();
-        setCurrentUserId(user._id);
+      const { user } = await getUserStatus();
+      setCurrentUserId(user._id);
 
-        const arenaData = await getArenaById(arenaId);
-        setEndTime(new Date(arenaData.endTime));
-
-        // 소켓 이벤트 요청: 인스턴스 생성
-        socket.emit('arena:play-ready', { arenaId, userId: user._id });
-
-      } catch (err) {
-        console.error(err);
-        setError('사용자 인증 또는 아레나 정보 로드 실패');
-        setLoading(false);
+      // ✅ join emit 중복 방지
+      if (!joinedRef.current) {
+        joinedRef.current = true;
+        if (socket.connected) {
+          socket.emit('arena:join', { arenaId, userId: user._id });
+        } else {
+          socket.once('connect', () => {
+            socket.emit('arena:join', { arenaId, userId: user._id });
+          });
+        }
       }
+
+      const arenaData = await getArenaById(arenaId);
+      setArenaName(arenaData.name);
+      setStatus(arenaData.status);
+      setHostId(arenaData.host);
+      setIsHost(user._id === arenaData.host);
+      setParticipants(arenaData.participants);
     })();
-    
-    return () => {
-      socket.off('arena:instance-ready', handleInstanceReady);
-      socket.off('arena:instance-failed', handleInstanceFailed);
-      socket.off('arena:ended', handleArenaEnded);
+  }, [arenaId]);
+
+  useEffect(() => {
+    const handleJoinFailed = ({ reason }: { reason: string }) => {
+      alert(reason);
+      navigate('/arena');
     };
-  }, [arenaId, navigate, setInstanceStatus]);
 
-  // 타이머 설정 및 업데이트
+    socket.on('arena:join-failed', handleJoinFailed);
+
+    return () => {
+      // 명시적으로 void 처리
+      socket.off('arena:join-failed', handleJoinFailed);
+      return undefined;
+    };
+  }, [navigate]);
+
   useEffect(() => {
-    if (!endTime) return;
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const remaining = endTime.getTime() - now;
-      if (remaining <= 0) {
-        clearInterval(interval);
-        setTimeLeft(0);
-        return;
+    const handleStart = ({
+      arenaId,
+      startTime,
+      endTime,
+    }: {
+      arenaId: string;
+      startTime: string;
+      endTime: string;
+    }) => {
+      console.log('[소켓] arena:start 수신', startTime, endTime);
+      navigate(`/arena/play/${arenaId}`);
+    };
+
+    socket.on('arena:start', handleStart);
+
+    return () => {
+      socket.off('arena:start', handleStart);
+      return undefined;
+    };
+  }, [navigate]);
+
+
+  useEffect(() => {
+    const handleUpdate = ({
+      participants: list,
+      host,
+      status: newStatus,
+    }: {
+      participants: Participant[];
+      host: string;
+      status: 'waiting' | 'started' | 'ended';
+    }) => {
+      setParticipants(list.filter(p => !p.hasLeft));
+      setHostId(host);
+      setIsHost(currentUserId === host);
+      setStatus(newStatus);
+    };
+
+    const handleDeleted = ({ arenaId: deleted }: { arenaId: string }) => {
+      if (deleted === arenaId) navigate('/arena');
+    };
+
+    socket.on('arena:update', handleUpdate);
+    socket.on('arena:deleted', handleDeleted);
+
+    return () => {
+      if (currentUserId && arenaId) {
+        socket.emit('arena:leave', { arenaId, userId: currentUserId });
       }
-      setTimeLeft(Math.max(0, Math.floor(remaining / 1000)));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [endTime]);
+      socket.off('arena:update', handleUpdate);
+      socket.off('arena:deleted', handleDeleted);
+    };
+  }, [arenaId, currentUserId, navigate]);
 
-  // 타이머가 0이 되면 결과 페이지로 자동 이동
-  useEffect(() => {
-    if (timeLeft === 0 && endTime) {
-      navigate(`/arena/result/${arenaId}`);
-    }
-  }, [timeLeft, endTime, navigate, arenaId]);
+  const me = participants.find(p => {
+    const uid = typeof p.user === 'string' ? p.user : p.user._id;
+    return uid === currentUserId;
+  });
 
-  // 성공 시 애니메이션
-  useEffect(() => {
-    if (submitStatus === 'flag-success' && containerRef.current) {
-      containerRef.current.classList.add('flag-success');
-      containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      containerRef.current?.classList.remove('flag-success');
-    }
-  }, [submitStatus]);
+  const amReady = me?.isReady ?? false;
 
-  if (error) {
-    return (
-      <Main>
-        <div className="arena-play-container" ref={containerRef}>
-          <div className="error-message"><ErrorIcon /> {error}</div>
-        </div>
-      </Main>
-    );
-  }
-
-  if (loading || !instanceInfo) {
-    return (
-      <Main>
-        <div className="arena-play-container" ref={containerRef}>
-          <LoadingIcon />
-        </div>
-      </Main>
-    );
-  }
+  const allReady =
+    participants.length > 0 &&
+    participants
+      .filter(p => {
+        const uid = typeof p.user === 'string' ? p.user : p.user._id;
+        return uid !== hostId;
+      })
+      .every(p => p.isReady && !p.hasLeft);
 
   return (
     <Main>
-      <div className={`arena-play-container ${submitStatus === 'flag-success' ? 'flag-success' : ''}`} ref={containerRef}>
-        <div className="arena-play-name">
-          <h3><b>🚀 Arena Challenge</b></h3>
+      <div className="arena-frame">
+        <h2 className="arena-title">{arenaName}</h2>
+        <div className="participants-list">
+          {participants.map(p => {
+            const uid = typeof p.user === 'string' ? p.user : p.user._id;
+            const name = typeof p.user === 'string' ? p.user : p.user.username;
+            const readyFlag = p.isReady;
+            const isHostUser = uid === hostId;
+
+            return (
+              <div key={uid} className={`participant-card ${readyFlag ? 'ready' : ''}`}>
+                <span className="participant-name">{name}</span>
+                {isHostUser ? (
+                  <span className="host-label">👑 Host</span>
+                ) : (
+                  <span className={`participant-status ${readyFlag ? 'ready' : 'not-ready'}`}>
+                    {readyFlag ? '✅ Ready' : '❌ Not Ready'}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="arena-timer">
-          ⏳ 남은 시간: {Math.floor(timeLeft / 60)}:{('0' + (timeLeft % 60)).slice(-2)}
+        <div className="action-buttons">
+          {isHost ? (
+            <button
+              className="btn start-btn"
+              disabled={!allReady || isStarting}
+              onClick={() => {
+                if (!currentUserId || isStarting) return;
+                setIsStarting(true);
+                socket.emit('arena:start', { arenaId, userId: currentUserId });
+              }}
+            >
+              게임 시작
+            </button>
+          ) : (
+            <button
+              className="btn"
+              onClick={() =>
+                socket.emit('arena:ready', {
+                  arenaId,
+                  userId: currentUserId,
+                  isReady: !amReady,
+                })
+              }
+            >
+              {amReady ? '준비 취소' : '준비'}
+            </button>
+          )}
         </div>
-
-        <div className="download-box">
-          <StatusIcon status={'completed'} />
-          <DownloadVPNProfile />
-        </div>
-
-        {/* instanceInfo가 null이 아닐 때만 렌더링 */}
-        {/*instanceInfo && <InstanceInfo publicIp={instanceInfo.publicIp} />}
-
-        {/* arenaId와 currentUserId가 null이 아닐 때만 렌더링 */}
-        {arenaId && currentUserId && machineId && (
-          <SubmitFlagForm
-            arenaId={arenaId}
-            machineId={machineId}
-            playType="arena"
-            onFlagSuccess={handleFlagSuccess}
-          />
-        )}
       </div>
     </Main>
   );
 };
 
-export default ArenaPlayPage;
+export default ArenaRoomPage;

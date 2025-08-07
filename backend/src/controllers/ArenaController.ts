@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { EC2Client, RunInstancesCommand, RunInstancesCommandInput, TerminateInstancesCommand } from "@aws-sdk/client-ec2"; 
+import { EC2Client, RunInstancesCommand, TerminateInstancesCommand, _InstanceType as EC2InstanceType } from "@aws-sdk/client-ec2"; 
 import Arena from '../models/Arena';
 import User from '../models/User';
 import Instance from '../models/Instance';
@@ -48,51 +48,58 @@ export const registerArenaSocketHandlers = (socket, io) => {
   };
 
   socket.on('arena:join', async ({ arenaId, userId }) => {
-    socket.userId = userId;
-    socket.arenaId = arenaId;
+    try {
+      socket.userId = userId;
+      socket.arenaId = arenaId;
 
-    const arena = await Arena.findById(arenaId);
-    if (!arena) {
-      return socket.emit('arena:join-failed', { reason: '방이 없습니다.' });
-    }
+      const arena = await Arena.findById(arenaId);
+      if (!arena) {
+        return socket.emit('arena:join-failed', { reason: '방이 없습니다.' });
+      }
 
-    const userIdStr = userId.toString();
+      const userIdStr = userId.toString();
+      const activeCount = arena.participants.filter(p => !p.hasLeft).length;
 
-    const alreadyActive = arena.participants.some(
-      (p) => p.user.toString() === userIdStr && !p.hasLeft
-    );
+      const alreadyActive = arena.participants.some(
+        (p) => p.user.toString() === userIdStr && !p.hasLeft
+      );
 
-    const activeCount = arena.participants.filter(p => !p.hasLeft).length;
-    if (!alreadyActive && activeCount >= arena.maxParticipants) {
-      return socket.emit('arena:join-failed', {
-        reason: '최대 인원을 초과하여 입장할 수 없습니다.',
+      if (!alreadyActive && activeCount >= arena.maxParticipants) {
+        return socket.emit('arena:join-failed', {
+          reason: '최대 인원을 초과하여 입장할 수 없습니다.',
+        });
+      }
+
+      const existing = arena.participants.find(p => p.user.toString() === userIdStr);
+      if (existing) {
+        existing.hasLeft = false;
+      } else {
+        arena.participants.push({
+          user: userId,
+          isReady: false,
+          hasLeft: false,
+        });
+      }
+
+      await arena.save();
+
+      socket.join(arenaId);
+
+      // ✅ user 필드 populate 해서 보내기
+      const populated = await Arena.findById(arenaId)
+        .populate('participants.user', '_id username')
+        .lean();
+
+      io.to(arenaId).emit('arena:update', {
+        participants: populated?.participants || [],
+        host: populated?.host?.toString() || '',
+        status: populated?.status || 'waiting',
       });
-    }
 
-    const existing = arena.participants.find(p => p.user.toString() === userIdStr);
-    if (existing) {
-      await Arena.updateOne(
-        { _id: arenaId, 'participants.user': userIdStr },
-        { $set: { 'participants.$.hasLeft': false } }
-      );
-    } else {
-      await Arena.findByIdAndUpdate(
-        arenaId,
-        {
-          $addToSet: {
-            participants: {
-              user: userIdStr,
-              isReady: false,
-              hasLeft: false
-            }
-          }
-        }
-      );
+    } catch (err) {
+      console.error('[arena:join] error:', err);
+      socket.emit('arena:join-failed', { reason: '입장 중 오류가 발생했습니다.' });
     }
-
-    socket.join(arenaId);
-    await broadcastUpdate(arenaId);
-    await updateArenaList();
   });
 
   socket.on('arena:ready', async ({ arenaId, userId, isReady }) => {
@@ -124,11 +131,91 @@ export const registerArenaSocketHandlers = (socket, io) => {
     await arena.save();
     console.log('[SERVER] arena:start broadcast:', arenaId);
     io.to(arenaId).emit('arena:start', {
-      arenaId, // 이거 추가!!
+      arenaId, 
       startTime: arena.startTime,
       endTime: arena.endTime,
       message: '게임이 시작되었습니다!',
     });
+  });
+
+  socket.on('arena:play-ready', async ({ arenaId, userId }) => {
+    try {
+      const arena = await Arena.findById(arenaId).populate('machine');
+      if (!arena || !arena.machine) {
+        socket.emit('arena:instance-failed', { reason: 'Arena or assigned machine not found' });
+        return;
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        socket.emit('arena:instance-failed', { reason: 'User not found' });
+        return;
+      }
+      const existingInstance = await Instance.findOne({
+        user: userId,
+        arena: arenaId,
+      });
+
+      if (existingInstance) {
+        console.log(`[arena:play-ready] ${user.username} - 기존 인스턴스 재사용: ${existingInstance.instanceId}`);
+        return socket.emit('arena:instance-ready', {
+          instanceId: existingInstance.instanceId
+        });
+      }
+
+      const ImageId = (arena.machine as any).amiId;
+      const runCommand = new RunInstancesCommand({
+        ImageId,
+        InstanceType: EC2InstanceType.t2_micro,
+        MinCount: 1,
+        MaxCount: 1,
+        SecurityGroupIds: [config.aws.securityGroupId!],
+        TagSpecifications: [
+          {
+            ResourceType: 'instance',
+            Tags: [
+              { Key: 'User', Value: userId },
+              { Key: 'Arena', Value: arenaId },
+            ],
+          },
+        ],
+      });
+
+      const data = await ec2Client.send(runCommand);
+      const instance = data.Instances?.[0];
+
+      if (!instance || !instance.InstanceId) {
+        socket.emit('arena:instance-failed', { reason: 'Failed to create instance' });
+        return;
+      }
+
+      const instanceId = instance.InstanceId;
+
+      // DB 저장 (arena 필드 포함)
+      const newInstance = new Instance({
+        user: userId,
+        instanceId,
+        machineType: arena.machine._id,
+        arena: arenaId, 
+      });
+      await newInstance.save();
+
+      // 퍼블릭 IP 기다렸다가 emit (optionally)
+      const publicIp = instance.PublicIpAddress || 'pending';
+
+      socket.emit('arena:instance-ready', {
+        instanceId,
+        publicIp,
+      });
+
+      console.log(`[arena:play-ready] ${user.username} - 인스턴스 생성 완료: ${instanceId}`);
+
+    } catch (error: any) {
+      console.error('[arena:play-ready] EC2 생성 실패:', error);
+      socket.emit('arena:instance-failed', {
+        reason: error?.message || 'Unexpected error',
+      });
+    }
   });
 
   const handleLeaveOrDisconnect = async (arenaId, userId) => {

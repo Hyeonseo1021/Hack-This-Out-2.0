@@ -192,7 +192,7 @@ const routes: RouteObject[] = [
           <ProtectedRoute>
             <PlayProvider>
               <ArenaPlayPage />
-            </PlayProvider>
+            </PlayProvider> 
           </ProtectedRoute>
         ),
       },

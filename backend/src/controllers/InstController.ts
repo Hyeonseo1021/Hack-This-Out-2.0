@@ -10,6 +10,7 @@ import bcrypt from 'bcrypt';
 import Instance from '../models/Instance';
 import Machine from '../models/Machine';
 import User from '../models/User';
+import Arena from '../models/Arena';
 import config from '../config/config';
 import stream from 'stream';
 import { promisify } from 'util';
