@@ -17,176 +17,205 @@ const ec2Client = new EC2Client({
 
 export const registerArenaSocketHandlers = (socket, io) => {
   const broadcastUpdate = async (arenaId) => {
-    const arena = await Arena.findById(arenaId).populate('participants.user', 'username');
+    const arena = await Arena.findById(arenaId)
+      .populate('participants.user', 'username')
+      .exec();
+
+    if (!arena) return;
+
+    const activeParticipants = arena.participants.filter(p => !p.hasLeft);
+
     io.to(arenaId).emit('arena:update', {
-      participants: arena.participants,
+      participants: activeParticipants,
       host: arena.host.toString(),
       status: arena.status,
     });
   };
 
-  // ✅ 입장
+  const updateArenaList = async () => {
+    const all = await Arena.find().lean();
+    io.emit('arena:list-update', all);
+  };
+
+  const tryDeleteArenaIfEmpty = async (arena) => {
+    const stillActive = arena.participants.filter(p => !p.hasLeft);
+    if (stillActive.length === 0 && arena.status === 'waiting') {
+      await Arena.deleteOne({ _id: arena._id });
+      io.emit('arena:deleted', { arenaId: arena._id.toString() });
+      return true;
+    }
+    return false;
+  };
+
   socket.on('arena:join', async ({ arenaId, userId }) => {
     socket.userId = userId;
     socket.arenaId = arenaId;
 
     const arena = await Arena.findById(arenaId);
-    if (!arena) return socket.emit('arena:join-failed', { reason: '방이 없습니다.' });
-
-    const existing = arena.participants.find(p => p.user.toString() === userId);
-    if (!existing) {
-      arena.participants.push({ user: userId, isReady: false, hasLeft: false });
-    } else {
-      existing.hasLeft = false; // ✅ 다시 복귀한 경우
+    if (!arena) {
+      return socket.emit('arena:join-failed', { reason: '방이 없습니다.' });
     }
 
-    await arena.save();
+    const userIdStr = userId.toString();
+
+    const alreadyActive = arena.participants.some(
+      (p) => p.user.toString() === userIdStr && !p.hasLeft
+    );
+
+    const activeCount = arena.participants.filter(p => !p.hasLeft).length;
+    if (!alreadyActive && activeCount >= arena.maxParticipants) {
+      return socket.emit('arena:join-failed', {
+        reason: '최대 인원을 초과하여 입장할 수 없습니다.',
+      });
+    }
+
+    const existing = arena.participants.find(p => p.user.toString() === userIdStr);
+    if (existing) {
+      await Arena.updateOne(
+        { _id: arenaId, 'participants.user': userIdStr },
+        { $set: { 'participants.$.hasLeft': false } }
+      );
+    } else {
+      await Arena.findByIdAndUpdate(
+        arenaId,
+        {
+          $addToSet: {
+            participants: {
+              user: userIdStr,
+              isReady: false,
+              hasLeft: false
+            }
+          }
+        }
+      );
+    }
+
     socket.join(arenaId);
+    await broadcastUpdate(arenaId);
+    await updateArenaList();
+  });
+
+  socket.on('arena:ready', async ({ arenaId, userId, isReady }) => {
+    await Arena.updateOne(
+      { _id: arenaId, 'participants.user': userId },
+      { $set: { 'participants.$.isReady': isReady } }
+    );
     await broadcastUpdate(arenaId);
   });
 
-  // ✅ 준비 상태 변경
-  socket.on('arena:ready', async ({ arenaId, userId, isReady }) => {
-    const arena = await Arena.findById(arenaId);
-    const p = arena?.participants.find(x => x.user.toString() === userId);
-    if (p) {
-      p.isReady = isReady;
-      await arena.save();
-      await broadcastUpdate(arenaId);
-    }
-  });
 
   socket.on('arena:start', async ({ arenaId, userId }) => {
-    try {
-      const arena = await Arena.findById(arenaId);
-      if (!arena) return;
+    console.log('[서버 수신] arena:start', arenaId, userId);
+    const arena = await Arena.findById(arenaId);
+    if (!arena || arena.host.toString() !== userId) return;
 
-      if (arena.host.toString() !== userId) return;
+    const nonHostParticipants = arena.participants.filter(p => p.user.toString() !== userId && !p.hasLeft);
 
-      const allReady = arena.participants.length > 0 && arena.participants.every(p => p.isReady);
-      if (!allReady) {
-        socket.emit('arena:start-failed', { reason: '모든 참가자가 준비되지 않았습니다.' });
-        return;
-      }
+    const allReady = nonHostParticipants.length === 0 || nonHostParticipants.every(p => p.isReady);
 
-      const machineId = arena.machine[0];
-      const machine = await Machine.findById(machineId);
-      if (!machine || !machine.amiId) {
-        socket.emit('arena:start-failed', { reason: '문제 머신 정보가 올바르지 않습니다.' });
-        return;
-      }
-
-      const instances = await Promise.all(
-        arena.participants.map(async (p) => {
-          const params: RunInstancesCommandInput = {
-            ImageId: machine.amiId,
-            InstanceType: 't2.micro',
-            MinCount: 1,
-            MaxCount: 1,
-            KeyName: config.aws.keyName!,
-            SecurityGroupIds: [config.aws.securityGroupId!],
-            TagSpecifications: [
-              {
-                ResourceType: 'instance',
-                Tags: [
-                  { Key: 'User', Value: p.user.toString() },
-                  { Key: 'Arena', Value: arenaId },
-                ],
-              },
-            ],
-          };
-
-          const command = new RunInstancesCommand(params);
-          const result = await ec2Client.send(command);
-          const instance = result.Instances?.[0];
-
-          return {
-            userId: p.user.toString(),
-            instanceId: instance?.InstanceId ?? '',
-            publicIp: instance?.PublicIpAddress ?? '',
-          };
-        })
-      );
-
-      // 인스턴스 정보 저장
-      for (const instanceInfo of instances) {
-        const participant = arena.participants.find(p => p.user.toString() === instanceInfo.userId);
-        if (participant) {
-          participant.instanceId = instanceInfo.instanceId;
-          participant.publicIp = instanceInfo.publicIp;
-        }
-      }
-
-      arena.status = 'started';
-      const now = new Date();
-      arena.startTime = now;
-      arena.endTime = new Date(now.getTime() + arena.duration * 60000);
-      await arena.save();
-
-      io.to(arenaId).emit('arena:start', {
-        startTime: arena.startTime,
-        endTime: arena.endTime,
-        message: '게임이 시작되었습니다!',
-      });
-
-    } catch (err) {
-      console.error('arena:start error:', err);
-      socket.emit('arena:start-failed', { reason: '인스턴스 생성 중 오류 발생' });
+    if (!allReady) {
+      socket.emit('arena:start-failed', { reason: '모든 참가자가 준비를 완료해야 합니다.' });
+      return;
     }
+
+    arena.status = 'started';
+    arena.startTime = new Date();
+    arena.endTime = new Date(arena.startTime.getTime() + arena.duration * 60000);
+    await arena.save();
+    console.log('[SERVER] arena:start broadcast:', arenaId);
+    io.to(arenaId).emit('arena:start', {
+      arenaId, // 이거 추가!!
+      startTime: arena.startTime,
+      endTime: arena.endTime,
+      message: '게임이 시작되었습니다!',
+    });
   });
 
+  const handleLeaveOrDisconnect = async (arenaId, userId) => {
+    const arena = await Arena.findById(arenaId);
+    if (!arena) return;
 
-  // ✅ 나가기 버튼 클릭 시
+    const userIdStr = userId.toString();
+    const updateQuery: any = {
+      'participants.$.hasLeft': true,
+    };
+
+    await Arena.updateOne(
+      { _id: arenaId, 'participants.user': userIdStr },
+      { $set: updateQuery }
+    );
+
+    const updatedArena = await Arena.findById(arenaId);
+    if (!updatedArena) return;
+
+    const stillActive = updatedArena.participants.filter(p => !p.hasLeft);
+
+    if (updatedArena.host.toString() === userIdStr && stillActive.length > 0) {
+      await Arena.updateOne({ _id: arenaId }, { $set: { host: stillActive[0].user } });
+    }
+
+    const deleted = await tryDeleteArenaIfEmpty(updatedArena);
+    if (!deleted) await broadcastUpdate(arenaId);
+    await updateArenaList();
+  };
+
+
   socket.on('arena:leave', async ({ arenaId, userId }) => {
     const arena = await Arena.findById(arenaId);
     if (!arena) return;
 
-    const index = arena.participants.findIndex(p => p.user.toString() === userId);
-    if (index !== -1) arena.participants.splice(index, 1); // 완전 제거
-    await arena.save();
+    const userIdStr = userId.toString();
+    const newParticipants = arena.participants.filter(p => p.user.toString() !== userIdStr);
 
-    if (arena.participants.length === 0) {
+    const update: any = {
+      participants: newParticipants,
+    };
+
+    if (arena.host.toString() === userIdStr && newParticipants.length > 0) {
+      update.host = newParticipants[0].user;
+    }
+
+    const allLeft = newParticipants.length === 0;
+
+    if (allLeft && arena.status === 'waiting') {
       await Arena.deleteOne({ _id: arenaId });
       io.emit('arena:deleted', { arenaId });
-    } else {
-      await broadcastUpdate(arenaId);
+      return;
     }
+
+    await Arena.updateOne({ _id: arenaId }, update);
+    await broadcastUpdate(arenaId);
+    await updateArenaList();
   });
 
-  // ✅ 새로고침, 강제 종료 등
+
   socket.on('disconnect', async () => {
-    const { arenaId, userId } = socket;
+    const arenaId = socket.arenaId;
+    const userId = socket.userId;
+
     if (!arenaId || !userId) return;
 
     const arena = await Arena.findById(arenaId);
     if (!arena) return;
 
-    const p = arena.participants.find(p => p.user.toString() === userId);
-    if (p) p.hasLeft = true;
-
-    // 호스트가 나간 경우, 남은 사람 중에서 재할당
-    if (arena.host.toString() === userId) {
-      const next = arena.participants.find(p => !p.hasLeft);
-      if (next) arena.host = next.user;
+    // 해당 유저의 hasLeft를 true로 설정
+    const participant = arena.participants.find(p => p.user.toString() === userId);
+    if (participant) {
+      participant.hasLeft = true;
     }
 
-    const stillActive = arena.participants.filter(p => !p.hasLeft);
-    // disconnect에서 Arena 삭제 유예 적용
-    if (stillActive.length === 0 && arena.status === 'waiting') {
-      setTimeout(async () => {
-        const latest = await Arena.findById(arenaId);
-        if (!latest) return;
-        const alive = latest.participants.filter(p => !p.hasLeft);
-        if (alive.length === 0 && latest.status === 'waiting') {
-          await Arena.deleteOne({ _id: arenaId });
-          io.emit('arena:deleted', { arenaId });
-        }
-      }, 10000);
-    }
+    arena.markModified('participants');
+    await arena.save();
 
+    // 모든 유저가 hasLeft === true일 경우 Arena 삭제
+    const allLeft = arena.participants.every(p => p.hasLeft);
+    if (allLeft) {
+      console.log(`[서버] 모든 유저가 떠났습니다. Arena ${arenaId} 삭제 중`);
+      await Arena.findByIdAndDelete(arenaId);
+      // 필요 시 관련 인스턴스도 종료
+    }
   });
 };
-
 
 // 나중에 difficulty 추가
 export const createArena = async (req: Request, res: Response): Promise<void> => {
@@ -324,4 +353,86 @@ export const endArena = async (arenaId: string, io: any) => {
   }
 };
 
+export const submitFlagArena = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { arenaId } = req.params;
+    const { flag, machineId } = req.body;
+    const userId = res.locals.jwtData?.id;
 
+    if (!arenaId || !userId || !machineId || !flag) {
+      res.status(400).json({ msg: '필수 정보 누락됨.' });
+      return;
+    }
+
+    const arena = await Arena.findById(arenaId);
+    if (!arenaId) {
+      res.status(404).json({ msg: 'Arena not found.'});
+      return;
+    }
+
+    const machine = await Machine.findById(machineId);
+    if (!machine) {
+      res.status(404).json({ msg: 'Machine not found.' });
+      return;
+    }
+
+    const alreadySubmitted = arena.submissions.find(
+      (sub) => sub.user.toString() === userId
+    );
+    if (alreadySubmitted) {
+      res.status(400).json({ msg: '이미 제출한 사용자입니다.' });
+      return;
+    }
+    const isMatch = await bcrypt.compare(flag, machine.flag);
+    if (!isMatch) {
+      // 틀린 경우에도 submissions에 기록할 수 있음
+      arena.submissions.push({
+        user: userId,
+        submitttedAt: new Date(),
+        flagCorrect: false
+      });
+      await arena.save();
+
+      res.status(400).json({ msg: 'Incorrect flag.' });
+      return;
+    }
+
+    // 4. 정답 제출 저장
+    arena.submissions.push({
+      user: userId,
+      submitttedAt: new Date(),
+      flagCorrect: true
+    });
+    await arena.save();
+
+    // 5. 유저 경험치 지급
+    const user = await User.findById(userId);
+    if (user) {
+      user.exp += arena.arenaExp;
+      await (user as any).updateLevel();
+      await user.save();
+    }
+
+    // 6. 응답 반환
+    res.status(200).json({
+      msg: '정답입니다!',
+      correct: true,
+      expEarned: arena.arenaExp,
+      totalExp: user?.exp || 0
+    });
+
+    // 7. 모든 유저가 정답 제출했는지 확인 → arena 종료 emit
+    const totalParticipants = arena.participants.filter(p => !p.hasLeft).length;
+    const correctSubmissions = arena.submissions.filter(s => s.flagCorrect).length;
+
+    if (correctSubmissions >= totalParticipants) {
+      const io = req.app.get('io'); // socket.io 등록되어 있어야 함
+      io.to(arenaId).emit('arena:ended');
+    }
+
+    } catch (error) {
+      console.error('Arena flag 제출 중 오류:', error);
+      res.status(500).json({ msg: 'Arena flag 제출 실패' });
+    }
+  };
+  

@@ -10,6 +10,7 @@ import './assets/scss/admin/AdminDashboard.scss';
 import AdminLayout from './components/admin/AdminLayout';
 import MachineCompleteModal from './components/modal/MachineCompleteModal';
 import ContestCompleteModal from './components/modal/ContestCompleteMD';
+import { PlayProvider } from './contexts/PlayContext';
 
 // Lazy-loaded components
 const LoginPage = lazy(() => import('./pages/public/LoginPage'));
@@ -38,6 +39,7 @@ const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
 const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
 const ArenaRoomPage = lazy(() => import('./pages/arena/ArenaRoomPage'));
+const ArenaPlayPage = lazy(() => import('./pages/arena/ArenaPlayPage'));
 const MatchPage = lazy(() => import('./pages/match/MatchPage'));
 const BattleMachinesManagement = lazy(() => import('./pages/admin/BattleMachinesManagement'));
 const ShopPage = lazy(() => import('./pages/shop/ShopPage'));
@@ -181,6 +183,16 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <ArenaRoomPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'arena/play/:id',
+        element: (
+          <ProtectedRoute>
+            <PlayProvider>
+              <ArenaPlayPage />
+            </PlayProvider>
           </ProtectedRoute>
         ),
       },

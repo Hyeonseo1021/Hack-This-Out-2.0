@@ -27,6 +27,15 @@ export const getArenaById = async (arenaId: string) => {
     throw error?.response?.data || new Error('Failed to fetch arena info');
   }
 };
+
+export const submitFlagArena = async (arenaId: string, userId: string, flag: string) => {
+  const res = await axiosInstance.post(`/arena/${arenaId}/submit`, {
+    userId,
+    flag,
+  });
+  return res.data;
+};
+
 // 이후 추가로 필요한 기능 예시:
 // export const joinArena = ...
 // export const startArena = ...

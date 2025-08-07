@@ -32,10 +32,12 @@ const ArenaSchema = new mongoose.Schema({
             default: false
         },
         instanceId: {
-            type: String
+            type: String,
+            default: null
         },
         publicIp: { 
-            type: String
+            type: String,
+            default: null
         }
     }],
     maxParticipants: {

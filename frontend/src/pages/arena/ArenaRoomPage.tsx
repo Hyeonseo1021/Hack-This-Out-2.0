@@ -54,6 +54,34 @@ const ArenaRoomPage: React.FC = () => {
     })();
   }, [arenaId]);
 
+  // 소켓 연결 실패 처리 (최대 인원 초과 등)
+  useEffect(() => {
+    const handleJoinFailed = ({ reason }: { reason: string }) => {
+      alert(reason);
+      navigate('/arena'); // 또는 다른 페이지로 리디렉션
+    };
+
+    socket.on('arena:join-failed', handleJoinFailed);
+
+    return () => {
+      socket.off('arena:join-failed', handleJoinFailed);
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    const handleStarted = ({ arenaId }: { arenaId: string }) => {
+      console.log('[소켓 수신] arena:start → 이동');
+      navigate(`/arena/play/${arenaId}`);
+    };
+
+    socket.on('arena:start', handleStarted);
+
+    return () => {
+      socket.off('arena:start', handleStarted);
+    };
+  }, [navigate]);
+
+
   // 2) 소켓 이벤트 구독: 업데이트 / 삭제
   useEffect(() => {
     if (!arenaId || !currentUserId) return;
@@ -79,7 +107,7 @@ const ArenaRoomPage: React.FC = () => {
 
     const handleDeleted = ({ arenaId: deleted }: { arenaId: string }) => {
       if (deleted === arenaId) {
-        navigate('/arenas');
+        navigate('/arena');
       }
     };
 
@@ -94,18 +122,6 @@ const ArenaRoomPage: React.FC = () => {
     };
   }, [arenaId, currentUserId, navigate]);
 
- /* useEffect(() => {
-    socket.on('arena:start', ({ startTime, endTime }) => {
-      // 이동: /arena/play/:arenaId
-      navigate(`/arena/play/${arenaId}`);
-    });
-
-    return () => {
-      socket.off('arena:start');
-    };
-  }, []);*/
-
-
   // 내 준비 상태 찾기
   const me = participants.find(p => {
     const uid = typeof p.user === 'string' ? p.user : p.user._id;
@@ -113,23 +129,28 @@ const ArenaRoomPage: React.FC = () => {
   });
   const amReady = me?.isReady ?? false;
 
-  // 전체 참가자 준비 완료 여부
-  const allReady = participants.length > 0 && participants.every(p => p.isReady && !p.hasLeft);
-
+  const allReady =
+    participants.length > 0 &&
+    participants
+      .filter(p => {
+        const uid = typeof p.user === 'string' ? p.user : p.user._id;
+        return uid !== hostId; // 호스트 제외 ← 이 조건이 문제일 수 있음
+      })
+      .every(p => p.isReady && !p.hasLeft);
 
   return (
     <Main>
       <div className="arena-frame">
         <h2 className="arena-title">{arenaName}</h2>
-
         <div className="participants-list">
-          {participants.map(p => {
+          {participants.map((p, index) => {
             const uid = typeof p.user === 'string' ? p.user : p.user._id;
             const name = typeof p.user === 'string' ? p.user : p.user.username;
             const readyFlag = p.isReady;
             const isHostUser = uid === hostId;
 
             return (
+              <>
               <div
                 key={uid}
                 className={`participant-card ${readyFlag ? 'ready' : ''}`}
@@ -143,19 +164,25 @@ const ArenaRoomPage: React.FC = () => {
                   </span>
                 )}
               </div>
-
-            );
-          })}
-        </div>
+              </>
+              );
+            })}
+              
+          </div>
 
         <div className="action-buttons">
           {isHost ? (
             <button
               className="btn start-btn"
               disabled={!allReady} // 🔒 준비 안된 사람 있으면 비활성화
-              onClick={() =>
-                socket.emit('arena:start', { arenaId, userId: currentUserId })
-              }
+              onClick={() => {
+                if (!currentUserId) {
+                  console.warn('❗ currentUserId is null. emit 취소됨');
+                  return;
+                }
+                console.log('프론트 emit:', arenaId, currentUserId);
+                socket.emit('arena:start', { arenaId, userId: currentUserId });
+              }}
             >
               게임 시작
             </button>

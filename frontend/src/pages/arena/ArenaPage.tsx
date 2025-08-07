@@ -48,14 +48,28 @@ const ArenaPage: React.FC = () => {
       setArenas(prev => prev.filter(a => a._id !== arenaId));
     };
 
-    socket.on('arena:new', handleNew);
+    socket.on('arena:new-room', handleNew);
     socket.on('arena:deleted', handleDeleted);
 
     return () => {
-      socket.off('arena:new', handleNew);
+      socket.off('arena:new-room', handleNew);
       socket.off('arena:deleted', handleDeleted);
     };
   }, []);
+
+  // 3. arena:list-update 소켓 이벤트 구독
+  useEffect(() => {
+    const handleListUpdate = (updatedArenas: Arena[]) => {
+      setArenas(Array.isArray(updatedArenas) ? updatedArenas : []);
+    };
+
+    socket.on('arena:list-update', handleListUpdate);
+
+    return () => {
+      socket.off('arena:list-update', handleListUpdate);
+    };
+  }, []);
+
 
   // 3. 방 클릭 핸들러 (방 유효성 확인)
   const handleEnterArena = (arenaId: string) => {
@@ -111,7 +125,9 @@ const ArenaPage: React.FC = () => {
                     <div className="col name">{arena.name}</div>
                     <div className="col category">{arena.category}</div>
                     <div className="col players">
-                      {arena.participants.length} / {arena.maxParticipants}
+                      {
+                        arena.participants.filter(p => !p.hasLeft).length
+                      } / {arena.maxParticipants}
                     </div>
                     <div className="col status">
                       {arena.status === 'ended' ? 'Closed' : arena.status}
