@@ -12,12 +12,6 @@ const ArenaSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    instanceId: {
-        type: String
-    },
-    publicIp: {
-        type: String
-    },
     participants: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,
@@ -35,10 +29,15 @@ const ArenaSchema = new mongoose.Schema({
             type: String,
             default: null
         },
-        publicIp: { 
+        vpnIp: { 
             type: String,
             default: null
-        }
+        },
+        provisionStatus: {
+            type: String,
+            enum: ['creating','ready','error'],
+            default: 'creating'
+        },
     }],
     maxParticipants: {
         type: Number,

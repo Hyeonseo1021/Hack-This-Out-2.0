@@ -70,6 +70,38 @@ const ArenaPage: React.FC = () => {
     };
   }, []);
 
+  // 3.5. 단일 방 요약 업데이트 구독 (참가자 수/상태 즉시 반영)
+  useEffect(() => {
+    const handleRoomUpdated = (updated: {
+      _id: string;
+      name?: string;
+      category?: string;
+      status?: 'waiting' | 'started' | 'ended' | string;
+      maxParticipants?: number;
+      participants?: { user: string; hasLeft: boolean }[]; // 서버에서 주는 최소 필드
+    }) => {
+      setArenas(prev => {
+        const idx = prev.findIndex(a => a._id === updated._id);
+        if (idx === -1) return prev; // 목록에 없으면 무시(원하면 추가 로직 가능)
+
+        const next = [...prev];
+        next[idx] = {
+          ...next[idx],
+          ...(updated.name !== undefined ? { name: updated.name } : {}),
+          ...(updated.category !== undefined ? { category: updated.category } : {}),
+          ...(updated.status !== undefined ? { status: updated.status as any } : {}),
+          ...(updated.maxParticipants !== undefined ? { maxParticipants: updated.maxParticipants } : {}),
+          ...(Array.isArray(updated.participants) ? { participants: updated.participants } : {}),
+        } as typeof prev[number];
+        return next;
+      });
+    };
+
+    socket.on('arena:room-updated', handleRoomUpdated);
+    return () => {socket.off('arena:room-updated', handleRoomUpdated)};
+  }, []);
+
+
 
   // 3. 방 클릭 핸들러 (방 유효성 확인)
   const handleEnterArena = (arenaId: string) => {
@@ -125,10 +157,9 @@ const ArenaPage: React.FC = () => {
                     <div className="col name">{arena.name}</div>
                     <div className="col category">{arena.category}</div>
                     <div className="col players">
-                      {
-                        arena.participants.filter(p => !p.hasLeft).length
-                      } / {arena.maxParticipants}
+                      {(arena.participants ?? []).length} / {arena.maxParticipants}
                     </div>
+
                     <div className="col status">
                       {arena.status === 'ended' ? 'Closed' : arena.status}
                     </div>
