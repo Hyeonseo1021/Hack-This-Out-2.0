@@ -1,7 +1,7 @@
 // src/api/axiosShop.ts
 
 import axiosInstance from './axiosInit';
-import { ShopItem } from '../types/ShopItem';
+import { ShopItem } from '../types/ShopItem'; // ✅ 타입은 import만
 
 // 상점 아이템 목록 가져오기
 export const getShopItems = async (): Promise<ShopItem[]> => {

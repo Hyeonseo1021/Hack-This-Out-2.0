@@ -1,64 +1,40 @@
 .shop-item-card {
-  width: 100%;
-  max-width: 300px;
-  background-color: #111;
-  border: 2px solid #00ffff88;
+  border: 2px solid #999;
+  padding: 16px;
+  margin: 12px;
   border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 0 15px #00ffff33;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.6);
+  color: white;
+  width: 220px;
+  text-align: center;
+  box-shadow: 0 0 8px #00fff7;
 
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 25px #00ffffaa;
+  .item-name {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
   }
 
-  .item-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  .item-description {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
 
-    h3 {
-      font-size: 1.4rem;
-      color: #00ffff;
-      margin-bottom: 0.25rem;
-      text-shadow: 0 0 5px #00ffff99;
-    }
+  .item-price {
+    font-weight: bold;
+    margin-bottom: 12px;
+  }
 
-    p {
-      font-size: 1rem;
-      color: #ccc;
+  .buy-button {
+    padding: 6px 12px;
+    background: #00fff7;
+    color: rgb(255, 255, 255);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
 
-      &.price {
-        font-weight: bold;
-        color: #00ffcc;
-        margin-top: 0.5rem;
-      }
-    }
-
-    button {
-      margin-top: 1rem;
-      background-color: #00ffff;
-      color: #111;
-      border: none;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-
-      &:hover {
-        background-color: #00cccc;
-        transform: scale(1.05);
-      }
-
-      &:active {
-        transform: scale(0.97);
-      }
+    &:hover {
+      background: #00c7b7;
     }
   }
 }

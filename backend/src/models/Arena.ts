@@ -33,11 +33,6 @@ const ArenaSchema = new mongoose.Schema({
             type: String,
             default: null
         },
-        provisionStatus: {
-            type: String,
-            enum: ['creating','ready','error'],
-            default: 'creating'
-        },
     }],
     maxParticipants: {
         type: Number,
@@ -58,7 +53,7 @@ const ArenaSchema = new mongoose.Schema({
     duration: {
         type: Number,
         required: true,
-        default: 30
+        default: 10
     },
     startTime: {
         type: Date,

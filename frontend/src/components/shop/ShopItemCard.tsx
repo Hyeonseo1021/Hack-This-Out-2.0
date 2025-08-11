@@ -1,29 +1,28 @@
-// src/components/shop/ShopItemCard.tsx
-
 import React from 'react';
 import '../../assets/scss/shop/ShopItemCard.scss';
 
-interface ShopItem {
+export interface ShopItem {
   _id: string;
   name: string;
   description: string;
   price: number;
+  type: string; // 예: 'hint', 'exp_boost', 'nickname_change'
 }
 
 interface ShopItemCardProps {
   item: ShopItem;
-  onBuy: (itemId: string) => void;
+  onBuy: () => void;
 }
 
 const ShopItemCard: React.FC<ShopItemCardProps> = ({ item, onBuy }) => {
   return (
     <div className="shop-item-card">
-      <div className="item-content">
-        <h3>{item.name}</h3>
-        <p>{item.description}</p>
-        <p className="price">{item.price} Tokens</p>
-        <button onClick={() => onBuy(item._id)}>구매하기</button>
-      </div>
+      <h3 className="item-name">{item.name}</h3>
+      <p className="item-description">{item.description}</p>
+      <p className="item-price">{item.price} Tokens</p>
+      <button className="buy-button" onClick={onBuy}>
+        구매하기
+      </button>
     </div>
   );
 };

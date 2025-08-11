@@ -1,5 +1,5 @@
 // src/pages/arena/ArenaRoomPage.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
 import Main from '../../components/main/Main';
@@ -33,6 +33,7 @@ const ArenaRoomPage: React.FC = () => {
   const [arenaName, setArenaName] = useState('');
   const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const skipLeaveRef = useRef(false);
 
   // 내 카드 / 활성 인원 / 전체 준비 여부
   const myParticipant = useMemo(
@@ -55,7 +56,7 @@ const ArenaRoomPage: React.FC = () => {
     });
   }, [participants, hostId]);
 
-  // 호스트 제외 모두 준비?
+  // 호스트 제외 모두 준비
   const everyoneExceptHostReady = useMemo(() => {
     return nonHostParticipants.length > 0 && nonHostParticipants.every(p => p.isReady);
   }, [nonHostParticipants]);
@@ -98,6 +99,7 @@ const ArenaRoomPage: React.FC = () => {
     };
 
     const handleStart = ({ arenaId: id }: { arenaId: string }) => {
+      skipLeaveRef.current = true;        // ✅ 플레이로 이동 중 표시
       navigate(`/arena/play/${id}`);
     };
 
@@ -120,7 +122,9 @@ const ArenaRoomPage: React.FC = () => {
 
     return () => {
       // 나가기 + 핸들러 해제
-      socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      if (!skipLeaveRef.current) {
+        socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      }
       socket.off('arena:update', handleUpdate);
       socket.off('arena:join-failed', handleJoinFailed);
       socket.off('arena:start', handleStart);
