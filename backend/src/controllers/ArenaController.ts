@@ -212,7 +212,7 @@ export const registerArenaSocketHandlers = (socket, io) => {
 
         const runParams: any = {
           ImageId: machine.amiId,
-          InstanceType: (machine.InstanceType as any) || 't3.micro',
+          InstanceType: (machine.InstanceType as any) || 't2.micro',
           MinCount: 1,
           MaxCount: 1,
         };
