@@ -1,0 +1,156 @@
+.arena-frame {
+  width: 110%;
+  height: 100%;
+  background-image: url('../../img/arena/room.png');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
+  position: relative; // 자식의 absolute 기준점
+}
+
+.arena-title {
+  color: white;
+  font-weight: bold;
+  font-size: 2rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.participants-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1rem;
+    width: 70%;
+    height: 75%;
+    background-color: transparent;
+    margin-bottom: 1rem;
+    padding: 0 1rem;
+    justify-content: center; // 세로 중앙
+    align-items: center; 
+    border-top: 3px solid #00d5ff; 
+    border-top: 3px solid transparent;
+    box-shadow: 0 -2px 10px #00ffff88;
+    background-image: linear-gradient(to right, #00ffff, #ff00ff);
+    background-repeat: no-repeat;
+    background-position: top;
+    background-size: 100% 4px;
+
+    .participant-card {
+      width: 300px;
+      height: 200px;
+      background-color: #111;
+      border: 2px solid #00ffff;
+      border-radius: 12px;
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+
+      // 💡 정가운데 정렬 핵심
+      display: flex;
+      flex-direction: column;
+      justify-content: center; // 세로 중앙
+      align-items: center;      // 가로 중앙
+
+      gap: 0.5rem;
+      text-align: center;
+
+      &.ready {
+        border-color: #00ff88;
+        background-color: #0a1a0a;
+      }
+
+      .participant-name {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .host-label {
+        font-size: 1.5rem;
+        color: gold;
+        background-color: rgba(255, 215, 0, 0.1);
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-weight: bold;
+      }
+
+      .participant-status {
+        font-size: 1.5rem;
+
+        &.ready {
+          color: #00ff88;
+          font-weight: 500;
+        }
+
+        &.not-ready {
+          color: #ff4444;
+          font-weight: 500;
+        }
+      }
+    }
+    .chat-box {
+      flex: 1;
+      display: flex;
+      margin-top: 30px;
+      flex-direction: column;
+      border: 2px solid #ff00ff;
+      border-radius: 10px;
+      padding: 1rem;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      height: 500px;
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 1rem;
+      }
+
+      .chat-message {
+        margin-bottom: 0.5rem;
+      }
+
+      .chat-input {
+        padding: 0.5rem;
+        border: none;
+        border-radius: 5px;
+      }
+    }
+}
+
+
+
+.action-buttons {
+  position: absolute;
+  bottom: 3rem;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+
+
+    .btn {
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      background-color: #00ffff;
+      color: black;
+      cursor: pointer;
+
+      &.start-btn {
+        background-color: #ff00ff;
+        color: white;
+      }
+
+      &:disabled {
+        background-color: #555;
+        cursor: not-allowed;
+      }
+    }
+}

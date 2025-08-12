@@ -32,6 +32,10 @@ const Sidebar: React.FC = () => {
           <FaCogs className="sidebar-icon" />
           Instances
         </NavLink>
+        <NavLink to="/admin/battle-machines" className={({ isActive }) => (isActive ? 'active' : '')}>
+          <FaServer className="sidebar-icon" />
+          Battle-Machines
+        </NavLink>
       </nav>
     </div>
   );

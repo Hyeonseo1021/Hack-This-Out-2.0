@@ -43,6 +43,11 @@ const InstanceSchema = new mongoose.Schema({
     ref: 'Contest',
     default: [],
   },
+  arena: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Arena',
+    default: null,
+  },
 });
 
 const Instance = mongoose.model('Instance', InstanceSchema);

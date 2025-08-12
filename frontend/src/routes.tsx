@@ -10,6 +10,7 @@ import './assets/scss/admin/AdminDashboard.scss';
 import AdminLayout from './components/admin/AdminLayout';
 import MachineCompleteModal from './components/modal/MachineCompleteModal';
 import ContestCompleteModal from './components/modal/ContestCompleteMD';
+import { PlayProvider } from './contexts/PlayContext';
 
 // Lazy-loaded components
 const LoginPage = lazy(() => import('./pages/public/LoginPage'));
@@ -34,6 +35,15 @@ const InstancesManagement = lazy(() => import('./pages/admin/InstancesManagement
 const TutorialPage = lazy(() => import('./pages/TutorialPage'));
 const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const ManualPage = lazy(() => import('./pages/ManualPage'));
+const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
+const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
+const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
+const ArenaRoomPage = lazy(() => import('./pages/arena/ArenaRoomPage'));
+const ArenaPlayPage = lazy(() => import('./pages/arena/ArenaPlayPage'));
+const MatchPage = lazy(() => import('./pages/match/MatchPage'));
+const BattleMachinesManagement = lazy(() => import('./pages/admin/BattleMachinesManagement'));
+const ShopPage = lazy(() => import('./pages/shop/ShopPage'));
+
 
 const routes: RouteObject[] = [
   {
@@ -97,6 +107,14 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        path: 'battle',
+        element: (
+          <ProtectedRoute>
+            <BattlePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'contest',
         element: (
           <ProtectedRoute>
@@ -145,6 +163,48 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        path: 'arena',
+        element: (
+          <ProtectedRoute>
+            <ArenaPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'arena/create',
+        element: (
+          <ProtectedRoute>
+            <CreateArenaPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'arena/:id',
+        element: (
+          <ProtectedRoute>
+            <ArenaRoomPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'arena/play/:id',
+        element: (
+          <ProtectedRoute>
+            <PlayProvider>
+              <ArenaPlayPage />
+            </PlayProvider> 
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'match',
+        element: (   
+          <ProtectedRoute>
+            <MatchPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'machine',
         element: (
           <ProtectedRoute>
@@ -181,6 +241,14 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <MachinePlayPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'shop',
+        element: (
+          <ProtectedRoute>
+            <ShopPage />
           </ProtectedRoute>
         ),
       },
@@ -267,6 +335,18 @@ const routes: RouteObject[] = [
                 <div className="admin-dashboard">
                   <div className="admin-content">
                     <InstancesManagement />
+                  </div>
+                </div>
+              </AdminProtectedRoute>
+            ),
+          },
+          {
+            path: 'battle-machines',
+            element: (
+              <AdminProtectedRoute>
+                <div className="admin-dashboard">
+                  <div className="admin-content">
+                    <BattleMachinesManagement />
                   </div>
                 </div>
               </AdminProtectedRoute>

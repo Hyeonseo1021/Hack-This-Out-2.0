@@ -3,6 +3,7 @@ import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { submitFlagMachine } from '../../api/axiosMachine';
 import { submitFlagForContest } from '../../api/axiosContest';
 import { submitFlagInstance } from '../../api/axiosInstance';
+import { submitFlagArena } from '../../api/axiosArena';
 import '../../assets/scss/play/SubmitFlagForm.scss';
 import { LuFlag } from "react-icons/lu";
 import { CiLock } from "react-icons/ci";
@@ -14,8 +15,9 @@ import { usePlayContext } from '../../contexts/PlayContext';
  */
 interface SubmitFlagFormProps {
   machineId: string;
-  playType: 'machine' | 'contest';
+  playType: 'machine' | 'contest' | 'arena';
   contestId?: string; // Optional, required only for contest mode
+  arenaId?: string;
   onFlagSuccess: () => void; // Updated to accept expEarned
 }
 
@@ -39,7 +41,7 @@ interface SubmitFlagResponse {
 /**
  * Component for submitting a flag for a machine or contest.
  */
-const SubmitFlagForm: React.FC<SubmitFlagFormProps> = ({ machineId, playType, contestId, onFlagSuccess }) => {
+const SubmitFlagForm: React.FC<SubmitFlagFormProps> = ({ machineId, playType, contestId, arenaId, onFlagSuccess }) => {
   const navigate: NavigateFunction = useNavigate();
   const [flag, setFlag] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -71,10 +73,17 @@ const SubmitFlagForm: React.FC<SubmitFlagFormProps> = ({ machineId, playType, co
       return;
     }
 
+    if (playType === 'arena' && !arenaId) {
+      setErrors([{ msg: 'Arena ID is missing for arena mode.' }]);
+      return;
+    }
+
     if (!flag.trim()) {
       setErrors([{ msg: 'Flag cannot be empty.' }]);
       return;
     }
+
+    
 
     try {
       let response: SubmitFlagResponse;
@@ -110,6 +119,23 @@ const SubmitFlagForm: React.FC<SubmitFlagFormProps> = ({ machineId, playType, co
           return;
         } else {
           response = await submitFlagForContest(contestId, machineId, flag);
+        }
+        setMessage(response.msg || instanceResponse.msg || 'Flag submitted successfully for contest!');
+        if (response.expEarned) {
+          onFlagSuccess(); 
+        }
+        
+      } else if (playType === 'arena') {
+        if (!arenaId) {
+          setErrors([{ msg: 'Arena ID is required for arena mode.' }]);
+          return;
+        }
+        const instanceResponse = await submitFlagInstance(machineId, flag);
+        if (instanceResponse.message === "ERROR") {
+          setErrors([{ msg: instanceResponse.cause }]);
+          return;
+        } else {
+          response = await submitFlagArena(arenaId, machineId, flag);
         }
         setMessage(response.msg || instanceResponse.msg || 'Flag submitted successfully for contest!');
         if (response.expEarned) {

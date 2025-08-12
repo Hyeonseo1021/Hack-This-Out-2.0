@@ -88,6 +88,11 @@ const MachineSchema = new mongoose.Schema({
         required: true,
         default: false
     },
+    isBattleOnly: {
+        type: Boolean,
+        required: true,
+        default: false   
+    }
 }, {
     timestamps: true
 });

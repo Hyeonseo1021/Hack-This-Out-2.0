@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import connectDB from './config/db';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -8,6 +9,8 @@ import userRoutes from "./routes/UserRoutes";
 import InstRoutes from "./routes/InstRoutes";
 import MachineRoutes from './routes/MachineRoutes';
 import ContestRoutes from './routes/ContestRoutes';
+import ArenaRoutes from './routes/ArenaRoutes';
+import { initializeSocket } from './config/socket';
 
 // **Import the Instance Cleanup Scheduler**
 import './middlewares/instanceCleanup';
@@ -29,9 +32,6 @@ app.use(cookieParser(process.env.COOKIE_SECRET));
 // Logger
 app.use(morgan("dev"));
 
-// Root Endpoint
-app.get('/', (req, res) => res.send('API is running'));
-
 // Middleware
 app.use(express.json());
 app.use(mongoSanitize());
@@ -41,9 +41,16 @@ app.use('/api/user', userRoutes);
 app.use('/api/inst', InstRoutes);
 app.use('/api/machines', MachineRoutes);
 app.use('/api/contest', ContestRoutes);
+app.use('/api/arena', ArenaRoutes);
+
+// Root Endpoint
+app.get('/', (req, res) => res.send('API is running'));
 
 // Server Port
 const PORT = process.env.PORT || 5000;
-
+const server = http.createServer(app);
+initializeSocket(server, app);
 // Start Server
-app.listen(PORT, () => console.log(`Server starts on port ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`Server starts on port ${PORT}`);
+});

@@ -1,0 +1,122 @@
+@use "../style" as *;
+
+.arena-container {
+  @include scrollbar-none;
+  color: var(--color-white);
+  overflow: auto;
+  display: flex;
+  flex-direction: row;
+  height: auto;
+  gap: 12px;
+  margin-bottom: 16px;               /* 두 이미지 간격 조정 */
+}
+
+.rooms-wrapper {
+  width: 1000px;
+  height: 800px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.create-room-wrapper {
+  width: 450px;
+  height: 800px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rooms-bg,
+.create-room-bg {
+  width: 100%;
+  height: 100%;
+  background-size: contain; // 또는 cover
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rooms-bg {
+  background-image: url('../../img/arena/rooms.png');
+}
+
+.create-room-bg {
+  background-image: url('../../img/arena/create_room.png');
+}
+
+.rooms-list {
+  padding: 1rem;
+  width: 95%;
+  height: 95%;
+  max-height: 800px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.room-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background-color: rgba(9, 255, 255, 0.1);
+  box-shadow: 0 0 8px #0091ffaa;
+  border-color: #009dff;
+  transform: scale(1.01);
+  
+
+  .col {
+    text-align: center;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+
+    &.name { flex: 2; }
+    &.category { flex: 1.5; }
+    &.players { flex: 1; }
+    &.status { flex: 1; }
+  }
+}
+
+.room-card.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.no-rooms {
+  text-align: center;
+  color: #999;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+}
+
+
+@media (max-width: 1024px) {
+  .arena-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rooms-wrapper,
+  .create-room-wrapper {
+    width: 90vw !important;      // ✅ 고정 너비를 덮기 위해 꼭 필요
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-width: 600px;            // ✅ 너무 커지지 않도록 제한
+  }
+
+  .rooms-bg,
+  .create-room-bg {
+    width: 100%;
+    height: 100%;
+  }
+}
+

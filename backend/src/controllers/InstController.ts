@@ -10,6 +10,7 @@ import bcrypt from 'bcrypt';
 import Instance from '../models/Instance';
 import Machine from '../models/Machine';
 import User from '../models/User';
+import Arena from '../models/Arena';
 import config from '../config/config';
 import stream from 'stream';
 import { promisify } from 'util';
@@ -427,7 +428,7 @@ export const downloadOpenVPNProfile = async (req: Request, res: Response): Promi
 
     // Set appropriate headers for file download
     res.setHeader('Content-Type', data.ContentType || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="hto-profile.ovpn"`);
+    res.setHeader('Content-Disposition', `attachment; filename="client1.ovpn"`);
 
     // Pipe the S3 response stream to the client
     // Convert ReadableStream to Node.js stream

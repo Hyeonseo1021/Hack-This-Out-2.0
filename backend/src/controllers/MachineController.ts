@@ -8,7 +8,7 @@ import bcrypt from 'bcrypt';
  */
 export const createMachine = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, category, description, exp, amiId, hints, hintCosts, flag } = req.body;
+    const { name, category, description, exp, amiId, hints, hintCosts, flag, isBattleOnly } = req.body;
 
     // Validate required fields
     if (!name || !category || !amiId || !flag) {
@@ -59,7 +59,8 @@ export const createMachine = async (req: Request, res: Response): Promise<void> 
       amiId,
       hints: hintsArray.map((hint: string, index: number) => ({ content: hint, cost: hintCostsArray[index] })),
       flag: hashedFlag, // Assign the hashed flag
-      isActive: false
+      isActive: false,
+      isBattleOnly: isBattleOnly === true
     });
 
     await newMachine.save();
