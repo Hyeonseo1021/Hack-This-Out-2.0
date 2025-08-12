@@ -84,6 +84,12 @@ const ArenaPage: React.FC = () => {
         const idx = prev.findIndex(a => a._id === updated._id);
         if (idx === -1) return prev; // 목록에 없으면 무시(원하면 추가 로직 가능)
 
+        if (updated.status === 'ended') {
+          setTimeout(() => {
+            setArenas(prev2 => prev2.filter(a => a._id !== updated._id));
+          }, 3000);
+        }
+
         const next = [...prev];
         next[idx] = {
           ...next[idx],
