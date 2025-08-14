@@ -59,10 +59,10 @@ html.sidebar-open .manual-viewport {        /* ★ 추가 */
   font-size: clamp(18px, 2.4vw, 30px);
 }
 .guide-title {
-  top: 24%;
+  top: 16.5%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(16px, 2vw, 24px);
+  font-size: clamp(17px, 2vw, 47px);
 }
 
 /* 언어 토글 */
@@ -122,7 +122,7 @@ html.sidebar-open .manual-viewport {        /* ★ 추가 */
   bottom: 3%;
   transform: translateX(-50%);
   width: 20%;
-  min-width: 200px;
+  min-width: 240px;
   padding: 0.9rem 1rem;
   text-align: center;
   border-radius: 16px;
@@ -146,4 +146,45 @@ html.sidebar-open .manual-viewport {        /* ★ 추가 */
 /* 작은 화면에서 여백만 축소 */
 @media (max-width: 900px) {
   .frame-inner { padding: 1rem; }
+}
+
+.box-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 26%;                 /* v1/v2 박스 폭과 동일 */
+  text-align: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: clamp(26px, 3.8vw, 72px);  /* 스샷처럼 큼직하게 */
+  letter-spacing: .02em;
+  text-shadow: 0 0 12px rgba(0,255,255,.3), 0 0 2px rgba(0,0,0,.6);
+  z-index: 6;
+  pointer-events: none;
+}
+.box-label.v1 { left: 20%; top: 30%; }
+.box-label.v2 { left: 20%; top: 71%; }
+.rules-title { display: none !important; }
+
+/* 게임 소개 박스 클릭 핫스팟 (투명 링크) */
+.hotspot {
+  position: absolute;
+  display: block;
+  transform: translate(-50%, -50%);
+  z-index: 8;            /* 벡터와 라벨 위에서 클릭 받기 */
+  cursor: pointer;
+  background: transparent;
+  outline: none;
+}
+
+/* v1: 좌측 상단 박스 영역과 똑같이 덮어씌움 */
+.hotspot.v1 {
+  left: 20%;
+  top: 30%;
+  width: 26%;
+  aspect-ratio: 10 / 7;
+}
+
+.hotspot:focus-visible {
+  box-shadow: 0 0 0 3px rgba(102,240,242,.8);
+  border-radius: 14px;
 }
