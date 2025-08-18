@@ -1,198 +1,216 @@
 @use "../style" as *;
 
-.arena-play-container {
-    @include background_set;
-    @include scrollbar-none;
-    position: relative;
-    height: 100%;
-    padding: 0 32px 32px;
-    display: flex;
-    flex-direction: column;
-    overflow-y: scroll;
+/* ───────── Theme tokens ───────── */
+:root {
+  --bg: #000;
+  --surface: #0b0f16;
+  --ink: #e6f7ff;
+  --muted: #9cc7d8;
+  --cyan: #00f5ff;
+  --magenta: #DF62D5;
 
-    .arena-play-name {
-        background-color: var(--color-layout);
-        position: sticky;
-        top: 0;
-        color: var(--color-white);
-        font-size: 40px;
-        padding: 32px 24px;
-        z-index: 10;
-        display: flex;
-        justify-content: space-between;
-        padding-right: 32px;
-        gap: 60px;
-    }
-
-    .download-box {
-        display: flex;
-        width: 100%;
-        height: 224px;
-        padding-right: 30px;
-    }
-
-    .btn-box {
-        display: flex;
-        width: 100%;
-        padding-right: 30px;
-
-        .instance-hint-box {
-            width: 100%;
-            gap: 24px;
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 24px;
-        }
-    }
-    
-    .submit-box {
-        display: flex;
-        width: 100%;
-        padding-right: 30px;
-    }
+  --gap: 30px;          /* 그리드 간격 */
+  --side-min-h: 750px;  /* 좌/우 최소 높이 */
 }
 
-.arena-play-container.flag-success {
-    /* Disable scrolling */
-    overflow: hidden;
+/* Utils */
+.mono { letter-spacing: .06em; font-variant-numeric: tabular-nums; font-size: 28px; }
+.sr-only { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); }
 
-    /* Optionally, you can set the scroll position to top using JavaScript */
-    /* Additional styles can be added here if needed */
-}
+/* ───────── 3-column frame (1:2:1, 넘침 방지) ───────── */
+.play-frame {
+  background: var(--bg);
+  min-height: 90vh;
+  padding: 24px 16px 40px;
 
-/* Ensure smooth scrolling when the flag-success class is added */
-.arena-play-container.flag-success {
-    scroll-behavior: smooth;
-}
-
-.play-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  .title {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: .2px;
-  }
-  .spacer { flex: 1; }
-  .timer-pill {
-    padding: 6px 10px;
-    border: 1px solid #43daf5;
-    border-radius: 999px;
-    font-weight: 600;
-    background: #d4e5ff;
-  }
-}
-
-/* 2열 레이아웃 */
-.play-grid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 16px;
-  margin-top: 12px;
-}
-@media (max-width: 1024px) { .play-grid { grid-template-columns: 1fr; } }
+  /* 비율 고정 + 줄어들 때도 넘치지 않도록 minmax(0, …) 사용 */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: stretch;
 
-/* 공통 카드 */
-.card {
-  background: #0b0f13;
-  border: 1px solid #6ae6f7;
-  border-radius: 16px;
+  /* 가로 넘침 방지 */
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* ───────── Panels (전부 네모) ───────── */
+.panel {
+  background: var(--surface);
+  color: var(--ink);
   padding: 16px;
-  color: white;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-}
-.card h3, .card h4 {
-  margin: 0 0 10px;
-  font-weight: 700;
+  border: 1px solid rgba(0, 245, 255, .35);
+  border-radius: 0;         /* 🔷 네모 */
+  min-width: 0;             /* 그리드 자식 넘침 방지 핵심 */
 }
 
-/* 내 VM 카드 */
-.vm-card {
+/* 강조 테두리(네모) */
+.cut {
+  border: 2px solid var(--cyan);
+  box-shadow: 0 0 12px rgba(0,245,255,.15);
+  border-radius: 0;         /* 🔷 네모 */
+}
+
+/* ───────── Left (OVPN + VM) ───────── */
+.panel-left {
+  display: grid;
+  grid-auto-rows: min-content;
+  row-gap: 16px;
+  min-height: var(--side-min-h);
+
+  .module { display: grid; row-gap: 12px; min-width: 0; }
+  .module-body {
+    min-height: 275px;
+    background: #05080d;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 0;       /* 🔷 네모 */
+    padding: 3px;
+  }
+
+  .divider { height: 1px; background: rgba(255,255,255,.12); margin: 4px 0 8px; }
+
   .kv {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin: 6px 0;
-    .k { width: 110px; color: #ffffff; font-size: 14px; }
+    display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;
+    .k { color: var(--muted); }
     .v code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      background: #0d1117;
+      color: #bfe8ff;
+      background: #06090f;
       border: 1px solid #1f2430;
       padding: 2px 6px;
-      border-radius: 6px;
+      border-radius: 0;     /* 🔷 네모 */
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
   }
-  .hint {
-    margin-top: 8px;
-    color: #ffffff;
-    font-size: 14px;
-  }
+  .hint { margin-top: 8px; color: var(--muted); }
 }
 
-/* 플래그 제출 */
-.flag-form {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-
-  input[type="text"] {
-    flex: 1;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid #1f2430;
-    background: #0c1016;
-    color: #e5e7eb;
-    outline: none;
-  }
-  input::placeholder { color: #6b7280; }
-
-  button {
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid #1f2430;
-    background: #111827;
-    color: #e5e7eb;
-    cursor: pointer;
-    transition: transform .02s ease;
-  }
-  button:disabled { opacity: .6; cursor: not-allowed; }
-  button:active { transform: translateY(1px); }
+/* ───────── Center (Timer + Flag) ───────── */
+.panel-center {
+  display: grid;
+  place-items: center;
+  row-gap: 10px;
+  min-width: 0;             /* 그리드 자식 넘침 방지 */
 }
 
-.flag-msg { margin-top: 8px; font-size: 14px; }
+.big-timer {
+  font-size: clamp(40px, 6vw, 96px);
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255,255,255,.1);
+}
 
-/* 참가자 패널 */
-.participants-card {
-  .participants {
-    list-style: none;
-    padding: 0;
+.guide {
+  margin-top: 0rem;
+  font-size: 1.5rem;
+  color: var(--muted);
+
+  ul {
+    list-style: none;    /* 기본 불릿 제거 */
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    color: white;
+    padding: 0;
+
+    li {
+      margin: 0.25rem 0; /* 줄간격 */
+      line-height: 1.4;  /* 텍스트 간격 */
+    }
   }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border: 1px solid #ffffff;
-    border-radius: 12px;
-    background: #0c1016;
-  }
-  .row.left { opacity: .55; }
-  .name { flex: 1; font-weight: 600; }
-  .badge {
-    font-size: 12px;
-    padding: 2px 6px;
-    border: 1px solid #ffffff;
-    border-radius: 999px;
-  }
-  .badge.muted { color: #ffffff; }
 }
 
-/* 공통 유틸 */
-code { color: #ffffff; }
+.flag-box {
+  width: 100%;
+  max-width: 640px;
+  background: var(--surface);
+  border: 2px solid var(--magenta);
+  border-radius: 0;         /* 🔷 네모 */
+  box-shadow: 0 0 12px rgba(196,0,255,.18);
+  padding: 18px;
+  min-width: 0;             /* flex 자식 넘침 방지 */
+
+  .flag-form {
+    display: flex; gap: 12px; align-items: stretch;
+    min-width: 0;
+
+    input[type="text"] {
+      flex: 1 1 auto;
+      min-width: 0;         /* 🔑 인풋이 가로를 밀지 않게 */
+      padding: 14px 12px;
+      border-radius: 0;     /* 🔷 네모 */
+      background: #06090f;
+      color: var(--ink);
+      border: 1px solid #1f2430;
+      outline: none;
+    }
+    input::placeholder { color: #6b7280; }
+
+    button {
+      flex: 0 0 auto;
+      padding: 12px 16px;
+      border-radius: 0;     /* 🔷 네모 */
+      border: none;
+      background: linear-gradient(135deg, var(--magenta), #8a00ff);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+  }
+
+  .flag-msg { margin-top: 10px; color: var(--ink); opacity: .9; word-break: break-word; }
+}
+
+/* 포커스 링 */
+.flag-box input:focus {
+  border-color: var(--magenta);
+  box-shadow: 0 0 0 3px rgba(196,0,255,.15);
+}
+
+/* ───────── Right (Participants) ───────── */
+.panel-right {
+  min-height: var(--side-min-h);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  h5 { margin: 0 0 12px; }
+
+  .slots {
+    display: grid;
+    gap: 12px;
+    flex: 1;
+    overflow: auto;   /* 내용 많아지면 내부 스크롤 */
+    min-width: 0;
+  }
+
+  .slot {
+    background: rgba(0,245,255,.02);
+    border: 1px solid rgba(0,245,255,.45);
+    border-radius: 0; /* 🔷 네모 */
+    padding: 10px 12px;
+    min-width: 0;
+
+    .row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+
+      & + .row { margin-top: 6px; }
+      .label { color: var(--muted); }
+      .value { color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .value.muted { opacity: .5; }
+      .crown { margin-left: 6px; }
+    }
+  }
+}
+
+/* ───────── Responsive ───────── */
+@media (max-width: 1200px) {
+  .play-frame {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .flag-box { max-width: 100%; }
+}

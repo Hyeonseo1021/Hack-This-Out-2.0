@@ -1,63 +1,57 @@
 :root {
   --bg: #0b1220;
-  --panel: #0f182a;
+  --panel: #000000;
   --cyan: #00f5ff;
   --magenta: #c400ff;
   --ink: #e6f7ff;
   --muted: #7bd8ff;
 }
 
+/* ──────────────────────────────────────────
+   컨테이너(배경) — 기본값
+   ────────────────────────────────────────── */
 .arena-form-frame.cyber {
   position: relative;
-  background-image: url('../../img/arena/create_room_form.png'); // 있으면 유지
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
   width: 97%;
-  height: 100%;
+  height: 100%;              
+  box-sizing: border-box;
   display: flex;
   align-items: stretch;
-  padding: 2rem;
-  box-sizing: border-box;
+  padding: 3rem;
 
-  /* 오른쪽 정렬 */
-  margin-left: auto;
+  /* 배경(있으면 유지) */
+  background-image: url('../../img/arena/create_room_form.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center calc(50% - 5px);  /* 오른쪽 정렬 감 유지 */
+}
 
-  /* 스캔라인 느낌 */
-  &::before {
-    content: "";
-    position: absolute; inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      to bottom,
-      #0000 0px, #0000 2px, rgba(255,255,255,0.02) 3px, #0000 4px
-    );
-    mix-blend-mode: screen;
-    animation: scan 2.2s linear infinite;
-  }
-  @keyframes scan { 0% { transform: translateY(-2%) } 100% { transform: translateY(2%) } }
+@keyframes scan { 
+  0% { transform: translateY(-2%) } 
+  100% { transform: translateY(2%) } 
+}
 
+/* ──────────────────────────────────────────
+   내부 레이아웃
+   ────────────────────────────────────────── */
+.arena-form-frame.cyber {
   .wizard-shell {
     position: relative;
     display: grid;
-    grid-template-columns: 350px minmax(500px, 2fr);
-    gap: 1.5rem;
-    width: 100%;
+    grid-template-columns: 350px minmax(600px, 2fr);
+    gap: 3rem;
+    width: clamp(860px, 90%, 1480px);          
+    margin-left: 6%;
   }
 
   /* ---------- Side rail */
   .side-rail {
     padding: 1.25rem;
     color: var(--ink);
-    height: 90%;
-    margin-top: 10.5%;
-    margin-left: 2%;
     background:
       linear-gradient(var(--panel), var(--panel)) padding-box,
       linear-gradient(180deg, var(--cyan), var(--magenta)) border-box;
-    border: 1px solid transparent;
-    border-radius: 14px;
-    box-shadow: 0 0 20px rgba(0,255,255,0.15);
+  
 
     .rail-title {
       font-size: 0.9rem;
@@ -92,15 +86,6 @@
   /* ---------- Neon panel */
   .neon-panel {
     padding: 1.25rem 1.25rem 1.5rem;
-    height: 90%;
-    margin-left: 2.75%;
-    margin-top: 3.25%;
-    background:
-      linear-gradient(var(--panel), var(--panel)) padding-box,
-      linear-gradient(90deg, var(--cyan), var(--magenta)) border-box;
-    border: 1px solid transparent;
-    border-radius: 16px;
-    box-shadow: 0 0 24px rgba(0,255,255,.15), 0 0 28px rgba(196,0,255,.12);
 
     .panel-title {
       text-align: center;
@@ -135,23 +120,19 @@
     background: transparent;
     color: var(--ink);
     display: grid;
+    height: 80%;
     grid-template-columns: repeat(2, minmax(240px, 1fr));
+    box-shadow: 0 0 20px #2e2e2eaa;
     gap: 1rem 1.25rem;
 
     .field-card {
       padding: .9rem;
       min-height: 200px;
-      background:
-        linear-gradient(#0e1728, #0e1728) padding-box,
-        linear-gradient(135deg, rgba(0,245,255,.9), rgba(196,0,255,.9)) border-box;
-      border: 1px solid transparent;
-      border-radius: 12px;
-      box-shadow: 0 0 16px rgba(0,255,255,.08);
       display: grid; gap: .7rem;
 
       label { 
         font-size: 1.5rem; 
-        padding-bottom: 0%;  
+        padding-bottom: 0;  
         color: var(--muted); 
         letter-spacing: .05em; 
       }
@@ -161,7 +142,7 @@
       select {
         width: 100%;
         padding: .3rem .9rem;
-        background: #121c33;
+        background: #151616;
         color: #eaffff;
         font-size: 1.25rem;
         border-radius: 10px;
@@ -178,11 +159,12 @@
 
     .cta {
       grid-column: 1 / -1;
-      margin-top: 1.25rem;
+      margin-top: 3rem;
       width: 100%;
+      height: 50%;
       padding: 0.9rem 1rem;
       border: none;
-      border-radius: 9999px;
+      border-radius: 30px;
       font-size: 1.1rem;
       font-weight: bold;
       background: linear-gradient(90deg, #00ffff, #00ccff);
@@ -200,11 +182,55 @@
       text-align: center;
     }
   }
+}
 
-  /* 반응형: 모바일은 가운데, 데스크톱은 오른쪽 */
-  @media (max-width: 1024px) {
-    margin-left: 10;
-    .wizard-shell { grid-template-columns: 1fr; }
-    .add-arena-form { grid-template-columns: 1fr; }
+/* ──────────────────────────────────────────
+   @media (컨테이너 전용) — 배경/포지션만 조정
+   ────────────────────────────────────────── */
+@media (max-width: 1670px) {
+  .arena-form-frame.cyber {
+    width: 100%;
+    padding: 1.5rem;
+    /* 단위 누락 수정 */
+    margin-left: 10px;                    /* 필요 시 10%로 변경 가능 */
+    background-position: center top;      /* 좁을 땐 상단 중앙에 배치 */
   }
+}
+
+@media (max-width: 1200px) {
+  .arena-form-frame.cyber {
+    background-size: cover;               /* 더 좁아지면 배경이 화면을 채우도록 */
+  }
+}
+
+/* ──────────────────────────────────────────
+   @media (자식 전용) — 폼/사이드/패널만 조정
+   ────────────────────────────────────────── */
+@media (max-width: 1670px) {
+  .arena-form-frame.cyber .wizard-shell {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .arena-form-frame.cyber .add-arena-form {
+    grid-template-columns: 1fr;
+  }
+  .arena-form-frame.cyber .side-rail,
+  .arena-form-frame.cyber .neon-panel {
+    height: auto;          /* 고정 높이 해제해서 오버플로 방지 */
+    margin: 0;             /* 과도한 마진 제거 */
+  }
+}
+
+@media (max-width: 1200px) {
+  .arena-form-frame.cyber .neon-panel .panel-title { font-size: 1.6rem; }
+  .arena-form-frame.cyber .add-arena-form .field-card label { font-size: 1.2rem; }
+  .arena-form-frame.cyber .add-arena-form input,
+  .arena-form-frame.cyber .add-arena-form select { font-size: 1rem; }
+}
+
+/* 모션 최소화 환경 배려 */
+@media (prefers-reduced-motion: reduce) {
+  .arena-form-frame.cyber::before { animation: none; }
 }

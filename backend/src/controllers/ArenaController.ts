@@ -19,6 +19,19 @@ const ec2Client = new EC2Client({
   },
 });
 
+export const scheduleEnd = (arenaId: string, endAt: Date, io: any) => {
+  const old = gameTimers.get(arenaId);
+  if (old) clearTimeout(old);
+
+  const ms = Math.max(0, endAt.getTime() - Date.now());
+  const t = setTimeout(async () => {
+    await endArena(arenaId, io);
+    gameTimers.delete(arenaId);
+  }, ms);
+
+  gameTimers.set(arenaId, t);
+};
+
 export const registerArenaSocketHandlers = (socket, io) => {
   socket.on('arena:join', async ({ arenaId, userId }) => {
     try {
@@ -180,12 +193,10 @@ export const registerArenaSocketHandlers = (socket, io) => {
       return socket.emit('arena:start-failed', { reason: '이미 시작되었거나 종료된 방입니다.' });
     }
 
-    // 최소 2명(호스트 + 1)
     if ((arena.participants || []).length < 2) {
       return socket.emit('arena:start-failed', { reason: '최소 2명이 필요합니다.' });
     }
 
-    // 호스트 제외 전원 준비
     const others = (arena.participants || []).filter(p => {
       const uid = String((p.user as any)?._id ?? p.user);
       return uid !== hostStr;
@@ -201,13 +212,16 @@ export const registerArenaSocketHandlers = (socket, io) => {
     arena.endTime = new Date(arena.startTime.getTime() + arena.duration * 60000);
     await arena.save();
 
+    scheduleEnd(String(arena._id), arena.endTime!, io);
+
     try {
       const machine: any = (arena as any).machine;
       if (!machine?.amiId) {
         return socket.emit('arena:start-failed', { reason: 'Missing machine AMI info.'});
       }
 
-      for (const p of arena.participants) {
+      // (옵션) 나간 사람은 건너뜀
+      for (const p of arena.participants.filter(x => !x.hasLeft)) {
         if (p.instanceId) continue;
 
         const runParams: any = {
@@ -233,14 +247,20 @@ export const registerArenaSocketHandlers = (socket, io) => {
         p.instanceId = inst?.InstanceId || null;
 
         let privateIp: string | null = inst?.PrivateIpAddress ?? null;
-        for (let i = 0; i < 3 &&  !privateIp && p.instanceId; i++) {
+        for (let i = 0; i < 3 && !privateIp && p.instanceId; i++) {
           await new Promise(r => setTimeout(r, 1500));
           const desc = await ec2Client.send(new DescribeInstancesCommand({
             InstanceIds: [String(p.instanceId)],
           }));
           privateIp = desc.Reservations?.[0]?.Instances?.[0]?.PrivateIpAddress || null;
         }
+
         (p as any).vpnIp = privateIp ?? null;
+
+        // ✅ vpnIp가 실제로 잡힌 경우에만 vm_connected 전환
+        if ((p as any).vpnIp) {
+          (p as any).status = 'vm_connected';
+        }
 
         const uid = String((p.user as any)?._id ?? p.user);
         await Instance.create({
@@ -275,6 +295,7 @@ export const registerArenaSocketHandlers = (socket, io) => {
         hasLeft: !!pp.hasLeft,
         instanceId: pp.instanceId ?? null,
         vpnIp: pp.vpnIp ?? null,
+        status: pp.status || 'waiting', // ✅ 명시적으로 포함
       })),
     });
 
@@ -283,14 +304,8 @@ export const registerArenaSocketHandlers = (socket, io) => {
       startTime: arena.startTime,
       endTime: arena.endTime,
     });
+  });
 
-    const msLeft = Math.max(0, arena.endTime.getTime() - Date.now());
-    if (gameTimers.has(arenaId)) clearTimeout(gameTimers.get(arenaId)!);
-    gameTimers.set(arenaId, setTimeout(() => {
-      gameTimers.delete(arenaId);
-      endArena(arenaId, io);
-    }, msLeft));
-   });
 
   socket.on('arena:leave', async ({ arenaId, userId }) => {
     try {
@@ -653,7 +668,6 @@ export const endArena = async (arenaId: string, io: any) => {
   }
 };
 
-
 export const submitFlagArena = async (req: Request, res: Response): Promise<void> => {
   try {
     const { arenaId } = req.params;
@@ -666,8 +680,8 @@ export const submitFlagArena = async (req: Request, res: Response): Promise<void
     }
 
     const arena = await Arena.findById(arenaId);
-    if (!arenaId) {
-      res.status(404).json({ msg: 'Arena not found.'});
+    if (!arena) {
+      res.status(404).json({ msg: 'Arena not found.' });
       return;
     }
 
@@ -677,63 +691,105 @@ export const submitFlagArena = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const alreadySubmitted = arena.submissions.find(
-      (sub) => sub.user.toString() === userId
+    const alreadyCorrect = arena.submissions.some(
+      (sub) => sub.user.toString() === userId && sub.flagCorrect
     );
-    if (alreadySubmitted) {
-      res.status(400).json({ msg: '이미 제출한 사용자입니다.' });
+    if (alreadyCorrect) {
+      res.status(400).json({ msg: '이미 정답을 제출했습니다.' });
       return;
     }
+
     const isMatch = await bcrypt.compare(flag, machine.flag);
+    const now = new Date();
+
     if (!isMatch) {
-      // 틀린 경우에도 submissions에 기록할 수 있음
+      // ❌ 오답 제출 기록
       arena.submissions.push({
         user: userId,
-        submitttedAt: new Date(),
-        flagCorrect: false
+        submittedAt: now,
+        flagCorrect: false,
       });
-      await arena.save();
 
+      // 참가자 상태 갱신
+      const participant = arena.participants.find(p => p.user.toString() === userId);
+      if (participant) participant.status = 'flag_submitted';
+
+      await arena.save();
       res.status(400).json({ msg: 'Incorrect flag.' });
       return;
     }
 
-    // 4. 정답 제출 저장
+    // ✅ 정답 제출 기록
     arena.submissions.push({
       user: userId,
-      submitttedAt: new Date(),
-      flagCorrect: true
+      submittedAt: now,
+      flagCorrect: true,
     });
-    await arena.save();
 
-    // 5. 유저 경험치 지급
+    const participant = arena.participants.find(p => p.user.toString() === userId);
+    if (participant) participant.status = 'completed';
+
+    // 🎁 EXP 지급
     const user = await User.findById(userId);
     if (user) {
       user.exp += arena.arenaExp;
-      await (user as any).updateLevel();
+      await (user as any).updateLevel?.();
       await user.save();
     }
 
-    // 6. 응답 반환
+    // 🏆 첫 정답인지 확인 → winner/firstSolvedAt 기록 + 그레이스 적용
+    const isFirstSolve = !arena.firstSolvedAt;
+    if (isFirstSolve) {
+      arena.winner = userId;
+      arena.firstSolvedAt = now;
+
+      const graceMs = arena.settings?.graceMs ?? 90_000;
+      arena.endTime = new Date(Date.now() + graceMs);
+    }
+
+    await arena.save();
+
     res.status(200).json({
-      msg: '정답입니다!',
+      msg: isFirstSolve ? '정답입니다! (그레이스 타임 시작)' : '정답입니다!',
       correct: true,
       expEarned: arena.arenaExp,
-      totalExp: user?.exp || 0
+      totalExp: user?.exp || 0,
     });
 
-    // 7. 모든 유저가 정답 제출했는지 확인 → arena 종료 emit
+    // 📡 클라 업데이트
+    const populated = await Arena.findById(arenaId)
+      .populate('participants.user', '_id username')
+      .lean();
+    const io = req.app.get('io');
+    io.to(arenaId).emit('arena:update', {
+      arenaId: String(populated?._id || arenaId),
+      status: populated?.status || 'started',
+      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
+      startTime: populated?.startTime || null,
+      endTime: populated?.endTime || null,
+      participants: (populated?.participants || []).map((pp: any) => ({
+        user: pp.user,
+        isReady: !!pp.isReady,
+        hasLeft: !!pp.hasLeft,
+        instanceId: pp.instanceId ?? null,
+        vpnIp: pp.vpnIp ?? null,
+      })),
+    });
+
+    // ⏱ 첫 풀이자면 종료 타이머 재예약
+    if (isFirstSolve && arena.endTime) {
+      scheduleEnd(String(arena._id), arena.endTime, io);
+    }
+
+    // 🔚 전원 정답 제출 시 즉시 종료
     const totalParticipants = arena.participants.filter(p => !p.hasLeft).length;
     const correctSubmissions = arena.submissions.filter(s => s.flagCorrect).length;
-
     if (correctSubmissions >= totalParticipants) {
-      const io = req.app.get('io'); // socket.io 등록되어 있어야 함
-      io.to(arenaId).emit('arena:ended');
+      await endArena(arenaId, io); // 단일 종료 경로
     }
 
-    } catch (error) {
-      console.error('Arena flag 제출 중 오류:', error);
-      res.status(500).json({ msg: 'Arena flag 제출 실패' });
-    }
-  };
-  
+  } catch (error) {
+    console.error('Arena flag 제출 중 오류:', error);
+    res.status(500).json({ msg: 'Arena flag 제출 실패' });
+  }
+};

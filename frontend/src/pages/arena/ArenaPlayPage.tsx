@@ -15,6 +15,7 @@ type Participant = {
   hasLeft?: boolean;
   instanceId?: string | null;
   vpnIp?: string | null;
+  status?: 'waiting' | 'vm_connected' | 'flag_submitted' | 'completed';
 };
 
 type ArenaUpdatePayload = {
@@ -39,7 +40,7 @@ const ArenaPlayPage: React.FC = () => {
   const [endAt, setEndAt] = useState<Date | null>(null);
   const [remaining, setRemaining] = useState<number>(0); // ms
 
-  // 새로 추가: 내 vm/ip/머신
+  // 내 VM/IP/머신
   const [myInstanceId, setMyInstanceId] = useState<string | null>(null);
   const [myVpnIp, setMyVpnIp] = useState<string | null>(null);
   const [machineId, setMachineId] = useState<string | null>(null);
@@ -50,6 +51,17 @@ const ArenaPlayPage: React.FC = () => {
 
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
+
+  const statusText = (p: Participant) => {
+    if (p.hasLeft) return 'left';
+    switch (p.status) {
+      case 'waiting':        return 'waiting';
+      case 'vm_connected':   return 'vm connected';
+      case 'flag_submitted': return 'flag submitted';
+      case 'completed':      return 'completed';
+      default:               return '';
+    }
+  };
 
   // 1) 유저/아레나 초기 로드 + 방 진입
   useEffect(() => {
@@ -70,7 +82,7 @@ const ArenaPlayPage: React.FC = () => {
       // machineId(문자/객체 모두 대응)
       setMachineId(String((arenaData as any).machine?._id ?? (arenaData as any).machine ?? '') || null);
 
-      // 플레이 페이지는 "시작된 방"만 허용
+      // 시작된 방만 허용
       if (arenaData.status !== 'started') {
         navigate(`/arena/${arenaId}`); // 로비로
         return;
@@ -120,6 +132,13 @@ const ArenaPlayPage: React.FC = () => {
     };
   }, [endAt]);
 
+  // 2-1) 타임업 안전망: 남은시간 0이면 이동
+  useEffect(() => {
+    if (endAt && remaining === 0) {
+      navigate(`/arena/${arenaId}`);
+    }
+  }, [remaining, endAt, arenaId, navigate]);
+
   // 3) 소켓 이벤트 바인딩
   useEffect(() => {
     const handleUpdate = (payload: ArenaUpdatePayload) => {
@@ -140,7 +159,7 @@ const ArenaPlayPage: React.FC = () => {
         }
       }
 
-      // 플레이 중에 ended 되면 결과/로비로 이동(원하는 UX로 바꿔도 됨)
+      // 서버가 ended 푸시 시 이동
       if (payload.status === 'ended') {
         navigate(`/arena/${payload.arenaId}`);
       }
@@ -170,9 +189,28 @@ const ArenaPlayPage: React.FC = () => {
     };
   }, [arenaId, currentUserId, navigate]);
 
+  // 3-1) arena:ended 이벤트도 잡아서 이동(옵션이지만 안전)
+  useEffect(() => {
+    const handleEnded = (data?: { arenaId?: string }) => {
+      navigate(`/arena/${data?.arenaId ?? arenaId}`);
+    };
+
+    socket.on('arena:ended', handleEnded);
+
+    return () => {
+      // ✅ cleanup은 아무 것도 반환하지 않도록 블록으로
+      socket.off('arena:ended', handleEnded);
+    };
+  }, [arenaId, navigate]);
+
+
+
   // 표시용 포맷
   const mm = Math.floor(remaining / 60000);
   const ss = Math.floor((remaining % 60000) / 1000);
+
+  // 타임업/종료 시 입력/버튼 비활성화
+  const isTimeUp = remaining === 0 || status !== 'started';
 
   // 4) 플래그 제출
   const submitFlag = async (e: React.FormEvent) => {
@@ -198,60 +236,92 @@ const ArenaPlayPage: React.FC = () => {
 
   return (
     <Main>
-      {/* 상단바 */}
-      <header className="play-header">
-        <h2 className="title">{arenaName}</h2>
-        <div className="spacer" />
-        <div className="timer-pill">⏱ {mm}:{String(ss).padStart(2,'0')}</div>
-        <DownloadVPNProfile />
-      </header>
-
-      {/* 2열 레이아웃 */}
-      <div className="play-grid">
-        {/* 좌측: 내 VM */}
-        <section className="card vm-card">
-          <h3>내 VM</h3>
-          <div className="kv">
-            <span className="k">Instance ID</span>
-            <span className="v"><code>{myInstanceId || '생성 중...'}</code></span>
+      <div className="play-frame">
+        {/* ───────── Left Panel ───────── */}
+        <section className="panel panel-left cut">
+          <div className="module">
+            <h5 className="mono">OVPN DOWNLOAD</h5>
+            <div className="module-body">
+              <DownloadVPNProfile />
+            </div>
           </div>
-          <div className="kv">
-            <span className="k">VPN IP</span>
-            <span className="v"><code>{myVpnIp || '할당 대기...'}</code></span>
-          </div>
-          <p className="hint">
-            {myVpnIp ? <>OVPN 연결 후 <code>{myVpnIp}</code> 접속</> : '인스턴스가 뜨는 중입니다. 잠시만 기다려 주세요.'}
-          </p>
 
-          {/* 플래그 제출 */}
-          <form onSubmit={submitFlag} className="flag-form">
-            <input
-              type="text"
-              placeholder="FLAG{...}"
-              value={flag}
-              onChange={(e) => setFlag(e.target.value)}
-              required
-            />
-            <button type="submit" disabled={submitting || !flag}>
-              {submitting ? '제출 중...' : '제출'}
-            </button>
-          </form>
-          {submitMsg && <div className="flag-msg">{submitMsg}</div>}
+          <div className="divider" />
+
+          <div className="module">
+            <h5 className="mono">VM</h5>
+            <div className="kv">
+              <span className="k">Instance ID</span>
+              <span className="v"><code>{myInstanceId || '생성 중...'}</code></span>
+            </div>
+            <div className="kv">
+              <span className="k">VPN IP</span>
+              <span className="v"><code>{myVpnIp || '할당 대기...'}</code></span>
+            </div>
+            <p className="hint">
+              {myVpnIp ? <>OVPN 연결 후 <code>{myVpnIp}</code> 접속</>
+                      : '인스턴스가 뜨는 중입니다. 잠시만 기다려 주세요.'}
+            </p>
+          </div>
         </section>
 
-        {/* 우측: 참가자 */}
-        <aside className="card participants-card">
-          <h4>참가자</h4>
-          <ul className="participants">
+        {/* ───────── Center Panel ───────── */}
+        <section className="panel panel-center">
+          <div className="big-timer">{mm}:{String(ss).padStart(2,'0')}</div>
+          <div className="guide">
+            <ul>
+              <li>1. Download OVPN</li>
+              <li>2. Accept VM</li>
+              <li>3. Check VPN IP</li>
+              <li>4. Submit Flag</li>
+            </ul>
+          </div>
+
+          <div className="flag-box cut">
+            <form onSubmit={submitFlag} className="flag-form">
+              <label className="mono sr-only">flag</label>
+              <input
+                type="text"
+                placeholder="FLAG{...}"
+                value={flag}
+                onChange={(e) => setFlag(e.target.value)}
+                required
+                disabled={isTimeUp}
+              />
+              <button type="submit" disabled={isTimeUp || submitting || !flag}>
+                {submitting ? '제출 중...' : '제출'}
+              </button>
+            </form>
+            {submitMsg && <div className="flag-msg">{submitMsg}</div>}
+            {isTimeUp && <div className="flag-msg">시간 종료</div>}
+          </div>
+        </section>
+
+        {/* ───────── Right Panel ───────── */}
+        <aside className="panel panel-right cut">
+          <h5 className="mono">PARITICIPATIONS</h5>
+
+          <ul className="slots">
             {participants.map(p => {
               const uid  = typeof p.user === 'string' ? p.user : p.user._id;
               const name = typeof p.user === 'string' ? p.user : p.user.username;
               const isHostUser = uid === hostId;
+
               return (
-                <li key={uid} className={`row ${p.hasLeft ? 'left' : ''}`}>
-                  <span className="name">{name}</span>
-                  {isHostUser && <span className="badge">👑 Host</span>}
-                  {p.hasLeft && <span className="badge muted">나감</span>}
+                <li key={uid} className="slot">
+                  <div className="row">
+                    <span className="label mono">name</span>
+                    <span className="value">
+                      {name}{' '}
+                      {isHostUser && <span className="crown" title="host">👑</span>}
+                    </span>
+                  </div>
+                  <div className="row">
+                    <span className="label mono">status</span>
+                    <span className={`value ${p.hasLeft ? 'muted' : ''}`}>
+                      {statusText(p)}
+                    </span>
+                  </div>
                 </li>
               );
             })}
