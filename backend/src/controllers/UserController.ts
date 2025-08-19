@@ -745,3 +745,21 @@ export const getUserProgress = async (req: Request, res: Response): Promise<void
 		});
 	}
 };
+
+export const addUserCoin = async (req: Request, res: Response): Promise<void> => {
+	try {
+		const { coin } = req.body;
+		const { userId } = req.params;
+		const user = await User.findOne({ _id: userId });
+		if (!user) {
+			res.status(404).json({ msg: 'User not found.' });
+			return;
+		}
+		user.htoCoin += coin;
+		await user.save();
+		res.status(200).json({ message: "OK", htoCoin: user.htoCoin });
+	} catch (error: any) {
+		console.error('Error updating user coin.', error);
+		res.status(500).send('Server error');
+	}
+};

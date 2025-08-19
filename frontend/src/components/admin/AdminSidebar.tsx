@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import '../../assets/scss/admin/AdminSidebar.scss';
-import { FaTachometerAlt, FaUsers, FaHome, FaCogs, FaClipboardList, FaServer } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaHome, FaCogs, FaClipboardList, FaServer, FaShopify } from 'react-icons/fa';
 
 const Sidebar: React.FC = () => {
   return (
@@ -37,7 +37,7 @@ const Sidebar: React.FC = () => {
           Battle-Machines
         </NavLink>
         <NavLink to="/admin/item" className={({ isActive }) => (isActive ? 'active' : '')}>
-          <FaServer className="sidebar-icon" />
+          <FaShopify className="sidebar-icon" />
           Items
         </NavLink>
       </nav>

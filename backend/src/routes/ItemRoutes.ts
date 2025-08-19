@@ -4,7 +4,7 @@ import {
     getItems, 
     createItem, 
     buyItem, 
-    getInventory
+    getInventory,
 } from "../controllers/ItemController";
 import { verifyAdmin } from '../middlewares/Admin.js';
 
@@ -13,5 +13,6 @@ ItemRoutes.post("/", verifyToken, verifyAdmin, createItem);
 ItemRoutes.get("/", verifyToken, getItems);
 ItemRoutes.post("/buy/:id", verifyToken, buyItem);
 ItemRoutes.get("/inventory", verifyToken, getInventory);
+
 
 export default ItemRoutes;

@@ -25,36 +25,40 @@ export const createItem = async (req: Request, res: Response): Promise<void> => 
 }
 
 export const buyItem = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { id } = req.params;
-        const userId = res.locals.jwtData.id;
+  try {
+    const { id } = req.params;
+    const userId = res.locals.jwtData.id;
 
-        const item = await Item.findById(id);
-        if (!item || !item.isListed) {
-            res.status(404).json({ msg: "No item." });
-            return;
-        }
-
-        const user = await User.findById(userId);
-        if (!user) res.status(404).json({ msg: "No user." });
-
-        if (user.htoCoin < item.price) {
-            res.status(400).json({ msg: "lacked Coin." });
-        }
-
-        user.htoCoin -= item.price;
-        await user.save();
-
-        const inv = new Inventory({
-            user: userId,
-            item: item._id,
-        });
-        await inv.save();
-        res.status(200).json({ msg: "Completed to buy item." });
-    } catch (err) {
-        res.status(500).json({ msg: "Failed to buy Item." });
+    const item = await Item.findById(id);
+    if (!item || !item.isListed) {
+      res.status(404).json({ msg: "No item." });
+      return;
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ msg: "No user." });
+      return;  // ← 추가
+    }
+
+    if (user.htoCoin < item.price) {
+        res.status(400).json({ msg: "코인이 부족합니다." });
+        return;
+    }
+
+    user.htoCoin -= item.price;
+    await user.save();
+
+    const inv = new Inventory({ user: userId, item: item._id });
+    await inv.save();
+
+    res.status(200).json({ msg: "Completed to buy item." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to buy Item." });
+  }
 };
+
 
 export const getInventory = async (req: Request, res: Response): Promise<void> => {
   try {
