@@ -43,6 +43,7 @@ const ArenaPlayPage = lazy(() => import('./pages/arena/ArenaPlayPage'));
 const MatchPage = lazy(() => import('./pages/match/MatchPage'));
 const BattleMachinesManagement = lazy(() => import('./pages/admin/BattleMachinesManagement'));
 const ShopPage = lazy(() => import('./pages/shop/ShopPage'));
+const ItemManagement = lazy(() => import('./pages/admin/ItemManagement'));
 
 
 const routes: RouteObject[] = [
@@ -347,6 +348,18 @@ const routes: RouteObject[] = [
                 <div className="admin-dashboard">
                   <div className="admin-content">
                     <BattleMachinesManagement />
+                  </div>
+                </div>
+              </AdminProtectedRoute>
+            ),
+          },
+          {
+            path: 'item',
+            element: (
+              <AdminProtectedRoute>
+                <div className="admin-dashboard">
+                  <div className="admin-content">
+                    <ItemManagement />
                   </div>
                 </div>
               </AdminProtectedRoute>

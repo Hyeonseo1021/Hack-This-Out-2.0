@@ -5,6 +5,7 @@ import { FaQuestionCircle, FaRegQuestionCircle, FaBook } from "react-icons/fa";
 import { PiComputerTowerBold, PiComputerTowerFill } from "react-icons/pi";
 import { RiArrowLeftDoubleFill, RiArrowRightDoubleFill } from "react-icons/ri";
 import { GiCrossedSwords } from "react-icons/gi";
+import { FaShop } from 'react-icons/fa6';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import EmojiEventsIconRounded from '@mui/icons-material/EmojiEventsRounded';
 import styles from '../../assets/scss/section/_sidebar.module.scss';
@@ -119,6 +120,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
               >
                 {getMenuIcon('/machine', <PiComputerTowerFill className={styles.menuIcon} />, <PiComputerTowerBold className={styles.menuIcon} />)}
                 <div className={styles.label}>Machines</div>
+              </Link>
+              <Link
+                to="/shop"
+                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/shop') ? styles.selected : ''}`}
+                data-tooltip="shop"
+              >
+                {getMenuIcon('/shop', <FaShop className={styles.menuIcon} />, <FaShop className={styles.menuIcon} />)}
+                <div className={styles.label}>Shop</div>
               </Link>
             </li>
           </div>

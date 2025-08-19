@@ -18,6 +18,7 @@ interface UserData {
   avatar: string;
   exp: number;
   level: number;
+  htoCoin: number;
 }
 
 const PersonalInfoForm: React.FC = () => {
@@ -28,6 +29,7 @@ const PersonalInfoForm: React.FC = () => {
     avatar: '',
     exp: 0,
     level: 0,
+    htoCoin: 0
   });
   const [username, setUsername] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
@@ -228,6 +230,9 @@ const PersonalInfoForm: React.FC = () => {
           </div>
           <div className="exp-container">
             <label>EXP : {userData.exp}</label>
+          </div>
+          <div className="coin-container">
+            <label>HTO Coin : {userData.htoCoin}</label>
           </div>
         </div>
       </div>
