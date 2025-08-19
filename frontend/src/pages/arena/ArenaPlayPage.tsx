@@ -82,12 +82,6 @@ const ArenaPlayPage: React.FC = () => {
       // machineId(문자/객체 모두 대응)
       setMachineId(String((arenaData as any).machine?._id ?? (arenaData as any).machine ?? '') || null);
 
-      // 시작된 방만 허용
-      if (arenaData.status !== 'started') {
-        navigate(`/arena/${arenaId}`); // 로비로
-        return;
-      }
-
       // 소켓 join(중복 방지)
       if (!joinedRef.current) {
         joinedRef.current = true;
@@ -134,10 +128,10 @@ const ArenaPlayPage: React.FC = () => {
 
   // 2-1) 타임업 안전망: 남은시간 0이면 이동
   useEffect(() => {
-    if (endAt && remaining === 0) {
+    if (status === 'ended') {
       navigate(`/arena/${arenaId}`);
     }
-  }, [remaining, endAt, arenaId, navigate]);
+  }, [status, arenaId, navigate]);
 
   // 3) 소켓 이벤트 바인딩
   useEffect(() => {

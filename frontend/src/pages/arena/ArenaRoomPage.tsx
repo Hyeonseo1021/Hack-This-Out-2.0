@@ -98,10 +98,11 @@ const ArenaRoomPage: React.FC = () => {
       navigate('/arena');
     };
 
-    const handleStart = ({ arenaId: id }: { arenaId: string }) => {
-      skipLeaveRef.current = true;        // ✅ 플레이로 이동 중 표시
-      navigate(`/arena/play/${id}`);
+    const handleStart = ({ arenaId }: { arenaId: string }) => {
+      skipLeaveRef.current = true;
+      navigate(`/arena/play/${arenaId}`);
     };
+
 
     const handleStartFailed = ({ reason }: { reason: string }) => {
       alert(reason);
