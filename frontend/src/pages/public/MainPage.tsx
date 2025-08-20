@@ -21,7 +21,7 @@ const MainPage: React.FC = () => {
   const handleTransition = () => {
     setIsFadingOut(true);
     setTimeout(() => {
-      navigate('/tutorial');
+      navigate('/manual');
     }, 500);
   };
 
@@ -69,7 +69,7 @@ const MainPage: React.FC = () => {
   const handleClick = () => {
     setIsFadingOut(true);
     setTimeout(() => {
-      navigate('/tutorial');
+      navigate('/manual');
     }, 500);
   };
 
