@@ -47,6 +47,17 @@ const ManualPage: React.FC = () => {
             <img className="vector v3" src={vec3} alt="" aria-hidden="true" />
             <img className="vector v4" src={vec4} alt="" aria-hidden="true" />
 
+
+            {/* 게임 규칙 */}
+            <div className="Guide">
+              <h3>{language === 'ko' ? '게임 규칙' : 'Guide'}</h3>
+              <ol>
+                <li>{language === 'ko' ? '해킹을 통해 깃발을 획득하여 머신을 완료합니다.' : 'Hack the machine to capture the flag and complete it.'}</li>
+                <li>{language === 'ko' ? '머신을 완료하면 경험치(EXP)를 얻습니다.' : 'Earn experience (EXP) upon completing the machine.'}</li>
+                <li>{language === 'ko' ? '각 머신에서 힌트를 얻을 수 있지만, 페널티가 부과됩니다.' : 'Hints can be obtained in each machine, but penalties apply.'}</li>
+              </ol>
+            </div>
+
             {/* 좌측 박스 텍스트 */}
             <div className="box-label v1">{textMap[language].v1}</div>
             <div className="box-label v2">{textMap[language].v2}</div>
