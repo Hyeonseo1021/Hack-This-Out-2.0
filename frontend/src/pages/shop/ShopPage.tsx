@@ -70,65 +70,67 @@ const ShopPage: React.FC = () => {
 
   return (
     <Main>
-      <div className="shop-layout">
-        {/* ─ Left: Shop ─ */}
-        <section className="shop-page">
-          <h1 className="shop-title">Shop</h1>
-
-          {/* 잔여 코인 표시 */}
-          <div className="shop-balance">
-            <span style={{ opacity: 0.85 }}>내 보유 코인</span>
-            <strong style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {balance === null ? '…' : `${balance} HTO`}
-            </strong>
+      <div className="shop-layout--blueprint">
+        
+        {/* ─ Left: Shop Panel ─ */}
+        <section className="panel--blueprint">
+          <div className="panel__header">
+            <h1 className="panel__title">SHOP TERMINAL</h1>
           </div>
-
-          {loading && <div className="shop-skeleton">로딩 중...</div>}
-
-          {!loading && items.length === 0 && (
-            <div className="shop-empty">지금 진열된 아이템이 없어요.</div>
-          )}
-
-          {!loading && items.length > 0 && (
-            <div className="shop-grid">
-              {items.map((item) => (
-                <ShopItemCard
-                  key={item._id}
-                  item={item}
-                  onBuy={() => handleBuyItem(item._id)}
-                  disabled={buyingId === item._id}
-                />
-              ))}
+          <div className="panel__content">
+            <div className="shop-balance">
+              <span> 보유 자산 </span>
+              <strong>{balance === null ? '...' : `${balance} HTO`}</strong>
             </div>
-          )}
+            {loading && <div className="loader">데이터베이스 접속 중...</div>}
+            {!loading && items.length === 0 && (
+              <div className="empty-state">판매 가능한 아이템이 없습니다.</div>
+            )}
+            {!loading && items.length > 0 && (
+              <div className="shop-grid">
+                {items.map((item) => (
+                  <div key={item._id} className="shop-item">
+                    <div className="shop-item__header">
+                      <h3>{item.name}</h3>
+                      <span>{item.price} HTO</span>
+                    </div>
+                    <p className="shop-item__desc">{item.description}</p>
+                    <button
+                      className="shop-item__btn"
+                      onClick={() => handleBuyItem(item._id)}
+                      disabled={buyingId === item._id}
+                    >
+                      {buyingId === item._id ? '처리 중...' : '아이템 획득'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
-        {/* ─ Right: Inventory ─ */}
-        <aside className="inventory-panel">
-          <div className="inventory-panel__inner">
-            <h2 className="inventory-title">내 인벤토리</h2>
-
+        
+        {/* ─ Right: Inventory Panel ─ */}
+        <aside className="panel--blueprint">
+          <div className="panel__header">
+            <h2 className="panel__title">INVENTORY LOG</h2>
+          </div>
+          <div className="panel__content">
             {invLoading ? (
-              <div className="inventory-skeleton">불러오는 중…</div>
+              <div className="loader">인벤토리 스캔 중...</div>
             ) : inventory.length === 0 ? (
-              <div className="inventory-empty">보유한 아이템이 없습니다.</div>
+              <div className="empty-state">보유한 아이템이 없습니다.</div>
             ) : (
               <ul className="inventory-list">
                 {inventory.map((e) => {
-                  const name = e.item?.name ?? '(삭제된 아이템)';
-                  const desc = e.item?.description ?? '';
+                  const name = e.item?.name ?? '[알 수 없는 아이템]';
                   return (
                     <li key={e._id} className="inventory-item">
-                      <div className="inventory-item__left">
-                        <div className="inventory-item__name">{name}</div>
-                        {!!desc && <div className="inventory-item__desc">{desc}</div>}
-                      </div>
-                      <div className="inventory-item__right">
-                        <div className="inventory-item__date">
+                      <span className="inventory-item__name">{name}</span>
+                      <div className="inventory-item__meta">
+                        {e.isUsed && <span className="badge--used">사용됨</span>}
+                        <span className="inventory-item__date">
                           {new Date(e.acquiredAt).toLocaleDateString()}
-                        </div>
-                        {e.isUsed && (
-                          <span className="inventory-item__badge">사용됨</span>
-                        )}
+                        </span>
                       </div>
                     </li>
                   );

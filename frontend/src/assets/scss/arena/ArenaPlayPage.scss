@@ -1,216 +1,254 @@
+/*
+ * ArenaPlayPage.scss - Redesigned based on the "Node Sync Terminal" concept.
+ * Concept: A main system cockpit for real-time flag submission.
+ */
 @use "../style" as *;
 
-/* ───────── Theme tokens ───────── */
+// --- 테마 변수 (ArenaRoomPage.scss와 동기화) ---
 :root {
-  --bg: #000;
-  --surface: #0b0f16;
-  --ink: #e6f7ff;
-  --muted: #9cc7d8;
-  --cyan: #00f5ff;
-  --magenta: #DF62D5;
-
-  --gap: 30px;          /* 그리드 간격 */
-  --side-min-h: 750px;  /* 좌/우 최소 높이 */
+  --glow-color: #31e8ee;
+  --glitch-color-1: #ff00c1;
+  --background-color: #01020a;
+  --border-color: rgba(0, 217, 255, 0.25);
+  --text-color: #e0e0e0;
+  --text-muted: #88a1b9;
+  --ready-color: #00ff89; // 'Completed' status 등에 사용
+  --host-color: #ffc300;
+  --not-ready-color: #ff4444; // 'Waiting' status 등에 사용
+  --panel-bg: rgba(10, 25, 47, 0.6);
+  --font-main: 'Roboto Mono', monospace;
+  --font-display: 'Orbitron', sans-serif;
 }
 
-/* Utils */
-.mono { letter-spacing: .06em; font-variant-numeric: tabular-nums; font-size: 28px; }
-.sr-only { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); }
-
-/* ───────── 3-column frame (1:2:1, 넘침 방지) ───────── */
-.play-frame {
-  background: var(--bg);
-  min-height: 90vh;
-  padding: 24px 16px 40px;
-
-  display: grid;
-  /* 비율 고정 + 줄어들 때도 넘치지 않도록 minmax(0, …) 사용 */
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: var(--gap);
-  align-items: stretch;
-
-  /* 가로 넘침 방지 */
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
+// --- 키프레임 애니메이션 (필요한 것만 유지) ---
+@keyframes text-flicker {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.8; }
 }
 
-/* ───────── Panels (전부 네모) ───────── */
-.panel {
-  background: var(--surface);
-  color: var(--ink);
-  padding: 16px;
-  border: 1px solid rgba(0, 245, 255, .35);
-  border-radius: 0;         /* 🔷 네모 */
-  min-width: 0;             /* 그리드 자식 넘침 방지 핵심 */
+@keyframes scanline {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-100px); }
 }
 
-/* 강조 테두리(네모) */
-.cut {
-  border: 2px solid var(--cyan);
-  box-shadow: 0 0 12px rgba(0,245,255,.15);
-  border-radius: 0;         /* 🔷 네모 */
+@keyframes pulse-green {
+  0% { text-shadow: 0 0 5px var(--ready-color); }
+  50% { text-shadow: 0 0 15px var(--ready-color); }
+  100% { text-shadow: 0 0 5px var(--ready-color); }
 }
 
-/* ───────── Left (OVPN + VM) ───────── */
-.panel-left {
-  display: grid;
-  grid-auto-rows: min-content;
-  row-gap: 16px;
-  min-height: var(--side-min-h);
-
-  .module { display: grid; row-gap: 12px; min-width: 0; }
-  .module-body {
-    min-height: 275px;
-    background: #05080d;
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 0;       /* 🔷 네모 */
-    padding: 3px;
-  }
-
-  .divider { height: 1px; background: rgba(255,255,255,.12); margin: 4px 0 8px; }
-
-  .kv {
-    display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;
-    .k { color: var(--muted); }
-    .v code {
-      color: #bfe8ff;
-      background: #06090f;
-      border: 1px solid #1f2430;
-      padding: 2px 6px;
-      border-radius: 0;     /* 🔷 네모 */
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-  }
-  .hint { margin-top: 8px; color: var(--muted); }
-}
-
-/* ───────── Center (Timer + Flag) ───────── */
-.panel-center {
-  display: grid;
-  place-items: center;
-  row-gap: 10px;
-  min-width: 0;             /* 그리드 자식 넘침 방지 */
-}
-
-.big-timer {
-  font-size: clamp(40px, 6vw, 96px);
-  font-weight: 800;
-  letter-spacing: .08em;
-  color: #fff;
-  text-shadow: 0 0 8px rgba(255,255,255,.1);
-}
-
-.guide {
-  margin-top: 0rem;
-  font-size: 1.5rem;
-  color: var(--muted);
-
-  ul {
-    list-style: none;    /* 기본 불릿 제거 */
-    margin: 0;
-    padding: 0;
-
-    li {
-      margin: 0.25rem 0; /* 줄간격 */
-      line-height: 1.4;  /* 텍스트 간격 */
-    }
-  }
-}
-
-.flag-box {
+// --- 전체 컨테이너 및 배경 ---
+.play-cockpit-container {
   width: 100%;
-  max-width: 640px;
-  background: var(--surface);
-  border: 2px solid var(--magenta);
-  border-radius: 0;         /* 🔷 네모 */
-  box-shadow: 0 0 12px rgba(196,0,255,.18);
-  padding: 18px;
-  min-width: 0;             /* flex 자식 넘침 방지 */
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-main);
+  overflow: hidden;
+  position: relative;
+  padding: 2rem;
+}
 
-  .flag-form {
-    display: flex; gap: 12px; align-items: stretch;
-    min-width: 0;
-
-    input[type="text"] {
-      flex: 1 1 auto;
-      min-width: 0;         /* 🔑 인풋이 가로를 밀지 않게 */
-      padding: 14px 12px;
-      border-radius: 0;     /* 🔷 네모 */
-      background: #06090f;
-      color: var(--ink);
-      border: 1px solid #1f2430;
-      outline: none;
-    }
-    input::placeholder { color: #6b7280; }
-
-    button {
-      flex: 0 0 auto;
-      padding: 12px 16px;
-      border-radius: 0;     /* 🔷 네모 */
-      border: none;
-      background: linear-gradient(135deg, var(--magenta), #8a00ff);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .6; cursor: not-allowed; }
+.background-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.1;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 8px;
+    animation: scanline 4s linear infinite;
+    opacity: 0.3;
   }
-
-  .flag-msg { margin-top: 10px; color: var(--ink); opacity: .9; word-break: break-word; }
 }
 
-/* 포커스 링 */
-.flag-box input:focus {
-  border-color: var(--magenta);
-  box-shadow: 0 0 0 3px rgba(196,0,255,.15);
+// --- 메인 3단 그리드 레이아웃 ---
+.cockpit-grid {
+  width: 100%;
+  max-width: 1800px;
+  height: 90vh;
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-rows: 1fr;
+  gap: 2rem;
 }
 
-/* ───────── Right (Participants) ───────── */
-.panel-right {
-  min-height: var(--side-min-h);
+.cockpit-panel {
+  border: 1px solid var(--border-color);
+  background: var(--panel-bg);
+  backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  overflow: hidden;
 
-  h5 { margin: 0 0 12px; }
-
-  .slots {
-    display: grid;
-    gap: 12px;
-    flex: 1;
-    overflow: auto;   /* 내용 많아지면 내부 스크롤 */
-    min-width: 0;
+  .panel-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--glow-color);
+    flex-shrink: 0;
   }
 
-  .slot {
-    background: rgba(0,245,255,.02);
-    border: 1px solid rgba(0,245,255,.45);
-    border-radius: 0; /* 🔷 네모 */
-    padding: 10px 12px;
-    min-width: 0;
+  .panel-content {
+    padding: 1.5rem;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+}
 
-    .row {
-      display: grid;
-      grid-template-columns: 80px 1fr;
-      gap: 8px;
-      align-items: center;
-      min-width: 0;
+// --- 좌측: 시스템 & 커넥션 패널 ---
+.system-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 
-      & + .row { margin-top: 6px; }
-      .label { color: var(--muted); }
-      .value { color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-      .value.muted { opacity: .5; }
-      .crown { margin-left: 6px; }
+  .info-block {
+    .label {
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+    .value {
+      background: rgba(0,0,0,0.3);
+      padding: 0.8rem 1rem;
+      font-size: 1.1rem;
+      word-break: break-all;
+      border-left: 3px solid var(--glow-color);
+    }
+    &.vpn-download .value {
+        padding: 0;
+        border: none;
+        background: none;
     }
   }
 }
 
-/* ───────── Responsive ───────── */
-@media (max-width: 1200px) {
-  .play-frame {
-    grid-template-columns: 1fr;
-    gap: 20px;
+// --- 중앙: 메인 코어 (타이머 & 플래그) ---
+.main-core-panel {
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  gap: 3rem;
+  border-color: var(--glow-color);
+  box-shadow: 0 0 25px rgba(49, 232, 238, 0.25);
+
+  .big-timer {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 12vw, 8rem);
+    font-weight: 700;
+    color: var(--glow-color);
+    text-shadow: 0 0 20px var(--glow-color);
+    line-height: 1;
   }
-  .flag-box { max-width: 100%; }
+
+  .flag-submission-unit {
+    width: 100%;
+    max-width: 700px;
+    border: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.4);
+    padding: 1rem;
+    
+    .flag-form {
+      display: flex;
+      border: 1px solid var(--border-color);
+    }
+
+    input[type="text"] {
+      flex-grow: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-color);
+      font-family: var(--font-main);
+      font-size: 1.2rem;
+      padding: 1rem;
+      outline: none;
+      min-width: 0;
+      
+      &:focus {
+        background: rgba(49, 232, 238, 0.1);
+      }
+    }
+    
+    // Command-line prompt style
+    .prompt {
+        padding: 1rem;
+        background: rgba(0,0,0,0.3);
+        color: var(--ready-color);
+        font-weight: bold;
+    }
+
+    button {
+      flex-shrink: 0;
+      background: var(--glow-color);
+      border: none;
+      color: var(--background-color);
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      padding: 0 2rem;
+      cursor: pointer;
+      text-transform: uppercase;
+
+      &:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+    }
+    
+    .flag-msg {
+      margin-top: 1rem;
+      text-align: center;
+      color: var(--ready-color);
+      animation: pulse-green 2s infinite;
+    }
+  }
+}
+
+// --- 우측: 참가자 명단 (Roster) ---
+// ArenaRoomPage의 스타일 재사용 및 변형
+.roster-list {
+  display: flex;
+  flex-direction: column;
+
+  .roster-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px dashed var(--border-color);
+    }
+    
+    .username { flex-grow: 1; font-size: 1.1rem; }
+    
+    .status {
+      font-weight: bold;
+      text-transform: uppercase;
+      color: var(--text-muted);
+
+      &.vm_connected { color: var(--host-color); }
+      &.completed { color: var(--ready-color); }
+      &.left { color: var(--not-ready-color); text-decoration: line-through;}
+    }
+  }
+}
+
+// --- 반응형 ---
+@media (max-width: 1200px) {
+  .cockpit-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    height: auto;
+    max-height: calc(100vh - 4rem);
+  }
 }

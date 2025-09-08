@@ -1,299 +1,183 @@
 /* src/assets/scss/Shop/ShopPage.scss */
-
-/* ── 컬러 토큰 그대로 ── */
+/* Blueprint Theme - Two Column Final */
+@use "../style" as *;
+// --- 테마 변수 ---
 :root {
-  --bg: #000;
-  --surface: #0b0f16;
-  --ink: #e6f7ff;
-  --muted: #9cc7d8;
-  --cyan: #00f5ff;
-  --magenta: #c400ff;
-  --ring: rgba(0, 245, 255, .25);
+  --bp-bg: #1D2A3D;
+  --bp-panel-bg: #131c28;
+  --bp-text: #F0EBE5;
+  --bp-text-muted: #8392a7;
+  --bp-accent: #31e8ee;
+  --bp-border: #2c484f;
 }
 
-/* ─────────────────────────────────────────────────────
-   레이아웃: 좌측(상점) 넓게, 우측(인벤토리) 살짝 키움
-   ───────────────────────────────────────────────────── */
-.shop-layout {
+// --- 2단 그리드 메인 레이아웃 ---
+.shop-layout--blueprint {
+  @include background_set; // 이 mixin은 프로젝트에 정의되어 있어야 합니다.
   display: grid;
-  /* 좌측 최소 760px 확보 + 우측 360~380px */
-  grid-template-columns: minmax(600px, 1fr) minmax(350px, 380px);
-  align-items: start;
-  height: 95%;
-  width: 90%;
-  /* 부모가 좁으면 눌리는 현상 방지 */
-  min-width: 0;
+  grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr); // 상점:인벤토리 = 2:1 비율
+  gap: 32px;
+  padding: 40px;
+
+  height: calc(100vh - 160px); 
 }
 
-/* ─────────────────────────────────────────────────────
-   상점 컨테이너 (좌측)
-   ───────────────────────────────────────────────────── */
-.shop-page {
-  position: relative;
-  padding: 32px 24px 64px;
-  min-height: 100%;
-  width: 90%;
-  min-width: 0; /* grid 자식 너비 계산 버그 방지 */
-  color: var(--ink);
-  background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(0,245,255,.12), transparent 60%),
-    radial-gradient(900px 500px at 10% 110%, rgba(196,0,255,.12), transparent 65%),
-    #000;
-
-  border: 2px solid #00fff7;
-  box-shadow: 0 0 8px #00fff7, 0 0 16px #00fff7;
-  border-radius: 12px;
-
-  /* 내용물이 잘리는 현상 있어서 hidden 제거 */
-  /* overflow: hidden; */ 
-  overflow: clip; /* 내부 흐림/애니메이션만 클립하고 스티키/툴팁은 살림 */
-
-  /* 내용 레이어 보장 */
-  > * { position: relative; z-index: 1; }
-
-  /* 네온 그리드 오버레이 */
-  &::before {
-    content: "";
-    position: absolute; inset: 0;
-    z-index: 0;              /* 내용보다 아래 */
-    background:
-      repeating-linear-gradient(
-        to right,
-        rgba(0,245,255,.06) 0px,
-        rgba(0,245,255,.06) 1px,
-        transparent 1px,
-        transparent 24px
-      ),
-      repeating-linear-gradient(
-        to bottom,
-        rgba(196,0,255,.05) 0px,
-        rgba(196,0,255,.05) 1px,
-        transparent 1px,
-        transparent 24px
-      );
-    pointer-events: none;
-    mix-blend-mode: screen;
-    opacity: .5;
-    animation: gridPulse 6s ease-in-out infinite;
-  }
-
-  /* 스캔라인 + 노이즈 */
-  &::after {
-    content: "";
-    position: absolute; inset: 0;
-    z-index: 0;              /* 내용보다 아래 */
-    background:
-      linear-gradient(transparent 97%, rgba(255,255,255,.06) 98%, transparent 100%),
-      repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(255,255,255,.03) 3px, rgba(255,255,255,.03) 4px);
-    background-size: 100% 100%, 100% 4px;
-    opacity: .35;
-    mix-blend-mode: soft-light;
-    pointer-events: none;
-    animation: scan 5.5s linear infinite;
-  }
-}
-
-/* ─────────────────────────────────────────────────────
-   타이틀
-   ───────────────────────────────────────────────────── */
-.shop-title {
-  position: relative;
-  display: inline-block;
-  font-size: clamp(24px, 3.2vw, 40px);
-  letter-spacing: .02em;
-  margin: 0 0 20px;
-  text-shadow: 0 0 8px rgba(0,245,255,.6), 0 0 18px rgba(196,0,255,.4);
-
-  &::after {
-    content: "";
-    display: block;
-    height: 3px;
-    margin-top: 10px;
-    background: linear-gradient(90deg, rgba(0,245,255,.9), rgba(196,0,255,.9));
-    box-shadow: 0 0 12px rgba(0,245,255,.6), 0 0 12px rgba(196,0,255,.6);
-    border-radius: 6px;
-    transform-origin: left;
-    animation: underlineGlow 2.2s ease-in-out infinite;
-  }
-}
-
-/* ─────────────────────────────────────────────────────
-   잔액 표시
-   ───────────────────────────────────────────────────── */
-.shop-balance {
+// --- 패널 공통 스타일 ---
+.panel--blueprint {
+  background-color: var(--bp-panel-bg);
+  border: 1px solid var(--bp-border);
+  border-radius: 4px;
+  box-shadow: 5px 5px 0px rgba(0,0,0,0.2);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 100%; /* 살짝 더 넓게 */
-  gap: 16px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 10px;
-  margin-bottom: 16px;
-  background: rgba(255,255,255,0.03);
-  backdrop-filter: blur(4px);
-
-  span { color: var(--muted); }
-  strong { font-weight: 700; letter-spacing: .02em; }
+  flex-direction: column;
+  overflow: hidden; // 내부 콘텐츠가 패널을 넘지 않도록 설정
 }
 
-/* ─────────────────────────────────────────────────────
-   상태 표시
-   ───────────────────────────────────────────────────── */
-.shop-skeleton,
-.shop-empty {
-  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
+.panel__header {
+  padding: 16px 24px;
+  border-bottom: 1px dashed var(--bp-border);
+  flex-shrink: 0; // 헤더는 줄어들지 않음
+}
+
+.panel__title {
+  color: var(--bp-accent);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0;
+  &::before, &::after { content: '[ '; color: var(--bp-text-muted); }
+  &::after { content: ' ]'; }
+}
+
+.panel__content {
   padding: 24px;
-  margin-top: 16px;
-  color: var(--muted);
+  overflow-y: auto; // 콘텐츠가 많으면 스크롤 생성
+  flex-grow: 1; // 남은 공간을 모두 차지
 }
 
-/* ─────────────────────────────────────────────────────
-   아이템 그리드 (카드 더 크고 간격 여유)
-   ───────────────────────────────────────────────────── */
+/* ... 이하 스타일은 이전과 대부분 동일 ... */
+
+.loader, .empty-state {
+  color: var(--bp-text-muted);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.shop-balance {
+  background-color: var(--bp-bg);
+  border: 1px solid var(--bp-border);
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--bp-text);
+  
+  strong {
+    color: var(--bp-accent);
+    font-size: 1.2rem;
+  }
+}
+
 .shop-grid {
-  position: relative;
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* 260 → 300 */
-  margin-top: 16px;
-  min-width: 0; /* 컨텐츠 수축 방지 */
 }
 
-/* ─────────────────────────────────────────────────────
-   인벤토리 패널 (우측)
-   ───────────────────────────────────────────────────── */
-.inventory-panel {
-  position: relative;
-  min-width: 0; /* 텍스트 ellipsis 계산 안정화 */
+.shop-item {
+  border: 1px solid var(--bp-border);
+  background-color: var(--bp-bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease-out;
 
-  .inventory-panel__inner {
-    position: sticky;
-    top: 16px;
-    background: rgba(255,255,255,0.04);      /* 살짝 더 진하게 */
-    border: 1px solid rgb(36, 212, 207);   /* 시안 테두리로 가독성 ↑ */
-    border-radius: 14px;
-    padding: 16px;
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 14px rgba(0,255,247,.20);
-    z-index: 2; /* 어떤 배경 위에도 보이게 */
+  &:hover {
+    border-color: var(--bp-accent);
+    transform: translateY(-4px);
   }
 
-  .inventory-title {
-    font-size: 1.1rem;
-    margin: 0 0 12px;
-    opacity: .95;
-    color: white;
-    text-shadow: 0 0 10px rgba(0,255,247,.35);
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--bp-border);
+    color: var(--bp-text);
+
+    h3 { font-size: 1.1rem; margin: 0; }
+    span { font-weight: 700; color: var(--bp-accent); }
   }
 
-  .inventory-skeleton,
-  .inventory-empty {
+  &__desc {
+    color: var(--bp-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+    flex-grow: 1;
+  }
+
+  &__btn {
+    background-color: var(--bp-accent);
+    color: var(--bp-bg);
+    border: none;
     padding: 12px;
-    opacity: .85;
-    border-radius: 10px;
-    border: 1px dashed rgba(255,255,255,.18);
-  }
-
-  .inventory-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 10px;
-  }
-
-  .inventory-item {
-    display: grid;
-    color: white;
-    grid-template-columns: 1fr auto;
-    gap: 8px;
-    border: 1px solid rgb(59, 167, 209);
-    border-radius: 10px;
-    padding: 10px;
-    background: rgba(255,255,255,0.05);
-
-    &__left { min-width: 0; }
-
-    &__name {
-      font-weight: 600;
-      letter-spacing: .02em;
-      margin-bottom: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    
+    &:hover:not(:disabled) {
+      background-color: #ff419a;
     }
-
-    &__desc {
-      font-size: .86rem;
-      opacity: .85;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 26ch; /* 조금 더 길게 */
-    }
-
-    &__right {
-      text-align: right;
-      display: grid;
-      gap: 6px;
-      justify-items: end;
-    }
-
-    &__date { font-size: .8rem; opacity: .75; }
-
-    &__badge {
-      display: inline-block;
-      font-size: .75rem;
-      padding: 2px 6px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.22);
-      opacity: .95;
+    &:disabled {
+      background-color: var(--bp-border);
+      cursor: not-allowed;
     }
   }
 }
 
-/* ─────────────────────────────────────────────────────
-   애니메이션
-   ───────────────────────────────────────────────────── */
-@keyframes gridPulse {
-  0%, 100% { opacity: .45; filter: hue-rotate(0deg); }
-  50%      { opacity: .6;  filter: hue-rotate(20deg); }
-}
-@keyframes scan {
-  0% { background-position-y: -200%; }
-  100% { background-position-y: 200%; }
-}
-@keyframes underlineGlow {
-  0%,100% { box-shadow: 0 0 12px rgba(0,245,255,.6), 0 0 12px rgba(196,0,255,.6); }
-  50%     { box-shadow: 0 0 20px rgba(0,245,255,.9), 0 0 20px rgba(196,0,255,.9); }
+.inventory-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* ─────────────────────────────────────────────────────
-   반응형
-   ───────────────────────────────────────────────────── */
-@media (max-width: 1200px) {
-  .shop-layout {
-    grid-template-columns: minmax(680px, 1fr) 340px;
-    gap: 24px;
-  }
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--bp-border);
+  background: var(--bp-bg);
+  padding: 12px 16px;
+  color: var(--bp-text);
+
+  &__name { font-size: 0.95rem; }
+  &__meta { display: flex; align-items: center; gap: 12px; }
+  &__date { font-size: 0.85rem; color: var(--bp-text-muted); }
 }
 
+.badge--used {
+  background-color: var(--bp-text-muted);
+  color: var(--bp-bg);
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+// --- 반응형 ---
 @media (max-width: 960px) {
-  .shop-layout {
-    grid-template-columns: 1fr; /* 1컬럼 전환 */
+  .shop-layout--blueprint {
+    grid-template-columns: 1fr; // 화면이 좁아지면 1단으로 변경
+    height: auto; // 높이를 콘텐츠에 맞게 자동 조절
+    padding: 24px; // 모바일에서는 패딩을 줄임
   }
-  .inventory-panel .inventory-panel__inner {
-    position: static;
-    margin-top: 12px;
-  }
-}
-
-@media (max-width: 640px) {
-  .shop-page { padding: 20px 16px 48px; }
-  .shop-grid { gap: 16px; grid-template-columns: 1fr 1fr; }
-  .shop-card__img { height: 132px; }
-}
-
-@media (max-width: 420px) {
-  .shop-grid { grid-template-columns: 1fr; }
 }

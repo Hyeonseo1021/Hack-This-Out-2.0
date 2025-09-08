@@ -522,6 +522,11 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    if(name.length > 30) {
+      res.status(400).json({ message: 'Arena name must be 30 characters or fewer.' });
+      return;
+    }
+
     const candidate = await Machine.aggregate([
       { $match: { category, isBattleOnly: true } },
       { $sample: { size: 1 } }

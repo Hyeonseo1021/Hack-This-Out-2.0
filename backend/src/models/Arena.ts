@@ -5,7 +5,8 @@ const ArenaSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true   
+        maxlength: 30,
+        unique: true 
     },
     host: {
         type: mongoose.Schema.Types.ObjectId,

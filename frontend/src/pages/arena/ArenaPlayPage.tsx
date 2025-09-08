@@ -229,101 +229,81 @@ const ArenaPlayPage: React.FC = () => {
   };
 
   return (
-    <Main>
-      <div className="play-frame">
-        {/* ───────── Left Panel ───────── */}
-        <section className="panel panel-left cut">
-          <div className="module">
-            <h5 className="mono">OVPN DOWNLOAD</h5>
-            <div className="module-body">
-              <DownloadVPNProfile />
-            </div>
-          </div>
+  <Main>
+    <div className="play-cockpit-container">
+      <div className="background-overlay" />
 
-          <div className="divider" />
-
-          <div className="module">
-            <h5 className="mono">VM</h5>
-            <div className="kv">
-              <span className="k">Instance ID</span>
-              <span className="v"><code>{myInstanceId || '생성 중...'}</code></span>
+      <div className="cockpit-grid">
+        {/* ───────── 좌측: 시스템 & 커넥션 패널 ───────── */}
+        <section className="cockpit-panel">
+          <header className="panel-header">SYSTEM & CONNECTION</header>
+          <div className="panel-content">
+            <div className="system-info-list">
+              <div className="info-block vpn-download">
+                <span className="label">1. OVPN PROFILE</span>
+                {/* DownloadVPNProfile 컴포넌트 버튼이 .cyber-button 스타일을 따르도록 해야 할 수 있습니다. */}
+                {/* 필요하다면 DownloadVPNProfile 내부 버튼에 className="cyber-button" 같은 속성을 추가하세요. */}
+                <DownloadVPNProfile />
+              </div>
+              <div className="info-block">
+                <span className="label">2. VM INSTANCE ID</span>
+                <div className="value">{myInstanceId || 'ALLOCATING...'}</div>
+              </div>
+              <div className="info-block">
+                <span className="label">3. SECURE IP ADDRESS</span>
+                <div className="value">{myVpnIp || 'AWAITING ASSIGNMENT...'}</div>
+              </div>
             </div>
-            <div className="kv">
-              <span className="k">VPN IP</span>
-              <span className="v"><code>{myVpnIp || '할당 대기...'}</code></span>
-            </div>
-            <p className="hint">
-              {myVpnIp ? <>OVPN 연결 후 <code>{myVpnIp}</code> 접속</>
-                      : '인스턴스가 뜨는 중입니다. 잠시만 기다려 주세요.'}
-            </p>
           </div>
         </section>
 
-        {/* ───────── Center Panel ───────── */}
-        <section className="panel panel-center">
-          <div className="big-timer">{mm}:{String(ss).padStart(2,'0')}</div>
-          <div className="guide">
-            <ul>
-              <li>1. Download OVPN</li>
-              <li>2. Accept VM</li>
-              <li>3. Check VPN IP</li>
-              <li>4. Submit Flag</li>
-            </ul>
-          </div>
-
-          <div className="flag-box cut">
+        {/* ───────── 중앙: 메인 코어 (타이머 & 플래그) ───────── */}
+        <section className="cockpit-panel main-core-panel">
+          <div className="big-timer">{mm}:{String(ss).padStart(2, '0')}</div>
+          
+          <div className="flag-submission-unit">
             <form onSubmit={submitFlag} className="flag-form">
-              <label className="mono sr-only">flag</label>
+              <span className="prompt">&gt;</span>
               <input
                 type="text"
-                placeholder="FLAG{...}"
+                placeholder="SUBMIT FLAG..."
                 value={flag}
                 onChange={(e) => setFlag(e.target.value)}
                 required
                 disabled={isTimeUp}
               />
               <button type="submit" disabled={isTimeUp || submitting || !flag}>
-                {submitting ? '제출 중...' : '제출'}
+                {submitting ? 'SENDING' : 'EXECUTE'}
               </button>
             </form>
-            {submitMsg && <div className="flag-msg">{submitMsg}</div>}
-            {isTimeUp && <div className="flag-msg">시간 종료</div>}
+            {submitMsg && <div className="flag-msg">SYSTEM RESPONSE: {submitMsg}</div>}
+            {isTimeUp && <div className="flag-msg">CONNECTION TIMED OUT</div>}
           </div>
         </section>
 
-        {/* ───────── Right Panel ───────── */}
-        <aside className="panel panel-right cut">
-          <h5 className="mono">PARITICIPATIONS</h5>
+        {/* ───────── 우측: 참가자 명단 (Roster) ───────── */}
+        <aside className="cockpit-panel">
+          <header className="panel-header">PARTICIPANT ROSTER</header>
+          <div className="panel-content">
+            <div className="roster-list">
+              {participants.map(p => {
+                const uid  = typeof p.user === 'string' ? p.user : p.user._id;
+                const name = typeof p.user === 'string' ? '...' : p.user.username; // 유저 객체가 없을 경우 대비
+                const currentStatus = statusText(p).replace(' ', '_'); // e.g., 'vm_connected'
 
-          <ul className="slots">
-            {participants.map(p => {
-              const uid  = typeof p.user === 'string' ? p.user : p.user._id;
-              const name = typeof p.user === 'string' ? p.user : p.user.username;
-              const isHostUser = uid === hostId;
-
-              return (
-                <li key={uid} className="slot">
-                  <div className="row">
-                    <span className="label mono">name</span>
-                    <span className="value">
-                      {name}{' '}
-                      {isHostUser && <span className="crown" title="host">👑</span>}
-                    </span>
+                return (
+                  <div key={uid} className="roster-row">
+                    <span className="username">{name}{uid === hostId && ' [HOST]'}</span>
+                    <span className={`status ${currentStatus}`}>{currentStatus}</span>
                   </div>
-                  <div className="row">
-                    <span className="label mono">status</span>
-                    <span className={`value ${p.hasLeft ? 'muted' : ''}`}>
-                      {statusText(p)}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                );
+              })}
+            </div>
+          </div>
         </aside>
       </div>
-    </Main>
+    </div>
+  </Main>
   );
-};
-
+}
 export default ArenaPlayPage;

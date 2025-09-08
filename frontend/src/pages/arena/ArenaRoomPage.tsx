@@ -173,71 +173,56 @@ const ArenaRoomPage: React.FC = () => {
 
   return (
     <Main>
-      <div className="arena-frame">
-        <h2 className="arena-title">{arenaName}</h2>
+      <div className="battle-cyber-container room-variant">
+        <div className="background-grid"></div>
+        <div className="cyber-module">
+          <h1 className="cyber-title" data-text={arenaName}>{arenaName}</h1>
+          
+          <div className="participants-grid">
+            {activeParticipants.map(p => {
+              const userObject = typeof p.user === 'object' ? p.user : { _id: p.user, username: 'Loading...' };
+              const isUserHost = userObject._id === hostId;
+              const isMe = userObject._id === currentUserId;
 
-        <div className="participants-list">
-          {participants.map((p) => {
-            const uid = typeof p.user === 'string' ? p.user : p.user._id;
-            const name = typeof p.user === 'string' ? p.user : p.user.username;
-            const readyFlag = p.isReady;
-            const isHostUser = uid === hostId;
-            const isMe = uid === currentUserId;
+              return (
+                <div 
+                  key={userObject._id}
+                  className={`participant-card ${p.isReady ? 'is-ready' : ''} ${isUserHost ? 'is-host' : ''} ${isMe ? 'is-me' : ''}`}
+                >
+                  <div className="card-bg"></div>
+                  <div className="card-content">
+                    <span className="username">{userObject.username}</span>
+                    <span className="status">{p.isReady ? 'READY' : 'NOT READY'}</span>
+                  </div>
+                  {isUserHost && <div className="host-tag">HOST</div>}
+                </div>
+              );
+            })}
+          </div>
 
-            return (
-              <div
-                key={uid}
-                className={`participant-card ${readyFlag ? 'ready' : ''} ${p.hasLeft ? 'left' : ''}`}
+          <div className="footer-actions">
+            {isHost ? (
+              <button
+                className="cyber-button"
+                disabled={status !== 'waiting' || !everyoneExceptHostReady || activeParticipants.length < 2}
+                onClick={() => socket.emit('arena:start', { arenaId, userId: currentUserId })}
               >
-                <span className="participant-name">
-                  {name} {isMe ? '(me)' : ''}
+                <span data-text="START GAME">START GAME</span>
+                <div className="button-loader"></div>
+              </button>
+            ) : (
+              <button
+                className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`}
+                disabled={status !== 'waiting'}
+                onClick={toggleReady}
+              >
+                <span data-text={myParticipant?.isReady ? 'CANCEL' : 'READY'}>
+                  {myParticipant?.isReady ? 'CANCEL' : 'READY'}
                 </span>
-                {isHostUser ? (
-                  <span className="host-label">👑 Host</span>
-                ) : (
-                  <span className={`participant-status ${readyFlag ? 'ready' : 'not-ready'}`}>
-                    {readyFlag ? '✅ Ready' : '❌ Not Ready'}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="action-buttons">
-          {isHost ? (
-            <button
-              className="btn start-btn"
-              disabled={
-                !isHost ||
-                status !== 'waiting' ||
-                !everyoneExceptHostReady ||
-                participants.length < 2 // 최소 2명(호스트+1)
-              }
-              onClick={() => {
-                if (!currentUserId) return;
-                socket.emit('arena:start', { arenaId, userId: currentUserId });
-              }}
-              title={
-                !isHost ? '호스트만 시작 가능' :
-                status !== 'waiting' ? '대기 상태에서만 시작' :
-                !everyoneExceptHostReady ? '호스트 제외 전원이 준비해야 함' :
-                participants.length < 2 ? '최소 2명 필요' : ''
-              }
-            >
-              게임 시작
-            </button>
-          ) : (
-            <button
-              className="btn"
-              disabled={!currentUserId || status !== 'waiting'}
-              onClick={toggleReady}
-            >
-              {participants.find(p => (typeof p.user === 'string' ? p.user : p.user._id) === currentUserId)?.isReady
-                ? '준비 취소'
-                : '준비'}
-            </button>
-          )}
+                <div className="button-loader"></div>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Main>
