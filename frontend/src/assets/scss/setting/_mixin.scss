@@ -4,12 +4,12 @@
     height: clamp(var(--container-height), 100vh, var(--container-height));
     min-height: clamp(var(--container-min-height), 100vh, var(--container-min-height));
     background: var(--color-background-transparent);
-    //border-radius: clamp(16px, 2vw, 24px);
-    //s filter: drop-shadow(0 0 10px var(--blue-200));
+    border-radius: clamp(16px, 2vw, 24px);
+    filter: drop-shadow(0 0 10px var(--blue-200));
     transition: all 0.3s ease-in-out;
-    //&:hover {
-      //  filter: drop-shadow(0 0 10px var(--blue-300));
-    //}
+    &:hover {
+       filter: drop-shadow(0 0 10px var(--blue-300));
+    }
 }
 
 @mixin flex_center{

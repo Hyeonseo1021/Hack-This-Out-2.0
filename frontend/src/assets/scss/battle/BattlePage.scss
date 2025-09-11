@@ -24,7 +24,7 @@
 }
 
 // --- 동적 배경 그리드 ---
-.background-grid {
+.battle-background-grid {
   position: absolute;
   inset: 0;
   background-size: 50px 50px;
@@ -35,17 +35,17 @@
 }
 
 // --- 중앙 모듈 ---
-.mode-module {
+.battle-mode-module {
   position: relative;
   text-align: center;
   padding: 2rem;
   width: clamp(300px, 90vw, 900px);
-  transform: translateY(30%);
+  transform: translateY(40%);
   
 }
 
 // --- 글리치 타이틀 ---
-.mode-title {
+.battle-title {
   position: relative;
   font-size: clamp(3rem, 10vw, 6rem);
   font-weight: 700;
@@ -78,7 +78,7 @@
 }
 
 // --- 선택 버튼 ---
-.selection-wrapper {
+.battle-selection-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -90,7 +90,7 @@
   }
 }
 
-.mode-button {
+.battle-button {
   position: relative;
   display: block;
   width: 320px; // 너비를 280px에서 320px로 늘림

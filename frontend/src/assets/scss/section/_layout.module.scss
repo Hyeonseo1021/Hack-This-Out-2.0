@@ -363,7 +363,7 @@
         .upper_bar {
             width: calc(100% - var(--sidebar-width));
             height: 80px;
-            background-color: var(--secondary-layout);
+            background-color: var(--color-layout);
             z-index: 1;
         }
         .profile_container {

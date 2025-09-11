@@ -8,21 +8,21 @@ const BattlePage: React.FC = () => {
     <Main>
       <div className="battle-cyber-container">
         {/* 동적인 배경 효과를 위한 요소 */}
-        <div className="background-grid"></div>
+        <div className="battle-background-grid"></div>
 
-        <div className="mode-module">
+        <div className="battle-mode-module">
           {/* 타이틀에 글리치 효과를 위한 데이터 속성 추가 */}
-          <h1 className="mode-title" data-text="BATTLE">
+          <h1 className="battle-title" data-text="BATTLE">
             BATTLE
           </h1>
           
-          <div className="selection-wrapper">
-            <Link to="/contest" className="mode-button">
+          <div className="battle-selection-wrapper">
+            <Link to="/contest" className="battle-button">
               <span data-text="CONTESTS">CONTESTS</span>
               <div className="button-loader"></div>
             </Link>
             
-            <Link to="/arena" className="mode-button">
+            <Link to="/arena" className="battle-button">
               <span data-text="ARENA">ARENA</span>
               <div className="button-loader"></div>
             </Link>
