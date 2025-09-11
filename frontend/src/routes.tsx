@@ -83,6 +83,14 @@ const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
       },
+            {
+        path: 'play',                      
+        element: (
+          <ProtectedRoute>               
+            <PlayPage />                    
+          </ProtectedRoute>
+        ),
+      },
       {
         path: 'play',                      
         element: (
