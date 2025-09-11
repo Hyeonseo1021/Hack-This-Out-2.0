@@ -33,7 +33,7 @@ body {
 
 	--container-width: 80dvw;
 	--container-min-width: 1000px;
-	--container-height: 84dvh;
+	--container-height: 88dvh;
 	--container-min-height: 750px;
 
 	--profile-width: 360px;
@@ -51,15 +51,15 @@ body {
 	--font-title : 3rem;						// Title급 글자 사이즈
 
 	/* Colors */
-	--color-background-transparent: #111617;
-	--color-layout: #181818;
-	--secondary-layout: #000000;
+	--color-background-transparent: #13151a;
+	--color-layout: #000000;
+	--secondary-layout: #1c1c1c;
 	--pink:#ff419a;
-	--blue-200: #8686AC;
-	--blue-300: #505081;
+	--blue-200: #2985db;
+	--blue-300: #22aec7;
 	--blue-400: #272757;
 	--blue-500: #0F0E47;
-	--lightblue-200: #2E74A0;
+	--lightblue-200: #46abea;
 
 	--lightblue-200-rgb: 173, 216, 230; 
     --blue-300-rgb: 100, 149, 237;
@@ -78,5 +78,5 @@ body {
 	--gradient-container : linear-gradient(to bottom, #0b1f65, #16488f, #0c2144, #071125); // 컨테이너 배경. ex)CurrentUserInfo 배경 그라데이션
 
 	/* Border */
-	--border-container: 24px;
+	--border-container: 4px;
 }

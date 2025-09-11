@@ -1,18 +1,173 @@
-.shop-page {
-  padding: 2rem;
-  text-align: center;
-  background-color: aliceblue;
+/* src/assets/scss/Shop/ShopPage.scss */
+/* Blueprint Theme - Two Column Final */
+@use "../style" as *;
+// --- 테마 변수 ---
+
+// --- 2단 그리드 메인 레이아웃 ---
+.shop-layout--blueprint {
+  @include background_set; 
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr); // 상점:인벤토리 = 2:1 비율
+  gap: 32px;
+  padding: 40px;
 }
 
-.shop-title {
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  color: black;
+// --- 패널 공통 스타일 ---
+.panel--blueprint {
+  background-color: var(--color-background-transparent);
+  border: 1px solid var(--bp-border);
+  border-radius: 4px;
+  box-shadow: 5px 5px 0px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; // 내부 콘텐츠가 패널을 넘지 않도록 설정
+}
+
+.panel__header {
+  padding: 16px 24px;
+  border-bottom: 1px dashed var(--color-gainsboro);
+  flex-shrink: 0; // 헤더는 줄어들지 않음
+}
+
+.panel__title {
+  color: var(--color-gainsboro);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0;
+  &::before, &::after { content: '[ '; color: var(--color-gainsboro); }
+  &::after { content: ' ]'; }
+}
+
+.panel__content {
+  padding: 24px;
+  overflow-y: auto; // 콘텐츠가 많으면 스크롤 생성
+  flex-grow: 1; // 남은 공간을 모두 차지
+}
+
+/* ... 이하 스타일은 이전과 대부분 동일 ... */
+
+.loader, .empty-state {
+  color: var(--color-gainsboro);
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.shop-balance {
+  background-color: var(--bp-bg);
+  border: 1px solid var(--color-gainsboro);
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--color-gainsboro);
+  
+  strong {
+    color: var(--color-gainsboro);
+    font-size: 1.2rem;
+  }
 }
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.5rem;
-  background-color: antiquewhite;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.shop-item {
+  border: 1px solid var(--color-gainsboro);
+  background-color: var(--color-background-transparent);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease-out;
+
+  &:hover {
+    border-color: var(--color-background-transparent);
+    transform: translateY(-4px);
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--color-background-transparent);
+    color: var(--color-gainsboro);
+
+    h3 { font-size: 1.1rem; margin: 0; }
+    span { font-weight: 700; color: var(--color-background-transparent); }
+  }
+
+  &__desc {
+    color: var(--color-gainsboro);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+    flex-grow: 1;
+  }
+
+  &__btn {
+    background-color: var(--bp-accent);
+    color: var(--color-gainsboro);
+    border: none;
+    padding: 12px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    
+    &:hover:not(:disabled) {
+      background-color: #ff419a;
+    }
+    &:disabled {
+      background-color: var(--bp-border);
+      cursor: not-allowed;
+    }
+  }
+}
+
+.inventory-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--bp-border);
+  background: var(--bp-bg);
+  padding: 12px 16px;
+  color: var(--color-gainsboro);
+
+  &__name { font-size: 0.95rem; }
+  &__meta { display: flex; align-items: center; gap: 12px; }
+  &__date { font-size: 0.85rem; color: var(--color-gainsboro); }
+}
+
+.badge--used {
+  background-color: var(--bp-text-muted);
+  color: var(--bp-bg);
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+// --- 반응형 ---
+@media (max-width: 960px) {
+  .shop-layout--blueprint {
+    grid-template-columns: 1fr; // 화면이 좁아지면 1단으로 변경
+    height: auto; // 높이를 콘텐츠에 맞게 자동 조절
+    padding: 24px; // 모바일에서는 패딩을 줄임
+  }
 }

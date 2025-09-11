@@ -146,5 +146,5 @@ const Play: React.FC = () => {
     </Main>
   );
 };
-
 export default Play;
+

@@ -29,6 +29,7 @@ import {
     makeAdminToUser,
     getMyRank,
     getUserProgress,
+    addUserCoin
 } from '../controllers/UserController.js';
 
 const UserRoutes = express.Router();
@@ -130,5 +131,11 @@ UserRoutes.post("/:userId/to-admin", verifyToken, verifyAdmin, makeUserAdmin);
 
 // Make Admin to User by User ID(Admin Only)
 UserRoutes.post("/:userId/to-user", verifyToken, verifyAdmin, makeAdminToUser);
+
+UserRoutes.post("/update/:userId/coin", 
+    verifyToken, 
+    verifyAdmin,
+    addUserCoin
+);
 
 export default UserRoutes;

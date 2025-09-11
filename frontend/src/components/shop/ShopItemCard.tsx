@@ -1,28 +1,34 @@
+// src/components/shop/ShopItemCard.tsx
 import React from 'react';
-import '../../assets/scss/shop/ShopItemCard.scss';
+import { ShopItem } from '../../types/ShopItem';
+import '../../assets/scss/Shop/ShopItemCard.scss'; // 대소문자 경로 확인!
 
-export interface ShopItem {
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  type: string; // 예: 'hint', 'exp_boost', 'nickname_change'
-}
-
-interface ShopItemCardProps {
+type Props = {
   item: ShopItem;
   onBuy: () => void;
-}
+  disabled?: boolean;
+};
 
-const ShopItemCard: React.FC<ShopItemCardProps> = ({ item, onBuy }) => {
+const ShopItemCard: React.FC<Props> = ({ item, onBuy, disabled }) => {
   return (
-    <div className="shop-item-card">
-      <h3 className="item-name">{item.name}</h3>
-      <p className="item-description">{item.description}</p>
-      <p className="item-price">{item.price} Tokens</p>
-      <button className="buy-button" onClick={onBuy}>
-        구매하기
-      </button>
+    <div className="shop-card">
+
+      <div className="shop-card__body">
+        <h3 className="shop-card__title">{item.name}</h3>
+        {item.description && <p className="shop-card__desc">{item.description}</p>}
+
+        <div className="shop-card__footer">
+          <span className="shop-card__price">{item.price} HTO</span>
+          <button
+            className="shop-card__buy"
+            onClick={onBuy}
+            disabled={!!disabled}
+            aria-busy={!!disabled}
+          >
+            {disabled ? '구매중...' : '구매'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

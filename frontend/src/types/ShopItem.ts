@@ -4,5 +4,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: string; // 예: 'hint', 'exp_boost', 'nickname_change'
+  isListed: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };

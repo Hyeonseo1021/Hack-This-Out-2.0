@@ -5,7 +5,8 @@ const ArenaSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true   
+        maxlength: 30,
+        unique: true 
     },
     host: {
         type: mongoose.Schema.Types.ObjectId,
@@ -33,6 +34,11 @@ const ArenaSchema = new mongoose.Schema({
             type: String,
             default: null
         },
+        status: {
+            type: String,
+            enum: ['waiting', 'vm_connected', 'flag_submitted', 'completed'],
+            default: 'waiting'
+        }
     }],
     maxParticipants: {
         type: Number,
@@ -78,7 +84,7 @@ const ArenaSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
-        submitttedAt: Date,
+        submittedAt: Date,
         flagCorrect: Boolean
     }],
     ranking: [{
@@ -87,7 +93,30 @@ const ArenaSchema = new mongoose.Schema({
             ref: 'User'
         },
         rank: Number
-    }]
+    }],
+    winner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    firstSolvedAt: {
+        type: Date,
+        default: null
+    },
+    settings: {
+        endOnFirstSolve: {
+            type: Boolean,
+            default: true
+        },
+        graceMs: {
+            type: Number,
+            default: 90_000
+        },
+        hardTimeLimitMs: {
+            type: Number,
+            default: 10*60_000
+        }
+    }
 }, {
     timestamps: true  
 });

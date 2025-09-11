@@ -2,7 +2,7 @@
 
 .contest-banner-container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
   height: 100%;
   font-weight: bold;
   
@@ -21,7 +21,7 @@
     .banner-slide {
       padding: clamp(16px, 2vw, 32px);
       height: clamp(250px, 28vh, 400px);
-      background: var(--color-layout);
+      background: var(--color-background-transparent);
       @include flex_center;
       
       .banner-contents {

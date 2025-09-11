@@ -22,10 +22,10 @@
         gap: clamp(4px, 1vw, 8px);
 
         .machine-banner {
-            width: calc(100% - min(28vh, 300px));
+            width: calc(100% - min(28vh, 400px));
             height: 100%;
             border-radius: var(--border-container);
-            background: var(--color-layout);
+            background: var(--color-background-transparent);
             flex-grow: 1;
 
             @media (max-width: 1024px) {

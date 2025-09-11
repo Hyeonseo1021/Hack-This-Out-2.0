@@ -5,8 +5,8 @@ import { createArena, getArenaList, getArenaById, submitFlagArena } from '../con
 const ArenaRoutes = express.Router();
 
 ArenaRoutes.post('/create', verifyToken, createArena);
-ArenaRoutes.get('/list', getArenaList);
-ArenaRoutes.get('/:arenaId', getArenaById);
-ArenaRoutes.post('/:arenaId/submit', submitFlagArena)
+ArenaRoutes.get('/list', verifyToken, getArenaList);
+ArenaRoutes.get('/:arenaId', verifyToken, getArenaById);
+ArenaRoutes.post('/:arenaId/submit', verifyToken, submitFlagArena)
 
 export default ArenaRoutes;

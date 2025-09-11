@@ -21,6 +21,7 @@ const ArenaPage: React.FC = () => {
   const [arenas, setArenas] = useState<Arena[]>([]);
   const [loading, setLoading] = useState(true);
 
+  
   // 1. 초기 데이터 로드
   useEffect(() => {
     (async () => {
@@ -125,71 +126,66 @@ const ArenaPage: React.FC = () => {
   });
 
   return (
-    <Main>
-      <div className="arena-container">
-        <div className="rooms-wrapper">
-          <div className="rooms-bg">
-            {loading ? (
-              <p>불러오는 중...</p>
-            ) : (
-              <div className="rooms-list">
-                {/* 헤더 */}
-                <div
-                  className="room-card header"
-                  style={{
-                    fontWeight: 'bold',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'default'
-                  }}
-                >
-                  <div className="col name">Room</div>
-                  <div className="col category">Category</div>
-                  <div className="col players">Players</div>
-                  <div className="col status">Status</div>
+        <Main>
+            <div className="blueprint-container">
+                <div className="blueprint-container__scanline"></div>
+
+                {/* 좌측: 아레나 리스트 패널 */}
+                <div className="blueprint-panel blueprint-panel--list">
+                    <div className="blueprint-panel__header">
+                        <h2 className="blueprint-panel__title">ARENA LIST</h2>
+                    </div>
+                    <div className="blueprint-panel__body">
+                        <div className="arena-list">
+                            <div className="arena-list__row arena-list__row--header">
+                                <div className="arena-list__col">ID</div>
+                                <div className="arena-list__col">Room Name</div>
+                                <div className="arena-list__col">Operators</div>
+                                <div className="arena-list__col">Status</div>
+                            </div>
+                            {loading ? (
+                                <p className="arena-list__message">SYSTEM SCANNING...</p>
+                            ) : sortedArenas.length > 0 ? (
+                                sortedArenas.map((arena, index) => (
+                                    <div
+                                        key={arena._id}
+                                        className={`arena-list__row ${arena.status !== 'waiting' ? 'arena-list__row--locked' : ''}`}
+                                        onClick={() => handleEnterArena(arena._id)}
+                                    >
+                                        <div className="arena-list__col" data-label="ID">{`#${(index + 1).toString().padStart(4, '0')}`}</div>
+                                        <div className="arena-list__col" data-label="Room Name">{arena.name}</div>
+                                        <div className="arena-list__col" data-label="Operators">
+                                            {(arena.participants ?? []).filter(p => !p.hasLeft).length} / {arena.maxParticipants}
+                                        </div>
+                                        <div className="arena-list__col" data-label="Status">
+                                            <span className={`status-badge status-badge--${arena.status}`}>
+                                                {arena.status.toUpperCase()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="arena-list__message">NO SIGNAL DETECTED</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                {/* 방 목록 */}
-                {sortedArenas.map(arena => (
-                  <div
-                    key={arena._id}
-                    className={`room-card ${arena.status === 'ended' ? 'disabled' : ''}`}
-                    onClick={() => handleEnterArena(arena._id)}
-                    style={{
-                      pointerEvents: arena.status === 'ended' ? 'none' : 'auto',
-                      opacity: arena.status === 'ended' ? 0.5 : 1
-                    }}
-                  >
-                    <div className="col name">{arena.name}</div>
-                    <div className="col category">{arena.category}</div>
-                    <div className="col players">
-                      {(arena.participants ?? []).length} / {arena.maxParticipants}
+                {/* 우측: 방 만들기 패널 */}
+                <div className="blueprint-panel blueprint-panel--create">
+                    <div className="blueprint-panel__header">
+                        <h2 className="blueprint-panel__title">NEW CONNECTION</h2>
                     </div>
-
-                    <div className="col status">
-                      {arena.status === 'ended' ? 'Closed' : arena.status}
+                    <div className="blueprint-panel__body blueprint-panel__body--center">
+                        <button className="blueprint-button" onClick={() => navigate('/arena/create')}>
+                            <span className="blueprint-button__text">CREATE ROOM</span>
+                        </button>
+                        <p className="blueprint-panel__subtext">Create a new arena</p>
                     </div>
-                  </div>
-                ))}
-
-                {/* 빈 목록 메시지 */}
-                {sortedArenas.length === 0 && (
-                  <p className="no-rooms">현재 대기 중인 방이 없습니다.</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 방 만들기 버튼 */}
-        <div className="create-room-wrapper">
-          <div className="create-room-bg">
-            <ArenaCreateButton title="Create Arena" route="/arena/create" />
-          </div>
-        </div>
-      </div>
-    </Main>
-  );
+                </div>
+            </div>
+        </Main>
+    );
 };
 
 export default ArenaPage;

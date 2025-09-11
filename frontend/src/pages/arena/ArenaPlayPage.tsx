@@ -15,6 +15,7 @@ type Participant = {
   hasLeft?: boolean;
   instanceId?: string | null;
   vpnIp?: string | null;
+  status?: 'waiting' | 'vm_connected' | 'flag_submitted' | 'completed';
 };
 
 type ArenaUpdatePayload = {
@@ -39,7 +40,7 @@ const ArenaPlayPage: React.FC = () => {
   const [endAt, setEndAt] = useState<Date | null>(null);
   const [remaining, setRemaining] = useState<number>(0); // ms
 
-  // 새로 추가: 내 vm/ip/머신
+  // 내 VM/IP/머신
   const [myInstanceId, setMyInstanceId] = useState<string | null>(null);
   const [myVpnIp, setMyVpnIp] = useState<string | null>(null);
   const [machineId, setMachineId] = useState<string | null>(null);
@@ -50,6 +51,17 @@ const ArenaPlayPage: React.FC = () => {
 
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
+
+  const statusText = (p: Participant) => {
+    if (p.hasLeft) return 'left';
+    switch (p.status) {
+      case 'waiting':        return 'waiting';
+      case 'vm_connected':   return 'vm connected';
+      case 'flag_submitted': return 'flag submitted';
+      case 'completed':      return 'completed';
+      default:               return '';
+    }
+  };
 
   // 1) 유저/아레나 초기 로드 + 방 진입
   useEffect(() => {
@@ -69,12 +81,6 @@ const ArenaPlayPage: React.FC = () => {
 
       // machineId(문자/객체 모두 대응)
       setMachineId(String((arenaData as any).machine?._id ?? (arenaData as any).machine ?? '') || null);
-
-      // 플레이 페이지는 "시작된 방"만 허용
-      if (arenaData.status !== 'started') {
-        navigate(`/arena/${arenaId}`); // 로비로
-        return;
-      }
 
       // 소켓 join(중복 방지)
       if (!joinedRef.current) {
@@ -120,6 +126,13 @@ const ArenaPlayPage: React.FC = () => {
     };
   }, [endAt]);
 
+  // 2-1) 타임업 안전망: 남은시간 0이면 이동
+  useEffect(() => {
+    if (status === 'ended') {
+      navigate(`/arena/${arenaId}`);
+    }
+  }, [status, arenaId, navigate]);
+
   // 3) 소켓 이벤트 바인딩
   useEffect(() => {
     const handleUpdate = (payload: ArenaUpdatePayload) => {
@@ -140,7 +153,7 @@ const ArenaPlayPage: React.FC = () => {
         }
       }
 
-      // 플레이 중에 ended 되면 결과/로비로 이동(원하는 UX로 바꿔도 됨)
+      // 서버가 ended 푸시 시 이동
       if (payload.status === 'ended') {
         navigate(`/arena/${payload.arenaId}`);
       }
@@ -170,9 +183,28 @@ const ArenaPlayPage: React.FC = () => {
     };
   }, [arenaId, currentUserId, navigate]);
 
+  // 3-1) arena:ended 이벤트도 잡아서 이동(옵션이지만 안전)
+  useEffect(() => {
+    const handleEnded = (data?: { arenaId?: string }) => {
+      navigate(`/arena/${data?.arenaId ?? arenaId}`);
+    };
+
+    socket.on('arena:ended', handleEnded);
+
+    return () => {
+      // ✅ cleanup은 아무 것도 반환하지 않도록 블록으로
+      socket.off('arena:ended', handleEnded);
+    };
+  }, [arenaId, navigate]);
+
+
+
   // 표시용 포맷
   const mm = Math.floor(remaining / 60000);
   const ss = Math.floor((remaining % 60000) / 1000);
+
+  // 타임업/종료 시 입력/버튼 비활성화
+  const isTimeUp = remaining === 0 || status !== 'started';
 
   // 4) 플래그 제출
   const submitFlag = async (e: React.FormEvent) => {
@@ -198,68 +230,86 @@ const ArenaPlayPage: React.FC = () => {
 
   return (
     <Main>
-      {/* 상단바 */}
-      <header className="play-header">
-        <h2 className="title">{arenaName}</h2>
-        <div className="spacer" />
-        <div className="timer-pill">⏱ {mm}:{String(ss).padStart(2,'0')}</div>
-        <DownloadVPNProfile />
-      </header>
+      {/* "Maze Runner Terminal" 컨셉으로 변경된 JSX 구조입니다.
+        - 최상위 컨테이너: play-maze-container
+        - 배경 오버레이: maze-background-overlay
+        - 그리드 시스템: maze-grid
+        - 각 패널: maze-panel
+        - 중앙 패널 강조: main-core-panel
+        - SCSS에서 정의한 나머지 클래스명은 기존 구조와 호환되므로 유지합니다.
+      */}
+      <div className="play-maze-container">
+        <div className="maze-background-overlay" />
 
-      {/* 2열 레이아웃 */}
-      <div className="play-grid">
-        {/* 좌측: 내 VM */}
-        <section className="card vm-card">
-          <h3>내 VM</h3>
-          <div className="kv">
-            <span className="k">Instance ID</span>
-            <span className="v"><code>{myInstanceId || '생성 중...'}</code></span>
-          </div>
-          <div className="kv">
-            <span className="k">VPN IP</span>
-            <span className="v"><code>{myVpnIp || '할당 대기...'}</code></span>
-          </div>
-          <p className="hint">
-            {myVpnIp ? <>OVPN 연결 후 <code>{myVpnIp}</code> 접속</> : '인스턴스가 뜨는 중입니다. 잠시만 기다려 주세요.'}
-          </p>
+        <div className="maze-grid">
+          {/* ───────── 좌측: 시스템 & 커넥션 패널 (미로의 입구) ───────── */}
+          <section className="maze-panel">
+            <header className="panel-header">SYSTEM & CONNECTION</header>
+            <div className="panel-content">
+              <div className="system-info-list">
+                <div className="info-block vpn-download">
+                  <span className="label">1. OVPN PROFILE</span>
+                  <DownloadVPNProfile />
+                </div>
+                <div className="info-block">
+                  <span className="label">2. VM INSTANCE ID</span>
+                  <div className="value">{myInstanceId || 'ALLOCATING...'}</div>
+                </div>
+                <div className="info-block">
+                  <span className="label">3. SECURE IP ADDRESS</span>
+                  <div className="value">{myVpnIp || 'AWAITING ASSIGNMENT...'}</div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-          {/* 플래그 제출 */}
-          <form onSubmit={submitFlag} className="flag-form">
-            <input
-              type="text"
-              placeholder="FLAG{...}"
-              value={flag}
-              onChange={(e) => setFlag(e.target.value)}
-              required
-            />
-            <button type="submit" disabled={submitting || !flag}>
-              {submitting ? '제출 중...' : '제출'}
-            </button>
-          </form>
-          {submitMsg && <div className="flag-msg">{submitMsg}</div>}
-        </section>
+          {/* ───────── 중앙: 메인 코어 (미로의 중심) ───────── */}
+          <section className="maze-panel main-core-panel">
+            <div className="big-timer">{mm}:{String(ss).padStart(2, '0')}</div>
+            
+            <div className="flag-submission-unit">
+              <form onSubmit={submitFlag} className="flag-form">
+                <span className="prompt">$</span>
+                <input
+                  type="text"
+                  placeholder="SUBMIT FLAG..."
+                  value={flag}
+                  onChange={(e) => setFlag(e.target.value)}
+                  required
+                  disabled={isTimeUp}
+                />
+                <button type="submit" disabled={isTimeUp || submitting || !flag}>
+                  {submitting ? 'SENDING' : 'SUBMIT'}
+                </button>
+              </form>
+              {submitMsg && <div className="flag-msg">SYSTEM RESPONSE: {submitMsg}</div>}
+              {isTimeUp && <div className="flag-msg" style={{ color: 'var(--error-color)' }}>CONNECTION TIMED OUT</div>}
+            </div>
+          </section>
 
-        {/* 우측: 참가자 */}
-        <aside className="card participants-card">
-          <h4>참가자</h4>
-          <ul className="participants">
-            {participants.map(p => {
-              const uid  = typeof p.user === 'string' ? p.user : p.user._id;
-              const name = typeof p.user === 'string' ? p.user : p.user.username;
-              const isHostUser = uid === hostId;
-              return (
-                <li key={uid} className={`row ${p.hasLeft ? 'left' : ''}`}>
-                  <span className="name">{name}</span>
-                  {isHostUser && <span className="badge">👑 Host</span>}
-                  {p.hasLeft && <span className="badge muted">나감</span>}
-                </li>
-              );
-            })}
-          </ul>
-        </aside>
+          {/* ───────── 우측: 참가자 명단 (탐색기 리스트) ───────── */}
+          <aside className="maze-panel">
+            <header className="panel-header">PARTICIPANT ROSTER</header>
+            <div className="panel-content">
+              <div className="roster-list">
+                {participants.map(p => {
+                  const uid  = typeof p.user === 'string' ? p.user : p.user._id;
+                  const name = typeof p.user === 'string' ? '...' : p.user.username;
+                  const currentStatus = statusText(p).replace(/ /g, '_'); // e.g., 'vm_connected'
+
+                  return (
+                    <div key={uid} className="roster-row">
+                      <span className="username">{name}{uid === hostId && ' [HOST]'}</span>
+                      <span className={`status ${currentStatus}`}>{statusText(p).toUpperCase()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </Main>
   );
-};
-
+}
 export default ArenaPlayPage;
