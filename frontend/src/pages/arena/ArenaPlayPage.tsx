@@ -229,81 +229,87 @@ const ArenaPlayPage: React.FC = () => {
   };
 
   return (
-  <Main>
-    <div className="play-cockpit-container">
-      <div className="background-overlay" />
+    <Main>
+      {/* "Maze Runner Terminal" 컨셉으로 변경된 JSX 구조입니다.
+        - 최상위 컨테이너: play-maze-container
+        - 배경 오버레이: maze-background-overlay
+        - 그리드 시스템: maze-grid
+        - 각 패널: maze-panel
+        - 중앙 패널 강조: main-core-panel
+        - SCSS에서 정의한 나머지 클래스명은 기존 구조와 호환되므로 유지합니다.
+      */}
+      <div className="play-maze-container">
+        <div className="maze-background-overlay" />
 
-      <div className="cockpit-grid">
-        {/* ───────── 좌측: 시스템 & 커넥션 패널 ───────── */}
-        <section className="cockpit-panel">
-          <header className="panel-header">SYSTEM & CONNECTION</header>
-          <div className="panel-content">
-            <div className="system-info-list">
-              <div className="info-block vpn-download">
-                <span className="label">1. OVPN PROFILE</span>
-                {/* DownloadVPNProfile 컴포넌트 버튼이 .cyber-button 스타일을 따르도록 해야 할 수 있습니다. */}
-                {/* 필요하다면 DownloadVPNProfile 내부 버튼에 className="cyber-button" 같은 속성을 추가하세요. */}
-                <DownloadVPNProfile />
-              </div>
-              <div className="info-block">
-                <span className="label">2. VM INSTANCE ID</span>
-                <div className="value">{myInstanceId || 'ALLOCATING...'}</div>
-              </div>
-              <div className="info-block">
-                <span className="label">3. SECURE IP ADDRESS</span>
-                <div className="value">{myVpnIp || 'AWAITING ASSIGNMENT...'}</div>
+        <div className="maze-grid">
+          {/* ───────── 좌측: 시스템 & 커넥션 패널 (미로의 입구) ───────── */}
+          <section className="maze-panel">
+            <header className="panel-header">SYSTEM & CONNECTION</header>
+            <div className="panel-content">
+              <div className="system-info-list">
+                <div className="info-block vpn-download">
+                  <span className="label">1. OVPN PROFILE</span>
+                  <DownloadVPNProfile />
+                </div>
+                <div className="info-block">
+                  <span className="label">2. VM INSTANCE ID</span>
+                  <div className="value">{myInstanceId || 'ALLOCATING...'}</div>
+                </div>
+                <div className="info-block">
+                  <span className="label">3. SECURE IP ADDRESS</span>
+                  <div className="value">{myVpnIp || 'AWAITING ASSIGNMENT...'}</div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* ───────── 중앙: 메인 코어 (타이머 & 플래그) ───────── */}
-        <section className="cockpit-panel main-core-panel">
-          <div className="big-timer">{mm}:{String(ss).padStart(2, '0')}</div>
-          
-          <div className="flag-submission-unit">
-            <form onSubmit={submitFlag} className="flag-form">
-              <span className="prompt">&gt;</span>
-              <input
-                type="text"
-                placeholder="SUBMIT FLAG..."
-                value={flag}
-                onChange={(e) => setFlag(e.target.value)}
-                required
-                disabled={isTimeUp}
-              />
-              <button type="submit" disabled={isTimeUp || submitting || !flag}>
-                {submitting ? 'SENDING' : 'EXECUTE'}
-              </button>
-            </form>
-            {submitMsg && <div className="flag-msg">SYSTEM RESPONSE: {submitMsg}</div>}
-            {isTimeUp && <div className="flag-msg">CONNECTION TIMED OUT</div>}
-          </div>
-        </section>
-
-        {/* ───────── 우측: 참가자 명단 (Roster) ───────── */}
-        <aside className="cockpit-panel">
-          <header className="panel-header">PARTICIPANT ROSTER</header>
-          <div className="panel-content">
-            <div className="roster-list">
-              {participants.map(p => {
-                const uid  = typeof p.user === 'string' ? p.user : p.user._id;
-                const name = typeof p.user === 'string' ? '...' : p.user.username; // 유저 객체가 없을 경우 대비
-                const currentStatus = statusText(p).replace(' ', '_'); // e.g., 'vm_connected'
-
-                return (
-                  <div key={uid} className="roster-row">
-                    <span className="username">{name}{uid === hostId && ' [HOST]'}</span>
-                    <span className={`status ${currentStatus}`}>{currentStatus}</span>
-                  </div>
-                );
-              })}
+          {/* ───────── 중앙: 메인 코어 (미로의 중심) ───────── */}
+          <section className="maze-panel main-core-panel">
+            <div className="big-timer">{mm}:{String(ss).padStart(2, '0')}</div>
+            
+            <div className="flag-submission-unit">
+              <form onSubmit={submitFlag} className="flag-form">
+                <span className="prompt">$</span>
+                <input
+                  type="text"
+                  placeholder="SUBMIT FLAG..."
+                  value={flag}
+                  onChange={(e) => setFlag(e.target.value)}
+                  required
+                  disabled={isTimeUp}
+                />
+                <button type="submit" disabled={isTimeUp || submitting || !flag}>
+                  {submitting ? 'SENDING' : 'SUBMIT'}
+                </button>
+              </form>
+              {submitMsg && <div className="flag-msg">SYSTEM RESPONSE: {submitMsg}</div>}
+              {isTimeUp && <div className="flag-msg" style={{ color: 'var(--error-color)' }}>CONNECTION TIMED OUT</div>}
             </div>
-          </div>
-        </aside>
+          </section>
+
+          {/* ───────── 우측: 참가자 명단 (탐색기 리스트) ───────── */}
+          <aside className="maze-panel">
+            <header className="panel-header">PARTICIPANT ROSTER</header>
+            <div className="panel-content">
+              <div className="roster-list">
+                {participants.map(p => {
+                  const uid  = typeof p.user === 'string' ? p.user : p.user._id;
+                  const name = typeof p.user === 'string' ? '...' : p.user.username;
+                  const currentStatus = statusText(p).replace(/ /g, '_'); // e.g., 'vm_connected'
+
+                  return (
+                    <div key={uid} className="roster-row">
+                      <span className="username">{name}{uid === hostId && ' [HOST]'}</span>
+                      <span className={`status ${currentStatus}`}>{statusText(p).toUpperCase()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
-    </div>
-  </Main>
+    </Main>
   );
 }
 export default ArenaPlayPage;
