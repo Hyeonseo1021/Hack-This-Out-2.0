@@ -1,0 +1,209 @@
+@use "../style" as *;
+// --- 변수 ---
+:root {
+  --bg-dark: #0a0a14;
+  --panel-bg: rgba(15, 20, 30, 0.8);
+  --accent-blue: #00e0ff;
+  --accent-green: #00ff8c;
+  --accent-red: #ff3366;
+  --text-primary: #e0e6f0;
+  --text-secondary: #8a96a8;
+  --border-light: rgba(255, 255, 255, 0.1);
+  --border-dark: rgba(0, 0, 0, 0.2);
+  --shadow-glow: rgba(0, 224, 255, 0.4);
+}
+
+// --- 애니메이션 (이전과 동일) ---
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateX(0);
+  }
+}
+@keyframes bg-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+
+// --- 최상위 컨테이너 (요청하신 스타일 유지) ---
+.play-container {
+  color: var(--text-primary);
+  @include background_set;
+  backdrop-filter: blur(20px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+// --- 메인 패널 ---
+.play-panel {
+  display: grid;
+  grid-template-columns: 280px 1fr; // 왼쪽 메뉴 너비 증가
+  background-color: transparent; // 글래스모피즘 효과를 위해 패널 배경은 투명하게
+}
+
+// --- 왼쪽 단계 내비게이션 패널 ---
+.step-nav-panel {
+  background-color: rgba(25, 30, 40, 0.8); // 사이드 패널만 약간 어두운 배경
+  border-right: 1px solid var(--border-light);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent-blue);
+  text-align: center;
+  margin-bottom: 2.5rem;
+  text-shadow: 0 0 10px var(--shadow-glow);
+}
+
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.step-item {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent; // 밑줄 강조 효과
+  text-align: left;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+
+  &:hover {
+    color: var(--text-primary);
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  // 완료된 단계
+  &.completed {
+    color: var(--text-secondary); // 완료된 단계는 어둡게
+    border-bottom-color: var(--accent-green); // 초록색 밑줄
+    &:hover {
+        color: var(--text-primary); // 호버 시 밝게
+    }
+  }
+
+  // 현재 활성 단계
+  &.active {
+    color: var(--accent-blue);
+    font-weight: 700;
+    border-bottom-color: var(--accent-blue);
+    text-shadow: 0 0 5px var(--shadow-glow);
+  }
+}
+
+// --- 오른쪽 메인 콘텐츠 영역 (그리드 확장성) ---
+.main-content-area {
+  padding: 2.5rem 3rem;
+  display: grid; // 내부 콘텐츠를 위한 그리드
+  grid-template-rows: auto 1fr; // 상단 설명(auto) + 하단 액션/정보(1fr)
+  gap: 2rem; // 섹션 간 간격
+  overflow-y: auto; // 내용이 넘칠 경우 스크롤 가능
+}
+
+.description-section {
+  animation: reveal-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.section-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 8px var(--shadow-glow);
+  &::before {
+    content: '> '; // 터미널 프롬프트 느낌
+    color: var(--accent-green);
+  }
+}
+
+.section-description {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 70ch;
+}
+
+// --- 하단 액션/정보 섹션 ---
+.action-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; // 요소 간 간격
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-light); // 구분선 추가
+}
+
+// --- 액션 버튼/인풋 ---
+.action-button, .action-input {
+  font-size: 0.95rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.action-button {
+  cursor: pointer;
+  max-width: fit-content; // 버튼 크기를 내용에 맞춤
+
+  &:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px var(--shadow-glow);
+  }
+
+  &.primary {
+    background: linear-gradient(45deg, var(--accent-blue), var(--accent-green));
+    border-color: var(--accent-blue);
+    color: var(--bg-dark);
+    font-weight: 700;
+
+    &:hover {
+      box-shadow: 0 0 15px var(--accent-blue);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.action-input {
+  width: 100%;
+  max-width: 500px; // 인풋 최대 너비
+  &:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 8px var(--shadow-glow);
+  }
+}
+
+.info-box {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 224, 255, 0.3);
+  padding: 0.6rem 1rem;
+  border-radius: 4px;
+  color: var(--accent-blue);
+  font-size: 0.9rem;
+  max-width: 500px;
+}

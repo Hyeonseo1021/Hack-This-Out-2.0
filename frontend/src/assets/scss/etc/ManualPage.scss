@@ -1,191 +1,278 @@
-/* 화면 중앙 정렬 */
-.manual-viewport {
-  --header-h: 64px;                 /* ★ 세미콜론 추가 확인 */
-  --top-gap: var(--header-h);       /* ★ 헤더 높이와 동일하게 사용 */
-  --left-gap: 80px;                 /* 좌측(사이드바) 여유 */
-  --right-gap: 50px;                /* 우측 여유 */
-  --lift: -6vh;                     /* 프레임을 위로 올리기(음수↑/양수↓) */
-  --shift-x: -0.7vw;                /* ★ 프레임을 왼/오 이동(음수=왼쪽, 양수=오른쪽) */
+@use "../style" as *;
 
-  min-height: calc(100vh - var(--top-gap));
-  padding-left: var(--left-gap);
-  padding-right: var(--right-gap);
+// --- 색상 및 폰트 변수 ---
+$color-bg: #1a1a1a;
+$color-container-bg: #2d2d2d;
+$color-text: #e0e0e0;
+$color-text-dark: #333;
+$color-accent: #31e8ee;
+$color-accent-dark: #00a8b0;
+$color-bubble: #ffffff;
+
+
+// --- 애니메이션 ---
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// --- 전체 뷰포트 ---
+.manual-beginner-viewport {
+  @include background_set;
+  backdrop-filter: blur(20px);
   display: flex;
-  align-items: center;
   justify-content: center;
-}
-
-/* ⬇️ 사이드바 펼침 시 왼쪽 여유만 키우기 + 이동량은 조금 줄임(선택) */
-html.sidebar-open .manual-viewport {        /* ★ 추가 */
-  --left-gap: 330px;                        /* 사이드바 펼친 폭 */
-  --shift-x: -1.25vw;                       /* ★ 펼친 상태에선 덜 이동 */
-}
-
-/* 프레임(원본 PNG 비율 1556:768 유지, 화면 꽉 차게) */
-.manual-border-frame {
-  position: relative;
-  width: min(
-    calc(100vw - var(--left-gap) - var(--right-gap)),
-    calc((100vh - var(--top-gap)) * (1556 / 768))
-  );
-  aspect-ratio: 1556 / 768;
-  height: auto;
-  background: center / contain no-repeat transparent;
-  overflow: hidden;
-  isolation: isolate;
-  transform: translate(var(--shift-x), var(--lift));  /* ★ 가로/세로 동시 이동 */
-}
-
-.frame-inner {
-  position: absolute;
-  inset: 0;
-  padding: 2rem;
+  align-items: center;
+  padding: 20px;
   box-sizing: border-box;
 }
 
-/* 라벨 */
-.label {
-  position: absolute;
-  color: #e6f7ff;
-  text-shadow: 0 0 6px rgba(0,255,255,.25);
-  pointer-events: none;
-  font-weight: 600;
-  letter-spacing: .02em;
+// --- 메인 컨테이너 (사이즈 고정) ---
+.manual-beginner-container {
+  width: 100%;
+  max-width: 1000px;
+  height: 85vh;
+  max-height: 800px;
+  background: rgba(13, 13, 13, 0.7);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+// --- 헤더 ---
+.manual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba($color-accent, 0.2);
+  flex-shrink: 0;
 }
 .manual-title {
-  top: 2.8%;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: clamp(18px, 2.4vw, 30px);
+  font-size: 3rem;
+  color: $color-accent;
+  text-shadow: 0 0 8px rgba($color-accent, 0.5);
 }
-.guide-title {
-  top: 16.5%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: clamp(17px, 2vw, 47px);
-}
-
-/* 언어 토글 */
 .language-toggle {
-  position: absolute;
-  top: 2rem; right: 2rem;
-  padding: .55rem 1.2rem;
-  color: #cfffff;
-  font-size: .95rem;
-  border: 2px solid #00ffff;
-  border-radius: 10px;
-  background: rgba(0,0,0,.5);
-  box-shadow: 0 0 12px #00ffff;
-  text-shadow: 0 0 8px #00ffff;
-  z-index: 20;
-}
-
-/* 벡터 공통 */
-.vector {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 4;
-  filter: drop-shadow(0 0 6px rgba(0,255,255,.15));
-}
-
-/* 위치/크기 */
-.vector.v1, .vector.v2 {
-  width: 26%;
-  aspect-ratio: 10 / 7;
-  height: auto;
-}
-.vector.v1 { left: 20%; top: 30%; }
-.vector.v2 { left: 20%; top: 71%; }
-
-.vector.v3 {
-  left: 50%;
-  top: 50%;
-  width: 24%;
-  aspect-ratio: 9 / 16;
-  height: auto;
-}
-
-.vector.v4 {
-  left: 82%;
-  top: 53%;
-  width: 35%;
-  aspect-ratio: 4 / 3;
-  height: auto;
-}
-
-/* 하단 Tutorial 버튼 */
-.tutorial-cta {
-  position: absolute;
-  left: 50%;
-  bottom: 3%;
-  transform: translateX(-50%);
-  width: 20%;
-  min-width: 240px;
-  padding: 0.9rem 1rem;
-  text-align: center;
-  border-radius: 16px;
-  background: #66f0f2;
-  color: #0b0f14;
-  font-weight: 800;
-  font-size: clamp(14px, 1.4vw, 20px);
-  text-decoration: none;
-  box-shadow: 0 0 26px rgba(191, 120, 255, .35),
-              0 0 16px rgba(102, 240, 242, .5) inset;
-  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
-  z-index: 10;
-}
-.tutorial-cta:hover {
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 0 36px rgba(191,120,255,.45),
-              0 0 22px rgba(102,240,242,.7) inset;
-  filter: brightness(1.05);
-}
-
-/* 작은 화면에서 여백만 축소 */
-@media (max-width: 900px) {
-  .frame-inner { padding: 1rem; }
-}
-
-.box-label {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: 26%;                 /* v1/v2 박스 폭과 동일 */
-  text-align: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: clamp(26px, 3.8vw, 72px);  /* 스샷처럼 큼직하게 */
-  letter-spacing: .02em;
-  text-shadow: 0 0 12px rgba(0,255,255,.3), 0 0 2px rgba(0,0,0,.6);
-  z-index: 6;
-  pointer-events: none;
-}
-.box-label.v1 { left: 20%; top: 30%; }
-.box-label.v2 { left: 20%; top: 71%; }
-.rules-title { display: none !important; }
-
-/* 게임 소개 박스 클릭 핫스팟 (투명 링크) */
-.hotspot {
-  position: absolute;
-  display: block;
-  transform: translate(-50%, -50%);
-  z-index: 8;            /* 벡터와 라벨 위에서 클릭 받기 */
+  background-color: transparent;
+  border: 1px solid $color-accent;
+  color: $color-accent;
+  padding: 8px 16px;
+  font-size: 1.5rem;
+  border-radius: 20px;
   cursor: pointer;
-  background: transparent;
-  outline: none;
+  transition: all 0.3s ease;
+  &:hover {
+    background-color: $color-accent;
+    color: $color-bg;
+  }
 }
 
-/* v1: 좌측 상단 박스 영역과 똑같이 덮어씌움 */
-.hotspot.v1 {
-  left: 20%;
-  top: 30%;
-  width: 26%;
-  aspect-ratio: 10 / 7;
+// --- 콘텐츠 영역 (페이지 전환의 기준) ---
+.manual-content-area {
+  flex-grow: 1;
+  position: relative;
+  overflow: hidden;
 }
 
-.hotspot:focus-visible {
-  box-shadow: 0 0 0 3px rgba(102,240,242,.8);
-  border-radius: 14px;
+// --- 페이지 공통 스타일 ---
+.page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding-right: 10px;
+  overflow-y: auto;
+  transition: transform 0.5s ease-in-out, opacity 0.4s ease-in-out;
+
+  &.active {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+  &.inactive-left {
+    transform: translateX(-50px);
+    opacity: 0;
+    pointer-events: none;
+  }
+  &.inactive-right {
+    transform: translateX(50px);
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
+.page-two-footer-nav {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+// --- 페이지네이션 컨트롤 ---
+.manual-pagination-controls {
+  padding-top: 20px;
+  margin-top: auto;
+  border-top: 1px solid rgba($color-accent, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  
+  .page-button {
+    background-color: $color-accent;
+    color: $color-bg;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba($color-accent, 0.7);
+    }
+    
+    &.prev {
+      background-color: transparent;
+      border: 2px solid $color-accent-dark;
+      color: $color-accent-dark;
+    }
+    
+    &.next {
+      margin-left: auto;
+    }
+  }
+}
+
+// --- 아바타 (이미지 태그용) ---
+.guide-avatar {
+  flex-shrink: 0;
+  margin-right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: $color-container-bg;
+}
+
+// --- 말풍선 및 내부 콘텐츠 ---
+.dialog-wrapper {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.speech-bubble {
+  position: relative;
+  background-color: $color-bubble;
+  color: $color-text-dark;
+  border-radius: 12px;
+  padding: 20px 25px;
+  width: 100%;
+  &::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 20px;
+    border: 10px solid transparent;
+    border-right-color: $color-bubble;
+  }
+
+  p {
+    font-size: 1.2rem;
+    line-height: 1.7;
+  }
+}
+.bubble-title {
+  font-size: 2rem;
+  color: #000;
+  margin-bottom: 15px;
+}
+.rules-list {
+  list-style: none;
+  padding-left: 0;
+  li {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 12px;
+    font-size: 1.2rem;
+    line-height: 1.7;
+    &::before {
+      content: '✔';
+      position: absolute;
+      left: 0;
+      top: 2px;
+      color: $color-accent-dark;
+    }
+  }
+}
+.next-steps-container {
+  display: grid; // 그리드 레이아웃 사용
+  grid-template-columns: repeat(2, 1fr); // 2개의 동일한 너비의 컬럼 생성
+  gap: 1rem; // 카드 사이의 간격
+  margin-top: 1rem;
+}
+.step-card {
+  flex: 1;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 20px;
+  text-decoration: none;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  &:hover {
+    transform: translateY(-5px);
+    border-color: $color-accent;
+  }
+  h3 { color: $color-accent-dark; margin-bottom: 10px; }
+  p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.6;
+  }
+}
+
+.nav-button {
+  // --- 공통 베이스 스타일 ---
+  padding: 10px 28px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-radius: 8px;
+  transition: all 0.2s ease-out;
+  background: transparent; // 기본 배경은 투명
+  cursor: pointer;
+  transform: translateY(0); // 호버 효과를 위한 초기 위치
+
+  // --- 주 버튼 (튜토리얼 시작하기) ---
+  border: 2px solid $color-accent; // 밝은 테두리
+  color: $color-accent;            // 밝은 텍스트
+  
+  &:hover {
+    background: $color-accent; // 호버 시 밝은 색으로 채우기
+    color: $color-bg;          // 텍스트 색상 반전
+    box-shadow: 0 0 20px rgba($color-accent, 0.7); // 글로우 효과
+    transform: translateY(-2px); // 살짝 위로 이동
+  }
+
+  // --- 보조 버튼 (머신 보러가기) ---
+  &.secondary {
+    border: 2px solid $color-accent-dark; // 어두운 테두리
+    color: $color-accent-dark;            // 어두운 텍스트
+    box-shadow: none;                     // 기본 그림자 없음
+    
+    &:hover {
+      background: $color-accent-dark; // 호버 시 어두운 색으로 채우기
+      color: #fff;                     // 텍스트 색상 반전
+      box-shadow: 0 0 15px rgba($color-accent-dark, 0.7); // 은은한 글로우
+      transform: translateY(-2px);
+    }
+  }
+}

@@ -1,10 +1,11 @@
-/* * BattlePage.scss - Unstable Data Stream Theme
- */
+/* * BattlePage.scss - Unstable Data Stream Theme (v4 - Star Removed)
+ */
 @use "../style" as *;
 
 // --- 테마 변수 ---
 :root {
   --glow-color: #31e8ee;
+  --glow-color-rgb: 49, 232, 238;
   --glitch-color-1: #ff00c1;
   --glitch-color-2: #00e1ff;
   --background-color: #01020a;
@@ -21,17 +22,20 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  overflow: hidden;
+  /* 유성 효과를 위한 ::before 블록이 여기서 삭제되었습니다. */
 }
 
 // --- 동적 배경 그리드 ---
 .battle-background-grid {
   position: absolute;
   inset: 0;
+  background-image:
+    linear-gradient(var(--border-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
   background-size: 50px 50px;
   opacity: 0.1;
   animation: grid-pan 10s linear infinite;
-  overflow: hidden;
-
 }
 
 // --- 중앙 모듈 ---
@@ -40,8 +44,7 @@
   text-align: center;
   padding: 2rem;
   width: clamp(300px, 90vw, 900px);
-  transform: translateY(40%);
-  
+  transform: translateY(30%);
 }
 
 // --- 글리치 타이틀 ---
@@ -52,9 +55,8 @@
   color: var(--text-color);
   text-transform: uppercase;
   margin: 0 0 4rem 0;
-  animation: text-flicker 3s linear infinite;
+  animation: text-flicker 4s linear infinite;
 
-  // 글리치 효과를 위한 가상 요소
   &::before, &::after {
     content: attr(data-text);
     position: absolute;
@@ -62,18 +64,18 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--background-color);
+    background: transparent;
     overflow: hidden;
   }
   &::before {
     left: 2px;
     text-shadow: -2px 0 var(--glitch-color-1);
-    animation: glitch-1 2s infinite reverse linear;
+    animation: glitch-soft-1 2.5s infinite reverse linear;
   }
   &::after {
     left: -2px;
     text-shadow: -2px 0 var(--glitch-color-2);
-    animation: glitch-2 2.5s infinite reverse linear;
+    animation: glitch-soft-2 3s infinite reverse linear;
   }
 }
 
@@ -93,16 +95,16 @@
 .battle-button {
   position: relative;
   display: block;
-  width: 320px; // 너비를 280px에서 320px로 늘림
-  padding: 1.5rem 2.5rem; // 상하좌우 여백을 늘려 전체 크기 키움
+  width: 320px;
+  padding: 1.5rem 2.5rem;
   background-color: transparent;
   color: var(--text-color);
   text-decoration: none;
   text-transform: uppercase;
-  font-size: 2rem; // 폰트 크기를 키워 버튼에 꽉 차는 느낌을 줌
+  font-size: 2rem;
   border: 1px solid var(--border-color);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
 
   span {
     position: relative;
@@ -110,10 +112,13 @@
   }
 
   &:hover {
-    background-color: rgba(var(--glow-color), 0.1);
+    background-color: rgba(var(--glow-color-rgb), 0.1);
+    transform: translateY(-5px);
+    color: var(--text-color);
+    box-shadow: 0 10px 20px rgba(var(--glow-color-rgb), 0.2);
     
     .button-loader {
-      width: 100%; // 로더 애니메이션 활성화
+      width: 100%;
     }
   }
 }
@@ -141,37 +146,33 @@
   0% { background-position: 0 0; }
   100% { background-position: 50px 50px; }
 }
+
 @keyframes text-flicker {
-  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+  0%, 100% {
+    text-shadow: 0 0 2px var(--text-color);
     opacity: 1;
   }
-  20%, 24%, 55% {
-    opacity: 0.2;
+  50% {
+    text-shadow: 0 0 5px var(--text-color);
+    opacity: 0.8;
   }
 }
 
-// 글리치 애니메이션
-@keyframes glitch-1 {
-  0%, 100% { clip-path: inset(50% 0 51% 0); }
-  20% { clip-path: inset(10% 0 81% 0); }
-  40% { clip-path: inset(40% 0 41% 0); }
-  60% { clip-path: inset(80% 0 1% 0); }
-  80% { clip-path: inset(20% 0 71% 0); }
-}
-@keyframes glitch-2 {
-  0%, 100% { clip-path: inset(1% 0 91% 0); }
-  25% { clip-path: inset(20% 0 51% 0); }
-  50% { clip-path: inset(80% 0 11% 0); }
-  75% { clip-path: inset(40% 0 21% 0); }
+@keyframes glitch-soft-1 {
+  0% { transform: translateX(-1px); clip-path: inset(10% 0 85% 0); }
+  20% { clip-path: inset(90% 0 5% 0); }
+  40% { transform: translateX(1px); }
+  60% { clip-path: inset(5% 0 90% 0); }
+  80% { transform: translateX(-0.5px); clip-path: inset(40% 0 45% 0); }
+  100% { clip-path: none; transform: translateX(0); }
 }
 
-@keyframes shooting-star {
-  from {
-    // 시작 위치 (transform으로 제어)
-    transform: translateX(0) rotate(-45deg);
-  }
-  to {
-    // 화면을 완전히 가로지르는 최종 위치
-    transform: translateX(150vw) rotate(-45deg);
-  }
+@keyframes glitch-soft-2 {
+  0% { transform: translateY(1px); clip-path: inset(80% 0 5% 0); }
+  25% { clip-path: inset(10% 0 85% 0); }
+  50% { transform: translateY(-1px); }
+  75% { clip-path: inset(85% 0 10% 0); }
+  100% { clip-path: none; transform: translateY(0); }
 }
+
+/* @keyframes shooting-star 부분이 여기서 삭제되었습니다. */
