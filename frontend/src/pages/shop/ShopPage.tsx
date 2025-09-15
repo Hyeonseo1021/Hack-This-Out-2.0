@@ -44,7 +44,6 @@ const ShopPage: React.FC = () => {
     }
   };
 
-
   useEffect(() => {
     fetchAll();
   }, []);
@@ -71,12 +70,52 @@ const ShopPage: React.FC = () => {
   return (
     <Main>
       <div className="shop-layout--blueprint">
-        
         {/* ─ Left: Shop Panel ─ */}
         <section className="panel--blueprint">
-          <div className="panel__header">
+          <div
+            className="panel__header"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
+          >
             <h1 className="panel__title">SHOP TERMINAL</h1>
+
+            {/* 정렬 UI (상태 추가 없이 URL 쿼리로 동작) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <label
+                htmlFor="shop-sort"
+                style={{ color: 'var(--color-gainsboro)', fontSize: 12, opacity: 0.9 }}
+              >
+                정렬
+              </label>
+              <select
+                id="shop-sort"
+                defaultValue={
+                  (typeof window !== 'undefined'
+                    ? new URLSearchParams(window.location.search).get('sort')
+                    : null) || 'price-asc'
+                }
+                onChange={(e) => {
+                  // 쿼리 파라미터 갱신 후 새로고침 (상단 로직 수정 없이 반영)
+                  const v = e.target.value;
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('sort', v);
+                  window.location.href = url.toString();
+                }}
+                style={{
+                  background: 'transparent',
+                  color: 'var(--color-gainsboro)',
+                  border: '1px solid var(--bp-border)',
+                  padding: '6px 10px',
+                  fontSize: 12,
+                  letterSpacing: '.03em',
+                }}
+              >
+                <option value="price-asc">가격 낮은순</option>
+                <option value="price-desc">가격 높은순</option>
+                <option value="name-asc">이름 오름차순</option>
+              </select>
+            </div>
           </div>
+
           <div className="panel__content">
             <div className="shop-balance">
               <span> 보유 자산 </span>
@@ -88,27 +127,49 @@ const ShopPage: React.FC = () => {
             )}
             {!loading && items.length > 0 && (
               <div className="shop-grid">
-                {items.map((item) => (
-                  <div key={item._id} className="shop-item">
-                    <div className="shop-item__header">
-                      <h3>{item.name}</h3>
-                      <span>{item.price} HTO</span>
+                {
+                  // 쿼리 파라미터 기반 정렬 (상태 없이 즉시 계산)
+                  (() => {
+                    const sortKey =
+                      (typeof window !== 'undefined'
+                        ? new URLSearchParams(window.location.search).get('sort')
+                        : null) || 'price-asc';
+
+                    const sorted = [...items].sort((a, b) => {
+                      switch (sortKey) {
+                        case 'price-desc':
+                          return (b.price ?? 0) - (a.price ?? 0);
+                        case 'name-asc':
+                          return (a.name || '').localeCompare(b.name || '');
+                        case 'price-asc':
+                        default:
+                          return (a.price ?? 0) - (b.price ?? 0);
+                      }
+                    });
+
+                    return sorted;
+                  })().map((item) => (
+                    <div key={item._id} className="shop-item">
+                      <div className="shop-item__header">
+                        <h3>{item.name}</h3>
+                        <span>{item.price} HTO</span>
+                      </div>
+                      <p className="shop-item__desc">{item.description}</p>
+                      <button
+                        className="shop-item__btn"
+                        onClick={() => handleBuyItem(item._id)}
+                        disabled={buyingId === item._id}
+                      >
+                        {buyingId === item._id ? '처리 중...' : '아이템 획득'}
+                      </button>
                     </div>
-                    <p className="shop-item__desc">{item.description}</p>
-                    <button
-                      className="shop-item__btn"
-                      onClick={() => handleBuyItem(item._id)}
-                      disabled={buyingId === item._id}
-                    >
-                      {buyingId === item._id ? '처리 중...' : '아이템 획득'}
-                    </button>
-                  </div>
-                ))}
+                  ))
+                }
               </div>
             )}
           </div>
         </section>
-        
+
         {/* ─ Right: Inventory Panel ─ */}
         <aside className="panel--blueprint">
           <div className="panel__header">
@@ -129,7 +190,7 @@ const ShopPage: React.FC = () => {
                       <div className="inventory-item__meta">
                         {e.isUsed && <span className="badge--used">사용됨</span>}
                         <span className="inventory-item__date">
-                          {new Date(e.acquiredAt).toLocaleDateString()}
+                          {new Date(e.acquiredAt).toLocaleDateString('ko-KR')}
                         </span>
                       </div>
                     </li>

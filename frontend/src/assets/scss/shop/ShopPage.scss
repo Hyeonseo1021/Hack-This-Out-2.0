@@ -2,6 +2,29 @@
 /* Blueprint Theme - Two Column Final */
 @use "../style" as *;
 // --- 테마 변수 ---
+/* === Theme Presets === */
+:root {
+  /* 기본: 핑크 */
+  --bp-accent: #ff64b4;
+  --bp-glow: rgba(255, 100, 180, 0.45);
+  --bp-border: #3a3a3a;
+  --bp-bg: rgba(10,10,14,0.6);
+  --bp-text-muted: #9aa0a6;
+  --color-gainsboro: #dcdcdc;
+  --color-background-transparent: rgba(255,255,255,0.06);
+}
+
+/* ⬇️ 시안 테마 */
+.theme-cyan {
+  --bp-accent: #00e0ff;
+  --bp-glow: rgba(0, 224, 255, 0.45);
+}
+
+/* ⬇️ 그린 테마 */
+.theme-green {
+  --bp-accent: #39ff14;
+  --bp-glow: rgba(57, 255, 20, 0.45);
+}
 
 // --- 2단 그리드 메인 레이아웃 ---
 .shop-layout--blueprint {
@@ -170,4 +193,260 @@
     height: auto; // 높이를 콘텐츠에 맞게 자동 조절
     padding: 24px; // 모바일에서는 패딩을 줄임
   }
+}
+/* === Blueprint Neon Polish – drop-in 추가 스타일 === */
+
+/* 0) 안전한 기본값(없으면 무시됨) */
+:root {
+  --bp-glow: rgba(255, 100, 180, 0.45);
+  --bp-scan: rgba(255,255,255,0.05);
+}
+
+/* 1) 레이아웃 배경에 ‘설계도 그리드’ + 스캔라인 오버레이 */
+.shop-layout--blueprint {
+  position: relative;
+  isolation: isolate; /* 오버레이 분리 */
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* 청사진 그리드 */
+  &::before {
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0 23px,
+        rgba(255,255,255,0.04) 23px 24px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 23px,
+        rgba(255,255,255,0.04) 23px 24px
+      );
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.25));
+  }
+
+  /* 미세 스캔라인 */
+  &::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--bp-scan) 50%,
+      transparent 100%
+    );
+    mix-blend-mode: overlay;
+    animation: scanSweep 6s linear infinite;
+  }
+}
+
+@keyframes scanSweep {
+  0% { transform: translateY(-100%); opacity: .0; }
+  10% { opacity: .35; }
+  50% { opacity: .12; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+/* 2) 패널에 네온 코너+유리감(글래스) */
+.panel--blueprint {
+  position: relative;
+  background: linear-gradient(180deg, rgba(20,22,34,0.55), rgba(9,10,16,0.55));
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--bp-border);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 10px 30px rgba(0,0,0,0.35);
+
+  /* 코너 장식 */
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    width: 18px; height: 18px;
+    pointer-events: none;
+    border: 2px solid var(--bp-accent);
+    filter: drop-shadow(0 0 8px var(--bp-glow));
+  }
+  &::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+  &::after { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+}
+
+/* 3) 헤더/타이틀에 설계도 느낌 강조 */
+.panel__header {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+  border-bottom: 1px dashed rgba(220,220,220,0.25);
+
+  /* 얇은 네온 라인 */
+  &::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--bp-accent), transparent);
+    filter: drop-shadow(0 0 6px var(--bp-glow));
+    opacity: .7;
+  }
+}
+
+.panel__title {
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 8px var(--bp-glow), 0 1px 0 rgba(0,0,0,.5);
+}
+
+/* 4) 잔액 박스에 라인/아이콘 슬롯 느낌 */
+.shop-balance {
+  position: relative;
+  border: 1px solid rgba(220,220,220,0.25);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+
+  &::before {
+    content: "⟡";
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    opacity: .45;
+  }
+  span { opacity: .85; }
+  strong { text-shadow: 0 0 8px var(--bp-glow); }
+}
+
+/* 5) 상점 카드: 글로우, 프라이스 필, 쉬머 */
+.shop-item {
+  border: 1px solid rgba(220,220,220,0.25);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  overflow: hidden;
+
+  /* 상단 그라디언트 라인 */
+  &::before {
+    content: "";
+    position: absolute; inset: 0 0 auto 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--bp-accent), transparent);
+    opacity: .6;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 8px 22px rgba(0,0,0,0.35),
+      0 0 18px -4px var(--bp-glow);
+  }
+
+  &__header {
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    h3 { text-shadow: 0 0 6px rgba(0,0,0,0.35); }
+
+    /* 오른쪽 가격을 ‘필(알약)’ 형태로 */
+    span {
+      display: inline-block;
+      padding: 4px 10px;
+      border: 1px solid var(--bp-accent);
+      border-radius: 999px;
+      background: radial-gradient(100% 100% at 50% 0%, rgba(255,255,255,0.08), rgba(255,255,255,0.01));
+      box-shadow: 0 0 10px -2px var(--bp-glow) inset, 0 0 10px -4px var(--bp-glow);
+      text-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+  }
+
+  /* 카드 내부 은은한 쉬머 */
+  &::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 60%);
+    transform: translateX(-100%);
+    animation: cardShimmer 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
+
+@keyframes cardShimmer {
+  0% { transform: translateX(-120%); }
+  60% { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* 6) 구매 버튼: 네온 보더 + 눌림 피드백 */
+.shop-item__btn {
+  position: relative;
+  border: 1px solid var(--bp-accent);
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 0 12px -4px var(--bp-glow);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06) inset,
+      0 0 18px -2px var(--bp-glow);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    filter: brightness(0.98);
+  }
+
+  /* 외곽 네온 라인 흐름 */
+  &::after {
+    content: "";
+    position: absolute; inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background:
+      conic-gradient(from 0deg, transparent, var(--bp-accent), transparent 25%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: orbit 2.2s linear infinite;
+    opacity: .55;
+  }
+}
+@keyframes orbit {
+  to { transform: rotate(360deg); }
+}
+
+/* 7) 인벤토리: 타임라인 스타일 */
+.inventory-list {
+  position: relative;
+  padding-left: 14px;
+
+  &::before {
+    content: "";
+    position: absolute; left: 6px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--bp-accent), transparent 60%);
+    opacity: .35;
+  }
+}
+.inventory-item {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(220,220,220,0.18);
+  border-radius: 6px;
+
+  /* 점 표시 */
+  &::before {
+    content: "";
+    position: absolute; left: -10px; top: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--bp-accent);
+    box-shadow: 0 0 8px var(--bp-glow);
+    transform: translateY(-50%);
+  }
+}
+
+/* 8) 모션 최소화 설정 */
+@media (prefers-reduced-motion: reduce) {
+  .shop-layout--blueprint::after,
+  .shop-item::after,
+  .shop-item__btn::after { animation: none !important; }
+  .shop-item:hover, .shop-item__btn:hover { transform: none !important; }
 }
