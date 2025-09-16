@@ -7,8 +7,8 @@
     z-index: 0;
     background: var(--secondary-layout);
     overflow: hidden;
-}
-    /* Enhanced Jinx paint splash effect
+
+    // Enhanced Jinx paint splash effect
     &::before {
         content: '';
         position: absolute;
@@ -186,9 +186,8 @@
             filter: blur(0.5px) brightness(1.2) contrast(1.1);
             mix-blend-mode: screen;
         }
-    }*/
-
-
+    }
+}
 
 // Enhanced chaotic animations
 @keyframes paint-shift {
@@ -362,7 +361,7 @@
 
         .upper_bar {
             width: calc(100% - var(--sidebar-width));
-            height: 80px;
+            height: 85px;
             background-color: var(--color-layout);
             z-index: 1;
         }

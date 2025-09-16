@@ -28,13 +28,13 @@ body {
 
 
 	/* component size */
-	--sidebar-width: 330px;
+	--sidebar-width: 340px;
 	--sidebar-collapsed: 80px;
 
 	--container-width: 80dvw;
 	--container-min-width: 1000px;
-	--container-height: 88dvh;
-	--container-min-height: 750px;
+	--container-height: 90dvh;
+	--container-min-height: 800px;
 
 	--profile-width: 360px;
 
@@ -52,14 +52,13 @@ body {
 
 	/* Colors */
 	--color-background-transparent: #13151a;
-	--color-layout: #000000;
-	--secondary-layout: #1c1c1c;
-	--pink:#ff419a;
-	--blue-200: #2985db;
-	--blue-300: #22aec7;
+	--color-layout: #13151a;
+	--secondary-layout: #263037;
+	--blue-200: #8686AC;
+	--blue-300: #505081;
 	--blue-400: #272757;
 	--blue-500: #0F0E47;
-	--lightblue-200: #46abea;
+	--lightblue-200: #2E74A0;
 
 	--lightblue-200-rgb: 173, 216, 230; 
     --blue-300-rgb: 100, 149, 237;
@@ -70,7 +69,7 @@ body {
 	--color-dimgray: #63666e;
 	--color-white: #fff;
 	--colors-others-color-blue-gray-200: #8ea6bf;
-	--color-gainsboro: #31e8ee;
+	--color-gainsboro: #e3e3e4;
 	--color-gray-400: #88909f;
 	--color-red-rosso: #D10000;
 
@@ -78,5 +77,5 @@ body {
 	--gradient-container : linear-gradient(to bottom, #0b1f65, #16488f, #0c2144, #071125); // 컨테이너 배경. ex)CurrentUserInfo 배경 그라데이션
 
 	/* Border */
-	--border-container: 4px;
+	--border-container: 24px;
 }
