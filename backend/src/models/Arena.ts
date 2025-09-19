@@ -26,10 +26,6 @@ const ArenaSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
-        instanceId: {
-            type: String,
-            default: null
-        },
         vpnIp: { 
             type: String,
             default: null
@@ -40,6 +36,14 @@ const ArenaSchema = new mongoose.Schema({
             default: 'waiting'
         }
     }],
+    problemInstanceId: {
+        type: String,
+        default: null
+    },
+    problemInstanceIp: {
+        type: String,
+        default: null
+    },
     maxParticipants: {
         type: Number,
         default: 2,

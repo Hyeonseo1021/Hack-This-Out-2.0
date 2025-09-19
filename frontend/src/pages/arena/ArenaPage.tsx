@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Main from '../../components/main/Main';
 import { useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
-import ArenaCreateButton from '../../components/arena/ArenaCreateButton';
 import { getArenaList } from '../../api/axiosArena';
 import '../../assets/scss/arena/ArenaPage.scss';
 

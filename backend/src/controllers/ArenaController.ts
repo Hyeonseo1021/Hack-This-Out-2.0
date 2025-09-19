@@ -105,7 +105,6 @@ export const registerArenaSocketHandlers = (socket, io) => {
           isReady: !!pp.isReady,
           hasLeft: !!pp.hasLeft,
           publicIp: pp.publicIp ?? null,
-          instanceId: pp.instanceId ?? null,
         })),
       });
 
@@ -172,7 +171,6 @@ export const registerArenaSocketHandlers = (socket, io) => {
           isReady: !!pp.isReady,
           hasLeft: !!pp.hasLeft,
           publicIp: pp.publicIp ?? null,
-          instanceId: pp.instanceId ?? null,
         })),
       });
     } catch (e) {
@@ -206,105 +204,96 @@ export const registerArenaSocketHandlers = (socket, io) => {
       return socket.emit('arena:start-failed', { reason: '호스트 제외 전원이 준비되지 않았습니다.' });
     }
 
-    // 시작 처리
     arena.status = 'started';
-    arena.startTime = new Date();
-    arena.endTime = new Date(arena.startTime.getTime() + arena.duration * 60000);
-    await arena.save();
+  arena.startTime = new Date();
+  arena.endTime = new Date(arena.startTime.getTime() + arena.duration * 60000);
 
-    scheduleEnd(String(arena._id), arena.endTime!, io);
-
-    try {
-      const machine: any = (arena as any).machine;
-      if (!machine?.amiId) {
-        return socket.emit('arena:start-failed', { reason: 'Missing machine AMI info.'});
-      }
-
-      // (옵션) 나간 사람은 건너뜀
-      for (const p of arena.participants.filter(x => !x.hasLeft)) {
-        if (p.instanceId) continue;
-
-        const runParams: any = {
-          ImageId: machine.amiId,
-          InstanceType: (machine.InstanceType as any) || 't2.micro',
-          MinCount: 1,
-          MaxCount: 1,
-        };
-
-        if (config.aws.privateSubnetId) {
-          runParams.NetworkInterfaces = [{
-            DeviceIndex: 0,
-            SubnetId: config.aws.privateSubnetId,
-            Groups: [config.aws.securityGroupId],
-            AssociatePublicIpAddress: false,
-          }];
-        } else {
-          runParams.securityGroupIds = [config.aws.securityGroupId!];
-        }
-
-        const out = await ec2Client.send(new RunInstancesCommand(runParams));
-        const inst = out.Instances?.[0];
-        p.instanceId = inst?.InstanceId || null;
-
-        let privateIp: string | null = inst?.PrivateIpAddress ?? null;
-        for (let i = 0; i < 3 && !privateIp && p.instanceId; i++) {
-          await new Promise(r => setTimeout(r, 1500));
-          const desc = await ec2Client.send(new DescribeInstancesCommand({
-            InstanceIds: [String(p.instanceId)],
-          }));
-          privateIp = desc.Reservations?.[0]?.Instances?.[0]?.PrivateIpAddress || null;
-        }
-
-        (p as any).vpnIp = privateIp ?? null;
-
-        // ✅ vpnIp가 실제로 잡힌 경우에만 vm_connected 전환
-        if ((p as any).vpnIp) {
-          (p as any).status = 'vm_connected';
-        }
-
-        const uid = String((p.user as any)?._id ?? p.user);
-        await Instance.create({
-          user: uid,
-          machineType: machine._id,
-          arena: arenaId,
-          instanceId: p.instanceId,
-          vpnIp: (p as any).vpnIp,
-          status: 'pending',
-        });
-      }
-
-      await arena.save();
-    } catch (e) {
-      console.error('[arena start - spawn', e);
+  try {
+    const machine: any = (arena as any).machine;
+    if (!machine?.amiId) {
+      return socket.emit('arena:start-failed', { reason: 'Missing machine AMI info.'});
     }
 
-    // 방 내부 업데이트 + 시작 이벤트
-    const populated = await Arena.findById(arenaId)
-      .populate('participants.user', '_id username')
-      .lean();
+    // 문제 머신이 없으면 생성 (한 번만)
+    if (!arena.problemInstanceId) {
+      const runParams: any = {
+        ImageId: machine.amiId,
+        InstanceType: (machine.InstanceType as any) || 't2.micro',
+        MinCount: 1,
+        MaxCount: 1,
+      };
 
-    io.to(arenaId).emit('arena:update', {
-      arenaId: String(populated?._id || arenaId),
-      status: populated?.status || 'started',
-      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-      startTime: populated?.startTime || null,
-      endTime: populated?.endTime || null,
-      participants: (populated?.participants || []).map((pp: any) => ({
-        user: pp.user,
-        isReady: !!pp.isReady,
-        hasLeft: !!pp.hasLeft,
-        instanceId: pp.instanceId ?? null,
-        vpnIp: pp.vpnIp ?? null,
-        status: pp.status || 'waiting', // ✅ 명시적으로 포함
-      })),
-    });
+      if (config.aws.privateSubnetId) {
+        runParams.NetworkInterfaces = [{
+          DeviceIndex: 0,
+          SubnetId: config.aws.privateSubnetId,
+          Groups: [config.aws.securityGroupId],
+          AssociatePublicIpAddress: false,
+        }];
+      } else {
+        runParams.SecurityGroupIds = [config.aws.securityGroupId!];
+      }
 
-    io.to(arenaId).emit('arena:start', {
-      arenaId,
-      startTime: arena.startTime,
-      endTime: arena.endTime,
-    });
+      const out = await ec2Client.send(new RunInstancesCommand(runParams));
+      const inst = out.Instances?.[0];
+      arena.problemInstanceId = inst?.InstanceId || null;
+
+      // 문제 머신 IP 대기
+      let problemIp: string | null = inst?.PrivateIpAddress ?? null;
+      for (let i = 0; i < 5 && !problemIp && arena.problemInstanceId; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const desc = await ec2Client.send(new DescribeInstancesCommand({
+          InstanceIds: [String(arena.problemInstanceId)],
+        }));
+        problemIp = desc.Reservations?.[0]?.Instances?.[0]?.PrivateIpAddress || null;
+      }
+      arena.problemInstanceIp = problemIp;
+    }
+
+    // 모든 참가자를 VPN 연결 대기 상태로 변경
+    for (const p of arena.participants.filter(x => !x.hasLeft)) {
+      (p as any).status = 'vpn_connecting';
+      p.vpnIp = null; // VPN IP 초기화
+    }
+
+    await arena.save();
+    scheduleEnd(String(arena._id), arena.endTime!, io);
+
+  } catch (e) {
+    console.error('[arena start - problem machine creation]', e);
+  }
+
+  // 업데이트 브로드캐스트
+  const populated = await Arena.findById(arenaId)
+    .populate('participants.user', '_id username')
+    .lean();
+
+  io.to(arenaId).emit('arena:update', {
+    arenaId: String(populated?._id || arenaId),
+    status: 'started',
+    host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
+    startTime: populated?.startTime || null,
+    endTime: populated?.endTime || null,
+    problemInstanceId: populated?.problemInstanceId || null,
+    problemInstanceIp: populated?.problemInstanceIp || null,
+    participants: (populated?.participants || []).map((pp: any) => ({
+      user: pp.user,
+      isReady: !!pp.isReady,
+      hasLeft: !!pp.hasLeft,
+      vpnIp: pp.vpnIp ?? null,
+      status: pp.status || 'vpn_connecting',
+    })),
   });
+
+  io.to(arenaId).emit('arena:start', {
+    arenaId,
+    startTime: arena.startTime,
+    endTime: arena.endTime,
+    needVpnConnection: true, // 클라이언트에게 VPN 연결 필요함을 알림
+  });
+});
+
+    
 
 
   socket.on('arena:leave', async ({ arenaId, userId }) => {
@@ -616,7 +605,7 @@ export const deleteArenaIfEmpty = async (userId: string, io: any) => {
 
 export const endArena = async (arenaId: string, io: any) => {
   try {
-    // ✅ 1) 시작 때 걸어둔 종료 타이머 정리
+    // 1) 시작 때 걸어둔 종료 타이머 정리
     const t = gameTimers.get(arenaId);
     if (t) { clearTimeout(t); gameTimers.delete(arenaId); }
 
@@ -627,7 +616,7 @@ export const endArena = async (arenaId: string, io: any) => {
     arena.endTime = new Date();
     await arena.save();
 
-    // ✅ 2) 종료 스냅샷 먼저 방송(프론트가 즉시 상태 전환 가능)
+    // 2) 종료 스냅샷 먼저 방송
     const populated = await Arena.findById(arenaId)
       .populate('participants.user', '_id username')
       .lean();
@@ -638,39 +627,57 @@ export const endArena = async (arenaId: string, io: any) => {
       host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
       startTime: populated?.startTime || null,
       endTime: populated?.endTime || null,
+      problemInstanceId: populated?.problemInstanceId || null,
+      problemInstanceIp: populated?.problemInstanceIp || null,
       participants: (populated?.participants || []).map((pp: any) => ({
         user: pp.user,
         isReady: !!pp.isReady,
         hasLeft: !!pp.hasLeft,
-        instanceId: pp.instanceId ?? null,
         vpnIp: pp.vpnIp ?? null,
+        status: pp.status || 'waiting',
       })),
     });
 
-    // (옵션) 별도 끝났음 이벤트도 유지
     io.to(arenaId).emit('arena:ended', { endTime: arena.endTime });
 
-    // ✅ 3) EC2 인스턴스 종료(실패해도 다른 것 계속 진행)
-    await Promise.allSettled(
-      arena.participants.map(async (p) => {
-        if (!p.instanceId) return;
-        try {
-          const terminateCommand = new TerminateInstancesCommand({
-            InstanceIds: [p.instanceId],
-          });
-          await ec2Client.send(terminateCommand);
-        } catch (err) {
-          console.warn(`[인스턴스 종료 실패] ${p.instanceId}:`, err);
-        }
-      })
-    );
+    const summary = await Arena.findById(arenaId)
+      .select('name category status maxParticipants participants.user participants.hasLeft')
+      .lean();
 
-    // ✅ 4) Instance 컬렉션 정리
+    if (summary) {
+      io.emit('arena:room-updated', {
+        _id: String(summary._id),
+        name: summary.name,
+        category: summary.category,
+        status: summary.status, // 이제 'ended'가 됨
+        maxParticipants: summary.maxParticipants,
+        participants: (summary.participants || []).map((p: any) => ({
+          user: String((p.user && (p.user as any)._id) ?? p.user),
+          hasLeft: !!p.hasLeft,
+        })),
+      });
+    }
+
+    // 3) 문제 인스턴스 종료 (개별 인스턴스 대신)
+    if (arena.problemInstanceId) {
+      try {
+        const terminateCommand = new TerminateInstancesCommand({
+          InstanceIds: [arena.problemInstanceId],
+        });
+        await ec2Client.send(terminateCommand);
+      } catch (err) {
+        console.warn(`[문제 인스턴스 종료 실패] ${arena.problemInstanceId}:`, err);
+      }
+    }
+
+    // 4) Instance 컬렉션 정리
     await Instance.deleteMany({ arena: arenaId });
 
   } catch (err) {
     console.error('endArena error:', err);
   }
+
+  
 };
 
 export const submitFlagArena = async (req: Request, res: Response): Promise<void> => {
@@ -768,16 +775,18 @@ export const submitFlagArena = async (req: Request, res: Response): Promise<void
     const io = req.app.get('io');
     io.to(arenaId).emit('arena:update', {
       arenaId: String(populated?._id || arenaId),
-      status: populated?.status || 'started',
+      status: populated?.status || 'waiting',
       host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
       startTime: populated?.startTime || null,
       endTime: populated?.endTime || null,
+      problemInstanceId: populated?.problemInstanceId || null, // 추가
+      problemInstanceIp: populated?.problemInstanceIp || null, // 추가
       participants: (populated?.participants || []).map((pp: any) => ({
         user: pp.user,
         isReady: !!pp.isReady,
         hasLeft: !!pp.hasLeft,
-        instanceId: pp.instanceId ?? null,
         vpnIp: pp.vpnIp ?? null,
+        status: pp.status || 'waiting', // instanceId 제거
       })),
     });
 
@@ -796,5 +805,70 @@ export const submitFlagArena = async (req: Request, res: Response): Promise<void
   } catch (error) {
     console.error('Arena flag 제출 중 오류:', error);
     res.status(500).json({ msg: 'Arena flag 제출 실패' });
+  }
+};
+
+export const receiveArenaVpnIp = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { arenaId, vpnIp } = req.body;
+    const userId = res.locals.jwtData?.id;
+
+    if (!arenaId || !userId || !vpnIp) {
+      res.status(400).json({ msg: '필수 정보 누락됨.' });
+      return;
+    }
+
+    const arena = await Arena.findById(arenaId);
+    if (!arena) {
+      res.status(404).json({ msg: 'Arena not found.' });
+      return;
+    }
+
+    const participant = arena.participants.find(p => 
+      String((p.user as any)?._id ?? p.user) === String(userId)
+    );
+
+    if (!participant) {
+      res.status(404).json({ msg: 'Participant not found.' });
+      return;
+    }
+
+    // VPN IP 할당
+    participant.vpnIp = vpnIp;
+    (participant as any).status = 'vm_connected';
+    
+    await arena.save();
+
+    res.status(200).json({ 
+      msg: 'VPN IP updated successfully',
+      problemInstanceIp: arena.problemInstanceIp 
+    });
+
+    // 실시간 업데이트
+    const io = req.app.get('io');
+    const populated = await Arena.findById(arenaId)
+      .populate('participants.user', '_id username')
+      .lean();
+
+    io.to(arenaId).emit('arena:update', {
+      arenaId: String(populated?._id || arenaId),
+      status: populated?.status || 'started',
+      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
+      startTime: populated?.startTime || null,
+      endTime: populated?.endTime || null,
+      problemInstanceId: populated?.problemInstanceId || null,
+      problemInstanceIp: populated?.problemInstanceIp || null,
+      participants: (populated?.participants || []).map((pp: any) => ({
+        user: pp.user,
+        isReady: !!pp.isReady,
+        hasLeft: !!pp.hasLeft,
+        vpnIp: pp.vpnIp ?? null,
+        status: pp.status || 'waiting',
+      })),
+    });
+
+  } catch (error) {
+    console.error('Error receiving arena VPN IP:', error);
+    res.status(500).send('Failed to receive VPN IP.');
   }
 };
