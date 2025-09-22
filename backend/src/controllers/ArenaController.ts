@@ -100,11 +100,14 @@ export const registerArenaSocketHandlers = (socket, io) => {
         host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
         startTime: populated?.startTime || null,
         endTime: populated?.endTime || null,
+        problemInstanceId: populated?.problemInstanceId || null,  // 추가
+        problemInstanceIp: populated?.problemInstanceIp || null,  // 추가
         participants: (populated?.participants || []).map((pp: any) => ({
           user: pp.user,
           isReady: !!pp.isReady,
           hasLeft: !!pp.hasLeft,
-          publicIp: pp.publicIp ?? null,
+          vpnIp: pp.vpnIp ?? null,  // 추가
+          status: pp.status || 'waiting',  // 추가
         })),
       });
 
@@ -166,11 +169,15 @@ export const registerArenaSocketHandlers = (socket, io) => {
         host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
         startTime: populated?.startTime || null,
         endTime: populated?.endTime || null,
+        problemInstanceId: populated?.problemInstanceId || null,  // 추가
+        problemInstanceIp: populated?.problemInstanceIp || null,  // 추가
         participants: (populated?.participants || []).map((pp: any) => ({
-          user: pp.user, // {_id, username}
+          user: pp.user,
           isReady: !!pp.isReady,
           hasLeft: !!pp.hasLeft,
-          publicIp: pp.publicIp ?? null,
+          vpnIp: pp.vpnIp ?? null,  // 추가
+          status: pp.status || 'waiting',  // 추가
+          // publicIp, instanceId 제거
         })),
       });
     } catch (e) {
@@ -339,12 +346,14 @@ export const registerArenaSocketHandlers = (socket, io) => {
         host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
         startTime: populated?.startTime || null,
         endTime: populated?.endTime || null,
+        problemInstanceId: populated?.problemInstanceId || null,  // 추가
+        problemInstanceIp: populated?.problemInstanceIp || null,  // 추가
         participants: (populated?.participants || []).map((pp: any) => ({
           user: pp.user,
           isReady: !!pp.isReady,
-          hasLeft: !!pp.hasLeft,        // ✅ 포함
-          publicIp: pp.publicIp ?? null,
-          instanceId: pp.instanceId ?? null,
+          hasLeft: !!pp.hasLeft,
+          vpnIp: pp.vpnIp ?? null,  // 추가
+          status: pp.status || 'waiting',  // 추가
         })),
       });
 
@@ -414,12 +423,14 @@ export const registerArenaSocketHandlers = (socket, io) => {
           host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
           startTime: populated?.startTime || null,
           endTime: populated?.endTime || null,
+          problemInstanceId: populated?.problemInstanceId || null,  // 추가
+          problemInstanceIp: populated?.problemInstanceIp || null,  // 추가
           participants: (populated?.participants || []).map((pp: any) => ({
-            user: pp.user, 
+            user: pp.user,
             isReady: !!pp.isReady,
             hasLeft: !!pp.hasLeft,
-            instanceId: pp.instanceId ?? null,
-            vpnIp: pp.vpnIp ?? null,
+            vpnIp: pp.vpnIp ?? null,  // 추가
+            status: pp.status || 'waiting',  // 추가
           })),
         });
 
@@ -466,9 +477,14 @@ export const registerArenaSocketHandlers = (socket, io) => {
         host: String((populated.host as any)?._id ?? populated.host ?? ''),
         startTime: populated.startTime || null,
         endTime: populated.endTime || null,
+        problemInstanceId: populated?.problemInstanceId || null,  // 추가
+        problemInstanceIp: populated?.problemInstanceIp || null,  // 추가
         participants: (populated.participants || []).map((pp: any) => ({
-          user: pp.user,          // {_id, username}
+          user: pp.user,
           isReady: !!pp.isReady,
+          hasLeft: !!pp.hasLeft,  // 추가
+          vpnIp: pp.vpnIp ?? null,  // 추가
+          status: pp.status || 'waiting',  // 추가
         })),
       });
     } catch (e) {

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { getShopItems, buyShopItem, getInventory } from '../../api/axiosShop';
 import { getUserDetail } from '../../api/axiosUser';
 import { ShopItem } from '../../types/ShopItem';
-import ShopItemCard from '../../components/shop/ShopItemCard';
 import '../../assets/scss/Shop/ShopPage.scss';
 import Main from '../../components/main/Main';
 import { toast } from 'react-toastify';
@@ -78,8 +77,8 @@ const ShopPage: React.FC = () => {
           >
             <h1 className="panel__title">SHOP TERMINAL</h1>
 
-            {/* 정렬 UI (상태 추가 없이 URL 쿼리로 동작) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* 정렬 UI (현재 구조 유지 / 사이버 툴바 스타일 적용) */}
+            <div className="cy-toolbar">
               <label
                 htmlFor="shop-sort"
                 style={{ color: 'var(--color-gainsboro)', fontSize: 12, opacity: 0.9 }}
@@ -88,31 +87,58 @@ const ShopPage: React.FC = () => {
               </label>
               <select
                 id="shop-sort"
+                className="cy-select"
                 defaultValue={
                   (typeof window !== 'undefined'
                     ? new URLSearchParams(window.location.search).get('sort')
                     : null) || 'price-asc'
                 }
                 onChange={(e) => {
-                  // 쿼리 파라미터 갱신 후 새로고침 (상단 로직 수정 없이 반영)
-                  const v = e.target.value;
+                  // ✅ 새로고침 없이 적용: URL만 교체, 리스트는 즉시 정렬하여 재렌더
+                  const v = e.target.value as 'price-asc' | 'price-desc' | 'name-asc';
+
+                  // 1) URL 쿼리만 리로드 없이 갱신
                   const url = new URL(window.location.href);
                   url.searchParams.set('sort', v);
-                  window.location.href = url.toString();
-                }}
-                style={{
-                  background: 'transparent',
-                  color: 'var(--color-gainsboro)',
-                  border: '1px solid var(--bp-border)',
-                  padding: '6px 10px',
-                  fontSize: 12,
-                  letterSpacing: '.03em',
+                  window.history.replaceState({}, '', url.toString());
+
+                  // 2) 현재 items를 즉시 정렬해서 재렌더 트리거
+                  setItems((prev) => {
+                    const next = [...prev];
+                    switch (v) {
+                      case 'price-desc':
+                        return next.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+                      case 'name-asc':
+                        return next.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                      case 'price-asc':
+                      default:
+                        return next.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+                    }
+                  });
                 }}
               >
                 <option value="price-asc">가격 낮은순</option>
                 <option value="price-desc">가격 높은순</option>
                 <option value="name-asc">이름 오름차순</option>
               </select>
+
+              {/* ▶ 인벤토리 드로어 열기 버튼 (해시 기반) */}
+              <a
+                href="#inv"
+                className="cy-button--accent"
+                style={{
+                  marginLeft: 8,
+                  padding: '6px 10px',
+                  borderRadius: 6,
+                  border: '1px solid var(--bp-accent)',
+                  background: 'transparent',
+                  color: 'var(--color-gainsboro)',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                인벤토리
+              </a>
             </div>
           </div>
 
@@ -128,7 +154,7 @@ const ShopPage: React.FC = () => {
             {!loading && items.length > 0 && (
               <div className="shop-grid">
                 {
-                  // 쿼리 파라미터 기반 정렬 (상태 없이 즉시 계산)
+                  // (초기 진입 시 쿼리 기준 정렬, onChange 시 setItems로 즉시 반영)
                   (() => {
                     const sortKey =
                       (typeof window !== 'undefined'
@@ -170,36 +196,43 @@ const ShopPage: React.FC = () => {
           </div>
         </section>
 
-        {/* ─ Right: Inventory Panel ─ */}
-        <aside className="panel--blueprint">
-          <div className="panel__header">
-            <h2 className="panel__title">INVENTORY LOG</h2>
+        {/* ─ Inventory Drawer (우측 슬라이드 / 모바일 바텀시트) ─ */}
+        <div id="inv" className="inv-drawer" role="dialog" aria-modal="true">
+          {/* 오버레이 - 클릭 시 닫기 (해시 제거) */}
+          <a href="#" className="inv-drawer__overlay" aria-label="닫기" />
+
+          <div className="inv-drawer__panel" onClick={(e) => e.stopPropagation()}>
+            <div className="inv-drawer__header">
+              <h2 className="panel__title">INVENTORY LOG</h2>
+              <a href="#" className="inv-drawer__close" aria-label="닫기">✕</a>
+            </div>
+
+            <div className="inv-drawer__content">
+              {invLoading ? (
+                <div className="loader">인벤토리 스캔 중...</div>
+              ) : inventory.length === 0 ? (
+                <div className="empty-state">보유한 아이템이 없습니다.</div>
+              ) : (
+                <ul className="inventory-list">
+                  {inventory.map((e) => {
+                    const name = e.item?.name ?? '[알 수 없는 아이템]';
+                    return (
+                      <li key={e._id} className="inventory-item">
+                        <span className="inventory-item__name">{name}</span>
+                        <div className="inventory-item__meta">
+                          {e.isUsed && <span className="badge--used">사용됨</span>}
+                          <span className="inventory-item__date">
+                            {new Date(e.acquiredAt).toLocaleDateString('ko-KR')}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </div>
-          <div className="panel__content">
-            {invLoading ? (
-              <div className="loader">인벤토리 스캔 중...</div>
-            ) : inventory.length === 0 ? (
-              <div className="empty-state">보유한 아이템이 없습니다.</div>
-            ) : (
-              <ul className="inventory-list">
-                {inventory.map((e) => {
-                  const name = e.item?.name ?? '[알 수 없는 아이템]';
-                  return (
-                    <li key={e._id} className="inventory-item">
-                      <span className="inventory-item__name">{name}</span>
-                      <div className="inventory-item__meta">
-                        {e.isUsed && <span className="badge--used">사용됨</span>}
-                        <span className="inventory-item__date">
-                          {new Date(e.acquiredAt).toLocaleDateString('ko-KR')}
-                        </span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </aside>
+        </div>
       </div>
     </Main>
   );

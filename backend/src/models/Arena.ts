@@ -32,7 +32,7 @@ const ArenaSchema = new mongoose.Schema({
         },
         status: {
             type: String,
-            enum: ['waiting', 'vm_connected', 'flag_submitted', 'completed'],
+            enum: ['waiting', 'vpn_connecting', 'vm_connected', 'flag_submitted', 'completed'],
             default: 'waiting'
         }
     }],

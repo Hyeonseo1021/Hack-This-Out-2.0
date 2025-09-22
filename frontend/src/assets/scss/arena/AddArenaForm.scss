@@ -1,6 +1,5 @@
 @use "../style" as *;
 
-// --- 테마 변수 ---
 :root {
   --crt-bg: #0d0d0d;
   --crt-green: #31e8ee;
@@ -8,139 +7,156 @@
   --crt-error: #ff5555;
 }
 
-// --- 애니메이션 ---
-@keyframes crt-flicker {
-  0%, 100% { opacity: 1; }
-  50.2% { opacity: 0.9; }
-  50.5% { opacity: 1; }
-  50.8% { opacity: 0.95; }
-}
-@keyframes text-reveal {
-  from { width: 0; }
-  to { width: 100%; }
-}
+// 애니메이션
 @keyframes cursor-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
 
-// --- 전체 컨테이너 및 배경 ---
+@keyframes text-reveal {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+// 전체 화면
 .terminal-form-container {
   @include background_set;
-  position: relative;
-  backdrop-filter: blur(40px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  padding: 40px 20px;
+  font-family: 'VT323', monospace;
+  background-color: var(--crt-bg);
+  color: var(--crt-green);
+  min-height: 100vh;
 }
 
-.background-grid { display: none; } // 그리드는 사용하지 않음
-
-// --- 메인 폼 모듈 ---
+// 폼 박스
 .terminal-module {
-  width: 100%; max-width: 100%;
-  position: relative;
-  z-index: 1;
-  padding: 2rem;
-  color: white;
-  text-shadow: 0 0 5px var(--crt-green-dark);
-  animation: crt-flicker 6s linear infinite;
-}
-
-.create-title {
-  font-size: 4rem;
-  margin-bottom: 2ch;
-  text-align: center;  
   width: 100%;
-  font-weight: bold;
-  letter-spacing: 0.1em;
+  max-width: 680px;
+  background-color: rgba(13, 13, 13, 0.85); // 반투명 블랙
+  border: 2px solid var(--crt-green);
+  padding: 3rem 2.5rem;
+  box-shadow: 0 0 20px var(--crt-green-dark);
+  border-radius: 12px;
 }
 
-// --- 단계별 콘텐츠 ---
-.step-content {
-  min-height: 200px;
+// 타이틀
+.create-title {
+  font-size: 3.8rem;
+  font-weight: bold;
+  margin-bottom: 2.5rem;
+  color: var(--crt-green);
+  text-shadow: 0 0 10px var(--crt-green-dark);
+  text-align: center;
+}
 
-  label {
-    display: block;
-    font-size: 3rem;
-    white-space: nowrap;
-    overflow: hidden;
-    width: fit-content;
-    animation: text-reveal 1.5s steps(40, end);
-    margin-bottom: 1.5rem;
-    
-    &::before { content: '> '; }
-  }
-  
-  input, select {
-    background: transparent;
-    border: none;
-    margin-bottom: 0;
-    font-size: 3rem;
-    width: 100%;
-    color: var(--crt-green);
-    font-family: inherit;
-    padding: 0.3em 0;
-    text-shadow: inherit;
-    border-right: 0.25rem solid transparent; // 커서 공간 확보
-    
-    
-    &:focus { 
-        outline: none; 
+// 라벨 + 인풋 구역
+.step-content {
+  margin: 2rem 0;
+
+  .crt-label-line {
+    font-size: 2.4rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .crt-prefix {
+      margin-right: 0.5ch;
+    }
+
+    .crt-label-text {
+      letter-spacing: 0.1em;
+    }
+
+    .crt-cursor {
+      margin-left: 0.5ch;
+      animation: cursor-blink 1s steps(2, start) infinite;
     }
   }
-  
-  option {
-    background: var(--crt-bg);
+
+  input,
+  select {
+    width: 100%;
+    padding: 1.2rem;
+    font-size: 2.1rem;
+    background: transparent;
     color: var(--crt-green);
+    border: 2px solid var(--crt-green);
+    border-radius: 6px;
+    outline: none;
+    text-align: center;
+    font-family: 'VT323', monospace;
+
+    &:focus {
+      border-color: var(--crt-green-dark);
+    }
+
+    option {
+      background: var(--crt-bg);
+      color: var(--crt-green);
+    }
   }
 }
 
-// --- 네비게이션 & 진행 바 ---
+// 버튼 영역
 .navigation-controls {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--crt-green-dark);
   display: flex;
-  justify-content: flex-end;
-}
+  justify-content: space-between;
+  margin-top: 2.5rem;
 
-.nav-button {
-  background: transparent;
-  border: none;
-  color: #FFFFFF;
-  font-family: inherit;
-  font-size: 3rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
+  .nav-button {
+    font-size: 2.1rem;
     color: var(--crt-green);
+    border: 2px solid var(--crt-green);
+    padding: 0.75rem 2.2rem;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'VT323', monospace;
+    border-radius: 4px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: var(--crt-green);
+      color: #000;
+      text-shadow: none;
+    }
   }
-  &.prev { margin-right: auto; }
 }
 
+// 진행 바
 .progress-bar-container {
   margin-top: 2rem;
-  font-size: 1.5rem;
-  
+  font-size: 1.6rem;
+  text-align: left;
+
+  span {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+
   .progress-bar-track {
     width: 100%;
     height: 20px;
     border: 2px solid var(--crt-green);
     padding: 2px;
-    margin-top: 0.5rem;
+    border-radius: 5px;
   }
+
   .progress-bar {
     height: 100%;
+    width: 0%;
     background-color: var(--crt-green);
     box-shadow: 0 0 10px var(--crt-green-dark);
+    border-radius: 3px;
     transition: width 0.5s ease-out;
   }
 }
 
+// 에러 메시지
 .form-error {
   color: var(--crt-error);
   font-size: 1.5rem;
