@@ -9,6 +9,12 @@ $color-accent: #31e8ee;
 $color-accent-dark: #00a8b0;
 $color-bubble: #ffffff;
 
+// 네온/글리치용 색상 변수 (BattlePage와 톤 맞춤)
+:root {
+  --glitch-color-1: #ff00c1;
+  --glitch-color-2: #00e1ff;
+  --text-color: #e0e0e0;
+}
 
 // --- 애니메이션 ---
 @keyframes fadeIn {
@@ -19,16 +25,39 @@ $color-bubble: #ffffff;
 // --- 전체 뷰포트 ---
 .manual-beginner-viewport {
   @include background_set;
+  position: relative;
   backdrop-filter: blur(20px);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
   box-sizing: border-box;
+  background-color: #01020a; // BattlePage 톤 맞춤
+
+  // === 격자 배경 ===
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 225, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.5) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.1;
+    animation: grid-pan 10s linear infinite;
+    z-index: 0;
+  }
 }
 
-// --- 메인 컨테이너 (사이즈 고정) ---
+@keyframes grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
+}
+
+// --- 메인 컨테이너 ---
 .manual-beginner-container {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 1000px;
   height: 85vh;
@@ -49,11 +78,39 @@ $color-bubble: #ffffff;
   border-bottom: 1px solid rgba($color-accent, 0.2);
   flex-shrink: 0;
 }
+
 .manual-title {
-  font-size: 3rem;
-  color: $color-accent;
-  text-shadow: 0 0 8px rgba($color-accent, 0.5);
+  position: relative;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 700;
+  color: var(--text-color);
+  text-transform: uppercase;
+  margin: 0 0 2rem 0;
+  animation: text-flicker 4s linear infinite;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &::before {
+    left: 2px;
+    text-shadow: -2px 0 var(--glitch-color-1);
+    animation: glitch-soft-1 2.5s infinite reverse linear;
+  }
+
+  &::after {
+    left: -2px;
+    text-shadow: -2px 0 var(--glitch-color-2);
+    animation: glitch-soft-2 3s infinite reverse linear;
+  }
 }
+
 .language-toggle {
   background-color: transparent;
   border: 1px solid $color-accent;
@@ -69,14 +126,14 @@ $color-bubble: #ffffff;
   }
 }
 
-// --- 콘텐츠 영역 (페이지 전환의 기준) ---
+// --- 콘텐츠 영역 ---
 .manual-content-area {
   flex-grow: 1;
   position: relative;
   overflow: hidden;
 }
 
-// --- 페이지 공통 스타일 ---
+// --- 페이지 ---
 .page {
   position: absolute;
   top: 0;
@@ -104,52 +161,7 @@ $color-bubble: #ffffff;
   }
 }
 
-.page-two-footer-nav {
-  margin-top: 2rem;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-// --- 페이지네이션 컨트롤 ---
-.manual-pagination-controls {
-  padding-top: 20px;
-  margin-top: auto;
-  border-top: 1px solid rgba($color-accent, 0.2);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-  
-  .page-button {
-    background-color: $color-accent;
-    color: $color-bg;
-    padding: 10px 25px;
-    border: none;
-    border-radius: 10px;
-    font-size: 1.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px rgba($color-accent, 0.7);
-    }
-    
-    &.prev {
-      background-color: transparent;
-      border: 2px solid $color-accent-dark;
-      color: $color-accent-dark;
-    }
-    
-    &.next {
-      margin-left: auto;
-    }
-  }
-}
-
-// --- 아바타 (이미지 태그용) ---
+// --- 아바타 ---
 .guide-avatar {
   flex-shrink: 0;
   margin-right: 20px;
@@ -160,42 +172,77 @@ $color-bubble: #ffffff;
   background-color: $color-container-bg;
 }
 
-// --- 말풍선 및 내부 콘텐츠 ---
+// --- 대화 묶음 ---
 .dialog-wrapper {
   display: flex;
   align-items: flex-start;
   margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: dialogEnter 0.6s ease-out forwards;
+
+  &.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+@keyframes dialogEnter {
+  0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+  70% { opacity: 1; transform: translateY(-5px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// --- 말풍선 ---
 .speech-bubble {
   position: relative;
-  background-color: $color-bubble;
+  background-color: rgba($color-bubble, 0.75);
   color: $color-text-dark;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px 25px;
   width: 100%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+
   &::before {
     content: '';
     position: absolute;
-    left: -10px;
-    top: 20px;
-    border: 10px solid transparent;
-    border-right-color: $color-bubble;
+    left: -22px;
+    top: 22px;
+    border-width: 12px;
+    border-style: solid;
+    border-color: transparent rgba(255, 255, 255, 0.75) transparent transparent;
   }
 
-  p {
-    font-size: 1.2rem;
-    line-height: 1.7;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    mix-blend-mode: overlay;
+    animation: glitch-bubble 2.5s infinite linear;
+    pointer-events: none;
   }
+
+  p { font-size: 1.2rem; line-height: 1.7; }
 }
+
 .bubble-title {
   font-size: 2rem;
   color: #000;
   margin-bottom: 15px;
 }
+
+// === glitch-bubble 효과 ===
+.speech-bubble.glitch-bubble {
+  animation: bubble-glitch 1.5s infinite alternate ease-in-out;
+}
+
+// --- 리스트 ---
 .rules-list {
   list-style: none;
   padding-left: 0;
+
   li {
     position: relative;
     padding-left: 25px;
@@ -211,68 +258,39 @@ $color-bubble: #ffffff;
     }
   }
 }
-.next-steps-container {
-  display: grid; // 그리드 레이아웃 사용
-  grid-template-columns: repeat(2, 1fr); // 2개의 동일한 너비의 컬럼 생성
-  gap: 1rem; // 카드 사이의 간격
-  margin-top: 1rem;
-}
-.step-card {
-  flex: 1;
-  background-color: #f0f0f0;
-  border-radius: 8px;
-  padding: 20px;
-  text-decoration: none;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  &:hover {
-    transform: translateY(-5px);
-    border-color: $color-accent;
-  }
-  h3 { color: $color-accent-dark; margin-bottom: 10px; }
-  p {
-    font-size: 1.1rem;
-    color: #555;
-    line-height: 1.6;
-  }
+
+// --- glitch 애니메이션 ---
+@keyframes bubble-glitch {
+  0%   { transform: translate(0, 0) skew(0deg); filter: none; }
+  20%  { transform: translate(-2px, 1px) skew(-1deg); filter: drop-shadow(-1px 0 var(--glitch-color-1)); }
+  40%  { transform: translate(2px, -1px) skew(1deg); filter: drop-shadow(1px 0 var(--glitch-color-2)); }
+  60%  { transform: translate(-1px, 2px) skew(0.5deg); filter: drop-shadow(-1px 0 var(--glitch-color-2)); }
+  80%  { transform: translate(1px, -2px) skew(-0.5deg); filter: drop-shadow(1px 0 var(--glitch-color-1)); }
+  100% { transform: translate(0, 0) skew(0deg); filter: none; }
 }
 
-.nav-button {
-  // --- 공통 베이스 스타일 ---
-  padding: 10px 28px;
-  font-size: 1.5rem;
-  font-weight: 700;
-  text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border-radius: 8px;
-  transition: all 0.2s ease-out;
-  background: transparent; // 기본 배경은 투명
-  cursor: pointer;
-  transform: translateY(0); // 호버 효과를 위한 초기 위치
+@keyframes glitch-bubble {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(1px, -1px); }
+  60% { transform: translate(-1px, -0.5px); }
+  80% { transform: translate(0.5px, 1px); }
+  100% { transform: translate(0, 0); }
+}
 
-  // --- 주 버튼 (튜토리얼 시작하기) ---
-  border: 2px solid $color-accent; // 밝은 테두리
-  color: $color-accent;            // 밝은 텍스트
-  
-  &:hover {
-    background: $color-accent; // 호버 시 밝은 색으로 채우기
-    color: $color-bg;          // 텍스트 색상 반전
-    box-shadow: 0 0 20px rgba($color-accent, 0.7); // 글로우 효과
-    transform: translateY(-2px); // 살짝 위로 이동
-  }
+@keyframes glitch-soft-1 {
+  0% { transform: translateX(-1px); clip-path: inset(10% 0 85% 0); }
+  20% { clip-path: inset(90% 0 5% 0); }
+  40% { transform: translateX(1px); }
+  60% { clip-path: inset(5% 0 90% 0); }
+  80% { transform: translateX(-0.5px); clip-path: inset(40% 0 45% 0); }
+  100% { clip-path: none; transform: translateX(0); }
+}
 
-  // --- 보조 버튼 (머신 보러가기) ---
-  &.secondary {
-    border: 2px solid $color-accent-dark; // 어두운 테두리
-    color: $color-accent-dark;            // 어두운 텍스트
-    box-shadow: none;                     // 기본 그림자 없음
-    
-    &:hover {
-      background: $color-accent-dark; // 호버 시 어두운 색으로 채우기
-      color: #fff;                     // 텍스트 색상 반전
-      box-shadow: 0 0 15px rgba($color-accent-dark, 0.7); // 은은한 글로우
-      transform: translateY(-2px);
-    }
-  }
+@keyframes glitch-soft-2 {
+  0% { transform: translateY(1px); clip-path: inset(80% 0 5% 0); }
+  25% { clip-path: inset(10% 0 85% 0); }
+  50% { transform: translateY(-1px); }
+  75% { clip-path: inset(85% 0 10% 0); }
+  100% { clip-path: none; transform: translateY(0); }
 }
