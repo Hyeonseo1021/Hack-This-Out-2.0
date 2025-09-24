@@ -2,7 +2,7 @@
 
 .machine-banner-container {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1200px;
   height: 100%;
   font-weight: bold;
 
@@ -17,12 +17,12 @@
   .carousel {
     height: 100%;
     border-radius: clamp(16px, 2vw, 24px);
-    border: 1px solid var(--color-gainsboro);
+    border: 1px solid var(--blue-200);
 
     .banner-slide {
       padding: clamp(16px, 2vw, 32px);
       height: clamp(250px, 28vh, 400px);
-      background: var(--color-background-transparent);
+      background: var(--color-layout);
       @include flex_center;
 
       .banner-contents {

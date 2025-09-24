@@ -5,17 +5,18 @@ import tutorialKR from './locales/tutorial-kr.json';
 import manualEN from './locales/manual-en.json';
 import manualKR from './locales/manual-kr.json';
 
+
 i18n
   .use(initReactI18next)
   .init({
     resources: {
       en: {
         tutorial: tutorialEN,
-        manual: manualEN
+        manual: manualEN,
       },
       ko: {
         tutorial: tutorialKR,
-        manual: manualKR
+        manual: manualKR,
       }
     },
     lng: 'en',

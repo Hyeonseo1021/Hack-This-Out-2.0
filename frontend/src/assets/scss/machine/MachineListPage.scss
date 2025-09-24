@@ -22,10 +22,10 @@
         gap: clamp(4px, 1vw, 8px);
 
         .machine-banner {
-            width: calc(100% - min(28vh, 400px));
+            width: calc(100% - min(28vh, 300px));
             height: 100%;
             border-radius: var(--border-container);
-            background: var(--color-background-transparent);
+            background: var(--color-layout);
             flex-grow: 1;
 
             @media (max-width: 1024px) {
@@ -40,7 +40,7 @@
             max-width: 300px;
             height: clamp(250px, 28vh, 400px);
             border-radius: clamp(16px, 2vw, 24px);
-            border: 1px solid var(--color-gainsboro);
+            border: 1px solid var(--blue-200);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -56,7 +56,7 @@
             }
 
             &:hover {
-                background: var(--pink);
+                background: var(--blue-400);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
                 border: 1px solid transparent;

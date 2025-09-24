@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Main from '../../components/main/Main';
 import { useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
-import ArenaCreateButton from '../../components/arena/ArenaCreateButton';
 import { getArenaList } from '../../api/axiosArena';
 import '../../assets/scss/arena/ArenaPage.scss';
 
@@ -139,9 +138,9 @@ const ArenaPage: React.FC = () => {
                         <div className="arena-list">
                             <div className="arena-list__row arena-list__row--header">
                                 <div className="arena-list__col">ID</div>
-                                <div className="arena-list__col">Room Name</div>
-                                <div className="arena-list__col">Operators</div>
-                                <div className="arena-list__col">Status</div>
+                                <div className="arena-list__col">ROOM NAME</div>
+                                <div className="arena-list__col">PARTICIPATIONS</div>
+                                <div className="arena-list__col">STATUS</div>
                             </div>
                             {loading ? (
                                 <p className="arena-list__message">SYSTEM SCANNING...</p>

@@ -16,7 +16,7 @@
     .tutorial-page-top{
         .tutorial-page-img-dark{
             height: 90%;
-            object-fit: cover; 
+            object-fit: fill; 
             border-bottom: 2px solid white;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             filter: brightness(1);

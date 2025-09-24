@@ -1,477 +1,195 @@
 /*
- * ArenaPlayPage.scss - Redesigned based on the "Maze Runner Terminal" concept.
- * Concept: A central command center navigating through a data maze for flag submissions.
+ * ArenaPlay - Game HUD Theme
  */
 @use "../style" as *;
 
-// --- 테마 변수 (Maze Runner Edition) ---
+// --- 테마 변수 ---
 :root {
-  --maze-primary: #00ffaa; // Maze path glow, active elements
-  --maze-secondary: #0077ff; // Connection lines, system highlights
-  --background-dark: #0a0e1a;
-  --background-medium: #151a2e;
-  --background-light: #2a304a;
-  --text-main: #e8eaf6;
-  --text-accent: #90caf9;
-  --border-maze: rgba(0, 255, 170, 0.2); // Soft maze wall
-  --glitch-red: #ff3366;
-  --glitch-blue: #33ccff;
-  --panel-bg-maze: rgba(10, 20, 40, 0.7); // Slightly darker for panels
-  --success-color: #4CAF50; // Green for success
-  --error-color: #F44336; // Red for errors
-  --warning-color: #FFC107; // Yellow for warnings
+  --ap-bg: #0A0F1A;
+  --ap-surface: rgba(19, 28, 46, 0.85);
+  --ap-border: rgba(0, 207, 255, 0.3);
+  --ap-accent: #00CFFF; // Electric Blue
+  --ap-accent-glow: rgba(0, 207, 255, 0.5);
+  --ap-secondary: #FFB800; // Amber
+  --ap-danger: #FF4A4A;
+  --ap-text-light: #EAF2FF;
+  --ap-text-dark: #8C99B4;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-// --- 키프레임 애니메이션 ---
-@keyframes maze-scan {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 100% 100%;
-  }
+// --- 애니메이션 ---
+@keyframes hex-grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 100px 58px; }
 }
 
-@keyframes path-glow {
-  0%, 100% {
-    box-shadow: 0 0 8px var(--maze-primary), 0 0 15px var(--maze-primary) inset;
-  }
-  50% {
-    box-shadow: 0 0 15px var(--maze-primary), 0 0 25px var(--maze-primary) inset;
-  }
-}
-
-@keyframes data-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes pulse-success {
-  0% {
-    text-shadow: 0 0 5px var(--success-color);
-  }
-  50% {
-    text-shadow: 0 0 15px var(--success-color);
-  }
-  100% {
-    text-shadow: 0 0 5px var(--success-color);
-  }
-}
-
-// --- 전체 컨테이너 및 배경 ---
-.play-maze-container {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--background-dark);
-  color: var(--text-main);
-  font-family: var(--font-main);
-  overflow: hidden;
+// --- 기본 컨테이너 ---
+.ap-container {
+  min-height: 90vh;
+  width: 80%;
   position: relative;
-  padding: 2rem;
-  perspective: 1000px; // 3D 효과를 위한 원근법
-}
-
-.maze-background-overlay {
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 38px, var(--border-maze) 39px, var(--border-maze) 40px),
-    repeating-linear-gradient(90deg, transparent, transparent 38px, var(--border-maze) 39px, var(--border-maze) 40px);
-  background-size: 40px 40px;
-  opacity: 0.15;
-  animation: maze-scan 120s linear infinite; // 미로 전체가 은은하게 움직이는 느낌
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(0, 255, 170, 0.05) 0%, transparent 70%);
-    opacity: 0.5;
-  }
-}
-
-// --- 메인 그리드 레이아웃 ---
-.maze-grid {
-  width: 100%;
-  max-width: 1800px;
-  height: 90vh;
-  display: grid;
-  grid-template-columns: 1fr 1.8fr 1fr; // 중앙을 더 넓게
-  grid-template-rows: 1fr;
-  gap: 2rem;
-  position: relative; // 연결선 배치를 위해
-}
-
-.maze-panel {
-  border: 1px solid var(--border-maze);
-  background: var(--panel-bg-maze);
-  backdrop-filter: blur(8px);
-  display: flex;
-  flex-direction: column;
+  background-color: var(--ap-bg);
+  color: var(--ap-text-light);
+  font-family: var(--font-sans);
+  padding: 1rem;
   overflow: hidden;
-  position: relative;
-  transition: all 0.3s ease-out; // 호버 효과
-
-  &:hover {
-    border-color: var(--maze-primary);
-    box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
-    transform: translateY(-5px);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: linear-gradient(to right, transparent, var(--maze-primary), transparent);
-    animation: data-flow 3s linear infinite;
-    opacity: 0.3;
-  }
-
-  .panel-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-maze);
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    color: var(--maze-primary);
-    flex-shrink: 0;
-    text-shadow: 0 0 8px rgba(0, 255, 170, 0.5);
-    position: relative;
-    z-index: 1;
-
-    &::after {
-      content: '>';
-      position: absolute;
-      right: 1.5rem;
-      color: var(--maze-secondary);
-    }
-  }
-
-  .panel-content {
-    padding: 1.5rem;
-    flex-grow: 1;
-    overflow-y: auto;
-    font-size: 0.95rem;
-    line-height: 1.6;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-    &::-webkit-scrollbar-track {
-      background: var(--background-dark);
-    }
-    &::-webkit-scrollbar-thumb {
-      background: var(--maze-secondary);
-      border-radius: 3px;
-    }
-  }
 }
 
-.maze-grid::before,
-.maze-grid::after {
-  content: '';
-  position: absolute;
-  background-color: var(--maze-secondary);
+.ap-grid-background {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
   opacity: 0.3;
-  z-index: -1;
+  background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="57.735"><path d="M50 0L100 28.868v57.735L50 115.47 0 86.603V28.868zM50 28.868l50 28.867v57.735L50 144.338l-50-28.868V57.735z" fill="none" stroke="%2300CFFF" opacity="0.2"/></svg>');
+  animation: hex-grid-pan 10s linear infinite;
 }
 
-.maze-grid::before { /* Left to Center */
-  width: calc(2rem + 2px);
-  height: 2px;
-  top: 50%;
-  /* * 수정된 부분: 
-   * (1 / 3.8) 계산을 먼저 수행하여 순수한 비율을 얻고,
-   * 그 결과에 100%를 곱하여 유효한 백분율 값으로 만듭니다.
-   */
-  left: calc( (1 / (1 + 1.8 + 1)) * 100% - 1rem );
-  transform: translateY(-50%);
-}
+// HUD 코너 스타일
+.ap-hud-corners {
+  position: absolute;
+  top: 1rem; right: 1rem; bottom: 1rem; left: 1rem;
+  pointer-events: none;
+  z-index: 2;
 
-.maze-grid::after { /* Center to Right */
-  width: calc(2rem + 2px);
-  height: 2px;
-  top: 50%;
-  /* 여기도 동일하게 수정합니다. */
-  right: calc( (1 / (1 + 1.8 + 1)) * 100% - 1rem );
-  transform: translateY(-50%);
-}
+  .ap-corner {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border: 2px solid var(--ap-accent);
+    opacity: 0.7;
 
-// --- 좌측: 시스템 & 커넥션 패널 (미로의 입구 정보) ---
-.system-info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-
-  .info-block {
-    position: relative; // 시각적 효과를 위해
-    
-    .label {
-      color: var(--text-accent);
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .value {
-      background: var(--background-light);
-      padding: 0.8rem 1rem;
-      font-size: 1.05rem;
-      word-break: break-all;
-      border-left: 3px solid var(--maze-primary);
-      position: relative;
-      overflow: hidden;
-
-      &::before { // 데이터 흐름 효과
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to right, transparent, rgba(0, 255, 170, 0.2), transparent);
-        animation: data-flow 4s linear infinite;
-        animation-delay: var(--delay, 0s);
-      }
-    }
-    &.vpn-download .value {
-      padding: 0;
-      border: none;
-      background: none;
-      color: var(--maze-secondary);
-      cursor: pointer;
-      text-decoration: underline;
-
-      &:hover {
-        color: var(--maze-primary);
-      }
-    }
+    &.top-left { top: 0; left: 0; border-right: none; border-bottom: none; }
+    &.top-right { top: 0; right: 0; border-left: none; border-bottom: none; }
+    &.bottom-left { bottom: 0; left: 0; border-right: none; border-top: none; }
+    &.bottom-right { bottom: 0; right: 0; border-left: none; border-top: none; }
   }
 }
 
-// --- 중앙: 메인 코어 (미로의 중심, 목표 지점) ---
-.main-core-panel {
-  justify-content: center;
+// --- 헤더 ---
+.ap-header {
+  position: relative; z-index: 1;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 2rem;
-  gap: 3rem;
-  border-color: var(--maze-primary);
-  box-shadow: 0 0 35px rgba(0, 255, 170, 0.5);
-  animation: path-glow 4s infinite alternate; // 메인 패널 강조
-  transform: translateZ(20px); // 3D 효과로 약간 돌출
+  margin-bottom: 1rem;
+  background: var(--ap-surface);
+  padding: 0.5rem 1.5rem;
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
 
-  .big-timer {
-    font-family: var(--font-display);
-    font-size: clamp(4rem, 10vw, 7rem); // 좀 더 작게 조절
-    font-weight: 700;
-    color: var(--maze-primary);
-    text-shadow: 0 0 25px var(--maze-primary), 0 0 40px rgba(0, 255, 170, 0.7);
-    line-height: 1;
-    position: relative;
-
-    &::before {
-      content: 'TIME TO DESTINATION';
-      position: absolute;
-      top: -2.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.2rem;
-      color: var(--text-accent);
-      text-shadow: none;
-      white-space: nowrap;
+  .ap-title-group {
+    h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
+    .ap-status-tag {
+      font-size: 0.7rem; font-weight: bold; margin-left: 1rem;
+      padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase;
+      &.status-waiting { background: var(--ap-secondary); color: var(--ap-bg); }
+      &.status-started { background: var(--ap-accent); color: var(--ap-bg); }
+      &.status-ended { background: var(--ap-danger); color: var(--ap-bg); }
     }
   }
 
-  .flag-submission-unit {
-    width: 100%;
-    max-width: 600px; // 조금 더 컴팩트하게
-    border: 1px solid var(--border-maze);
-    background: var(--background-medium);
-    padding: 1rem;
-    position: relative;
-    overflow: hidden;
+  .ap-timer {
+    text-align: right;
+    .ap-timer-value { font-size: 1.75rem; font-family: var(--font-mono); font-weight: 700; color: var(--ap-secondary); }
+    .ap-timer-label { font-size: 0.6rem; letter-spacing: 0.1em; color: var(--ap-text-dark); }
+  }
+}
 
-    &::before { // 미로 경로 느낌
-        content: '';
-        position: absolute;
-        inset: 0;
-        border: 2px dashed rgba(0, 255, 170, 0.3);
-        animation: data-flow 10s linear infinite reverse;
-        z-index: 0;
+// --- 콘텐츠 레이아웃 ---
+.ap-content {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 1rem;
+}
+
+// --- 공용 패널 ---
+.ap-panel {
+  background: var(--ap-surface);
+  border: 1px solid var(--ap-border);
+  backdrop-filter: blur(10px);
+  height: 100%;
+  clip-path: polygon(0 15px, 15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+
+  .ap-panel-header {
+    padding: 0.6rem 1rem;
+    background: rgba(0, 207, 255, 0.1);
+    border-bottom: 1px solid var(--ap-border);
+    h3 { margin: 0; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  }
+  .ap-panel-body { padding: 1rem; }
+}
+
+// --- 공용 입력요소 & 버튼 ---
+input[type="text"], .ap-button {
+  border: 1px solid var(--ap-border);
+  background: rgba(10, 15, 26, 0.8);
+  color: var(--ap-text-light);
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  &:focus { outline: none; border-color: var(--ap-accent); box-shadow: 0 0 8px var(--ap-accent-glow); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+.ap-button {
+  cursor: pointer; font-weight: 600; text-transform: uppercase;
+  background: transparent; color: var(--ap-accent); border-color: var(--ap-accent);
+  clip-path: polygon(0 5px, 5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%);
+  &.primary { background: var(--ap-accent); color: var(--ap-bg); }
+  &:hover:not(:disabled) { transform: scale(1.02); }
+}
+
+// --- 사이드바 ---
+.ap-sidebar {
+  .ap-info-item {
+    margin-bottom: 1rem;
+    label { font-size: 0.8rem; color: var(--ap-text-dark); margin-bottom: 0.25rem; display: block; }
+    .ap-data-text {
+      font-family: var(--font-mono); font-size: 0.9rem;
+      &.connected { color: var(--ap-accent); }
+      &.disconnected { color: var(--ap-danger); }
     }
-    
-    .flag-form {
-      display: flex;
-      border: 1px solid var(--maze-secondary);
-      position: relative;
-      z-index: 1;
-    }
+    .ap-input-group { display: flex; gap: 0.5rem; }
+  }
 
-    input[type="text"] {
-      flex-grow: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-family: var(--font-main);
-      font-size: 1.1rem;
-      padding: 1rem;
-      outline: none;
-      min-width: 0;
-      caret-color: var(--maze-primary); // 커서 색상
-
-      &::placeholder {
-        color: var(--text-muted);
-      }
-      
-      &:focus {
-        background: rgba(0, 255, 170, 0.15);
-      }
-    }
-    
-    .prompt {
-      padding: 1rem;
-      background: rgba(0,0,0,0.3);
-      color: var(--maze-primary);
-      font-weight: bold;
-      font-family: var(--font-mono); // 모노스페이스 폰트 적용
-    }
-
-    button {
-      flex-shrink: 0;
-      background: var(--maze-primary);
-      border: none;
-      color: var(--background-dark);
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      padding: 0 1.8rem;
-      cursor: pointer;
-      text-transform: uppercase;
-      font-weight: bold;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-
-      &:hover:not(:disabled) {
-        filter: brightness(1.15); // 1.15 = 115% 밝기 (15% 더 밝게)
-        box-shadow: 0 0 10px var(--maze-primary);
-      }
-
-      &:disabled {
-        background: var(--background-light);
-        color: var(--text-muted);
-        cursor: not-allowed;
-      }
-    }
-    
-    .flag-msg {
-      margin-top: 1rem;
-      text-align: center;
-      color: var(--success-color);
-      animation: pulse-success 2s infinite;
-      font-weight: bold;
-      text-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
+  .ap-participant-list {
+    list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .ap-participant-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.5rem 0.75rem; background: rgba(10, 15, 26, 0.5); border-radius: 4px;
+    .name { font-weight: 600; }
+    .host-tag { display: inline-block; width: 1rem; height: 1rem; text-align: center; line-height: 1rem;
+      font-size: 0.7rem; background: var(--ap-secondary); color: var(--ap-bg); border-radius: 50%; margin-left: 0.25rem; }
+    .ip { font-size: 0.75rem; color: var(--ap-text-dark); font-family: var(--font-mono); }
+    .ap-participant-status {
+      font-size: 0.7rem; font-weight: bold; text-transform: capitalize;
+      &.status-waiting { color: var(--ap-text-dark); }
+      &.status-vm-connected { color: var(--ap-accent); }
+      &.status-completed { color: var(--ap-secondary); }
+      &.status-left { color: var(--ap-danger); text-decoration: line-through; }
     }
   }
 }
 
-// --- 우측: 참가자 명단 (미로 탐색기 리스트) ---
-.roster-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem; // 좀 더 조밀하게
-
-  .roster-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.6rem 0;
-    position: relative; // 상태 아이콘을 위한
-
-    &:not(:last-child) {
-      border-bottom: 1px dashed rgba(var(--border-maze), 0.5);
-    }
-    
-    .username {
-      flex-grow: 1;
-      font-size: 1rem;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      
-      &::before { // 작은 아이콘 추가
-        content: '🧑‍💻'; // 또는 '▶'
-        margin-right: 0.5rem;
-        color: var(--maze-secondary);
-      }
-    }
-    
-    .status {
-      font-weight: bold;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-      padding: 0.3rem 0.6rem;
-      border-radius: 3px;
-      
-      &.vm_connected {
-        color: var(--warning-color);
-        border: 1px solid var(--warning-color);
-        background-color: rgba(255, 193, 7, 0.1);
-      }
-      &.completed {
-        color: var(--success-color);
-        border: 1px solid var(--success-color);
-        background-color: rgba(76, 175, 80, 0.1);
-        animation: pulse-success 1.5s infinite;
-      }
-      &.left {
-        color: var(--error-color);
-        text-decoration: line-through;
-        opacity: 0.7;
-      }
+// --- 메인 영역 ---
+.ap-main {
+  .ap-flag-form { display: flex; flex-direction: column; gap: 0.75rem; }
+  .ap-flag-input { font-family: var(--font-mono); font-size: 1.1rem; text-align: center; }
+  .ap-message-box {
+    margin-top: 1rem;
+    .ap-message { font-family: var(--font-mono); font-size: 0.8rem; padding: 0.5rem;
+      &.msg-success { color: var(--ap-accent); }
+      &.msg-error { color: var(--ap-danger); }
+      &.msg-warning { color: var(--ap-secondary); }
     }
   }
 }
 
-// --- 반응형 (미로 구조 변경) ---
+// --- 반응형 ---
 @media (max-width: 1200px) {
-  .maze-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto; // 세로 스택
-    height: auto;
-    max-height: calc(100vh - 4rem);
-    overflow-y: auto; // 스크롤 가능하게
-  }
-
-  // 연결선 제거 또는 변경
-  .maze-grid::before,
-  .maze-grid::after {
-    display: none; // 모바일에서는 복잡하니 제거
-  }
-
-  .maze-panel {
-    transform: none; // 호버 효과 유지
-    &:hover {
-      transform: none;
-    }
-  }
+  .ap-content { grid-template-columns: 1fr; }
 }
-
-// 추가: 전역 스크롤바 스타일
-body {
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-  &::-webkit-scrollbar-track {
-    background: var(--background-dark);
-  }
-  &::-webkit-scrollbar-thumb {
-    background: var(--maze-secondary);
-    border-radius: 4px;
-  }
+@media (max-width: 768px) {
+  .ap-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
 }

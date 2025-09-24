@@ -1,191 +1,296 @@
-/* 화면 중앙 정렬 */
-.manual-viewport {
-  --header-h: 64px;                 /* ★ 세미콜론 추가 확인 */
-  --top-gap: var(--header-h);       /* ★ 헤더 높이와 동일하게 사용 */
-  --left-gap: 80px;                 /* 좌측(사이드바) 여유 */
-  --right-gap: 50px;                /* 우측 여유 */
-  --lift: -6vh;                     /* 프레임을 위로 올리기(음수↑/양수↓) */
-  --shift-x: -0.7vw;                /* ★ 프레임을 왼/오 이동(음수=왼쪽, 양수=오른쪽) */
+@use "../style" as *;
 
-  min-height: calc(100vh - var(--top-gap));
-  padding-left: var(--left-gap);
-  padding-right: var(--right-gap);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+// --- 색상 및 폰트 변수 ---
+$color-bg: #1a1a1a;
+$color-container-bg: #2d2d2d;
+$color-text: #e0e0e0;
+$color-text-dark: #333;
+$color-accent: #31e8ee;
+$color-accent-dark: #00a8b0;
+$color-bubble: #ffffff;
+
+// 네온/글리치용 색상 변수 (BattlePage와 톤 맞춤)
+:root {
+  --glitch-color-1: #ff00c1;
+  --glitch-color-2: #00e1ff;
+  --text-color: #e0e0e0;
 }
 
-/* ⬇️ 사이드바 펼침 시 왼쪽 여유만 키우기 + 이동량은 조금 줄임(선택) */
-html.sidebar-open .manual-viewport {        /* ★ 추가 */
-  --left-gap: 330px;                        /* 사이드바 펼친 폭 */
-  --shift-x: -1.25vw;                       /* ★ 펼친 상태에선 덜 이동 */
+// --- 애니메이션 ---
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* 프레임(원본 PNG 비율 1556:768 유지, 화면 꽉 차게) */
-.manual-border-frame {
+// --- 전체 뷰포트 ---
+.manual-beginner-viewport {
+  @include background_set;
   position: relative;
-  width: min(
-    calc(100vw - var(--left-gap) - var(--right-gap)),
-    calc((100vh - var(--top-gap)) * (1556 / 768))
-  );
-  aspect-ratio: 1556 / 768;
-  height: auto;
-  background: center / contain no-repeat transparent;
-  overflow: hidden;
-  isolation: isolate;
-  transform: translate(var(--shift-x), var(--lift));  /* ★ 가로/세로 동시 이동 */
-}
-
-.frame-inner {
-  position: absolute;
-  inset: 0;
-  padding: 2rem;
+  backdrop-filter: blur(20px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
   box-sizing: border-box;
+  background-color: #01020a; // BattlePage 톤 맞춤
+
+  // === 격자 배경 ===
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 225, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.5) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.1;
+    animation: grid-pan 10s linear infinite;
+    z-index: 0;
+  }
 }
 
-/* 라벨 */
-.label {
-  position: absolute;
-  color: #e6f7ff;
-  text-shadow: 0 0 6px rgba(0,255,255,.25);
-  pointer-events: none;
-  font-weight: 600;
-  letter-spacing: .02em;
+@keyframes grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
 }
+
+// --- 메인 컨테이너 ---
+.manual-beginner-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1000px;
+  height: 85vh;
+  max-height: 800px;
+  background: rgba(13, 13, 13, 0.7);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+// --- 헤더 ---
+.manual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba($color-accent, 0.2);
+  flex-shrink: 0;
+}
+
 .manual-title {
-  top: 2.8%;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: clamp(18px, 2.4vw, 30px);
-}
-.guide-title {
-  top: 16.5%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: clamp(17px, 2vw, 47px);
+  position: relative;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 700;
+  color: var(--text-color);
+  text-transform: uppercase;
+  margin: 0 0 2rem 0;
+  animation: text-flicker 4s linear infinite;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &::before {
+    left: 2px;
+    text-shadow: -2px 0 var(--glitch-color-1);
+    animation: glitch-soft-1 2.5s infinite reverse linear;
+  }
+
+  &::after {
+    left: -2px;
+    text-shadow: -2px 0 var(--glitch-color-2);
+    animation: glitch-soft-2 3s infinite reverse linear;
+  }
 }
 
-/* 언어 토글 */
 .language-toggle {
-  position: absolute;
-  top: 2rem; right: 2rem;
-  padding: .55rem 1.2rem;
-  color: #cfffff;
-  font-size: .95rem;
-  border: 2px solid #00ffff;
-  border-radius: 10px;
-  background: rgba(0,0,0,.5);
-  box-shadow: 0 0 12px #00ffff;
-  text-shadow: 0 0 8px #00ffff;
-  z-index: 20;
-}
-
-/* 벡터 공통 */
-.vector {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 4;
-  filter: drop-shadow(0 0 6px rgba(0,255,255,.15));
-}
-
-/* 위치/크기 */
-.vector.v1, .vector.v2 {
-  width: 26%;
-  aspect-ratio: 10 / 7;
-  height: auto;
-}
-.vector.v1 { left: 20%; top: 30%; }
-.vector.v2 { left: 20%; top: 71%; }
-
-.vector.v3 {
-  left: 50%;
-  top: 50%;
-  width: 24%;
-  aspect-ratio: 9 / 16;
-  height: auto;
-}
-
-.vector.v4 {
-  left: 82%;
-  top: 53%;
-  width: 35%;
-  aspect-ratio: 4 / 3;
-  height: auto;
-}
-
-/* 하단 Tutorial 버튼 */
-.tutorial-cta {
-  position: absolute;
-  left: 50%;
-  bottom: 3%;
-  transform: translateX(-50%);
-  width: 20%;
-  min-width: 240px;
-  padding: 0.9rem 1rem;
-  text-align: center;
-  border-radius: 16px;
-  background: #66f0f2;
-  color: #0b0f14;
-  font-weight: 800;
-  font-size: clamp(14px, 1.4vw, 20px);
-  text-decoration: none;
-  box-shadow: 0 0 26px rgba(191, 120, 255, .35),
-              0 0 16px rgba(102, 240, 242, .5) inset;
-  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
-  z-index: 10;
-}
-.tutorial-cta:hover {
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 0 36px rgba(191,120,255,.45),
-              0 0 22px rgba(102,240,242,.7) inset;
-  filter: brightness(1.05);
-}
-
-/* 작은 화면에서 여백만 축소 */
-@media (max-width: 900px) {
-  .frame-inner { padding: 1rem; }
-}
-
-.box-label {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: 26%;                 /* v1/v2 박스 폭과 동일 */
-  text-align: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: clamp(26px, 3.8vw, 72px);  /* 스샷처럼 큼직하게 */
-  letter-spacing: .02em;
-  text-shadow: 0 0 12px rgba(0,255,255,.3), 0 0 2px rgba(0,0,0,.6);
-  z-index: 6;
-  pointer-events: none;
-}
-.box-label.v1 { left: 20%; top: 30%; }
-.box-label.v2 { left: 20%; top: 71%; }
-.rules-title { display: none !important; }
-
-/* 게임 소개 박스 클릭 핫스팟 (투명 링크) */
-.hotspot {
-  position: absolute;
-  display: block;
-  transform: translate(-50%, -50%);
-  z-index: 8;            /* 벡터와 라벨 위에서 클릭 받기 */
+  background-color: transparent;
+  border: 1px solid $color-accent;
+  color: $color-accent;
+  padding: 8px 16px;
+  font-size: 1.5rem;
+  border-radius: 20px;
   cursor: pointer;
-  background: transparent;
-  outline: none;
+  transition: all 0.3s ease;
+  &:hover {
+    background-color: $color-accent;
+    color: $color-bg;
+  }
 }
 
-/* v1: 좌측 상단 박스 영역과 똑같이 덮어씌움 */
-.hotspot.v1 {
-  left: 20%;
-  top: 30%;
-  width: 26%;
-  aspect-ratio: 10 / 7;
+// --- 콘텐츠 영역 ---
+.manual-content-area {
+  flex-grow: 1;
+  position: relative;
+  overflow: hidden;
 }
 
-.hotspot:focus-visible {
-  box-shadow: 0 0 0 3px rgba(102,240,242,.8);
-  border-radius: 14px;
+// --- 페이지 ---
+.page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding-right: 10px;
+  overflow-y: auto;
+  transition: transform 0.5s ease-in-out, opacity 0.4s ease-in-out;
+
+  &.active {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+  &.inactive-left {
+    transform: translateX(-50px);
+    opacity: 0;
+    pointer-events: none;
+  }
+  &.inactive-right {
+    transform: translateX(50px);
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
+// --- 아바타 ---
+.guide-avatar {
+  flex-shrink: 0;
+  margin-right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: $color-container-bg;
+}
+
+// --- 대화 묶음 ---
+.dialog-wrapper {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: dialogEnter 0.6s ease-out forwards;
+
+  &.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dialogEnter {
+  0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+  70% { opacity: 1; transform: translateY(-5px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// --- 말풍선 ---
+.speech-bubble {
+  position: relative;
+  background-color: rgba($color-bubble, 0.75);
+  color: $color-text-dark;
+  border-radius: 16px;
+  padding: 20px 25px;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 22px;
+    border-width: 12px;
+    border-style: solid;
+    border-color: transparent rgba(255, 255, 255, 0.75) transparent transparent;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    mix-blend-mode: overlay;
+    animation: glitch-bubble 2.5s infinite linear;
+    pointer-events: none;
+  }
+
+  p { font-size: 1.2rem; line-height: 1.7; }
+}
+
+.bubble-title {
+  font-size: 2rem;
+  color: #000;
+  margin-bottom: 15px;
+}
+
+// === glitch-bubble 효과 ===
+.speech-bubble.glitch-bubble {
+  animation: bubble-glitch 1.5s infinite alternate ease-in-out;
+}
+
+// --- 리스트 ---
+.rules-list {
+  list-style: none;
+  padding-left: 0;
+
+  li {
+    position: relative;
+    padding-left: 25px;
+    margin-bottom: 12px;
+    font-size: 1.2rem;
+    line-height: 1.7;
+    &::before {
+      content: '✔';
+      position: absolute;
+      left: 0;
+      top: 2px;
+      color: $color-accent-dark;
+    }
+  }
+}
+
+// --- glitch 애니메이션 ---
+@keyframes bubble-glitch {
+  0%   { transform: translate(0, 0) skew(0deg); filter: none; }
+  20%  { transform: translate(-2px, 1px) skew(-1deg); filter: drop-shadow(-1px 0 var(--glitch-color-1)); }
+  40%  { transform: translate(2px, -1px) skew(1deg); filter: drop-shadow(1px 0 var(--glitch-color-2)); }
+  60%  { transform: translate(-1px, 2px) skew(0.5deg); filter: drop-shadow(-1px 0 var(--glitch-color-2)); }
+  80%  { transform: translate(1px, -2px) skew(-0.5deg); filter: drop-shadow(1px 0 var(--glitch-color-1)); }
+  100% { transform: translate(0, 0) skew(0deg); filter: none; }
+}
+
+@keyframes glitch-bubble {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(1px, -1px); }
+  60% { transform: translate(-1px, -0.5px); }
+  80% { transform: translate(0.5px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes glitch-soft-1 {
+  0% { transform: translateX(-1px); clip-path: inset(10% 0 85% 0); }
+  20% { clip-path: inset(90% 0 5% 0); }
+  40% { transform: translateX(1px); }
+  60% { clip-path: inset(5% 0 90% 0); }
+  80% { transform: translateX(-0.5px); clip-path: inset(40% 0 45% 0); }
+  100% { clip-path: none; transform: translateX(0); }
+}
+
+@keyframes glitch-soft-2 {
+  0% { transform: translateY(1px); clip-path: inset(80% 0 5% 0); }
+  25% { clip-path: inset(10% 0 85% 0); }
+  50% { transform: translateY(-1px); }
+  75% { clip-path: inset(85% 0 10% 0); }
+  100% { clip-path: none; transform: translateY(0); }
+}

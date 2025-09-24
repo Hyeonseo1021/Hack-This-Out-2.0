@@ -1,95 +1,26 @@
 {
-  "manualPage": {
-    "mainTitle": "New here? Here's how to use our service step by step",
-    "tryTutorial": "Now try the tutorial to learn how to play with a machine.",
-    "tutorialTitle": "Now Playing: Tutorial Machine",
-    "stepCard": {
-      "firstVisit": "Platform Overview",
-      "Rules": "Check the Rules",
-      "Modes": "Explore Modes",
-      "Ranking": "View Rankings",
-      "Machines": "Play Machines",
-      "Contests": "Join Contests"
-    },
-    "connect": {
-      "title": "Connect",
-      "description": "Connect using OpenVPN.\nDownload your VPN configuration and connect from your environment.",
-      "button": "Download",
-      "done": "Downloaded"
-    },
-    "spawn": {
-      "title": "Spawn Machine",
-      "description": "Create a machine and start hacking.",
-      "button": "Start Instance",
-      "done": "Instance Started",
-      "loading": "Starting...",
-      "wait": "Please wait..."
-    },
-    "hints": {
-      "title": "Hints",
-      "description": "If you need a hint, press the button.",
-      "button": "View Hint",
-      "hintText": "💡 Try using nmap first!"
-    },
-    "flag": {
-      "title": "Submit Flag",
-      "placeholder": "Enter flag here",
-      "button": "Submit",
-      "correct": "Correct! 🎉",
-      "incorrect": "Incorrect. Please try again."
-    },
-    "steps": {
-      "0": {
-        "title": "Introduction",
-        "description": "Welcome to the web-based hacking lab, Hack This Out!",
-        "short": "Hack This Out"
-      },
-      "1": {
-        "title": "Rules",
-        "descriptions": [
-          "1. Complete a machine by capturing the flag through hacking.",
-          "2. You will earn experience points (EXP) upon completing a machine.",
-          "3. You can use hints for each machine, but penalties will apply."
-        ],
-        "short": "Rules"
-      },
-      "2": {
-        "title": "Modes",
-        "descriptions": [
-          "Basic Mode: Hack a vulnerable machine.",
-          "Competition Mode: Complete all given machines as fast as possible within the time limit."
-        ],
-        "short": "Modes"
-      },
-      "3": {
-        "title": "Ranking",
-        "description": "Your rank is determined by your accumulated experience points!",
-        "short": "Ranking"
-      },
-      "4": {
-        "title": "Machines",
-        "description": "Create and play machines. You can leave reviews on them. Machine creation is subject to admin approval.",
-        "short": "Machines"
-      },
-      "5": {
-        "title": "Contests",
-        "description": "Hack machines in real-time competitive events!",
-        "short": "Contests"
-      }
-    },
-    "joyride": {
-    "startTutorial": "Start Tutorial",
-    "firstVisit": "Check this guide if it's your first visit.",
-    "rules": "Review the game rules.",
-    "modes": "Explore different play modes.",
-    "ranking": "Compete through our ranking system.",
-    "machines": "Spawn machines and try hacking them.",
-    "contests": "Join CTF contests and challenge yourself.",
-    "next": "Next",
-    "back": "Back",
-    "skip": "Skip",
-    "last": "Finish",
-    "close": "Close"
-    }
-  }
+  "title": "HACKING LAB MANUAL",
+  "welcomeTitle": "Welcome to the Hacking Lab!",
+  "welcomeMessage": "This is a safe space to hone your cybersecurity skills. Learn the basic rules and start the tutorial right away!",
+  "guideTitle": "Basic Rules",
+  "rules": [
+    "Solve the challenges in each machine to capture the \"Flag\".",
+    "Completing machines earns you EXP and raises your ranking.",
+    "You can use hints if you get stuck, but a small penalty will apply."
+  ],
+  "nextStepsTitle": "What should we do first?",
+  "nextStepsMessage": "Choose an option below to get started.",
+  
+  "tutorialLabel": "View Tutorial",
+  "tutorialDescription": "Learn about the basic flow and rules of the game.",
+  "playLabel": "Play Real Machines",
+  "playDescription": "If you're ready, challenge a real machine right now!",
+  
+  "startTutorialLabel": "Start Guided Tutorial",
+  "startTutorialDescription": "Attack a real machine with a step-by-step guide.",
+  "learnBasicsLabel": "Learn Hacking Basics",
+  "learnBasicsDescription": "Study the essential terms and concepts for hacking.",
+
+  "nextPage": "Next",
+  "prevPage": "Prev"
 }

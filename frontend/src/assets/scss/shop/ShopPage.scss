@@ -1,9 +1,32 @@
 /* src/assets/scss/Shop/ShopPage.scss */
 /* Blueprint Theme - Two Column Final */
 @use "../style" as *;
-// --- 테마 변수 ---
 
-// --- 2단 그리드 메인 레이아웃 ---
+/* === Theme Presets === */
+.shop-layout--blueprint {
+  /* 기본: 핑크 */
+  --bp-accent: #ff64b4;
+  --bp-glow: rgba(255, 100, 180, 0.45);
+  --bp-border: #3a3a3a;
+  --bp-bg: rgba(10,10,14,0.6);
+  --bp-text-muted: #9aa0a6;
+  --color-gainsboro: #dcdcdc;
+  --color-background-transparent: rgba(255,255,255,0.06);
+}
+
+/* ⬇️ 시안 테마 */
+.theme-cyan {
+  --bp-accent: #00e0ff;
+  --bp-glow: rgba(0, 224, 255, 0.45);
+}
+
+/* ⬇️ 그린 테마 */
+.theme-green {
+  --bp-accent: #39ff14;
+  --bp-glow: rgba(57, 255, 20, 0.45);
+}
+
+/* --- 2단 그리드 메인 레이아웃 --- */
 .shop-layout--blueprint {
   @include background_set; 
   display: grid;
@@ -12,7 +35,7 @@
   padding: 40px;
 }
 
-// --- 패널 공통 스타일 ---
+/* --- 패널 공통 스타일 --- */
 .panel--blueprint {
   background-color: var(--color-background-transparent);
   border: 1px solid var(--bp-border);
@@ -45,8 +68,6 @@
   overflow-y: auto; // 콘텐츠가 많으면 스크롤 생성
   flex-grow: 1; // 남은 공간을 모두 차지
 }
-
-/* ... 이하 스타일은 이전과 대부분 동일 ... */
 
 .loader, .empty-state {
   color: var(--color-gainsboro);
@@ -170,4 +191,418 @@
     height: auto; // 높이를 콘텐츠에 맞게 자동 조절
     padding: 24px; // 모바일에서는 패딩을 줄임
   }
+}
+
+/* === Blueprint Neon Polish – drop-in 추가 스타일 === */
+
+/* 0) 안전한 기본값 */
+:root {
+  --bp-glow: rgba(255, 100, 180, 0.45);
+  --bp-scan: rgba(255,255,255,0.05);
+}
+
+/* 1) 레이아웃 배경 */
+.shop-layout--blueprint {
+  position: relative;
+  isolation: isolate;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  &::before {
+    background:
+      repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,0.04) 23px 24px),
+      repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,0.04) 23px 24px);
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.25));
+  }
+  &::after {
+    background: linear-gradient(to bottom, transparent 0%, var(--bp-scan) 50%, transparent 100%);
+    mix-blend-mode: overlay;
+    animation: scanSweep 6s linear infinite;
+  }
+}
+@keyframes scanSweep {
+  0% { transform: translateY(-100%); opacity: .0; }
+  10% { opacity: .35; }
+  50% { opacity: .12; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+/* 2) 패널 강화 */
+.panel--blueprint {
+  position: relative;
+  background: linear-gradient(180deg, rgba(20,22,34,0.55), rgba(9,10,16,0.55));
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--bp-border);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03) inset,
+    0 10px 30px rgba(0,0,0,0.35);
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    width: 18px; height: 18px;
+    pointer-events: none;
+    border: 2px solid var(--bp-accent);
+    filter: drop-shadow(0 0 8px var(--bp-glow));
+  }
+  &::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+  &::after { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+}
+
+/* 3) 헤더 강조 */
+.panel__header {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+  border-bottom: 1px dashed rgba(220,220,220,0.25);
+  &::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--bp-accent), transparent);
+    filter: drop-shadow(0 0 6px var(--bp-glow));
+    opacity: .7;
+  }
+}
+.panel__title {
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 8px var(--bp-glow), 0 1px 0 rgba(0,0,0,.5);
+}
+
+/* 4) 상점 카드 강화 */
+.shop-item {
+  border: 1px solid rgba(220,220,220,0.25);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  overflow: hidden;
+  &::before {
+    content: "";
+    position: absolute; inset: 0 0 auto 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--bp-accent), transparent);
+    opacity: .6;
+  }
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 8px 22px rgba(0,0,0,0.35),
+      0 0 18px -4px var(--bp-glow);
+  }
+  &__header {
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    h3 { text-shadow: 0 0 6px rgba(0,0,0,0.35); }
+    span {
+      display: inline-block;
+      padding: 4px 10px;
+      border: 1px solid var(--bp-accent);
+      border-radius: 999px;
+      background: radial-gradient(100% 100% at 50% 0%, rgba(255,255,255,0.08), rgba(255,255,255,0.01));
+      box-shadow: 0 0 10px -2px var(--bp-glow) inset, 0 0 10px -4px var(--bp-glow);
+      text-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+  }
+  &::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 60%);
+    transform: translateX(-100%);
+    animation: cardShimmer 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
+@keyframes cardShimmer {
+  0% { transform: translateX(-120%); }
+  60% { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* 5) 버튼 강화 */
+.shop-item__btn {
+  position: relative;
+  border: 1px solid var(--bp-accent);
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 0 12px -4px var(--bp-glow);
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06) inset,
+      0 0 18px -2px var(--bp-glow);
+  }
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    filter: brightness(0.98);
+  }
+  &::after {
+    content: "";
+    position: absolute; inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background:
+      conic-gradient(from 0deg, transparent, var(--bp-accent), transparent 25%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: orbit 2.2s linear infinite;
+    opacity: .55;
+  }
+}
+@keyframes orbit { to { transform: rotate(360deg); } }
+
+/* 6) 인벤토리 타임라인 */
+.inventory-list {
+  position: relative;
+  padding-left: 14px;
+  &::before {
+    content: "";
+    position: absolute; left: 6px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--bp-accent), transparent 60%);
+    opacity: .35;
+  }
+}
+.inventory-item {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(220,220,220,0.18);
+  border-radius: 6px;
+  &::before {
+    content: "";
+    position: absolute; left: -10px; top: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--bp-accent);
+    box-shadow: 0 0 8px var(--bp-glow);
+    transform: translateY(-50%);
+  }
+}
+
+/* 7) 모션 최소화 */
+@media (prefers-reduced-motion: reduce) {
+  .shop-layout--blueprint::after,
+  .shop-item::after,
+  .shop-item__btn::after { animation: none !important; }
+  .shop-item:hover, .shop-item__btn:hover { transform: none !important; }
+}
+
+/* === Override: Shop balance compact right-aligned === */
+.panel--blueprint .panel__content .shop-balance {
+  padding: 8px 12px;
+  margin: 0 0 12px auto;   /* 오른쪽 끝으로 */
+  width: fit-content;      
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border: 1px solid rgba(220,220,220,0.25);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+}
+.panel--blueprint .panel__content .shop-balance span {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+.panel--blueprint .panel__content .shop-balance strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-gainsboro);
+  white-space: nowrap;
+  text-align: right;
+}
+.panel--blueprint .panel__content .shop-balance::before {
+  display: none; /* 아이콘 제거 */
+}
+
+/* === Cyber Toolbar (정렬/테마 조작부) === */
+.cy-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(0,0,0,.28);
+  backdrop-filter: blur(4px);
+}
+
+.cy-select {
+  appearance: none;
+  background: transparent;
+  color: var(--color-gainsboro);
+  border: 1px solid rgba(255,255,255,.22);
+  padding: 6px 10px;
+  font-size: 12px;
+  letter-spacing: .03em;
+  border-radius: 6px;
+}
+/* === Cyber Header Emphasis === */
+.panel__header {
+  position: relative;
+  overflow: hidden;
+
+  /* 배경에 흐르는 네온 라인 */
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--bp-accent),
+      transparent
+    );
+    animation: cyber-scan 3s linear infinite;
+    opacity: 0.7;
+  }
+}
+
+/* 타이틀 글씨 네온 효과 */
+.panel__title {
+  font-family: "Orbitron", sans-serif; /* 있다면 사이버틱 폰트 */
+  font-size: 1.3rem;
+  letter-spacing: 0.25em;
+  color: var(--bp-accent);
+  text-shadow:
+    0 0 5px var(--bp-accent),
+    0 0 10px var(--bp-glow),
+    0 0 20px var(--bp-glow);
+
+  /* 깜빡이는 효과 */
+  animation: cyber-flicker 2.5s infinite;
+}
+
+/* 네온 라인 애니메이션 */
+@keyframes cyber-scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 타이틀 flicker 애니메이션 */
+@keyframes cyber-flicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.4; }
+}
+/* === Hologram Style for Shop Cards === */
+.shop-item {
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  background: rgba(10, 20, 40, 0.35); /* 반투명 */
+  backdrop-filter: blur(6px) saturate(140%);
+  box-shadow:
+    0 0 12px rgba(0, 224, 255, 0.25),
+    inset 0 0 20px rgba(255,255,255,0.05);
+
+  /* 카드 표면에 홀로그램 쉬머 */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      125deg,
+      transparent 0%,
+      rgba(0, 255, 255, 0.15) 40%,
+      rgba(255, 0, 200, 0.15) 60%,
+      transparent 100%
+    );
+    opacity: 0.6;
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: holoShift 6s ease-in-out infinite;
+  }
+
+  /* hover 시 홀로그램 강조 */
+  &:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+      0 0 20px rgba(0, 224, 255, 0.4),
+      0 0 30px rgba(255, 0, 200, 0.25);
+  }
+}
+
+@keyframes holoShift {
+  0% { background-position: -200% 0; }
+  50% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+/* === Inventory Drawer (우측 드로어 전용 스타일) === */
+.inv-drawer {
+  display: none;
+}
+.inv-drawer:target {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+/* 오버레이 */
+.inv-drawer__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+}
+
+/* 패널 */
+.inv-drawer__panel {
+  margin-left: auto;
+  width: 360px;
+  max-width: 85%;
+  height: 100%;
+  background: var(--bp-bg);
+  border-left: 1px solid var(--bp-border);
+  box-shadow: -2px 0 12px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn .25s ease-out;
+}
+
+/* 헤더/닫기 버튼 */
+.inv-drawer__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--bp-border);
+}
+.inv-drawer__close {
+  font-size: 1.2rem;
+  color: var(--color-gainsboro);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* 컨텐츠 */
+.inv-drawer__content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+/* === Shop: expand to full width when using drawer === */
+.shop-layout--blueprint {
+  grid-template-columns: 1fr !important;  /* 2:1 → 1열 풀폭 */
+}
+
+/* (선택) 상점 패널 폭이 넓어졌을 때 여백/그리드 살짝 조정 */
+.shop-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
 }

@@ -28,10 +28,20 @@ export const getArenaById = async (arenaId: string) => {
   }
 };
 
-export const submitFlagArena = async (arenaId: string, userId: string, flag: string) => {
+// 수정된 부분: userId 제거, machineId 추가
+export const submitFlagArena = async (arenaId: string, flag: string, machineId: string) => {
   const res = await axiosInstance.post(`/arena/${arenaId}/submit`, {
-    userId,
     flag,
+    machineId,
+  });
+  return res.data;
+};
+
+// VPN IP 전송 함수 추가
+export const sendArenaVpnIp = async (arenaId: string, vpnIp: string) => {
+  const res = await axiosInstance.post('/arena/vpn-ip', {
+    arenaId,
+    vpnIp,
   });
   return res.data;
 };

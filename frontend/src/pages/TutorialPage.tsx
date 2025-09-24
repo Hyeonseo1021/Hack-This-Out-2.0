@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import Main from '../components/main/Main';
-import logo_dark from "../assets/img/icon/image.png";
+import logo_dark from "../assets/img/icon/HTO DARK.jpg";
 import logo_light from "../assets/img/icon/HTO LIGHT RECOLORED_crop_filled.png";
 import '../assets/scss/etc/TutorialPage.scss';
 
