@@ -3,7 +3,7 @@
 @use "../style" as *;
 
 /* === Theme Presets === */
-:root {
+.shop-layout--blueprint {
   /* 기본: 핑크 */
   --bp-accent: #ff64b4;
   --bp-glow: rgba(255, 100, 180, 0.45);
