@@ -7,6 +7,7 @@ import Instance from '../models/Instance';
 import config from '../config/config';
 import Machine from '../models/Machine';
 import { Server } from 'http';
+import { start } from 'repl';
 
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const gameTimers = new Map<string, NodeJS.Timeout>();
@@ -521,8 +522,9 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const { name, category,  maxParticipants, duration } = req.body;
-    if (!name || !category || !maxParticipants || !duration) {
+    // 이제 machineId를 직접 받음
+    const { name, machineId, maxParticipants, duration } = req.body;
+    if (!name || !machineId || !maxParticipants || !duration) {
       res.status(400).json({ message: 'Missing required fields' });
       return;
     }
@@ -532,22 +534,17 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const candidate = await Machine.aggregate([
-      { $match: { category, isBattleOnly: true } },
-      { $sample: { size: 1 } }
-    ]);
-
-    if (candidate.length === 0) {
-      res.status(404).json({ message: 'No suitable arena machine found.' });
+    // 선택된 머신이 존재하고 활성화되어 있는지 확인
+    const machine = await Machine.findOne({ _id: machineId, isActive: true });
+    if (!machine) {
+      res.status(404).json({ message: 'Selected machine not found or inactive.' });
       return;
     }
-
-    const machine = candidate[0]
 
     const newArena = await Arena.create({
       name, 
       host: userId,
-      category, 
+      category: machine.category, // 머신의 카테고리 자동 설정
       maxParticipants,
       duration,
       machine: machine._id,
@@ -556,7 +553,7 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
     });
 
     req.app.get('io')?.emit('arena:new-room', newArena);
-    res.status(201).json(newArena)
+    res.status(201).json(newArena);
 
   } catch (err) {
     console.error('Create arena error:', err);
@@ -566,7 +563,9 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
 
 export const getArenaList = async (req: Request, res: Response): Promise<void> => {
   try {
-    const arenas = await Arena.find()
+    const arenas = await Arena.find({
+      status: { $in: ['waiting', 'started'] }
+    })
       .sort({ createdAt: -1 })
       .limit(10);
     res.json(arenas);
@@ -887,4 +886,113 @@ export const receiveArenaVpnIp = async (req: Request, res: Response): Promise<vo
     console.error('Error receiving arena VPN IP:', error);
     res.status(500).send('Failed to receive VPN IP.');
   }
+};
+
+export const getArenaResult = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { arenaId } = req.params;
+    const arena = await Arena.findById(arenaId)
+      .populate('participants.user', 'username')
+      .populate('winner', 'username');
+
+    if (!arena) {
+      res.status(404).json({ msg : 'Arena not found.'});
+    }
+
+    if (arena.status !== 'ended') {
+      res.status(400).json({ msg: 'Arena is not finished yet.'});
+    }
+
+    const participants = arena.participants.filter(p => !p.hasLeft).map(p => {
+      const userSubmission = arena.submissions.find(s => s.user.toString() === p.user._id.toString() && s.flagCorrect === true);
+
+      let completionTime = null;
+
+      if (userSubmission && arena.startTime) {
+        const startTime = new Date(arena.startTime).getTime();
+        const submitTime = new Date(userSubmission.submittedAt).getTime();
+        completionTime = Math.floor((submitTime - startTime) / 1000);
+      }
+
+      return {
+        userId: p.user._id,
+        username: p.user ? (p.user as any).username : "Unknown User",
+        status: p.status,
+        completionTime: completionTime,
+        submittedAt: userSubmission ? userSubmission.submittedAt : null,
+        isCompleted: p.status === 'flag_submitted' || p.status === 'completed'
+      };
+  })
+  .sort((a, b) => {
+    if(a.isCompleted && !b.isCompleted) return -1;
+    if (!a.isCompleted && b.isCompleted) return 1;
+
+    if (a.isCompleted && b.isCompleted) {
+      if (a.completionTime && b.completionTime) {
+        return a.completionTime - b.completionTime;
+      }
+      return 0;
+    }
+    const getStatusPriority = (status) => {
+          if (status === 'vm_connected') return 1;
+          if (status === 'vpn_connecting') return 2;
+          if (status === 'waiting') return 3;
+          return 4;
+        };
+        
+        return getStatusPriority(a.status) - getStatusPriority(b.status);
+      })
+      .map((p, index) => ({
+        ...p,
+        rank: index + 1
+      }));
+
+    let duration = arena.duration * 60; // 기본값 먼저 설정
+    
+    if (arena.startTime && arena.endTime) {
+      const startTime = new Date(arena.startTime);
+      const endTime = new Date(arena.endTime);
+      duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+    }
+
+    const completedCount = participants.filter(p => p.isCompleted).length;
+    
+    const winner = arena.winner ? {
+      userId: arena.winner._id,
+      username: arena.winner ? (arena.winner as any).username : "Unknown User",
+      solvedAt: arena.firstSolvedAt
+    } : null;
+
+    const result = {
+      _id: arena._id,
+      name: arena.name,
+      host: arena.host._id,
+      hostName: arena.host ? (arena.host as any).username : "Unknown Host",
+      status: arena.status,
+      category: arena.category,
+      startTime: arena.startTime,
+      endTime: arena.endTime,
+      duration: duration,
+      participants: participants,
+      winner: winner,
+      firstSolvedAt: arena.firstSolvedAt,
+      arenaExp: arena.arenaExp,
+      stats: {
+        totalParticipants: participants.length,
+        completedCount: completedCount,
+        successRate: participants.length > 0 ? Math.round((completedCount / participants.length) * 100) : 0
+      },
+      settings: {
+        endOnFirstSolve: arena.settings.endOnFirstSolve,
+        graceMs: arena.settings.graceMs,
+        hardTimeLimitMs: arena.settings.hardTimeLimitMs
+      }
+    };
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Get arena result error:', error);
+    res.status(500).json({ msg: 'Failed to get arena results' });
+ }
 };

@@ -88,10 +88,9 @@ const MachineSchema = new mongoose.Schema({
         required: true,
         default: false
     },
-    isBattleOnly: {
+    forArena: {
         type: Boolean,
-        required: true,
-        default: false   
+        default: false
     }
 }, {
     timestamps: true

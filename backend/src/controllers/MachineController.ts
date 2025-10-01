@@ -8,7 +8,7 @@ import bcrypt from 'bcrypt';
  */
 export const createMachine = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, category, description, exp, amiId, hints, hintCosts, flag, isBattleOnly } = req.body;
+    const { name, category, description, exp, amiId, hints, hintCosts, flag, forArena } = req.body;
 
     // Validate required fields
     if (!name || !category || !amiId || !flag) {
@@ -60,7 +60,7 @@ export const createMachine = async (req: Request, res: Response): Promise<void> 
       hints: hintsArray.map((hint: string, index: number) => ({ content: hint, cost: hintCostsArray[index] })),
       flag: hashedFlag, // Assign the hashed flag
       isActive: false,
-      isBattleOnly: isBattleOnly === true
+      forArena: forArena || false,
     });
 
     await newMachine.save();
@@ -310,7 +310,7 @@ export const getMachineStatus = async (req: Request, res: Response): Promise<voi
 export const updateMachineDetails = async (req: Request, res: Response): Promise<void> => {
   try {
     const { machineId } = req.params;
-    const { name, category, description, exp, amiId, flag, hints, hintCosts } = req.body;
+    const { name, category, description, exp, amiId, flag, hints, hintCosts, forArena } = req.body;
 
     // Find the machine
     const machine = await Machine.findById(machineId);
@@ -335,6 +335,7 @@ export const updateMachineDetails = async (req: Request, res: Response): Promise
       machine.flag = hashedFlag;
     } // Update flag if provided
     if (hints) machine.hints = hints.map((hint: string, index: number) => ({ content: hint, cost: hintCosts[index] }));
+    if (forArena !== undefined) machine.forArena = forArena;
 
     await machine.save();
     res.status(200).json({ 

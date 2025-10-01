@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import { createMachine } from '../../api/axiosMachine';
 import { useNavigate } from 'react-router-dom';
 import '../../assets/scss/machine/AddMachineForm.scss';
 import { IoMdArrowRoundBack } from 'react-icons/io';
 import RegisterCompleteMD from '../modal/RegisterCompleteMD';
+import { AuthUserContext } from '../../contexts/AuthUserContext';
 
 interface MachineFormData {
   name: string;
@@ -14,6 +15,7 @@ interface MachineFormData {
   exp?: number;
   hints: string[];
   hintCosts: number[];
+  forArena?: boolean;
 }
 
 interface ValidationErrors {
@@ -22,6 +24,12 @@ interface ValidationErrors {
 
 const AddMachineForm: React.FC = () => {
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const authUserContext = useContext(AuthUserContext);
+  if (!authUserContext) {
+    throw new Error('AddMachineForm must be used within an AuthUserProvider');
+  }
+  const { currentUser } = authUserContext;
+  const isAdmin = currentUser?.isAdmin || false;
   const [formData, setFormData] = useState<MachineFormData>({
     name: '',
     category: '',
@@ -31,6 +39,7 @@ const AddMachineForm: React.FC = () => {
     exp: 50,
     hints: [''],
     hintCosts: [1],
+    forArena: false,
   });
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -275,6 +284,27 @@ const AddMachineForm: React.FC = () => {
             <span className='field-error'>{validationErrors.exp}</span>
           )}
         </div>
+
+        {isAdmin && (
+          <div className='arena-container'>
+            <label htmlFor='forArena' style={{ display: 'flex', alignItems: 'center' }}>
+              <input
+                type='checkbox'
+                id='forArena'
+                name='forArena'
+                checked={formData.forArena}
+                onChange={(e) => 
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    forArena: e.target.checked
+                  }))
+                }
+                style={{ marginRight: '8px' }}
+              />
+              <span>Arena용 머신으로 등록</span>
+            </label>
+          </div>
+        )}
 
         <div className='hint-container'>
           <label>Hints <span style={{ color: 'red' }}>*</span></label>

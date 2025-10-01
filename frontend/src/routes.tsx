@@ -40,8 +40,8 @@ const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
 const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
 const ArenaRoomPage = lazy(() => import('./pages/arena/ArenaRoomPage'));
 const ArenaPlayPage = lazy(() => import('./pages/arena/ArenaPlayPage'));
+const ArenaResultPage = lazy(() => import('./pages/arena/ArenaResultPage'));
 const MatchPage = lazy(() => import('./pages/match/MatchPage'));
-const BattleMachinesManagement = lazy(() => import('./pages/admin/BattleMachinesManagement'));
 const ShopPage = lazy(() => import('./pages/shop/ShopPage'));
 const ItemManagement = lazy(() => import('./pages/admin/ItemManagement'));
 const PlayPage = lazy(() => import('./pages/TutorialPlayPage'));
@@ -206,6 +206,14 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        path: 'arena/result/:id',
+        element: (
+          <ProtectedRoute>
+            <ArenaResultPage />
+          </ProtectedRoute>
+        )
+      },
+      {
         path: 'match',
         element: (   
           <ProtectedRoute>
@@ -344,18 +352,6 @@ const routes: RouteObject[] = [
                 <div className="admin-dashboard">
                   <div className="admin-content">
                     <InstancesManagement />
-                  </div>
-                </div>
-              </AdminProtectedRoute>
-            ),
-          },
-          {
-            path: 'battle-machines',
-            element: (
-              <AdminProtectedRoute>
-                <div className="admin-dashboard">
-                  <div className="admin-content">
-                    <BattleMachinesManagement />
                   </div>
                 </div>
               </AdminProtectedRoute>
