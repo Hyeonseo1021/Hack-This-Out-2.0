@@ -1,0 +1,24 @@
+// src/assets/scss/Shop/ShopGuide.scss
+.shop-guide {
+  margin: 20px 0;
+  padding: 15px;
+  border: 2px solid var(--crt-green, #31e8ee);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+
+  .guide-toggle {
+    background: transparent;
+    border: none;
+    color: var(--crt-green, #31e8ee);
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+
+  .guide-content {
+    animation: fadeIn 0.3s ease;
+    line-height: 1.6;
+  }
+}

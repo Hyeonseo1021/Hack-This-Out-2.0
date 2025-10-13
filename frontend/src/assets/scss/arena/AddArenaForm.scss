@@ -1,294 +1,254 @@
-// AddArenaForm.scss - Holographic Interface Redesign
+@use "../style" as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Audiowide&family=Press+Start+2P&display=swap');
 
-// -- 변수 설정: 색상과 효과를 쉽게 변경할 수 있도록 변수화
-$primary-color: #00ff88;      // 메인 네온 그린
-$secondary-color: #00d9ff;    // 보조 사이버 블루
-$error-color: #ff4d4d;        // 오류 네온 레드
-
-$bg-dark-deep: #0a0c10;        // 가장 어두운 배경
-$bg-dark-main: rgba(20, 25, 40, 0.7); // 모듈 배경 (반투명)
-$border-color: rgba(0, 217, 255, 0.3); // 기본 테두리
-$border-hover-color: rgba(0, 217, 255, 0.7);
-$border-active-color: $primary-color;
-
-// -- 키프레임 애니메이션
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+:root {
+  --bg-dark: #10021d;
+  --mint: #aaffee;
+  --pink: #ffb3ec;
+  --text-main: #f9faff;
+  --soft-white: #fff6fb;
 }
 
-@keyframes flicker {
-  0%, 18%, 22%, 25%, 53%, 57%, 100% {
-    text-shadow:
-      0 0 4px $primary-color,
-      0 0 11px $primary-color,
-      0 0 19px $primary-color,
-      0 0 40px $primary-color,
-      0 0 80px $primary-color,
-      0 0 90px $primary-color;
-  }
-  20%, 24%, 55% {
-    text-shadow: none;
-  }
-}
-
-// -- 전체 레이아웃
+/* ===== 전체 화면 구성 ===== */
 .terminal-form-container {
-  min-height: 90vh;
-  min-width: 90%;
-  background: radial-gradient(ellipse at bottom, #1b2735 0%, $bg-dark-deep 100%);
+  position: relative;
+  width: 80vw;
+  height: 90vh;
+  background: radial-gradient(circle at 50% 50%, #1a0a2f 0%, #0b0114 90%);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  color: #e0e0e0;
+  overflow: hidden;
+  color: var(--text-main);
+  font-family: 'Audiowide', 'Press Start 2P', sans-serif;
+  z-index: 1;
 }
 
-// -- 메인 모듈 (홀로그램 스타일)
+/* ===== 은은한 네온 배경 효과 ===== */
+.terminal-form-container::before,
+.terminal-form-container::after {
+  content: "";
+  position: absolute;
+  width: 900px;
+  height: 900px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.terminal-form-container::before {
+  top: -250px;
+  left: -250px;
+  background: radial-gradient(circle, rgba(255, 179, 236, 0.2), transparent 70%);
+}
+
+.terminal-form-container::after {
+  bottom: -250px;
+  right: -250px;
+  background: radial-gradient(circle, rgba(170, 255, 238, 0.2), transparent 70%);
+}
+
+/* ===== 메인 콘솔 박스 ===== */
 .terminal-module {
-  background: $bg-dark-main;
-  border: 1px solid $border-color;
-  border-radius: 4px;
-  padding: 30px 40px;
-  width: 100%;
-  height: 90%;
-  max-width: 1400px;
-  box-shadow: 0 0 25px rgba(0, 217, 255, 0.15), inset 0 0 15px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px); // 유리/홀로그램 효과
   position: relative;
-  animation: fadeIn 0.6s ease-out;
-
-  // -- 모서리 장식
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-color: $secondary-color;
-    border-style: solid;
-  }
-  &::before {
-    top: -2px; left: -2px;
-    border-width: 2px 0 0 2px;
-  }
-  &::after {
-    bottom: -2px; right: -2px;
-    border-width: 0 2px 2px 0;
-  }
+  z-index: 2;
+  width: 90%;
+  max-width: 1200px;
+  height: 80vh;
+  background: rgba(18, 5, 31, 0.7);
+  border: 2px solid rgba(255, 179, 236, 0.4);
+  border-radius: 24px;
+  padding: 100px 80px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-shadow: 0 0 60px rgba(255, 179, 236, 0.25);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
 }
 
-// -- 진행 상태 표시
-.step-indicator {
-  color: $secondary-color;
-  font-size: 28px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 20px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
+/* ===== 상단 SYSTEM READY 헤더 ===== */
 .progress-bar-container {
-  margin-bottom: 30px;
-  .progress-label { display: none; } // 불필요한 라벨 제거
-  .progress-bar-track {
-    background: rgba(0, 0, 0, 0.3);
-    height: 32px;
-    border-radius: 0;
-    overflow: hidden;
-    border: 1px solid $border-color;
-    padding: 2px;
-  }
-  .progress-bar {
-    background: $primary-color;
-    height: 100%;
-    transition: width 0.4s ease;
-    box-shadow: 0 0 8px $primary-color;
-  }
-  .progress-percent {
-    color: $primary-color;
-    font-size: 24px;
-    text-align: right;
-    margin-top: 8px;
-    font-weight: bold;
-  }
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 179, 236, 0.2);
+  box-shadow: 0 0 15px rgba(255, 179, 236, 0.05);
+  z-index: 10;
 }
 
+.progress-label {
+  font-family: 'Press Start 2P';
+  font-size: 0.8rem;
+  color: var(--mint);
+  text-shadow: 0 0 6px var(--mint);
+  margin-bottom: 4px;
+}
+
+.progress-bar-track {
+  width: 60%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--mint);
+  box-shadow: 0 0 10px var(--mint);
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+.progress-percent {
+  position: absolute;
+  right: 10%;
+  top: 14px;
+  font-family: 'Audiowide';
+  font-size: 0.9rem;
+  color: var(--pink);
+  text-shadow: 0 0 6px var(--pink);
+}
+
+/* ===== 단계 인디케이터 ===== */
+.step-indicator {
+  font-family: 'Press Start 2P';
+  color: var(--pink);
+  text-shadow: 0 0 8px var(--pink);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 60px;
+  margin-bottom: 25px;
+}
+
+/* ===== 메인 타이틀 (CREATE ROOM / ARENA) ===== */
 .create-title {
-  color: #fff;
-  font-size: 40px;
-  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3.2rem;
+  color: var(--mint);
+  text-shadow: 0 0 12px var(--mint), 0 0 20px var(--mint);
+  letter-spacing: 3px;
   text-align: center;
-  margin-bottom: 30px;
-  letter-spacing: 1px;
-  animation: flicker 3s infinite alternate;
+  margin-bottom: 35px;
 }
 
-// -- 입력 필드 및 라벨
+/* ===== 스텝 콘텐츠 (중앙 정렬) ===== */
 .step-content {
-  margin-bottom: 30px;
-  .crt-label-line {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    .crt-label-text {
-      color: $primary-color;
-      font-size: 36px;
-      font-weight: bold;
-      &::before { content: '>> '; } // 프롬프트 스타일 추가
-    }
-  }
-
-  input, select {
-    width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    color: #fff;
-    border: 1px solid $border-color;
-    border-radius: 2px;
-    padding: 12px 15px;
-    font-size: 32px;
-    outline: none;
-    transition: all 0.2s ease;
-    box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
-
-    &:focus {
-      border-color: $border-active-color;
-      box-shadow: 0 0 10px rgba($primary-color, 0.5), inset 0 0 8px rgba(0,0,0,0.5);
-    }
-    &::placeholder { color: #556; }
-  }
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px 0;
 }
 
-// -- Machine 선택 그리드
-.machine-selection {
-  .machine-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 5px;
-
-    &::-webkit-scrollbar-thumb { background: $secondary-color; }
-  }
-
-  .machine-card {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid $border-color;
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.2s ease-out;
-    position: relative;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%); // 각진 모서리
-
-    &:hover {
-      transform: translateY(-5px);
-      border-color: $border-hover-color;
-      background: rgba($secondary-color, 0.1);
-    }
-
-    &.selected {
-      border-color: $border-active-color;
-      background: rgba($primary-color, 0.1);
-      box-shadow: 0 0 15px rgba($primary-color, 0.4);
-      transform: translateY(-5px);
-
-      .machine-name { color: $primary-color; }
-      &::after {
-        content: 'SELECTED';
-        position: absolute;
-        top: 10px; right: -5px;
-        background: $primary-color;
-        color: $bg-dark-deep;
-        font-size: 10px;
-        font-weight: bold;
-        padding: 2px 8px;
-        transform: rotate(45deg);
-      }
-    }
-    .machine-header .machine-category {
-      color: $secondary-color;
-      border-color: $secondary-color;
-    }
-    .machine-exp { color: $primary-color; }
-  }
+/* ===== 라벨 ===== */
+.crt-label-line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 1rem;
+  letter-spacing: 1px;
 }
 
-// -- 에러 메시지
-.form-error {
-  color: $error-color;
+.crt-label-text {
+  color: var(--soft-white);
+  font-family: 'Audiowide';
+}
+
+/* ✦ 반짝이는 별 효과 */
+.crt-label-text::before {
+  content: '✦ ';
+  color: var(--pink);
+  text-shadow: 0 0 6px var(--pink);
+  animation: sparkle 2.5s infinite ease-in-out;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; text-shadow: 0 0 6px var(--pink); }
+  50% { opacity: 0.7; text-shadow: 0 0 12px var(--mint); }
+}
+
+/* ===== 인풋 ===== */
+input {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid var(--mint);
+  color: var(--mint);
+  font-family: 'Press Start 2P';
+  padding: 14px;
+  width: 60%;
+  border-radius: 12px;
   text-align: center;
-  margin-bottom: 20px;
-  padding: 12px;
-  background: rgba($error-color, 0.1);
-  border: 1px solid $error-color;
-  text-shadow: 0 0 5px $error-color;
+  margin-top: 12px;
+  box-shadow: 0 0 10px rgba(170, 255, 238, 0.25);
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 22px var(--mint);
+  }
 }
 
-// -- 네비게이션 버튼
+/* ===== 버튼 ===== */
 .navigation-controls {
   display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  border-top: 1px solid $border-color;
-  padding-top: 25px;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 25px;
+}
+
+.nav-button {
+  background: transparent;
+  color: var(--mint);
+  border: 1.5px solid var(--mint);
+  border-radius: 12px;
+  padding: 14px 36px;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-shadow: 0 0 6px var(--mint);
+  font-family: 'Audiowide';
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: rgba(170, 255, 238, 0.1);
+    box-shadow: 0 0 16px var(--mint), 0 0 24px var(--pink);
+    color: var(--pink);
+  }
+}
+
+/* ===== 에러 메시지 ===== */
+.form-error {
+  color: var(--pink);
+  text-shadow: 0 0 8px var(--pink);
+  font-size: 0.9rem;
   margin-top: 10px;
-
-  .nav-button {
-    background: transparent;
-    border: 1px solid;
-    color: #fff;
-    padding: 12px 24px;
-    font-size: 36px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    
-    // 호버 시 빛 효과
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.4s;
-    }
-
-    &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.05);
-      &::before { left: 100%; }
-    }
-    &:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    &.prev { color: $secondary-color; border-color: $secondary-color; }
-    &.create { color: $primary-color; border-color: $primary-color; }
-  }
+  font-family: 'Press Start 2P';
+  text-align: center;
 }
 
-// -- 선택된 Machine 요약
-.selected-machine-summary {
-  margin-top: 20px;
-  padding: 15px;
-  background: rgba(0,0,0,0.3);
-  border: 1px dashed $border-color;
-  .summary-title {
-    color: $secondary-color;
-    &::before { content: '[[ SYSTEM.INFO ]] '; }
-  }
-  .summary-name { color: #fff; }
-  .summary-category { color: $secondary-color; }
-  .summary-exp { color: $primary-color; }
+/* ===== 스크롤바 ===== */
+.machine-grid::-webkit-scrollbar {
+  width: 6px;
 }
-
-// -- 반응형
-@media (max-width: 768px) {
-  .terminal-module { padding: 20px; }
-  .machine-selection .machine-grid {
-    grid-template-columns: 1fr;
-    max-height: 350px;
-  }
+.machine-grid::-webkit-scrollbar-thumb {
+  background: var(--pink);
+  border-radius: 6px;
+}
+.machine-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
 }
