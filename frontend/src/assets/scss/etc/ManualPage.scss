@@ -18,7 +18,6 @@ $color-bubble: #ffffff;
 
 // --- 전체 뷰포트 ---
 .manual-beginner-viewport {
-  @include background_set;
   position: relative;
   backdrop-filter: blur(20px);
   display: flex;
@@ -27,6 +26,7 @@ $color-bubble: #ffffff;
   padding: 20px;
   box-sizing: border-box;
   background-color: #01020a;
+  @include background_set;
 
   &::before {
     content: "";

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createArena } from '../../api/axiosArena';
-import { getAllMachines } from '../../api/axiosMachine';
+import { getActiveMachines } from '../../api/axiosMachine';
 import '../../assets/scss/arena/AddArenaForm.scss';
 
 interface Machine {
@@ -12,7 +12,11 @@ interface Machine {
   description: string;
   exp: number;
   isActive: boolean;
-  forArena?: boolean; // 추가
+  difficulty?: {
+    creatorLevel?: string;
+    confirmedLevel?: string;
+    isConfirmed?: boolean;
+  };
 }
 
 const formSteps = [
@@ -21,6 +25,14 @@ const formSteps = [
   { id: 'maxParticipants', label: 'MAX PARTICIPANTS', type: 'number', min: 2, max: 4 },
   { id: 'duration', label: 'DURATION (MINUTES)', type: 'number', min: 10, max: 60, step: 5 },
 ];
+
+const difficultyLabels: { [key: string]: string } = {
+  'very_easy': '⭐',
+  'easy': '⭐⭐',
+  'medium': '⭐⭐⭐',
+  'hard': '⭐⭐⭐⭐',
+  'very_hard': '⭐⭐⭐⭐⭐'
+};
 
 const AddArenaForm: React.FC = () => {
   const navigate = useNavigate();
@@ -37,18 +49,16 @@ const AddArenaForm: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
-  // 머신 목록 로드 - forArena가 true인 것만 필터링
+  // 머신 목록 로드 - 모든 활성화된 머신
   useEffect(() => {
     const fetchMachines = async () => {
       try {
         setLoading(true);
-        const response = await getAllMachines();
-        // isActive이면서 forArena가 true인 머신만 필터링
-        const arenaMachines = response.data.filter(
-          (machine: Machine) => machine.isActive && machine.forArena === true
-        );
-        setMachines(arenaMachines);
-        setFilteredMachines(arenaMachines);
+        const response = await getActiveMachines();
+        // response.machines가 배열
+        const activeMachines = response.machines || [];
+        setMachines(activeMachines);
+        setFilteredMachines(activeMachines);
       } catch (err) {
         console.error('Failed to fetch machines:', err);
         setError('Failed to load machines');
@@ -131,6 +141,12 @@ const AddArenaForm: React.FC = () => {
   const progress = ((step + 1) / formSteps.length) * 100;
   const selectedMachine = machines.find(m => m._id === formData.machineId);
 
+  const getDifficultyDisplay = (machine: Machine) => {
+    const level = machine.difficulty?.confirmedLevel || machine.difficulty?.creatorLevel;
+    if (!level) return '';
+    return difficultyLabels[level] || '';
+  };
+
   const inputProps = {
     id: currentStep.id,
     name: currentStep.id,
@@ -208,7 +224,7 @@ const AddArenaForm: React.FC = () => {
                     {filteredMachines.length === 0 ? (
                       <div className="no-machines">
                         {machines.length === 0 
-                          ? 'No arena machines available. Please contact admin to add machines for arena.' 
+                          ? 'No machines available.' 
                           : 'No machines available for this category.'}
                       </div>
                     ) : (
@@ -246,6 +262,18 @@ const AddArenaForm: React.FC = () => {
                               whiteSpace: 'nowrap'
                             }}>[{machine.category}]</div>
                           </div>
+                          
+                          {/* 난이도 표시 */}
+                          {getDifficultyDisplay(machine) && (
+                            <div className="machine-difficulty" style={{
+                              color: '#ffcc00',
+                              fontSize: '11px',
+                              marginBottom: '8px'
+                            }}>
+                              Difficulty: {getDifficultyDisplay(machine)}
+                            </div>
+                          )}
+
                           <div className="machine-description" style={{
                             color: '#ccc',
                             lineHeight: '1.4',
@@ -314,6 +342,9 @@ const AddArenaForm: React.FC = () => {
             <div className="summary-info">
               <span className="summary-name">{selectedMachine.name}</span>
               <span className="summary-category">[{selectedMachine.category}]</span>
+              {getDifficultyDisplay(selectedMachine) && (
+                <span className="summary-difficulty">{getDifficultyDisplay(selectedMachine)}</span>
+              )}
               <span className="summary-exp">{selectedMachine.exp} EXP</span>
             </div>
           </div>
