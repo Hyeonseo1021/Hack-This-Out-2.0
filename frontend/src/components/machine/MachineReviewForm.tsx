@@ -35,6 +35,15 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
 
   const { rating, review } = formData;
 
+  // 별점을 difficulty로 매핑하는 함수
+  const mapRatingToDifficulty = (rating: number): string => {
+    if (rating >= 4.5) return 'very_easy';
+    if (rating >= 3.5) return 'easy';
+    if (rating >= 2.5) return 'medium';
+    if (rating >= 1.5) return 'hard';
+    return 'very_hard';
+  };
+
   const adjustTextareaHeight = () => {
     if (reviewContentRef.current) {
       reviewContentRef.current.style.height = 'auto';
@@ -87,22 +96,28 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
 
     setLoading(true);
     try {
-      const newReview = await postMachineReview(machineId, formData);
+      // difficulty를 자동으로 추가
+      const reviewData = {
+        rating,
+        review,
+        difficulty: mapRatingToDifficulty(rating)
+      };
+      
+      const newReview = await postMachineReview(machineId, reviewData);
       onReviewAdded(newReview);
       setFormData({ rating: 0, review: '' });
       onClose(); // Close modal after successful submission
+      window.location.reload(); // 성공했을 때만 새로고침
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.msg) {
-        setError(`Error submitting review: ${err.response.data.msg}`);
+        setError(err.response.data.msg);
       } else if (err.msg) {
-        setError(`Error submitting review: ${err.msg}`);
+        setError(err.msg);
       } else {
         setError('Error submitting review: Unknown error.');
       }
     } finally {
       setLoading(false);
-      //reload page
-      window.location.reload();
     }
   };
 

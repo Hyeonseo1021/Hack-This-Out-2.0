@@ -644,76 +644,32 @@ export const deleteArenaIfEmpty = async (arenaId: string, io: any) => {
 
 export const endArena = async (arenaId: string, io: any) => {
   try {
-    // ✅ 수정: 모든 타이머 정리
-    cleanupTimers(arenaId);
-
     const arena = await Arena.findById(arenaId);
-    if (!arena || arena.status === 'ended') return;
+    if (!arena) return console.error("Arena not found.");
 
-    arena.status = 'ended';
-    arena.endTime = new Date();
+    // 1️⃣ 상태 변경
+    arena.status = "ended";
     await arena.save();
 
-    // 종료 스냅샷 방송
-    const populated = await Arena.findById(arenaId)
-      .populate('participants.user', '_id username')
-      .lean();
+    // 2️⃣ EC2 인스턴스 종료
+    const instanceIds = arena.participants
+      .map((p: any) => p.instanceId)
+      .filter((id: string) => !!id);
 
-    io.to(arenaId).emit('arena:update', {
-      arenaId: String(populated?._id || arenaId),
-      status: 'ended',
-      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-      startTime: populated?.startTime || null,
-      endTime: populated?.endTime || null,
-      problemInstanceId: populated?.problemInstanceId || null,
-      problemInstanceIp: populated?.problemInstanceIp || null,
-      participants: (populated?.participants || []).map((pp: any) => ({
-        user: pp.user,
-        isReady: !!pp.isReady,
-        hasLeft: !!pp.hasLeft,
-        vpnIp: pp.vpnIp ?? null,
-        status: pp.status || 'waiting',
-      })),
-    });
-
-    io.to(arenaId).emit('arena:ended', { endTime: arena.endTime });
-
-    const summary = await Arena.findById(arenaId)
-      .select('name category status maxParticipants participants.user participants.hasLeft')
-      .lean();
-
-    if (summary) {
-      io.emit('arena:room-updated', {
-        _id: String(summary._id),
-        name: summary.name,
-        category: summary.category,
-        status: summary.status,
-        maxParticipants: summary.maxParticipants,
-        participants: (summary.participants || []).map((p: any) => ({
-          user: String((p.user && (p.user as any)._id) ?? p.user),
-          hasLeft: !!p.hasLeft,
-        })),
-      });
+    if (instanceIds.length > 0) {
+      await ec2Client.send(
+        new TerminateInstancesCommand({ InstanceIds: instanceIds })
+      );
+      console.log(`✅ Terminated ${instanceIds.length} instances for arena ${arenaId}`);
     }
 
-    // 문제 인스턴스 종료
-    if (arena.problemInstanceId) {
-      try {
-        const terminateCommand = new TerminateInstancesCommand({
-          InstanceIds: [arena.problemInstanceId],
-        });
-        await ec2Client.send(terminateCommand);
-        console.log(`[endArena] Terminated problem instance: ${arena.problemInstanceId}`);
-      } catch (err) {
-        console.warn(`[문제 인스턴스 종료 실패] ${arena.problemInstanceId}:`, err);
-      }
-    }
+    // 3️⃣ 클라이언트에 종료 이벤트 전송
+    io.to(arenaId).emit("arena-ended", { message: "Arena ended" });
 
-    // Instance 컬렉션 정리
-    await Instance.deleteMany({ arena: arenaId });
-
+    // 4️⃣ 게임 타이머 정리
+    gameTimers.delete(arenaId);
   } catch (err) {
-    console.error('endArena error:', err);
+    console.error("Error ending arena:", err);
   }
 };
 
