@@ -1,0 +1,58 @@
+@use "../style" as *;
+
+.leaderboard-container {
+  width: 100%;
+  height: 100vh;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  .top-three {
+    display: flex;
+    gap: 40px;
+
+    .rank-card {
+      width: 250px;
+      height: 400px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid cyan;
+      border-radius: 20px;
+      box-shadow: 0 0 20px cyan;
+      text-align: center;
+      padding: 20px;
+      font-family: 'Orbitron', sans-serif;
+
+      h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        color: #31e8ee;
+      }
+
+      p {
+        margin: 10px 0;
+      }
+    }
+  }
+
+  .expanded-view {
+    width: 80%;
+    height: 60%;
+    background: rgba(0, 0, 50, 0.7);
+    border: 3px solid cyan;
+    border-radius: 15px;
+    box-shadow: 0 0 30px cyan;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    h1 {
+      color: #31e8ee;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+  }
+}

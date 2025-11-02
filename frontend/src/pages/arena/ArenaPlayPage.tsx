@@ -135,7 +135,7 @@ const ArenaPlayPage: React.FC = () => {
   // 2-1) 타임업 안전망: 남은시간 0이면 이동
   useEffect(() => {
     if (status === 'ended') {
-      navigate(`/arena/${arenaId}`);
+      navigate(`/arena/result/${arenaId}`);
     }
   }, [status, arenaId, navigate]);
 
@@ -164,7 +164,7 @@ const ArenaPlayPage: React.FC = () => {
 
       // 서버가 ended 푸시 시 이동
       if (payload.status === 'ended') {
-        navigate(`/arena/${payload.arenaId}`);
+        navigate(`/arena/result/${payload.arenaId}`);
       }
     };
 
@@ -205,7 +205,7 @@ const ArenaPlayPage: React.FC = () => {
   // 3-1) arena:ended 이벤트도 잡아서 이동(옵션이지만 안전)
   useEffect(() => {
     const handleEnded = (data?: { arenaId?: string }) => {
-      navigate(`/arena/${data?.arenaId ?? arenaId}`);
+      navigate(`/arena/result/${data?.arenaId ?? arenaId}`);
     };
 
     socket.on('arena:ended', handleEnded);

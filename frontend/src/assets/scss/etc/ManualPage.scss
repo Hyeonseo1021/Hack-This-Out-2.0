@@ -9,17 +9,11 @@ $color-accent: #31e8ee;
 $color-accent-dark: #00a8b0;
 $color-bubble: #ffffff;
 
-// 네온/글리치용 색상 변수 (BattlePage와 톤 맞춤)
+// 네온/글리치용 색상 변수
 :root {
   --glitch-color-1: #ff00c1;
   --glitch-color-2: #00e1ff;
   --text-color: #e0e0e0;
-}
-
-// --- 애니메이션 ---
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 // --- 전체 뷰포트 ---
@@ -32,9 +26,8 @@ $color-bubble: #ffffff;
   align-items: center;
   padding: 20px;
   box-sizing: border-box;
-  background-color: #01020a; // BattlePage 톤 맞춤
+  background-color: #01020a;
 
-  // === 격자 배경 ===
   &::before {
     content: "";
     position: absolute;
@@ -54,7 +47,7 @@ $color-bubble: #ffffff;
   100% { background-position: 50px 50px; }
 }
 
-// --- 메인 컨테이너 ---
+// --- 컨테이너 ---
 .manual-beginner-container {
   position: relative;
   z-index: 1;
@@ -76,7 +69,6 @@ $color-bubble: #ffffff;
   margin-bottom: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba($color-accent, 0.2);
-  flex-shrink: 0;
 }
 
 .manual-title {
@@ -86,7 +78,6 @@ $color-bubble: #ffffff;
   color: var(--text-color);
   text-transform: uppercase;
   margin: 0 0 2rem 0;
-  animation: text-flicker 4s linear infinite;
 
   &::before,
   &::after {
@@ -111,19 +102,51 @@ $color-bubble: #ffffff;
   }
 }
 
-.language-toggle {
-  background-color: transparent;
-  border: 1px solid $color-accent;
-  color: $color-accent;
-  padding: 8px 16px;
-  font-size: 1.5rem;
-  border-radius: 20px;
+/* === 언어 토글 (네온 CRT 스타일) === */
+.neon-toggle {
+  position: relative;
+  font-family: 'Orbitron', 'VT323', monospace;
+  font-size: 1rem;
+  color: #00eaff;
+  background: transparent;
+  border: 1px solid rgba(0, 225, 255, 0.4);
+  border-radius: 6px;
+  padding: 6px 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(0, 225, 255, 0.3);
+  backdrop-filter: blur(2px);
+
   &:hover {
-    background-color: $color-accent;
-    color: $color-bg;
+    color: #fff;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00c1;
+    box-shadow: 0 0 15px rgba(0, 225, 255, 0.6);
+    transform: scale(1.05);
   }
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 6px rgba(255, 0, 193, 0.6);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(0,255,255,0.1), rgba(255,0,193,0.1));
+    mix-blend-mode: screen;
+    opacity: 0.4;
+    pointer-events: none;
+    animation: toggle-glow 2.5s infinite linear;
+  }
+}
+
+@keyframes toggle-glow {
+  0%, 100% { filter: hue-rotate(0deg); opacity: 0.4; }
+  50% { filter: hue-rotate(30deg); opacity: 0.7; }
 }
 
 // --- 콘텐츠 영역 ---
@@ -131,34 +154,6 @@ $color-bubble: #ffffff;
   flex-grow: 1;
   position: relative;
   overflow: hidden;
-}
-
-// --- 페이지 ---
-.page {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding-right: 10px;
-  overflow-y: auto;
-  transition: transform 0.5s ease-in-out, opacity 0.4s ease-in-out;
-
-  &.active {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: all;
-  }
-  &.inactive-left {
-    transform: translateX(-50px);
-    opacity: 0;
-    pointer-events: none;
-  }
-  &.inactive-right {
-    transform: translateX(50px);
-    opacity: 0;
-    pointer-events: none;
-  }
 }
 
 // --- 아바타 ---
@@ -180,11 +175,6 @@ $color-bubble: #ffffff;
   opacity: 0;
   transform: translateY(20px);
   animation: dialogEnter 0.6s ease-out forwards;
-
-  &.active {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes dialogEnter {
@@ -196,86 +186,80 @@ $color-bubble: #ffffff;
 // --- 말풍선 ---
 .speech-bubble {
   position: relative;
-  background-color: rgba($color-bubble, 0.75);
-  color: $color-text-dark;
+  background: rgba(10, 20, 30, 0.9);
+  border: 1px solid rgba(0, 225, 255, 0.4);
   border-radius: 16px;
   padding: 20px 25px;
   width: 100%;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  color: #cfd8dc;
+  font-family: 'VT323', monospace;
+  box-shadow: 0 0 15px rgba(0, 225, 255, 0.3);
 
+  // 꼬리
   &::before {
     content: '';
     position: absolute;
-    left: -22px;
+    left: -24px;
     top: 22px;
     border-width: 12px;
     border-style: solid;
-    border-color: transparent rgba(255, 255, 255, 0.75) transparent transparent;
+    border-color: transparent rgba(10, 20, 30, 0.9) transparent transparent;
+    filter: drop-shadow(0 0 4px rgba(0, 225, 255, 0.6));
   }
 
+  // CRT 스캔라인
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.1);
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 225, 255, 0.05) 0px,
+      rgba(0, 225, 255, 0.05) 2px,
+      transparent 2px,
+      transparent 4px
+    );
     mix-blend-mode: overlay;
-    animation: glitch-bubble 2.5s infinite linear;
     pointer-events: none;
+    animation: scanlines 4s linear infinite;
   }
 
-  p { font-size: 1.2rem; line-height: 1.7; }
-}
+  h2 {
+    display: block; // 제목은 항상 한 줄 차지
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #00e1ff;
+    text-shadow: 0 0 4px rgba(0, 225, 255, 0.7);
+    white-space: normal;
+    word-break: keep-all;
+  }
 
-.bubble-title {
-  font-size: 2rem;
-  color: #000;
-  margin-bottom: 15px;
-}
+  p, li {
+    display: block;
+    width: 100%;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #b0bec5;
+    text-shadow: 0 0 4px rgba(0, 225, 255, 0.4);
+    white-space: normal;     /* 줄바꿈 허용 */
+    word-break: keep-all;    /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 문장 자동 개행 */
+    margin-top: 5px; 
+  }
 
-// === glitch-bubble 효과 ===
-.speech-bubble.glitch-bubble {
-  animation: bubble-glitch 1.5s infinite alternate ease-in-out;
-}
-
-// --- 리스트 ---
-.rules-list {
-  list-style: none;
-  padding-left: 0;
-
-  li {
-    position: relative;
-    padding-left: 25px;
-    margin-bottom: 12px;
-    font-size: 1.2rem;
-    line-height: 1.7;
-    &::before {
-      content: '✔';
-      position: absolute;
-      left: 0;
-      top: 2px;
-      color: $color-accent-dark;
-    }
+  li::before {
+    content: "▸";
+    margin-right: 8px;
+    color: #ff00c1;
+    text-shadow: 0 0 6px rgba(255, 0, 193, 0.7);
   }
 }
 
-// --- glitch 애니메이션 ---
-@keyframes bubble-glitch {
-  0%   { transform: translate(0, 0) skew(0deg); filter: none; }
-  20%  { transform: translate(-2px, 1px) skew(-1deg); filter: drop-shadow(-1px 0 var(--glitch-color-1)); }
-  40%  { transform: translate(2px, -1px) skew(1deg); filter: drop-shadow(1px 0 var(--glitch-color-2)); }
-  60%  { transform: translate(-1px, 2px) skew(0.5deg); filter: drop-shadow(-1px 0 var(--glitch-color-2)); }
-  80%  { transform: translate(1px, -2px) skew(-0.5deg); filter: drop-shadow(1px 0 var(--glitch-color-1)); }
-  100% { transform: translate(0, 0) skew(0deg); filter: none; }
-}
-
-@keyframes glitch-bubble {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-1px, 1px); }
-  40% { transform: translate(1px, -1px); }
-  60% { transform: translate(-1px, -0.5px); }
-  80% { transform: translate(0.5px, 1px); }
-  100% { transform: translate(0, 0); }
+// === 글리치 애니메이션 ===
+@keyframes scanlines {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 4px; }
 }
 
 @keyframes glitch-soft-1 {
@@ -293,4 +277,97 @@ $color-bubble: #ffffff;
   50% { transform: translateY(-1px); }
   75% { clip-path: inset(85% 0 10% 0); }
   100% { clip-path: none; transform: translateY(0); }
+}
+
+// 클릭 안내 텍스트
+.cyber-footer-text {
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  color: rgba(0, 225, 255, 0.7);
+  text-align: center;
+  margin-top: 15px;
+  animation: flicker 1.5s infinite;
+}
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.3; }
+}
+
+/* === 글리치 텍스트 효과 === */
+.glitch-text, .glitch-subtext {
+  position: relative;
+  display: inline-block;
+  color: #00eaff;
+  font-family: 'IBM Plex Mono', monospace;
+  text-shadow: 0 0 5px rgba(0,255,255,0.6), 0 0 10px rgba(255,0,255,0.3);
+  animation: text-glitch 3s infinite linear alternate;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.7;
+    mix-blend-mode: screen;
+  }
+
+  &::before {
+    color: #ff00c8;
+    transform: translate(-2px, 0);
+    animation: glitch-left 2.5s infinite linear alternate;
+  }
+
+  &::after {
+    color: #00ffff;
+    transform: translate(2px, 0);
+    animation: glitch-right 2.5s infinite linear alternate;
+  }
+}
+
+/* === 깜빡이는 노이즈 === */
+@keyframes text-glitch {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  10% { opacity: 0.9; filter: brightness(1.2) contrast(1.1); }
+  20% { opacity: 0.8; transform: skewX(1deg); }
+  30% { opacity: 1; transform: skewX(-1deg); }
+  40% { opacity: 0.7; filter: hue-rotate(10deg); }
+  50% { opacity: 1; filter: hue-rotate(-10deg); }
+  60%, 100% { opacity: 1; transform: none; }
+}
+
+/* === 좌우 분리 흔들림 === */
+@keyframes glitch-left {
+  0% { transform: translate(-2px, 0); opacity: 0.4; }
+  25% { transform: translate(-4px, -1px); opacity: 0.6; }
+  50% { transform: translate(-1px, 1px); opacity: 0.5; }
+  75% { transform: translate(-3px, 0); opacity: 0.7; }
+  100% { transform: translate(0, 0); opacity: 0.4; }
+}
+
+@keyframes glitch-right {
+  0% { transform: translate(2px, 0); opacity: 0.4; }
+  25% { transform: translate(4px, 1px); opacity: 0.6; }
+  50% { transform: translate(1px, -1px); opacity: 0.5; }
+  75% { transform: translate(3px, 0); opacity: 0.7; }
+  100% { transform: translate(0, 0); opacity: 0.4; }
+}
+
+/* === 말풍선 전체 클릭 가능 === */
+.link-bubble {
+  text-decoration: none;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(0, 225, 255, 0.5);
+  }
+
+  h2, p {
+    color: inherit;
+    text-decoration: none;
+  }
 }

@@ -1,131 +1,310 @@
 @use "../style" as *;
 
+:root {
+  --cyber-bg: #0a1118;
+  --cyber-blue: #2e8ea7;
+  --cyber-light: #5ec8d8;
+  --cyber-glow: #aef3ff;
+  --cyber-dark: #071920;
+}
+
+/* ===============================
+   MAIN CONTAINER
+=============================== */
 .tutorial-page-container {
-    @include background_set;
-    @include scrollbar-none;
-    color: var(--color-white);
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    gap: 8px;
-    margin-bottom: 16px;
-    // min-height: calc(100% - 16px);
-    // min-height: 100vh;
+  @include background_set;
+  @include scrollbar-none;
+  color: var(--color-white);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  position: relative;
 
-    .tutorial-page-top{
-        .tutorial-page-img-dark{
-            height: 90%;
-            object-fit: fill; 
-            border-bottom: 2px solid white;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: brightness(1);
-            transform-origin: center;
-            
-            &:hover {
-                transform: scale(1.02) translateY(-4px);
-                filter: brightness(0.9) contrast(1.1) invert(1);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            }
-            
-            &:active {
-                transform: scale(0.98);
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-        }
-    }
-}
+  /* --- 은은한 스캔라인 효과 --- */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 2px,
+      transparent 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+    animation: scan-move 8s linear infinite;
+  }
 
-.tutorial-page-content-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    // height: 100%;
-    padding: 0;
-    margin-top: -60px;
-    gap: 32px;
-    max-width: 1200px;
-    margin-inline: auto;
-    padding-inline: 24px;
-    padding-bottom : 24px;
-
-    article {
-        position: relative;
-        max-width: 1200px;
-        width: 100%;
-        text-align: left;
-        padding: 32px 48px;
-        font-size: clamp(20px, 2vw, 24px);
-        line-height: 1.6;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        // margin-bottom: 32px;
-
-        h2 {
-            margin-bottom: 16px;
-            padding-left: 24px;
-            border-left: 4px solid var(--blue-200);
-            font-weight: 700;
-            font-size: clamp(28px, 2vw, 36px);
-        }
-        
-        strong {
-            font-weight: 700;
-            font-size: clamp(28px, 2vw, 32px);
-        }
-
-        p, ol {
-            margin: 0;
-            padding: 0;
-        }
-
-        ol {
-            padding-left: 40px;
-            list-style: decimal inside;
-        }
-
-        a {
-            font-weight: 700;
-            font-size: 1.2em;
-            color: var(--blue-200);
-            filter: drop-shadow(0 0 10px var(--blue-400));
-            transition: color 0.2s ease;
-            cursor: auto;
-            &:hover {
-                color: var(--blue-200);
-                filter: drop-shadow(0 0 10px var(--blue-500));
-            }
-            &.intro-red {
-                color: var(--accent);
-                filter: drop-shadow(0 0 10px var(--blue-400));
-                &:hover {
-                    color: var(--accent);
-                    filter: drop-shadow(0 0 10px var(--blue-500));
-                }
-            }
-        }
-
-        b {
-            font-weight: 700;
-            font-size: 1.2em;
-        }
-    }
-}
-
-.tutorial-video-container {
+  .tutorial-page-top {
     position: relative;
-    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-    height: 0;
-    margin: 20px 0;
-    h3 {
-        margin-bottom: 16px;
+    z-index: 2;
+
+    .tutorial-page-img-dark {
+      height: 90%;
+      object-fit: fill;
+      border-bottom: 2px solid var(--cyber-light);
+      transition: all 0.5s ease;
+      filter: brightness(1);
+      transform-origin: center;
+
+      &:hover {
+        transform: scale(1.02) translateY(-4px);
+        filter: brightness(1.1) contrast(1.1);
+        box-shadow: 0 8px 24px rgba(94, 200, 216, 0.4);
+      }
     }
-    iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyber-blue), var(--cyber-light));
+      box-shadow: 0 0 8px rgba(94, 200, 216, 0.6);
+    }
+  }
+}
+
+/* ===============================
+   CONTENT CONTAINER
+=============================== */
+.tutorial-page-content-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  gap: 32px;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 24px;
+  padding-bottom: 24px;
+  position: relative;
+  z-index: 2;
+
+  /* ===============================
+     ARTICLE BOX
+  =============================== */
+  article {
+    position: relative;
+    max-width: 1200px;
+    width: 100%;
+    text-align: left;
+    padding: 32px 48px;
+    font-size: clamp(20px, 2vw, 24px);
+    line-height: 1.6;
+    background: rgba(10, 17, 24, 0.6);
+    border-radius: 16px;
+    overflow: hidden;
+    z-index: 1;
+    isolation: isolate;
+
+    /* --- 은은한 블루 Glow --- */
+    box-shadow:
+      0 0 15px rgba(46, 142, 167, 0.15),
+      inset 0 0 20px rgba(94, 200, 216, 0.08);
+    transition: all 0.4s ease;
+
+    &:hover {
+      box-shadow:
+        0 0 25px rgba(94, 200, 216, 0.25),
+        inset 0 0 25px rgba(174, 243, 255, 0.1);
+    }
+
+    /* --- 움직이는 블루 테두리 --- */
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 2px;
+      background: linear-gradient(
+        120deg,
+        var(--cyber-dark),
+        var(--cyber-blue),
+        var(--cyber-light),
+        var(--cyber-glow)
+      );
+      background-size: 300% 300%;
+      animation: neon-border-flow 10s linear infinite;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.7;
+    }
+
+    /* --- subtle glitch noise overlay --- */
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(94, 200, 216, 0.02) 0px,
+        rgba(94, 200, 216, 0.02) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      mix-blend-mode: lighten;
+      animation: glitch-noise 3s infinite steps(2);
+      opacity: 0.1;
+    }
+
+    /* === TEXT === */
+    h2 {
+      position: relative;
+      margin-bottom: 16px;
+      padding-left: 24px;
+      border-left: 4px solid var(--cyber-light);
+      font-weight: 700;
+      font-size: clamp(28px, 2vw, 36px);
+      color: var(--cyber-glow);
+      font-family: "Orbitron", sans-serif;
+      text-transform: uppercase;
+      text-shadow:
+        0 0 4px var(--cyber-light),
+        0 0 10px rgba(174, 243, 255, 0.4);
+      animation: title-flicker 7s infinite linear;
+      letter-spacing: 2px;
+      z-index: 2;
+    }
+
+    strong {
+      font-weight: 700;
+      font-size: clamp(26px, 2vw, 30px);
+      color: var(--cyber-glow);
+      text-shadow:
+        0 0 4px var(--cyber-light),
+        0 0 8px rgba(174, 243, 255, 0.3);
+      transition: all 0.3s ease;
+
+      &:hover {
+        color: var(--cyber-light);
+        text-shadow:
+          0 0 10px var(--cyber-light),
+          0 0 16px rgba(174, 243, 255, 0.5);
+      }
+    }
+
+    p,
+    ol {
+      margin: 0;
+      padding: 0;
+      color: #d6e9ef;
+      text-shadow:
+        0 0 2px rgba(94, 200, 216, 0.2),
+        0 0 4px rgba(174, 243, 255, 0.1);
+      z-index: 2;
+      position: relative;
+      font-family: "Rajdhani", sans-serif;
+    }
+
+    a {
+      font-weight: 700;
+      font-size: 1.1em;
+      color: var(--cyber-light);
+      font-family: "Share Tech Mono", monospace;
+      text-decoration: none;
+      text-shadow:
+        0 0 6px var(--cyber-light),
+        0 0 10px var(--cyber-glow);
+      transition: all 0.3s ease;
+      position: relative;
+
+      &:hover {
+        color: var(--cyber-glow);
+        text-shadow:
+          0 0 10px var(--cyber-light),
+          0 0 14px var(--cyber-glow);
+      }
+    }
+  }
+}
+
+/* ===============================
+   VIDEO SECTION
+=============================== */
+.tutorial-video-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  margin: 20px 0;
+  z-index: 2;
+
+  h3 {
+    margin-bottom: 16px;
+    font-family: "Orbitron", sans-serif;
+    color: var(--cyber-light);
+    text-shadow: 0 0 8px var(--cyber-glow);
+  }
+
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+  }
+}
+
+/* ===============================
+   ANIMATIONS
+=============================== */
+@keyframes neon-border-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes scan-move {
+  0% { background-position-y: 0; }
+  100% { background-position-y: 100%; }
+}
+
+@keyframes glitch-noise {
+  0% { opacity: 0.08; transform: translate(0); }
+  25% { opacity: 0.12; transform: translateX(1px); }
+  50% { opacity: 0.1; transform: translateX(-1px); }
+  75% { opacity: 0.12; transform: translateY(1px); }
+  100% { opacity: 0.08; transform: translate(0); }
+}
+
+@keyframes title-flicker {
+  0%, 100% {
+    opacity: 1;
+    text-shadow:
+      0 0 6px var(--cyber-light),
+      0 0 10px var(--cyber-blue);
+  }
+  45% {
+    opacity: 0.9;
+    text-shadow:
+      0 0 4px var(--cyber-blue),
+      0 0 6px var(--cyber-light);
+  }
+  48% {
+    opacity: 0.6;
+    text-shadow: none;
+  }
+  50% {
+    opacity: 1;
+    text-shadow:
+      0 0 10px var(--cyber-blue),
+      0 0 16px var(--cyber-light);
   }
 }

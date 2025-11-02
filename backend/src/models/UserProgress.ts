@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 const UserProgressSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -8,8 +9,13 @@ const UserProgressSchema = new mongoose.Schema({
     machine: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Machine',
-        required: true
     },
+    // ===== 여기부터 새로 추가 =====
+    lesson: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lesson',
+    },
+    // ===== 여기까지 새로 추가 =====
     completed: {
         type: Boolean,
         default: false

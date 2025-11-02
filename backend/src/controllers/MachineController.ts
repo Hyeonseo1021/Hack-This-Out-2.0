@@ -8,10 +8,23 @@ import bcrypt from 'bcrypt';
  */
 export const createMachine = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, category, description, exp, amiId, hints, hintCosts, flag, isBattleOnly } = req.body;
+    const { 
+      name, 
+      category, 
+      description, 
+      exp, 
+      amiId, 
+      hints, 
+      hintCosts, 
+      flag, 
+      forArena,
+      // 새로 추가된 필드들
+      difficulty,
+      creatorSurvey
+    } = req.body;
 
     // Validate required fields
-    if (!name || !category || !amiId || !flag) {
+    if (!name || !category || !amiId || !flag || !difficulty || !creatorSurvey) {
       const missingFields = [];
       if (!name) missingFields.push('name');
       if (!category) missingFields.push('category');
@@ -20,9 +33,23 @@ export const createMachine = async (req: Request, res: Response): Promise<void> 
       if (!exp) missingFields.push('exp');
       if (!hints) missingFields.push('hints');
       if (!hintCosts) missingFields.push('hintCosts');
+      if (!difficulty) missingFields.push('difficulty');
+      if (!creatorSurvey) missingFields.push('creatorSurvey');
       
       console.error('Missing fields:', missingFields);
       res.status(400).json({ message: "ERROR", msg: `Missing fields: ${missingFields.join(', ')}` });
+      return;
+    }
+
+    // Validate difficulty
+    if (!difficulty.creatorLevel) {
+      res.status(400).json({ message: "ERROR", msg: 'Creator difficulty level is required.' });
+      return;
+    }
+
+    // Validate creatorSurvey
+    if (!creatorSurvey.estimatedTime || !creatorSurvey.technicalComplexity) {
+      res.status(400).json({ message: "ERROR", msg: 'Creator survey fields are required.' });
       return;
     }
 
@@ -58,9 +85,21 @@ export const createMachine = async (req: Request, res: Response): Promise<void> 
       exp: exp || 50,
       amiId,
       hints: hintsArray.map((hint: string, index: number) => ({ content: hint, cost: hintCostsArray[index] })),
-      flag: hashedFlag, // Assign the hashed flag
+      flag: hashedFlag,
       isActive: false,
-      isBattleOnly: isBattleOnly === true
+      forArena: forArena || false,
+      // 새로 추가된 필드들
+      difficulty: {
+        creatorLevel: difficulty.creatorLevel,
+        confirmedLevel: null,
+        isConfirmed: false,
+        reviewCount: 0
+      },
+      creatorSurvey: {
+        estimatedTime: creatorSurvey.estimatedTime,
+        requiredSkills: creatorSurvey.requiredSkills || [],
+        technicalComplexity: creatorSurvey.technicalComplexity
+      }
     });
 
     await newMachine.save();
@@ -310,7 +349,7 @@ export const getMachineStatus = async (req: Request, res: Response): Promise<voi
 export const updateMachineDetails = async (req: Request, res: Response): Promise<void> => {
   try {
     const { machineId } = req.params;
-    const { name, category, description, exp, amiId, flag, hints, hintCosts } = req.body;
+    const { name, category, description, exp, amiId, flag, hints, hintCosts, forArena } = req.body;
 
     // Find the machine
     const machine = await Machine.findById(machineId);
@@ -335,6 +374,7 @@ export const updateMachineDetails = async (req: Request, res: Response): Promise
       machine.flag = hashedFlag;
     } // Update flag if provided
     if (hints) machine.hints = hints.map((hint: string, index: number) => ({ content: hint, cost: hintCosts[index] }));
+    if (forArena !== undefined) machine.forArena = forArena;
 
     await machine.save();
     res.status(200).json({ 
@@ -629,13 +669,23 @@ export const submitFlagMachine = async (req: Request, res: Response): Promise<vo
 export const postMachineReview = async (req: Request, res: Response): Promise<void> => {
     try {
         const { machineId } = req.params;
-        const { rating, review } = req.body;
+        const { rating, review, difficulty } = req.body; // difficulty 추가
         const userId = res.locals.jwtData.id;
 
-        if (!rating || !review) {
+        if (!rating || !review || !difficulty) {
             res.status(400).json({ 
                 message: "ERROR", 
-                msg: 'Rating and review are required.' 
+                msg: 'Rating, review, and difficulty are required.' 
+            });
+            return;
+        }
+
+        // Validate difficulty value
+        const validDifficulties = ['very_easy', 'easy', 'medium', 'hard', 'very_hard'];
+        if (!validDifficulties.includes(difficulty)) {
+            res.status(400).json({ 
+                message: "ERROR", 
+                msg: 'Invalid difficulty value.' 
             });
             return;
         }
@@ -672,12 +722,16 @@ export const postMachineReview = async (req: Request, res: Response): Promise<vo
             reviewerName: user.username,
             content: review,
             rating,
+            difficulty // 난이도 추가
         });
 
         await machine.save();
 
         // Recalculate and update the machine's average rating
         await (machine as any).updateRating();
+        
+        // Recalculate and update the machine's difficulty
+        await (machine as any).updateDifficulty();
 
         res.status(200).json({ 
             message: "OK", 
@@ -879,7 +933,7 @@ export const deleteMyMachineReview = async (req: Request, res: Response): Promis
 export const updateMachineReview = async (req: Request, res: Response): Promise<void> => {
     try {
         const { machineId, reviewId } = req.params;
-        const { newRating, newReview } = req.body;
+        const { newRating, newReview, newDifficulty } = req.body; // newDifficulty 추가
         const userId = res.locals.jwtData.id;
 
         const machine = await Machine.findById(machineId);
@@ -909,6 +963,19 @@ export const updateMachineReview = async (req: Request, res: Response): Promise<
             return;
         }
 
+        // Validate difficulty if provided
+        if (newDifficulty) {
+            const validDifficulties = ['very_easy', 'easy', 'medium', 'hard', 'very_hard'];
+            if (!validDifficulties.includes(newDifficulty)) {
+                res.status(400).json({ 
+                    message: "ERROR", 
+                    msg: 'Invalid difficulty value.' 
+                });
+                return;
+            }
+            review.difficulty = newDifficulty;
+        }
+
         if (newReview) review.content = newReview;
         if (newRating) review.rating = newRating; 
 
@@ -916,6 +983,9 @@ export const updateMachineReview = async (req: Request, res: Response): Promise<
 
         // Recalculate and update the machine's average rating
         await (machine as any).updateRating();
+        
+        // Recalculate and update the machine's difficulty
+        await (machine as any).updateDifficulty();
 
         res.status(200).json({ 
             message: "OK", 

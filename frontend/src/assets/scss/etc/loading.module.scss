@@ -181,6 +181,18 @@ $glitch-intensity: 25;
   background: #000 no-repeat center;
   background-size: cover;
   overflow: hidden;
+  
+.noiseOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.25; /* 투명도 조절 */
+  mix-blend-mode: screen; /* 배경 위에 자연스럽게 합성 */
+  z-index: 3;
+  pointer-events: none;
+}
 
   &::before {
     @include paint-splash;

@@ -46,6 +46,15 @@ export const sendArenaVpnIp = async (arenaId: string, vpnIp: string) => {
   return res.data;
 };
 
+
+export const getArenaResult = async (arenaId: string) => {
+  try {
+    const res = await axiosInstance.get(`/arena/${arenaId}/result`);
+    return res.data;
+  } catch (error: any) {
+    throw error?.response?.data || new Error('Failed to fetch arena results');
+  }
+};
 // 이후 추가로 필요한 기능 예시:
 // export const joinArena = ...
 // export const startArena = ...
