@@ -1,0 +1,210 @@
+/* =======================
+   네온 글리치 타이틀
+   ======================= */
+.leaderboard-title {
+  font-family: "Orbitron", sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  color: #eafaff;
+  margin-bottom: 80px;
+  text-align: center;
+
+  /* 네온 글리치 효과 */
+  text-shadow:
+    0 0 4px #00f6ff,
+    0 0 8px #00f6ff,
+    0 0 16px rgba(0, 255, 255, 0.6),
+    -1px 0 2px #00e1ff,
+    1px 0 2px #ff00c1;
+  animation: glitchPulse 2.8s infinite ease-in-out;
+}
+
+/* 깜빡이는 네온 애니메이션 */
+@keyframes glitchPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 6px #00f6ff,
+      0 0 12px #00f6ff,
+      0 0 22px rgba(0, 255, 255, 0.7),
+      -1px 0 2px #00e1ff,
+      1px 0 2px #ff00c1;
+    transform: translateX(0);
+  }
+  20% {
+    text-shadow:
+      0 0 10px #00f6ff,
+      0 0 25px #00f6ff,
+      0 0 40px rgba(0, 255, 255, 0.8),
+      -2px 0 3px #00e1ff,
+      2px 0 3px #ff00c1;
+  }
+  40% { transform: translateX(-1px); }
+  60% { transform: translateX(1px); }
+  80% {
+    text-shadow:
+      0 0 4px #00f6ff,
+      0 0 12px #00f6ff,
+      0 0 18px rgba(0, 255, 255, 0.5),
+      -1px 0 2px #00e1ff,
+      1px 0 2px #ff00c1;
+  }
+}
+
+/* =======================
+   레이아웃 (1위 위, 2‧3위 아래)
+   ======================= */
+.holo-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 80px;
+  perspective: 1000px;
+}
+
+.holo-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.holo-bottom {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 120px;
+}
+
+/* =======================
+   카드 공통 스타일
+   ======================= */
+.holo-card {
+  position: relative;
+  width: 260px;
+  height: 360px;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.6s ease;
+
+  &:hover {
+    transform: translateY(-10px) scale(1.05);
+  }
+
+  /* 카드 내부 패널 */
+  .holo-panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 255, 255, 0.03); /* 🔹 내부를 어둡게 */
+    border: 1px solid rgba(0, 255, 255, 0.08); /* 🔹 테두리 거의 안 보이게 */
+    border-radius: 12px;
+    box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.08),
+                0 0 20px rgba(0, 255, 255, 0.05);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    animation: floatCard 4s ease-in-out infinite alternate;
+  }
+
+  /* 하단 홀로그램 링 */
+  .holo-ring {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.3), transparent 70%);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+    filter: blur(3px);
+    animation: ringPulse 3s ease-in-out infinite;
+  }
+
+  /* 중앙 빛기둥 — 메인 포인트 */
+  .holo-beam {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 100%;
+    background: radial-gradient(circle at 50% 90%, rgba(0, 255, 255, 0.4) 0%, transparent 70%),
+                linear-gradient(
+                  to top,
+                  rgba(0, 255, 255, 0.55) 0%,
+                  rgba(0, 255, 255, 0.2) 40%,
+                  rgba(0, 255, 255, 0.05) 80%,
+                  transparent 100%
+                );
+    filter: blur(10px);
+    opacity: 0.9;
+    animation: beamGlow 3s ease-in-out infinite alternate;
+  }
+
+  /* 🔹 반짝이는 입자 제거 (삭제됨) */
+
+  /* 텍스트 영역 */
+  .holo-info {
+    position: absolute;
+    bottom: 60px;
+    width: 100%;
+    text-align: center;
+    color: cyan;
+    font-family: "Orbitron", sans-serif;
+    text-shadow: 0 0 10px cyan;
+
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 6px;
+    }
+    p {
+      font-size: 1rem;
+      margin: 2px 0;
+    }
+  }
+
+  /* Hover 시 glow */
+  &:hover .holo-panel {
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.25),
+                inset 0 0 20px rgba(0, 255, 255, 0.2);
+  }
+}
+
+/* =======================
+   랭크별 강조 스타일
+   ======================= */
+.holo-card.rank-1 .holo-panel {
+  box-shadow: 0 0 45px rgba(0, 255, 255, 0.25),
+              inset 0 0 25px rgba(0, 255, 255, 0.2);
+  transform: scale(1.15);
+}
+
+.holo-card.rank-2 .holo-panel,
+.holo-card.rank-3 .holo-panel {
+  opacity: 0.9;
+  transform: scale(0.95);
+}
+
+/* =======================
+   애니메이션 정의
+   ======================= */
+@keyframes ringPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+  50% { transform: translateX(-50%) scale(1.25); opacity: 1; }
+}
+
+@keyframes beamGlow {
+  0%, 100% { opacity: 0.7; filter: blur(10px); }
+  50% { opacity: 1; filter: blur(6px); }
+}
+
+@keyframes floatCard {
+  from { transform: translateY(0px); }
+  to { transform: translateY(-6px); }
+}

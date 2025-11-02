@@ -18,6 +18,7 @@ $color-bubble: #ffffff;
 
 // --- 전체 뷰포트 ---
 .manual-beginner-viewport {
+  @include background_set;
   position: relative;
   backdrop-filter: blur(20px);
   display: flex;
@@ -26,7 +27,6 @@ $color-bubble: #ffffff;
   padding: 20px;
   box-sizing: border-box;
   background-color: #01020a;
-  @include background_set;
 
   &::before {
     content: "";
@@ -53,7 +53,7 @@ $color-bubble: #ffffff;
   z-index: 1;
   width: 100%;
   max-width: 1000px;
-  height: 90vh;
+  height: 85vh;
   max-height: 800px;
   background: rgba(13, 13, 13, 0.7);
   padding: 30px;
@@ -100,6 +100,53 @@ $color-bubble: #ffffff;
     text-shadow: -2px 0 var(--glitch-color-2);
     animation: glitch-soft-2 3s infinite reverse linear;
   }
+}
+
+/* === 언어 토글 (네온 CRT 스타일) === */
+.neon-toggle {
+  position: relative;
+  font-family: 'Orbitron', 'VT323', monospace;
+  font-size: 1rem;
+  color: #00eaff;
+  background: transparent;
+  border: 1px solid rgba(0, 225, 255, 0.4);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 8px rgba(0, 225, 255, 0.3);
+  backdrop-filter: blur(2px);
+
+  &:hover {
+    color: #fff;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00c1;
+    box-shadow: 0 0 15px rgba(0, 225, 255, 0.6);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 6px rgba(255, 0, 193, 0.6);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(0,255,255,0.1), rgba(255,0,193,0.1));
+    mix-blend-mode: screen;
+    opacity: 0.4;
+    pointer-events: none;
+    animation: toggle-glow 2.5s infinite linear;
+  }
+}
+
+@keyframes toggle-glow {
+  0%, 100% { filter: hue-rotate(0deg); opacity: 0.4; }
+  50% { filter: hue-rotate(30deg); opacity: 0.7; }
 }
 
 // --- 콘텐츠 영역 ---
@@ -152,7 +199,7 @@ $color-bubble: #ffffff;
   &::before {
     content: '';
     position: absolute;
-    left: -22px;
+    left: -24px;
     top: 22px;
     border-width: 12px;
     border-style: solid;
@@ -179,17 +226,26 @@ $color-bubble: #ffffff;
   }
 
   h2 {
+    display: block; // 제목은 항상 한 줄 차지
     font-size: 1.5rem;
     margin-bottom: 10px;
     color: #00e1ff;
     text-shadow: 0 0 4px rgba(0, 225, 255, 0.7);
+    white-space: normal;
+    word-break: keep-all;
   }
 
   p, li {
+    display: block;
+    width: 100%;
     font-size: 1.1rem;
     line-height: 1.6;
     color: #b0bec5;
     text-shadow: 0 0 4px rgba(0, 225, 255, 0.4);
+    white-space: normal;     /* 줄바꿈 허용 */
+    word-break: keep-all;    /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 문장 자동 개행 */
+    margin-top: 5px; 
   }
 
   li::before {
@@ -236,4 +292,82 @@ $color-bubble: #ffffff;
 @keyframes flicker {
   0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
   20%, 24%, 55% { opacity: 0.3; }
+}
+
+/* === 글리치 텍스트 효과 === */
+.glitch-text, .glitch-subtext {
+  position: relative;
+  display: inline-block;
+  color: #00eaff;
+  font-family: 'IBM Plex Mono', monospace;
+  text-shadow: 0 0 5px rgba(0,255,255,0.6), 0 0 10px rgba(255,0,255,0.3);
+  animation: text-glitch 3s infinite linear alternate;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.7;
+    mix-blend-mode: screen;
+  }
+
+  &::before {
+    color: #ff00c8;
+    transform: translate(-2px, 0);
+    animation: glitch-left 2.5s infinite linear alternate;
+  }
+
+  &::after {
+    color: #00ffff;
+    transform: translate(2px, 0);
+    animation: glitch-right 2.5s infinite linear alternate;
+  }
+}
+
+/* === 깜빡이는 노이즈 === */
+@keyframes text-glitch {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  10% { opacity: 0.9; filter: brightness(1.2) contrast(1.1); }
+  20% { opacity: 0.8; transform: skewX(1deg); }
+  30% { opacity: 1; transform: skewX(-1deg); }
+  40% { opacity: 0.7; filter: hue-rotate(10deg); }
+  50% { opacity: 1; filter: hue-rotate(-10deg); }
+  60%, 100% { opacity: 1; transform: none; }
+}
+
+/* === 좌우 분리 흔들림 === */
+@keyframes glitch-left {
+  0% { transform: translate(-2px, 0); opacity: 0.4; }
+  25% { transform: translate(-4px, -1px); opacity: 0.6; }
+  50% { transform: translate(-1px, 1px); opacity: 0.5; }
+  75% { transform: translate(-3px, 0); opacity: 0.7; }
+  100% { transform: translate(0, 0); opacity: 0.4; }
+}
+
+@keyframes glitch-right {
+  0% { transform: translate(2px, 0); opacity: 0.4; }
+  25% { transform: translate(4px, 1px); opacity: 0.6; }
+  50% { transform: translate(1px, -1px); opacity: 0.5; }
+  75% { transform: translate(3px, 0); opacity: 0.7; }
+  100% { transform: translate(0, 0); opacity: 0.4; }
+}
+
+/* === 말풍선 전체 클릭 가능 === */
+.link-bubble {
+  text-decoration: none;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(0, 225, 255, 0.5);
+  }
+
+  h2, p {
+    color: inherit;
+    text-decoration: none;
+  }
 }

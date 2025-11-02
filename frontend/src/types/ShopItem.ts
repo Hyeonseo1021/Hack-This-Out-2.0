@@ -4,7 +4,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  isListed: boolean;
+  isListed?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };

@@ -11,22 +11,23 @@ const ManualPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentDialog, setCurrentDialog] = useState(0);
 
+  // ✅ 언어 토글 버튼 클릭 시 한/영 전환
   const toggleLanguage = () => {
     const newLang = i18n.language === 'ko' ? 'en' : 'ko';
     i18n.changeLanguage(newLang);
   };
   
-  // rules 배열 안전 처리
+  // 다국어 리소스 로드
   const rulesData = t('rules', { returnObjects: true });
   const rules = Array.isArray(rulesData) ? rulesData : [];
 
-  // 페이지1 대화 데이터
+  // 대화(인트로) 데이터
   const dialogs = [
     { title: t('welcomeTitle'), message: t('welcomeMessage') },
     { title: t('guideTitle'), rules: rules },
   ];
 
-  // 페이지2 대화 데이터 (4개의 말풍선)
+  // Step별 이동 대상 데이터
   const stepDialogs = [
     { label: t('tutorialLabel'), desc: t('tutorialDescription'), to: "/tutorial" },
     { label: t('playLabel'), desc: t('playDescription'), to: "/machine" },
@@ -34,6 +35,7 @@ const ManualPage: React.FC = () => {
     { label: t('learnBasicsLabel'), desc: t('learnBasicsDescription'), to: "/learn" },
   ];
 
+  // ✅ 클릭으로 페이지 및 대화 흐름 제어
   const handleNextDialog = () => {
     if (currentPage === 1) {
       if (currentDialog < dialogs.length - 1) {
@@ -56,41 +58,44 @@ const ManualPage: React.FC = () => {
       <div className="manual-beginner-viewport">
         <div className="manual-beginner-container">
           
-          {/* --- 헤더 --- */}
+          {/* --- 헤더 (타이틀 + 언어 토글) --- */}
           <div className="manual-header">
             <h1 className="manual-title" data-text={t('title')}>
               {t('title')}
             </h1>
-            <button className="language-toggle" onClick={toggleLanguage}>
+
+            {/* ✅ 네온 CRT 테마 언어 토글 버튼 */}
+            <button className="language-toggle neon-toggle" onClick={toggleLanguage}>
               {i18n.language === 'ko' ? 'EN' : 'KO'}
             </button>
           </div>
           
-          {/* --- 화면 클릭 시 다음 --- */}
+          {/* --- 메인 콘텐츠 영역 (클릭 시 페이지 전환) --- */}
           <div className="manual-content-area" onClick={handleNextDialog}>
             
-            {/* --- 페이지 1 --- */}
+            {/* --- 페이지 1 : 인트로 --- */}
             {currentPage === 1 && (
               <div className="page page-one active">
                 <div className="dialog-wrapper active">
                   <img src={Hackcat} alt="Guide Avatar" className="guide-avatar" />
-                  <div className="speech-bubble">
-                    <h2 className="bubble-title">{currentDialogData.title}</h2>
-                    {currentDialogData.message && <p>{currentDialogData.message}</p>}
-                    {currentDialogData.rules && (
-                      <ul className="rules-list">
-                        {currentDialogData.rules.map((rule: string, idx: number) => (
-                          <li key={idx}>{rule}</li>
-                        ))}
-                      </ul>
-                    )}
+
+                  {/* ✅ 글리치 효과 텍스트 */}
+                  <div className="dialogue-bubble">
+                    <span className="glitch-text" data-text={t('welcomeTitle')}>
+                      {t('welcomeTitle')}
+                    </span>
+                    <p className="glitch-subtext" data-text={t('welcomeMessage')}>
+                      {t('welcomeMessage')}
+                    </p>
                   </div>
                 </div>
+
+                {/* ✅ 첫 번째 페이지에서만 표시 */}
                 <p className="cyber-footer-text">CLICK TO CONTINUE</p>
               </div>
             )}
 
-            {/* --- 페이지 2 (말풍선 하나씩 클릭 시 나타나기) --- */}
+            {/* --- 페이지 2 : 메뉴 선택 화면 --- */}
             {currentPage === 2 && (
               <div className="page page-two active">
                 {stepDialogs.map((step, idx) => (
@@ -99,14 +104,26 @@ const ManualPage: React.FC = () => {
                     className={`dialog-wrapper ${idx <= currentDialog ? "active" : ""}`}
                   >
                     <img src={Hackcat} alt="Guide Avatar" className="guide-avatar" />
-                    <div className="speech-bubble">
-                      <h2 className="bubble-title">{step.label}</h2>
-                      <p>{step.desc}</p>
-                      <Link to={step.to} className="nav-button">Go</Link>
-                    </div>
+
+                    {/* ✅ 말풍선 전체를 클릭하면 이동 */}
+                    <Link to={step.to} className="speech-bubble link-bubble">
+                      <h2 
+                        className="glitch-text" 
+                        data-text={step.label}
+                      >
+                        {step.label}
+                      </h2>
+                      <p 
+                        className="glitch-subtext" 
+                        data-text={step.desc}
+                      >
+                        {step.desc}
+                      </p>
+                    </Link>
                   </div>
                 ))}
-                <p className="cyber-footer-text">CLICK TO CONTINUE</p>
+
+                {/* ❌ 두 번째 페이지에서는 CLICK TO CONTINUE 제거 */}
               </div>
             )}
 
