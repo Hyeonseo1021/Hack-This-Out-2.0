@@ -6,6 +6,7 @@ import User from '../models/User';
 import Instance from '../models/Instance';
 import config from '../config/config';
 import Machine from '../models/Machine';
+import ArenaProcess from '../models/ArenaProcess';
 import { Server } from 'http';
 
 // ✅ 수정: unused import 제거
@@ -645,31 +646,39 @@ export const deleteArenaIfEmpty = async (arenaId: string, io: any) => {
 export const endArena = async (arenaId: string, io: any) => {
   try {
     const arena = await Arena.findById(arenaId);
-    if (!arena) return console.error("Arena not found.");
+    if (!arena) return console.error('Arena not found.');
 
-    // 1️⃣ 상태 변경
-    arena.status = "ended";
+    arena.status = 'ended';
     await arena.save();
 
-    // 2️⃣ EC2 인스턴스 종료
-    const instanceIds = arena.participants
-      .map((p: any) => p.instanceId)
-      .filter((id: string) => !!id);
-
+    const instanceIds = arena.participants.map((p: any) => p.instanceId).filter((id: string) => !!id);
     if (instanceIds.length > 0) {
-      await ec2Client.send(
-        new TerminateInstancesCommand({ InstanceIds: instanceIds })
-      );
+      await ec2Client.send(new TerminateInstancesCommand({ InstanceIds: instanceIds }));
       console.log(`✅ Terminated ${instanceIds.length} instances for arena ${arenaId}`);
     }
 
-    // 3️⃣ 클라이언트에 종료 이벤트 전송
-    io.to(arenaId).emit("arena-ended", { message: "Arena ended" });
+    await ArenaProcess.create({
+      arenaId: arena._id,
+      machine: arena.machine,
+      participants: arena.participants.map((p: any) => ({
+        user: p.user,
+        isWinner: p.hasFlagSubmitted ?? false,
+        expEarned: p.expEarned ?? 0,
+        timeTaken: p.timeTaken ?? 0,
+        submittedAt: p.submittedAt ?? null,
+      })),
+      startTime: arena.startTime,
+      endTime: new Date(),
+      duration: arena.duration,
+    });
 
-    // 4️⃣ 게임 타이머 정리
+    await Arena.deleteOne({ _id: arenaId });
+
+
+    io.to(arenaId).emit('arena-ended', { message: 'Arena ended' });
     gameTimers.delete(arenaId);
   } catch (err) {
-    console.error("Error ending arena:", err);
+    console.error('Error ending arena:', err);
   }
 };
 
@@ -1034,5 +1043,24 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
   } catch (error) {
     console.error('Get arena result error:', error);
     res.status(500).json({ msg: 'Failed to get arena results' });
+  }
+};
+
+export const getArenaHistory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = res.locals.jwtData.id;
+
+    const history = await ArenaProcess.find({
+      "participants.user": userId,
+    })
+      .populate("machine", "name")
+      .populate("winner", "username")
+      .sort({ endTime: -1 })
+      .limit(20);
+
+    res.status(200).json({ arenaHistory: history });
+  } catch (err) {
+    console.error("Failed to fetch arena history:", err);
+    res.status(500).json({ message: "Failed to fetch arena history." });
   }
 };

@@ -16,6 +16,7 @@ interface MachineReviewFormProps {
 
 interface FormData {
   rating: number;
+  difficulty: string;
   review: string;
 }
 
@@ -27,22 +28,14 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
 }) => {
   const [formData, setFormData] = useState<FormData>({
     rating: 0,
+    difficulty: '',
     review: '',
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const reviewContentRef = useRef<HTMLTextAreaElement>(null);
 
-  const { rating, review } = formData;
-
-  // 별점을 difficulty로 매핑하는 함수
-  const mapRatingToDifficulty = (rating: number): string => {
-    if (rating >= 4.5) return 'very_easy';
-    if (rating >= 3.5) return 'easy';
-    if (rating >= 2.5) return 'medium';
-    if (rating >= 1.5) return 'hard';
-    return 'very_hard';
-  };
+  const { rating, difficulty, review } = formData;
 
   const adjustTextareaHeight = () => {
     if (reviewContentRef.current) {
@@ -89,6 +82,12 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
       return;
     }
 
+    // Validate difficulty
+    if (!difficulty) {
+      setError('Please select difficulty level.');
+      return;
+    }
+
     if (!review.trim()) {
       setError('Please write your review.');
       return;
@@ -96,16 +95,15 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
 
     setLoading(true);
     try {
-      // difficulty를 자동으로 추가
       const reviewData = {
         rating,
         review,
-        difficulty: mapRatingToDifficulty(rating)
+        difficulty
       };
       
       const newReview = await postMachineReview(machineId, reviewData);
       onReviewAdded(newReview);
-      setFormData({ rating: 0, review: '' });
+      setFormData({ rating: 0, difficulty: '', review: '' });
       onClose(); // Close modal after successful submission
       window.location.reload(); // 성공했을 때만 새로고침
     } catch (err: any) {
@@ -135,7 +133,7 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
         {error && <p className='error-message'>{error}</p>}
       
         <div className='machine-review-form-rating'>
-          <label htmlFor='rating' className='rating'>Rating</label>
+          <label htmlFor='rating' className='rating'>Quality Rating</label>
           <Box
             sx={{
               '& > legend': { mt: 2 },
@@ -149,6 +147,25 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
               onChange={handleRatingChange}
             />
           </Box>
+        </div>
+
+        <div className='machine-review-form-difficulty'>
+          <label htmlFor='difficulty'>Difficulty Level</label>
+          <select 
+            id='difficulty'
+            name='difficulty'
+            value={difficulty}
+            onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value }))}
+            required
+            className='difficulty-select'
+          >
+            <option value="">Select difficulty</option>
+            <option value="very_easy">⭐ Very Easy</option>
+            <option value="easy">⭐⭐ Easy</option>
+            <option value="medium">⭐⭐⭐ Medium</option>
+            <option value="hard">⭐⭐⭐⭐ Hard</option>
+            <option value="very_hard">⭐⭐⭐⭐⭐ Very Hard</option>
+          </select>
         </div>
       
         <div className='machine-review-form-content'>

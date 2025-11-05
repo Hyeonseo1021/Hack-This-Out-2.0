@@ -79,3 +79,52 @@
     }
   }
 }
+
+.machine-review-form-difficulty {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  .difficulty-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: #2a2a2a;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #666;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #4ade80;
+      box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.1);
+    }
+
+    option {
+      background-color: #2a2a2a;
+      color: #fff;
+      padding: 8px;
+    }
+  }
+}
+
+/* Rating 라벨 스타일 업데이트 */
+.machine-review-form-rating {
+  label {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+}

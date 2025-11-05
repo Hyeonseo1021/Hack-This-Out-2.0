@@ -34,3 +34,26 @@ export type ContestParticipationItem = {
     contestCompleted: boolean;
 };
 
+export interface ArenaHistoryItem {
+  _id: string;
+  name: string;
+  category: string;
+  machine: {
+    _id: string;
+    name: string;
+  };
+  host: string;
+  startTime: string;
+  endTime: string;
+  winner: {
+    _id: string;
+    username: string;
+  } | null;
+  participants: {
+    user: string;
+    rank: number;
+    expEarned: number;
+    flagCorrect: boolean;
+  }[];
+  arenaExp: number;
+}

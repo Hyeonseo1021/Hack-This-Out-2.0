@@ -55,6 +55,11 @@ export const getArenaResult = async (arenaId: string) => {
     throw error?.response?.data || new Error('Failed to fetch arena results');
   }
 };
+
+export const getArenaHistory = async () => {
+  const res = await axiosInstance.get("/arena/history", { withCredentials: true });
+  return res.data;
+};
 // 이후 추가로 필요한 기능 예시:
 // export const joinArena = ...
 // export const startArena = ...

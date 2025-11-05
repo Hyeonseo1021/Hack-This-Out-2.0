@@ -45,7 +45,6 @@ const MatchPage = lazy(() => import('./pages/match/MatchPage'));
 const ShopPage = lazy(() => import('./pages/shop/ShopPage'));
 const ItemManagement = lazy(() => import('./pages/admin/ItemManagement'));
 const PlayPage = lazy(() => import('./pages/TutorialPlayPage'));
-const LearningMainPage = lazy(() => import('./pages/learning/LearningMainPage'));
 const routes: RouteObject[] = [
   {
     path: '/',
@@ -266,14 +265,6 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>
             <ShopPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'learning',
-        element: (
-          <ProtectedRoute>
-            <LearningMainPage />
           </ProtectedRoute>
         ),
       },

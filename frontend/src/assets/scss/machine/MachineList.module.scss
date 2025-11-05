@@ -262,3 +262,21 @@
   color: #fff;
   /* Grey color for empty stars */
 }
+
+.table_difficulty {
+  text-align: center;
+  padding: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.machine_difficulty {
+  text-align: center;
+  padding: 12px;
+  
+  span {
+    display: inline-block;
+    min-width: 40px;
+    text-align: center;
+  }
+}

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import Item from "../models/Item";
 import User from "../models/User";
 import Inventory from "../models/Inventory";
@@ -25,37 +26,47 @@ export const createItem = async (req: Request, res: Response): Promise<void> => 
 }
 
 export const buyItem = async (req: Request, res: Response): Promise<void> => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
     const { id } = req.params;
     const userId = res.locals.jwtData.id;
 
-    const item = await Item.findById(id);
+    const item = await Item.findById(id).session(session);
     if (!item || !item.isListed) {
+      await session.abortTransaction();
       res.status(404).json({ msg: "No item." });
       return;
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).session(session);
     if (!user) {
+      await session.abortTransaction();
       res.status(404).json({ msg: "No user." });
-      return;  // ← 추가
+      return;
     }
 
     if (user.htoCoin < item.price) {
-        res.status(400).json({ msg: "코인이 부족합니다." });
-        return;
+      await session.abortTransaction();
+      res.status(400).json({ msg: "코인이 부족합니다." });
+      return;
     }
 
     user.htoCoin -= item.price;
-    await user.save();
+    await user.save({ session });
 
     const inv = new Inventory({ user: userId, item: item._id });
-    await inv.save();
+    await inv.save({ session });
 
+    await session.commitTransaction();
     res.status(200).json({ msg: "Completed to buy item." });
   } catch (err) {
+    await session.abortTransaction();
     console.error(err);
     res.status(500).json({ msg: "Failed to buy Item." });
+  } finally {
+    session.endSession();
   }
 };
 
