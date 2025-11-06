@@ -33,6 +33,7 @@ const ArenaRoomPage: React.FC = () => {
   const [arenaName, setArenaName] = useState('');
   const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isStarting, setIsStarting] = useState(false);
   const skipLeaveRef = useRef(false);
 
   // 내 카드 / 활성 인원 / 전체 준비 여부
@@ -99,12 +100,14 @@ const ArenaRoomPage: React.FC = () => {
     };
 
     const handleStart = ({ arenaId }: { arenaId: string }) => {
+      setIsStarting(false);
       skipLeaveRef.current = true;
       navigate(`/arena/play/${arenaId}`);
     };
 
 
     const handleStartFailed = ({ reason }: { reason: string }) => {
+      setIsStarting(false);
       alert(reason);
     };
 
@@ -178,6 +181,16 @@ const ArenaRoomPage: React.FC = () => {
         <div className="cyber-module">
           <h1 className="cyber-title" data-text={arenaName}>{arenaName}</h1>
           
+          {isStarting && (
+            <div className="starting-overlay">
+              <div className="starting-message">
+                <div className="loader-spinner"></div>
+                <h2>게임 준비 중...</h2>
+                <p>곧 게임이 시작됩니다</p>
+              </div>
+            </div>
+          )}
+
           <div className="participants-grid">
             {activeParticipants.map(p => {
               const userObject = typeof p.user === 'object' ? p.user : { _id: p.user, username: 'Loading...' };
@@ -204,16 +217,16 @@ const ArenaRoomPage: React.FC = () => {
             {isHost ? (
               <button
                 className="cyber-button"
-                disabled={status !== 'waiting' || !everyoneExceptHostReady || activeParticipants.length < 2}
-                onClick={() => socket.emit('arena:start', { arenaId, userId: currentUserId })}
+                disabled={status !== 'waiting' || !everyoneExceptHostReady || activeParticipants.length < 2 || isStarting}
+                onClick={() => { setIsStarting(true); socket.emit('arena:start', { arenaId, userId: currentUserId }); }}
               >
-                <span data-text="START GAME">START GAME</span>
+                <span data-text={isStarting ? 'STARTING...' : 'START GAME'}>{isStarting ? 'STARTING...' : 'START GAME'}</span>
                 <div className="button-loader"></div>
               </button>
             ) : (
               <button
                 className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`}
-                disabled={status !== 'waiting'}
+                disabled={status !== 'waiting' || isStarting}
                 onClick={toggleReady}
               >
                 <span data-text={myParticipant?.isReady ? 'CANCEL' : 'READY'}>

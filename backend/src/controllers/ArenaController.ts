@@ -9,9 +9,6 @@ import Machine from '../models/Machine';
 import ArenaProcess from '../models/ArenaProcess';
 import { Server } from 'http';
 
-// ✅ 수정: unused import 제거
-// import { start } from 'repl';
-
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const gameTimers = new Map<string, NodeJS.Timeout>();
 
