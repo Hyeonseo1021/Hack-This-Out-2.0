@@ -18,7 +18,7 @@ type Participant = {
 type ArenaUpdatePayload = {
   arenaId: string;
   status: 'waiting' | 'started' | 'ended' | string;
-  host: string; // 서버가 문자열로 보냄
+  host: string;
   startTime?: string | null;
   endTime?: string | null;
   participants: Participant[];
@@ -36,7 +36,6 @@ const ArenaRoomPage: React.FC = () => {
   const [isStarting, setIsStarting] = useState(false);
   const skipLeaveRef = useRef(false);
 
-  // 내 카드 / 활성 인원 / 전체 준비 여부
   const myParticipant = useMemo(
     () => participants.find(p => (typeof p.user === 'string' ? p.user : p.user._id) === currentUserId),
     [participants, currentUserId]
@@ -49,21 +48,17 @@ const ArenaRoomPage: React.FC = () => {
     () => activeParticipants.length > 0 && activeParticipants.every(p => p.isReady),
     [activeParticipants]
   );
-  // 호스트 제외 활성 참가자
   const nonHostParticipants = useMemo(() => {
     return participants.filter(p => {
       const uid = typeof p.user === 'string' ? p.user : p.user._id;
-      return uid !== hostId; // host 제외
+      return uid !== hostId;
     });
   }, [participants, hostId]);
 
-  // 호스트 제외 모두 준비
   const everyoneExceptHostReady = useMemo(() => {
     return nonHostParticipants.length > 0 && nonHostParticipants.every(p => p.isReady);
   }, [nonHostParticipants]);
 
-
-  // 유저/아레나 이름 로딩
   useEffect(() => {
     getUserStatus()
       .then(res => setCurrentUserId(res?.user?._id ?? res?.data?.user?._id ?? null))
@@ -76,11 +71,9 @@ const ArenaRoomPage: React.FC = () => {
     }
   }, [arenaId]);
 
-  // 소켓 바인딩 + join + cleanup
   useEffect(() => {
     if (!arenaId || !currentUserId) return;
 
-    // 중복 리스너 방지
     socket.off('arena:update');
     socket.off('arena:join-failed');
     socket.off('arena:start');
@@ -88,10 +81,17 @@ const ArenaRoomPage: React.FC = () => {
     socket.off('arena:ready-failed');
 
     const handleUpdate = (payload: ArenaUpdatePayload) => {
+      console.log('📡 arena:update 받음:', payload);
       setStatus((payload.status as any) || 'waiting');
       setHostId(payload.host || null);
       setIsHost(payload.host === currentUserId);
       setParticipants(payload.participants || []);
+
+      // ✅ 수정: started 상태여도 바로 이동하지 않음 (arena:start에서 처리)
+      // if (payload.status === 'started') {
+      //   skipLeaveRef.current = true;
+      //   navigate(`/arena/play/${payload.arenaId}`);
+      // }
     };
 
     const handleJoinFailed = ({ reason }: { reason: string }) => {
@@ -99,12 +99,19 @@ const ArenaRoomPage: React.FC = () => {
       navigate('/arena');
     };
 
-    const handleStart = ({ arenaId }: { arenaId: string }) => {
-      setIsStarting(false);
-      skipLeaveRef.current = true;
-      navigate(`/arena/play/${arenaId}`);
+    // ✅ 수정: arena:start 이벤트를 받으면 모든 플레이어가 로딩 상태로 전환
+    const handleStart = (data: { arenaId: string; startTime?: string; endTime?: string; needVpnConnection?: boolean }) => {
+      console.log('🎮 arena:start 이벤트 수신:', data);
+      console.log('🎮 현재 사용자:', currentUserId);
+      console.log('🎮 호스트:', hostId);
+      setIsStarting(true); // 모든 플레이어에게 로딩 화면 표시
+      
+      // 2-3초 후 플레이 페이지로 이동 (로딩 화면을 보여주기 위해)
+      setTimeout(() => {
+        skipLeaveRef.current = true;
+        navigate(`/arena/play/${data.arenaId}`);
+      }, 2500);
     };
-
 
     const handleStartFailed = ({ reason }: { reason: string }) => {
       setIsStarting(false);
@@ -121,11 +128,12 @@ const ArenaRoomPage: React.FC = () => {
     socket.on('arena:start-failed', handleStartFailed);
     socket.on('arena:ready-failed', handleReadyFailed);
 
-    // 입장
+    console.log('✅ 소켓 리스너 등록 완료 - arenaId:', arenaId, 'userId:', currentUserId);
+    console.log('✅ 소켓 연결 상태:', socket.connected);
+
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {
-      // 나가기 + 핸들러 해제
       if (!skipLeaveRef.current) {
         socket.emit('arena:leave', { arenaId, userId: currentUserId });
       }
@@ -137,7 +145,6 @@ const ArenaRoomPage: React.FC = () => {
     };
   }, [arenaId, currentUserId, navigate]);
 
-  // 방 목록 전역 업데이트도 방 화면에서 수신해서 '나간 사람' 즉시 제거 + 동기화 요청
   useEffect(() => {
     if (!arenaId) return;
 
@@ -149,13 +156,11 @@ const ArenaRoomPage: React.FC = () => {
 
       const ids = new Set((updated.participants ?? []).map(u => String(u.user)));
 
-      // 1) 로컬에서 '없는 사람' 즉시 제거 (새로고침 없이 카드 사라짐)
       setParticipants(prev => prev.filter(p => {
         const uid = typeof p.user === 'string' ? p.user : p.user._id;
         return ids.has(uid);
       }));
 
-      // 2) 유저명 등 디테일 동기화(짧은 스냅샷 요청) — 서버에 'arena:sync' 핸들러 필요
       socket.emit('arena:sync', { arenaId });
     };
 
@@ -165,8 +170,6 @@ const ArenaRoomPage: React.FC = () => {
     };
   }, [arenaId]);
 
-
-  // 준비 토글
   const toggleReady = () => {
     if (!arenaId || !currentUserId) return;
     if (status !== 'waiting') return;
@@ -174,22 +177,40 @@ const ArenaRoomPage: React.FC = () => {
     socket.emit('arena:ready', { arenaId, userId: currentUserId, ready: next });
   };
 
+  // ✅ 로딩 화면이 활성화되면 메인 콘텐츠를 완전히 숨김
+  if (isStarting) {
+    return (
+      <Main>
+        <div className="game-loading-fullscreen">
+          <div className="loading-background"></div>
+          <div className="loading-content">
+            <div className="loading-spinner">
+              <div className="spinner-ring"></div>
+              <div className="spinner-ring"></div>
+              <div className="spinner-ring"></div>
+            </div>
+            <h1 className="loading-title">머신을 해킹하세요!</h1>
+            <div className="loading-bar-container">
+              <div className="loading-bar">
+                <div className="loading-bar-fill"></div>
+              </div>
+            </div>
+            <p className="loading-text">게임 준비중...</p>
+            <div className="loading-dots">
+              <span>.</span><span>.</span><span>.</span>
+            </div>
+          </div>
+        </div>
+      </Main>
+    );
+  }
+
   return (
     <Main>
       <div className="battle-cyber-container room-variant">
         <div className="background-grid"></div>
         <div className="cyber-module">
           <h1 className="cyber-title" data-text={arenaName}>{arenaName}</h1>
-          
-          {isStarting && (
-            <div className="starting-overlay">
-              <div className="starting-message">
-                <div className="loader-spinner"></div>
-                <h2>게임 준비 중...</h2>
-                <p>곧 게임이 시작됩니다</p>
-              </div>
-            </div>
-          )}
 
           <div className="participants-grid">
             {activeParticipants.map(p => {
@@ -218,7 +239,11 @@ const ArenaRoomPage: React.FC = () => {
               <button
                 className="cyber-button"
                 disabled={status !== 'waiting' || !everyoneExceptHostReady || activeParticipants.length < 2 || isStarting}
-                onClick={() => { setIsStarting(true); socket.emit('arena:start', { arenaId, userId: currentUserId }); }}
+                onClick={() => { 
+                  console.log('🚀 START GAME 버튼 클릭 - arenaId:', arenaId, 'userId:', currentUserId);
+                  setIsStarting(true); 
+                  socket.emit('arena:start', { arenaId, userId: currentUserId }); 
+                }}
               >
                 <span data-text={isStarting ? 'STARTING...' : 'START GAME'}>{isStarting ? 'STARTING...' : 'START GAME'}</span>
                 <div className="button-loader"></div>

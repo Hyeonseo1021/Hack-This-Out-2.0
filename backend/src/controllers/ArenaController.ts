@@ -380,22 +380,24 @@ export const registerArenaSocketHandlers = (socket, io) => {
         .populate('participants.user', '_id username')
         .lean();
 
-      io.to(arenaId).emit('arena:update', {
-        arenaId: String(populated?._id || arenaId),
-        status: populated?.status || 'waiting',
-        host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-        startTime: populated?.startTime || null,
-        endTime: populated?.endTime || null,
-        problemInstanceId: populated?.problemInstanceId || null,
-        problemInstanceIp: populated?.problemInstanceIp || null,
-        participants: (populated?.participants || []).map((pp: any) => ({
-          user: pp.user,
-          isReady: !!pp.isReady,
-          hasLeft: !!pp.hasLeft,
-          vpnIp: pp.vpnIp ?? null,
-          status: pp.status || 'waiting',
-        })),
-      });
+      if (populated) {
+        io.to(arenaId).emit('arena:update', {
+          arenaId: String(populated._id || arenaId),
+          status: populated.status || 'waiting',
+          host: String((populated.host as any)?._id ?? populated.host ?? ''),
+          startTime: populated.startTime || null,
+          endTime: populated.endTime || null,
+          problemInstanceId: populated.problemInstanceId || null,
+          problemInstanceIp: populated.problemInstanceIp || null,
+          participants: (populated.participants || []).map((pp: any) => ({
+            user: pp.user,
+            isReady: !!pp.isReady,
+            hasLeft: !!pp.hasLeft,
+            vpnIp: pp.vpnIp ?? null,
+            status: pp.status || 'waiting',
+          })),
+        });
+      }
 
       // 목록 페이지 갱신(전역)
       const room = await Arena.findById(arenaId)
@@ -415,8 +417,8 @@ export const registerArenaSocketHandlers = (socket, io) => {
         });
       }
 
-      // ✅ 대기중일 때만 방 비우기 체크
-      if (arena.status === 'waiting') {
+      // ✅ 수정: 대기중과 시작된 방 모두 체크
+      if (arena.status === 'waiting' || arena.status === 'started') {
         await deleteArenaIfEmpty(arenaId, io);
       }
     } catch (e) {
@@ -467,22 +469,24 @@ export const registerArenaSocketHandlers = (socket, io) => {
         const populated = await Arena.findById(arenaId)
           .populate('participants.user', '_id username').lean();
 
-        io.to(arenaId).emit('arena:update', {
-          arenaId: String(populated?._id || arenaId),
-          status: populated?.status || 'waiting',
-          host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-          startTime: populated?.startTime || null,
-          endTime: populated?.endTime || null,
-          problemInstanceId: populated?.problemInstanceId || null,
-          problemInstanceIp: populated?.problemInstanceIp || null,
-          participants: (populated?.participants || []).map((pp: any) => ({
-            user: pp.user,
-            isReady: !!pp.isReady,
-            hasLeft: !!pp.hasLeft,
-            vpnIp: pp.vpnIp ?? null,
-            status: pp.status || 'waiting',
-          })),
-        });
+        if (populated) {
+          io.to(arenaId).emit('arena:update', {
+            arenaId: String(populated._id || arenaId),
+            status: populated.status || 'waiting',
+            host: String((populated.host as any)?._id ?? populated.host ?? ''),
+            startTime: populated.startTime || null,
+            endTime: populated.endTime || null,
+            problemInstanceId: populated.problemInstanceId || null,
+            problemInstanceIp: populated.problemInstanceIp || null,
+            participants: (populated.participants || []).map((pp: any) => ({
+              user: pp.user,
+              isReady: !!pp.isReady,
+              hasLeft: !!pp.hasLeft,
+              vpnIp: pp.vpnIp ?? null,
+              status: pp.status || 'waiting',
+            })),
+          });
+        }
 
         const room = await Arena.findById(arenaId)
           .select('name category status maxParticipants participants.user').lean();
@@ -500,7 +504,8 @@ export const registerArenaSocketHandlers = (socket, io) => {
           });
         }
 
-        if (arena.status === 'waiting') {
+        // ✅ 수정: 대기중과 시작된 방 모두 체크
+        if (arena.status === 'waiting' || arena.status === 'started') {
           await deleteArenaIfEmpty(arenaId, io);
         }
       } catch (e) {
@@ -557,6 +562,23 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
 
     if (name.length > 30) {
       res.status(400).json({ message: 'Arena name must be 30 characters or fewer.' });
+      return;
+    }
+
+    // ✅ 옵션: 안전장치로 체크 (사실상 발생하지 않음)
+    const existingArena = await Arena.findOne({
+      'participants.user': userId,
+      'participants.hasLeft': { $ne: true },
+      status: { $in: ['waiting', 'started'] }
+    });
+
+    if (existingArena) {
+      // 이론상 발생하지 않아야 하지만, 혹시 모를 버그 방지
+      console.warn(`[createArena] User ${userId} tried to create arena while in ${existingArena._id}`);
+      res.status(400).json({ 
+        message: '이미 다른 방에 참여 중입니다.',
+        existingArenaId: existingArena._id 
+      });
       return;
     }
 
@@ -619,21 +641,46 @@ export const getArenaById = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// ✅ 수정: 로직 단순화 및 명확화
 export const deleteArenaIfEmpty = async (arenaId: string, io: any) => {
   try {
     const arena = await Arena.findById(arenaId);
     
     if (!arena) return;
     
-    // 대기중 방만 처리
-    if (arena.status !== 'waiting') return;
+    // 종료된 방은 처리하지 않음 (endArena에서 처리)
+    if (arena.status === 'ended') return;
     
-    // 참가자가 없으면 삭제
-    if (arena.participants.length === 0) {
+    let shouldDelete = false;
+    
+    if (arena.status === 'waiting') {
+      // 대기중: 참가자가 없으면 삭제
+      shouldDelete = arena.participants.length === 0;
+    } else if (arena.status === 'started') {
+      // 시작됨: 모든 참가자가 나갔으면(hasLeft=true) 삭제
+      const activeParticipants = arena.participants.filter(p => !p.hasLeft);
+      shouldDelete = activeParticipants.length === 0;
+    }
+    
+    if (shouldDelete) {
+      // ✅ 시작된 방인 경우 인스턴스도 종료
+      if (arena.status === 'started' && arena.problemInstanceId) {
+        try {
+          await ec2Client.send(new TerminateInstancesCommand({
+            InstanceIds: [arena.problemInstanceId],
+          }));
+          console.log(`✅ Problem instance terminated due to empty arena (${arena.problemInstanceId})`);
+        } catch (err) {
+          console.error(`⚠️ Failed to terminate instance ${arena.problemInstanceId}:`, err);
+        }
+      }
+      
+      // 타이머 정리
+      cleanupTimers(arenaId);
+      
+      // 방 삭제
       await Arena.deleteOne({ _id: arenaId });
       io.emit('arena:deleted', { arenaId });
-      console.log(`[deleteArenaIfEmpty] Arena ${arenaId} deleted (empty)`);
+      console.log(`[deleteArenaIfEmpty] Arena ${arenaId} deleted (status: ${arena.status}, empty: true)`);
     }
   } catch (err) {
     console.error('deleteArenaIfEmpty error:', err);
@@ -645,15 +692,23 @@ export const endArena = async (arenaId: string, io: any) => {
     const arena = await Arena.findById(arenaId);
     if (!arena) return console.error('Arena not found.');
 
+    // ✅ 상태 변경
     arena.status = 'ended';
     await arena.save();
 
-    const instanceIds = arena.participants.map((p: any) => p.instanceId).filter((id: string) => !!id);
-    if (instanceIds.length > 0) {
-      await ec2Client.send(new TerminateInstancesCommand({ InstanceIds: instanceIds }));
-      console.log(`✅ Terminated ${instanceIds.length} instances for arena ${arenaId}`);
+    // ✅ 문제 VM 종료
+    if (arena.problemInstanceId) {
+      try {
+        await ec2Client.send(new TerminateInstancesCommand({
+          InstanceIds: [arena.problemInstanceId],
+        }));
+        console.log(`✅ Problem instance terminated (${arena.problemInstanceId})`);
+      } catch (err) {
+        console.error(`⚠️ Failed to terminate problem instance ${arena.problemInstanceId}:`, err);
+      }
     }
 
+    // ✅ 결과 기록 (ArenaProcess)
     await ArenaProcess.create({
       arenaId: arena._id,
       machine: arena.machine,
@@ -669,15 +724,53 @@ export const endArena = async (arenaId: string, io: any) => {
       duration: arena.duration,
     });
 
-    await Arena.deleteOne({ _id: arenaId });
+    // ✅ 여기에 추가: populate해서 arena:update 이벤트 보내기
+    const populated = await Arena.findById(arenaId)
+      .populate('participants.user', '_id username')
+      .lean();
 
+    io.to(arenaId).emit('arena:update', {
+      arenaId: String(populated?._id || arenaId),
+      status: 'ended',
+      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
+      startTime: populated?.startTime || null,
+      endTime: populated?.endTime || null,
+      problemInstanceId: populated?.problemInstanceId || null,
+      problemInstanceIp: populated?.problemInstanceIp || null,
+      participants: (populated?.participants || []).map((pp: any) => ({
+        user: pp.user,
+        isReady: !!pp.isReady,
+        hasLeft: !!pp.hasLeft,
+        vpnIp: pp.vpnIp ?? null,
+        status: pp.status || 'waiting',
+      })),
+    });
 
-    io.to(arenaId).emit('arena-ended', { message: 'Arena ended' });
+    // ✅ 상태 전파
+    io.to(arenaId).emit('arena:ended', { arenaId, message: 'Arena has ended.' });
+    io.emit('arena:room-updated', {
+      _id: String(arena._id),
+      name: arena.name,
+      category: arena.category,
+      status: 'ended',
+      maxParticipants: arena.maxParticipants,
+      participants: (arena.participants || []).map((p: any) => ({
+        user: String((p.user && (p.user as any)._id) ?? p.user),
+      })),
+    });
+
+    // ✅ 일정 시간 뒤 Arena 문서 삭제 (DB 정리)
+    setTimeout(async () => {
+      await Arena.deleteOne({ _id: arenaId });
+      console.log(`🗑️ Arena ${arenaId} deleted after end.`);
+    }, 30000);
+
     gameTimers.delete(arenaId);
   } catch (err) {
     console.error('Error ending arena:', err);
   }
 };
+
 
 export const submitFlagArena = async (req: Request, res: Response): Promise<void> => {
   try {

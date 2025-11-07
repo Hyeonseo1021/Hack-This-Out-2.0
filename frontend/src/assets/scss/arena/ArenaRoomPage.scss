@@ -162,3 +162,215 @@
     &:hover:not(:disabled) { background-color: rgba(0, 255, 137, 0.1); }
   }
 }
+
+// 기존 ArenaRoomPage.scss에 추가할 스타일
+
+.game-loading-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0e27;
+  overflow: hidden;
+
+  .loading-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      linear-gradient(45deg, transparent 30%, rgba(0, 255, 255, 0.03) 30%, rgba(0, 255, 255, 0.03) 70%, transparent 70%),
+      linear-gradient(-45deg, transparent 30%, rgba(255, 0, 255, 0.03) 30%, rgba(255, 0, 255, 0.03) 70%, transparent 70%);
+    background-size: 100px 100px;
+    animation: backgroundMove 20s linear infinite;
+    opacity: 0.3;
+  }
+
+  .loading-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .loading-spinner {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 40px;
+
+    .spinner-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 3px solid transparent;
+      border-radius: 50%;
+      animation: rotate 2s linear infinite;
+
+      &:nth-child(1) {
+        border-top-color: #00ffff;
+        animation-duration: 1.5s;
+      }
+
+      &:nth-child(2) {
+        border-right-color: #ff00ff;
+        animation-duration: 2s;
+        animation-direction: reverse;
+      }
+
+      &:nth-child(3) {
+        border-bottom-color: #00ff00;
+        animation-duration: 2.5s;
+      }
+    }
+  }
+
+  .loading-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #00ffff;
+    text-transform: uppercase;
+    letter-spacing: 8px;
+    margin-bottom: 30px;
+    text-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.8),
+      0 0 20px rgba(0, 255, 255, 0.6),
+      0 0 30px rgba(0, 255, 255, 0.4);
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  .loading-bar-container {
+    width: 400px;
+    max-width: 80vw;
+    margin: 0 auto 20px;
+  }
+
+  .loading-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 255, 255, 0.3) 50%, 
+        transparent 100%);
+      animation: shimmer 2s infinite;
+    }
+
+    .loading-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00ffff, #ff00ff, #00ff00);
+      border-radius: 2px;
+      animation: loadingProgress 3s ease-in-out infinite;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+    }
+  }
+
+  .loading-text {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  .loading-dots {
+    display: inline-flex;
+    gap: 5px;
+
+    span {
+      font-size: 2rem;
+      color: #00ffff;
+      animation: dotBounce 1.4s infinite ease-in-out;
+
+      &:nth-child(1) {
+        animation-delay: 0s;
+      }
+
+      &:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+    }
+  }
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 
+      0 0 10px rgba(0, 255, 255, 0.8),
+      0 0 20px rgba(0, 255, 255, 0.6),
+      0 0 30px rgba(0, 255, 255, 0.4);
+  }
+  50% {
+    opacity: 0.8;
+    text-shadow: 
+      0 0 20px rgba(0, 255, 255, 1),
+      0 0 30px rgba(0, 255, 255, 0.8),
+      0 0 40px rgba(0, 255, 255, 0.6);
+  }
+}
+
+@keyframes loadingProgress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes dotBounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(-20px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes backgroundMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(100px, 100px); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
