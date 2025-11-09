@@ -4,7 +4,7 @@ import axiosInstance from './axiosInit';
 export const getArenaList = async () => {
   try {
     const res = await axiosInstance.get('/arena/list');
-    return res.data;
+    return res.data.arenas;
   } catch (error: any) {
     throw error?.response?.data || new Error('Failed to fetch arena list');
   }

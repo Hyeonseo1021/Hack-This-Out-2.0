@@ -1,355 +1,149 @@
-// AddArenaForm.tsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createArena } from '../../api/axiosArena';
-import { getActiveMachines } from '../../api/axiosMachine';
-import '../../assets/scss/arena/AddArenaForm.scss';
+import '../../assets/scss/arena/AddArenaForm.scss'; 
 
-interface Machine {
-  _id: string;
-  name: string;
-  category: string;
-  description: string;
-  exp: number;
-  isActive: boolean;
-  difficulty?: {
-    creatorLevel?: string;
-    confirmedLevel?: string;
-    isConfirmed?: boolean;
-  };
-}
-
-const formSteps = [
-  { id: 'name', label: 'ROOM NAME', placeholder: 'Enter Room Name', type: 'text' },
-  { id: 'machineId', label: 'SELECT MACHINE', type: 'machine-select' },
-  { id: 'maxParticipants', label: 'MAX PARTICIPANTS', type: 'number', min: 2, max: 4 },
-  { id: 'duration', label: 'DURATION (MINUTES)', type: 'number', min: 10, max: 60, step: 5 },
+const modes = [
+  { id: 'Terminal Race', icon: '⚡', title: 'Terminal Race', desc: '터미널 명령어로 가장 빠르게 해킹!' },
+  { id: 'Defense Battle', icon: '⚔️', title: 'Defense Battle', desc: '2팀으로 나뉘어 실시간 공방전!' },
+  { id: 'Capture Server', icon: '🏰', title: 'Capture Server', desc: '서버를 점령해 영토를 확장하세요.' },
+  { id: "Hacker's Deck", icon: '🎲', title: "Hacker's Deck", desc: '해킹 카드를 활용한 턴제 전략 대결!' },
+  { id: 'Exploit Chain', icon: '🎯', title: 'Exploit Chain', desc: '단계별 취약점 퍼즐을 해결하세요.' },
 ];
-
-const difficultyLabels: { [key: string]: string } = {
-  'very_easy': '⭐',
-  'easy': '⭐⭐',
-  'medium': '⭐⭐⭐',
-  'hard': '⭐⭐⭐⭐',
-  'very_hard': '⭐⭐⭐⭐⭐'
-};
 
 const AddArenaForm: React.FC = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    machineId: '', 
-    maxParticipants: 2, 
-    duration: 30 
+  const [formData, setFormData] = useState({
+    name: '',
+    mode: '',
+    maxParticipants: 2,
+    duration: 10,
   });
-  const [machines, setMachines] = useState<Machine[]>([]);
-  const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 머신 목록 로드 - 모든 활성화된 머신
-  useEffect(() => {
-    const fetchMachines = async () => {
-      try {
-        setLoading(true);
-        const response = await getActiveMachines();
-        // response.machines가 배열
-        const activeMachines = response.machines || [];
-        setMachines(activeMachines);
-        setFilteredMachines(activeMachines);
-      } catch (err) {
-        console.error('Failed to fetch machines:', err);
-        setError('Failed to load machines');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMachines();
-  }, []);
-
-  // 카테고리별 필터링
-  useEffect(() => {
-    if (selectedCategory === '') {
-      setFilteredMachines(machines);
-    } else {
-      setFilteredMachines(machines.filter(machine => machine.category === selectedCategory));
-    }
-  }, [selectedCategory, machines]);
-
-  const categories = [...new Set(machines.map(machine => machine.category))];
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
   };
 
-  const handleMachineSelect = (machineId: string) => {
-    setFormData(prev => ({ ...prev, machineId }));
-  };
-
-  const handleNext = () => {
-    // 각 단계별 유효성 검사
-    if (step === 0 && formData.name.trim() === '') {
-      setError('Arena name is required.');
-      setTimeout(() => setError(''), 2000);
-      return;
-    }
-    
-    if (step === 1 && !formData.machineId) {
-      setError('Please select a machine.');
-      setTimeout(() => setError(''), 2000);
-      return;
-    }
-
-    if (step < formSteps.length - 1) {
-      setStep(step + 1);
-      setError('');
-    }
-  };
-
-  const handlePrev = () => {
-    if (step > 0) {
-      setStep(step - 1);
-      setError('');
-    }
+  const handleModeSelect = (mode: string) => {
+    setFormData(prev => ({ ...prev, mode }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.machineId) {
-      setError('Please select a machine.');
+    setError('');
+
+    if (!formData.name.trim() || !formData.mode) {
+      setError('System Error: All fields are required.');
       return;
     }
 
     try {
       setLoading(true);
-      const arena = await createArena(formData);
-      navigate(`/arena/${arena._id}`);
+      const res = await createArena(formData);
+      navigate(`/arena/${res._id}`);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.msg || 'Failed to create arena';
-      setError(msg);
+      const msg = err?.response?.data?.msg || 'Failed to create arena.';
+      setError(`System Error: ${msg}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const currentStep = formSteps[step];
-  const progress = ((step + 1) / formSteps.length) * 100;
-  const selectedMachine = machines.find(m => m._id === formData.machineId);
-
-  const getDifficultyDisplay = (machine: Machine) => {
-    const level = machine.difficulty?.confirmedLevel || machine.difficulty?.creatorLevel;
-    if (!level) return '';
-    return difficultyLabels[level] || '';
-  };
-
-  const inputProps = {
-    id: currentStep.id,
-    name: currentStep.id,
-    value: formData[currentStep.id as keyof typeof formData],
-    onChange: handleChange,
-    placeholder: currentStep.placeholder,
-    min: currentStep.min,
-    max: currentStep.max,
-    step: currentStep.step,
-    autoFocus: currentStep.type !== 'machine-select',
-    autoComplete: 'off',
-    autoCorrect: 'off',
-    onKeyDown: (e: React.KeyboardEvent) => { 
-      if (e.key === 'Enter' && currentStep.type !== 'machine-select') handleNext(); 
-    }
-  };
-
   return (
-    <div className="terminal-form-container">
-      <div className="terminal-module">
-        <div className="step-indicator">&lt; STEP {step + 1}: {currentStep.label.toUpperCase()} &gt;</div>
+    <div className="arena-create-container">
+      <div className="crt-overlay"></div>
+      <h1 className="glitch-title" data-text="CREATE ARENA">CREATE ARENA</h1>
 
-        <div className="progress-bar-container">
-          <div className="progress-label">SYSTEM READY</div>
-          <div className="progress-bar-track">
-            <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-          </div>
-          <div className="progress-percent">{Math.round(progress)}%</div>
-        </div>
-
-        <div className="create-title">CREATE ARENA</div>
-
-        <div key={step} className="step-content">
-          <div className="crt-label-line">
-            <span className="crt-label-text">{currentStep.label}</span>
-            {selectedMachine && step === 1 && (
-              <span className="selected-info">
-                [{selectedMachine.category}] {selectedMachine.name}
-              </span>
-            )}
-          </div>
-
-          {currentStep.type === 'machine-select' ? (
-            <div className="machine-selection" style={{
-              width: '100%',
-              marginTop: '20px'
-            }}>
-              {loading ? (
-                <div className="loading-message">Loading machines...</div>
-              ) : (
-                <>
-                  {/* 카테고리 필터 */}
-                  <div className="category-filter">
-                    <select 
-                      value={selectedCategory} 
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="category-select"
-                    >
-                      <option value="">ALL CATEGORIES</option>
-                      {categories.map(category => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* 머신 목록 */}
-                  <div className="machine-grid" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                    gap: '15px',
-                    maxHeight: '400px',
-                    overflowY: 'auto',
-                    padding: '10px 0'
-                  }}>
-                    {filteredMachines.length === 0 ? (
-                      <div className="no-machines">
-                        {machines.length === 0 
-                          ? 'No machines available.' 
-                          : 'No machines available for this category.'}
-                      </div>
-                    ) : (
-                      filteredMachines.map(machine => (
-                        <div 
-                          key={machine._id} 
-                          className={`machine-card ${formData.machineId === machine._id ? 'selected' : ''}`}
-                          onClick={() => handleMachineSelect(machine._id)}
-                          style={{
-                            background: formData.machineId === machine._id ? 'rgba(0, 255, 0, 0.1)' : '#000',
-                            border: formData.machineId === machine._id ? '2px solid #00ff00' : '2px solid #333',
-                            padding: '15px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            fontFamily: 'Courier New, monospace',
-                            fontSize: '12px'
-                          }}
-                        >
-                          <div className="machine-header" style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            marginBottom: '10px'
-                          }}>
-                            <div className="machine-name" style={{
-                              color: formData.machineId === machine._id ? '#00ff00' : '#fff',
-                              fontWeight: 'bold',
-                              fontSize: '14px',
-                              flex: 1,
-                              marginRight: '10px'
-                            }}>{machine.name}</div>
-                            <div className="machine-category" style={{
-                              color: '#ff6600',
-                              fontSize: '11px',
-                              whiteSpace: 'nowrap'
-                            }}>[{machine.category}]</div>
-                          </div>
-                          
-                          {/* 난이도 표시 */}
-                          {getDifficultyDisplay(machine) && (
-                            <div className="machine-difficulty" style={{
-                              color: '#ffcc00',
-                              fontSize: '11px',
-                              marginBottom: '8px'
-                            }}>
-                              Difficulty: {getDifficultyDisplay(machine)}
-                            </div>
-                          )}
-
-                          <div className="machine-description" style={{
-                            color: '#ccc',
-                            lineHeight: '1.4',
-                            marginBottom: '12px',
-                            minHeight: '40px',
-                            fontSize: '11px'
-                          }}>
-                            {machine.description || 'No description available'}
-                          </div>
-                          <div className="machine-exp" style={{
-                            color: '#00aa00',
-                            fontWeight: 'bold',
-                            fontSize: '12px',
-                            textAlign: 'right'
-                          }}>
-                            REWARD: {machine.exp} EXP
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </>
-              )}
+      <form className="arena-grid-layout" onSubmit={handleSubmit}>
+        
+        {/* --- 1. 메인 컨트롤 창 --- */}
+        <div className="widget-window main-controls">
+          <div className="widget-titlebar">:: MAIN_CONTROL.EXE</div>
+          <div className="widget-content">
+            <div className="form-group">
+              <label>ROOM NAME</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter room name..."
+                value={formData.name}
+                onChange={handleChange}
+              />
             </div>
-          ) : (
-            <input type={currentStep.type} {...inputProps} />
-          )}
-        </div>
+            
+            <div className="form-inline">
+              <div className="form-group small">
+                <label>MAX PARTICIPANTS</label>
+                <input
+                  type="number"
+                  name="maxParticipants"
+                  value={formData.maxParticipants}
+                  onChange={handleChange}
+                  min={2}
+                  max={8}
+                />
+              </div>
 
-        {!!error && <p className="form-error">{error}</p>}
-
-        <div className="navigation-controls">
-          {step > 0 && (
-            <button 
-              onClick={handlePrev} 
-              className="nav-button prev"
-              disabled={loading}
-            >
-              [ BACK ]
-            </button>
-          )}
-          
-          {step < formSteps.length - 1 ? (
-            <button 
-              onClick={handleNext} 
-              className="nav-button next"
-              disabled={loading}
-            >
-              [ NEXT ]
-            </button>
-          ) : (
-            <button 
-              onClick={handleSubmit} 
-              className="nav-button create"
-              disabled={loading || !formData.machineId}
-            >
-              {loading ? '[ CREATING... ]' : '[ COMPLETE ]'}
-            </button>
-          )}
-        </div>
-
-        {/* 선택된 머신 정보 요약 (마지막 단계에서) */}
-        {step === formSteps.length - 1 && selectedMachine && (
-          <div className="selected-machine-summary">
-            <div className="summary-title">SELECTED MACHINE:</div>
-            <div className="summary-info">
-              <span className="summary-name">{selectedMachine.name}</span>
-              <span className="summary-category">[{selectedMachine.category}]</span>
-              {getDifficultyDisplay(selectedMachine) && (
-                <span className="summary-difficulty">{getDifficultyDisplay(selectedMachine)}</span>
-              )}
-              <span className="summary-exp">{selectedMachine.exp} EXP</span>
+              <div className="form-group small">
+                <label>DURATION (MIN)</label>
+                <input
+                  type="number"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleChange}
+                  min={5}
+                  max={60}
+                  step={5}
+                />
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+
+        {/* --- 2. 모드 선택 창 (수정됨) --- */}
+        <div className="widget-window mode-selector">
+          <div className="widget-titlebar">:: MODE_SELECT.MOD</div>
+          <div className="widget-content">
+            {/* ⬇️ 'mode-grid' -> 'mode-table-layout'로 변경 ⬇️ */}
+            <div className="mode-table-layout">
+              {modes.map(mode => (
+                // ⬇️ 'mode-card' -> 'mode-row'로 변경 및 내부 구조 수정 ⬇️
+                <div
+                  key={mode.id}
+                  className={`mode-row ${formData.mode === mode.id ? 'selected' : ''}`}
+                  onClick={() => handleModeSelect(mode.id)}
+                >
+                  <div className="mode-icon">{mode.icon}</div>
+                  {/* ⬇️ 텍스트를 묶는 'mode-info' 그룹 추가 ⬇️ */}
+                  <div className="mode-info">
+                    <div className="mode-title">{mode.title}</div>
+                    <div className="mode-desc">{mode.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* --- 3. 시스템 로그 창 --- */}
+        <div className="widget-window system-log">
+          <div className="widget-titlebar">:: SYSTEM_LOG.DAT</div>
+          <div className="widget-content">
+            <div className="log-area">
+              {!error && !loading && <p className="log-entry info">System ready. Awaiting command...</p>}
+              {loading && <p className="log-entry processing">Connecting to host... Creating arena...</p>}
+              {error && <p className="log-entry error">{error}</p>}
+            </div>
+            <button type="submit" className="neon-button" disabled={loading}>
+              {loading ? 'EXECUTING...' : 'EXECUTE'}
+            </button>
+          </div>
+        </div>
+
+      </form>
     </div>
   );
 };

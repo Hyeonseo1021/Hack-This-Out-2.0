@@ -1,7 +1,7 @@
 // socket.ts
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { registerArenaSocketHandlers } from '../controllers/ArenaController';
+import { registerArenaSocketHandlers } from '../sockets/arenaHandlers';
 
 export const initializeSocket = (server: HTTPServer, app: any) => {
   const io = new Server(server, {
