@@ -10,11 +10,13 @@ import '../../assets/scss/arena/ArenaResultPage.scss';
 type Participant = {
   userId: string;
   username: string;
-  status: 'waiting' | 'vpn_connecting' | 'vm_connected' | 'flag_submitted' | 'completed';
+  status: 'waiting' | 'vm_connected' | 'completed';
   completionTime: number | null;
   submittedAt: string | null;
   isCompleted: boolean;
   rank: number;
+  score: number;
+  stage: number;
 };
 
 type Winner = {
@@ -29,7 +31,8 @@ type ArenaResult = {
   host: string;
   hostName: string;
   status: 'ended';
-  category: string;
+  mode: string;
+  maxParticipants: number;
   startTime: string;
   endTime: string;
   duration: number;
@@ -99,31 +102,22 @@ const ArenaResultPage: React.FC = () => {
   };
 
   const getStatusText = (participant: Participant): string => {
-    switch (participant.status) {
-      case 'flag_submitted':
-      case 'completed':
-        return 'VICTORY';
-      case 'vm_connected':
-        return 'CONNECTED';
-      case 'vpn_connecting':
-        return 'CONNECTING';
-      case 'waiting':
-      default:
-        return 'DEFEATED';
+    if (participant.isCompleted) {
+      return 'VICTORY';
+    } else if (participant.stage > 0 || participant.score > 0) {
+      return 'PARTICIPATED';
+    } else {
+      return 'DEFEATED';
     }
   };
 
   const getStatusClass = (participant: Participant): string => {
-    switch (participant.status) {
-      case 'flag_submitted':
-      case 'completed':
-        return 'victory';
-      case 'vm_connected':
-        return 'connected';
-      case 'vpn_connecting':
-        return 'connecting';
-      default:
-        return 'defeated';
+    if (participant.isCompleted) {
+      return 'victory';
+    } else if (participant.stage > 0 || participant.score > 0) {
+      return 'connected';
+    } else {
+      return 'defeated';
     }
   };
 
@@ -181,9 +175,9 @@ const ArenaResultPage: React.FC = () => {
             <h1 className="ar-game-over-text">MISSION COMPLETE</h1>
             <div className="ar-arena-name">{arenaResult.name}</div>
             <div className="ar-mission-stats">
-              <span className="ar-stat">{formatDuration(arenaResult.duration)}</span>
+              <span className="ar-stat">{formatDuration(arenaResult.duration)} MIN</span>
               <span className="ar-separator">|</span>
-              <span className="ar-stat">{arenaResult.stats.totalParticipants}/4 AGENTS</span>
+              <span className="ar-stat">{arenaResult.stats.totalParticipants}/{arenaResult.maxParticipants} PARTICIPANTS</span>
               <span className="ar-separator">|</span>
               <span className="ar-stat">{arenaResult.stats.successRate}% SUCCESS</span>
             </div>
@@ -225,9 +219,14 @@ const ArenaResultPage: React.FC = () => {
                   <div className={`ar-player-status ${getStatusClass(second)}`}>
                     {getStatusText(second)}
                   </div>
+                  <div className="ar-player-stats">
+                    <span className="ar-stat-item">⭐ {second.score} pts</span>
+                    <span className="ar-stat-separator">|</span>
+                    <span className="ar-stat-item">📊 Stage {second.stage + 1}</span>
+                  </div>
                   {second.completionTime && (
                     <div className="ar-completion-time">
-                      {formatDuration(second.completionTime)}
+                      ⏱️ {formatDuration(second.completionTime)}
                     </div>
                   )}
                 </div>
@@ -251,9 +250,14 @@ const ArenaResultPage: React.FC = () => {
                   <div className={`ar-player-status ${getStatusClass(first)}`}>
                     {getStatusText(first)}
                   </div>
+                  <div className="ar-player-stats">
+                    <span className="ar-stat-item">⭐ {first.score} pts</span>
+                    <span className="ar-stat-separator">|</span>
+                    <span className="ar-stat-item">📊 Stage {first.stage + 1}</span>
+                  </div>
                   {first.completionTime && (
                     <div className="ar-completion-time">
-                      {formatDuration(first.completionTime)}
+                      ⏱️ {formatDuration(first.completionTime)}
                     </div>
                   )}
                 </div>
@@ -274,9 +278,14 @@ const ArenaResultPage: React.FC = () => {
                   <div className={`ar-player-status ${getStatusClass(third)}`}>
                     {getStatusText(third)}
                   </div>
+                  <div className="ar-player-stats">
+                    <span className="ar-stat-item">⭐ {third.score} pts</span>
+                    <span className="ar-stat-separator">|</span>
+                    <span className="ar-stat-item">📊 Stage {third.stage + 1}</span>
+                  </div>
                   {third.completionTime && (
                     <div className="ar-completion-time">
-                      {formatDuration(third.completionTime)}
+                      ⏱️ {formatDuration(third.completionTime)}
                     </div>
                   )}
                 </div>
@@ -301,9 +310,14 @@ const ArenaResultPage: React.FC = () => {
                 <div className={`ar-player-status ${getStatusClass(fourth)}`}>
                   {getStatusText(fourth)}
                 </div>
+                <div className="ar-player-stats">
+                  <span className="ar-stat-item">⭐ {fourth.score} pts</span>
+                  <span className="ar-stat-separator">|</span>
+                  <span className="ar-stat-item">📊 Stage {fourth.stage + 1}</span>
+                </div>
                 {fourth.completionTime && (
                   <div className="ar-completion-time">
-                    {formatDuration(fourth.completionTime)}
+                    ⏱️ {formatDuration(fourth.completionTime)}
                   </div>
                 )}
               </div>
@@ -322,6 +336,16 @@ const ArenaResultPage: React.FC = () => {
                   <span className={`ar-status-badge ${getStatusClass(myResult)}`}>
                     {getStatusText(myResult)}
                   </span>
+                </div>
+                <div className="ar-my-stats">
+                  <div className="ar-stat-row">
+                    <span className="ar-stat-label">Score:</span>
+                    <span className="ar-stat-value">⭐ {myResult.score} pts</span>
+                  </div>
+                  <div className="ar-stat-row">
+                    <span className="ar-stat-label">Progress:</span>
+                    <span className="ar-stat-value">📊 Stage {myResult.stage + 1}</span>
+                  </div>
                 </div>
               </div>
             </div>

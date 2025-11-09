@@ -1,0 +1,60 @@
+
+@use "../style" as *;
+/* --- TerminalRaceUI --- */
+.terminal-ui {
+  display: flex;
+  flex-direction: column;
+  height: 100%; // 패널 높이에 맞춤
+
+  .terminal-output {
+    flex: 1; // 남은 공간 모두 차지
+    background: var(--bg-input);
+    border-radius: 10px;
+    padding: 1rem;
+    overflow-y: auto; // 스크롤
+    margin-bottom: 1rem;
+    font-family: var(--font-mono); // 모노스페이스 폰트
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+
+    pre {
+      margin: 0;
+      padding: 0;
+      white-space: pre-wrap; // 자동 줄바꿈
+      word-break: break-all; // 긴 단어 강제 줄바꿈
+      color: var(--text-light);
+
+      &.prompt-line {
+        color: var(--text-bright); // 내가 입력한 명령어는 밝게
+      }
+    }
+
+    hr {
+      border-color: var(--border-color);
+      opacity: 0.3;
+      margin: 0.5rem 0;
+    }
+  }
+
+  // 기존 .ap-flag-form 재활용
+  .ap-flag-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  
+    .terminal-prompt {
+      font-family: var(--font-mono);
+      color: var(--accent-success); // 프롬프트 색상
+      font-weight: 600;
+    }
+
+    .terminal-input {
+      flex: 1; // 남은 공간 차지
+      font-family: var(--font-mono);
+    }
+    
+    .terminal-submit-btn {
+      padding: 0.65rem 1rem; // 버튼 크기 조절
+    }
+  }
+}

@@ -3,8 +3,8 @@
 
 .battle-cyber-container.room-variant {
   position: relative;
-  width: 100%;
-  height: 100vh;
+  width: 90%;
+  height: 87vh;
   background: radial-gradient(circle at 20% 20%, #02010a, #000);
   color: #eafaff;
   font-family: 'Orbitron', sans-serif;
@@ -14,7 +14,7 @@
   justify-content: flex-start;
   overflow: hidden;
 
-  /* CRT flicker overlay */
+  /* ... (배경 그리드 및 애니메이션은 동일) ... */
   .background-grid {
     position: absolute;
     inset: 0;
@@ -44,6 +44,7 @@
 }
 
 /* === Arena Title === */
+/* ... (타이틀 스타일은 동일) ... */
 .cyber-title {
   font-size: 2.3rem;
   color: #00f6ff;
@@ -52,16 +53,6 @@
   margin-bottom: 40px;
   letter-spacing: 2px;
   text-shadow: 0 0 10px #00f6ff, 0 0 20px #00f6ff;
-
-  &::before {
-    content: attr(data-text);
-    position: absolute;
-    left: 2px;
-    color: #ff00c1;
-    text-shadow: -2px 0 #ff00c1;
-    animation: glitch 1.5s infinite linear alternate-reverse;
-  }
-
   @keyframes glitch {
     0% { clip-path: inset(0 0 10% 0); }
     50% { clip-path: inset(20% 0 40% 0); }
@@ -69,32 +60,37 @@
   }
 }
 
-/* === Participants Grid === */
-.participants-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  justify-items: center;
-  margin-bottom: 50px;
+
+/* === [수정됨] Participants List (기존 Grid 대체) === */
+.participant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 90%;
+  max-width: 800px; 
+  margin: 40px auto 50px; /* 또는 margin: 40px auto 50px auto; */
+  
+  min-height: 350px;
 }
 
-/* === Participant Card === */
+/* === [수정됨] Participant Card (슬롯 디자인) === */
 .participant-card {
   position: relative;
-  width: 100%;
-  max-width: 250px;
-  padding: 20px;
+  width: 100%; // 너비 100%로
+  height: auto; // 높이 자동
+  padding: 16px 24px; // 내부 패딩
   border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 12px;
+  border-radius: 8px;
   background: rgba(0, 5, 15, 0.7);
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.15);
   backdrop-filter: blur(6px);
   transition: 0.3s ease all;
+  text-align: left; // 텍스트 왼쪽 정렬
 
   .card-bg {
     position: absolute;
     inset: 0;
-    border-radius: 12px;
+    border-radius: 8px;
     z-index: 0;
   }
 
@@ -102,8 +98,24 @@
     position: relative;
     z-index: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row; // 가로 정렬
+    justify-content: space-between; // 양 끝으로 정렬
     align-items: center;
+    width: 100%;
+
+    .player-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-start;
+    }
+
+    .player-slot {
+      font-family: 'VT323', monospace;
+      font-size: 1rem;
+      color: #888;
+      letter-spacing: 1px;
+    }
 
     .username {
       font-size: 1.1rem;
@@ -112,32 +124,52 @@
       color: #eafaff;
     }
 
+    .player-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     .status {
-      font-size: 0.85rem;
-      margin-top: 8px;
-      opacity: 0.8;
+      font-size: 1rem;
+      font-weight: 600;
+      opacity: 0.9;
       color: #ccc;
     }
 
     .host-tag,
     .me-tag {
-      font-size: 0.75rem;
-      margin-top: 6px;
-      opacity: 0.85;
+      font-size: 0.8rem;
+      font-weight: 600;
+      opacity: 0.9;
     }
 
     .host-tag { color: #ff00c1; }
     .me-tag { color: #00ffae; }
   }
 
-  /* === Hover Animation === */
-  &:hover {
-    transform: translateY(-5px);
+  /* === 빈 슬롯 스타일 === */
+  &.is-empty {
+    background: rgba(0, 5, 15, 0.4);
+    border-color: rgba(0, 255, 255, 0.1);
+    box-shadow: none;
+    
+    .username {
+      color: #666;
+      font-size: 1rem;
+      font-style: italic;
+      font-weight: 400;
+    }
+  }
+
+  /* === 호버 효과 (기존과 동일) === */
+  &:hover:not(.is-empty) {
+    transform: translateY(-3px);
     box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
   }
 }
 
-/* === 상태별 스타일 === */
+/* === 상태별 스타일 (기존과 동일) === */
 .participant-card.is-host {
   border-color: #ff00c1;
   box-shadow: 0 0 12px #ff00c1;
@@ -151,16 +183,24 @@
 .participant-card.is-ready {
   border-color: #00f6ff;
   box-shadow: 0 0 16px #00f6ff;
-  color: #00f6ff;
-  animation: readyBlink 1.6s infinite alternate;
+
+  .status {
+    color: #00f6ff;
+    animation: readyBlink 1.6s infinite alternate;
+  }
 }
 
 @keyframes readyBlink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+/* ... (기존 .max-eight 그리드 스타일은 삭제) ... */
+/* .participants-grid.max-eight { ... } */
+/* .participant-card { ... } // 기존 카드 스타일 삭제 */
 
-/* === Footer Buttons === */
+
+/* === Footer Buttons (기존과 동일) === */
+/* ... (버튼 및 로딩 스타일은 동일) ... */
 .footer-actions {
   display: flex;
   justify-content: center;
@@ -225,7 +265,7 @@
   }
 }
 
-/* === 로딩 전환 화면 === */
+/* === 로딩 전환 화면 (기존과 동일) === */
 .game-loading-fullscreen {
   position: fixed;
   inset: 0;
@@ -287,24 +327,4 @@
     0%, 100% { opacity: 0.2; }
     50% { opacity: 0.4; }
   }
-}
-.participants-grid.max-eight {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(2, auto);
-  gap: 20px;
-  justify-items: center;
-  align-items: center;
-  width: 95%;
-  margin-top: 40px;
-  min-height: 350px; 
-}
-
-.participant-card {
-  width: 200px;
-  height: 120px;
-  text-align: center;
-  padding: 16px;
-  border-radius: 10px;
-  font-size: 0.9rem;
 }

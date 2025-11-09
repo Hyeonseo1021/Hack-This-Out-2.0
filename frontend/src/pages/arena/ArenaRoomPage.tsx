@@ -6,6 +6,9 @@ import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaRoomPage.scss';
 
+// 최대 플레이어 수 정의
+const MAX_PLAYERS = 8;
+
 const ArenaRoomPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -17,7 +20,7 @@ const ArenaRoomPage: React.FC = () => {
   const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
   const [participants, setParticipants] = useState<any[]>([]);
   const [isStarting, setIsStarting] = useState(false);
-  const [loading, setLoading] = useState(true); // 추가: 로딩 상태
+  const [loading, setLoading] = useState(true);
   const skipLeaveRef = useRef(false);
 
   const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
@@ -27,6 +30,17 @@ const ArenaRoomPage: React.FC = () => {
     () => activeParticipants.find(p => (typeof p.user === 'string' ? p.user : p.user._id) === currentUserId),
     [activeParticipants, currentUserId]
   );
+  
+  // === [수정됨] ===
+  // 8개의 슬롯을 만들고, 활성 참가자로 채워넣는 로직
+  const displaySlots = useMemo(() => {
+    const slots = new Array(MAX_PLAYERS).fill(null);
+    activeParticipants.slice(0, MAX_PLAYERS).forEach((p, index) => {
+      slots[index] = p;
+    });
+    return slots;
+  }, [activeParticipants]);
+  // ===============
 
   // 호스트 판별
   useEffect(() => {
@@ -70,7 +84,7 @@ const ArenaRoomPage: React.FC = () => {
     navigate('/arena');
   };
 
-  // 초기 데이터 로드
+  // ... (초기 데이터 로드 및 소켓 이벤트 로직은 동일) ...
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -106,7 +120,6 @@ const ArenaRoomPage: React.FC = () => {
     loadData();
   }, [arenaId]);
 
-  // 소켓 이벤트
   useEffect(() => {
     if (!arenaId || !currentUserId) {
       console.log('⚠️ Waiting for arenaId or currentUserId...');
@@ -157,8 +170,8 @@ const ArenaRoomPage: React.FC = () => {
       socket.off('arena:join-failed');
     };
   }, [arenaId, currentUserId, navigate]);
-
-  // 디버깅 정보 출력
+  
+  // ... (디버깅 정보 출력 및 로딩 중 UI는 동일) ...
   useEffect(() => {
     console.log('=== ARENA ROOM STATE ===');
     console.log('Current User ID:', currentUserId);
@@ -171,7 +184,6 @@ const ArenaRoomPage: React.FC = () => {
     console.log('========================');
   }, [currentUserId, hostId, isHost, status, participants, activeParticipants, myParticipant]);
 
-  // 로딩 중
   if (loading) {
     return (
       <Main>
@@ -184,6 +196,7 @@ const ArenaRoomPage: React.FC = () => {
     );
   }
 
+
   return (
     <Main>
       <div className="battle-cyber-container room-variant">
@@ -193,51 +206,16 @@ const ArenaRoomPage: React.FC = () => {
             {arenaName}
           </h1>
 
-          {/* 디버그 정보 (개발 중에만 표시) */}
-          {process.env.NODE_ENV === 'development' && (
-            <div style={{ 
-              background: '#222', 
-              padding: '10px', 
-              margin: '10px 0', 
-              fontSize: '12px',
-              color: '#0f0',
-              fontFamily: 'monospace'
-            }}>
-              <div>Current User: {currentUserId || 'null'}</div>
-              <div>Host: {hostId || 'null'}</div>
-              <div>Status: {status}</div>
-              <div>Participants Count: {participants.length}</div>
-              <div>Active Count: {activeParticipants.length}</div>
-            </div>
-          )}
-
-          {/* 참가자가 없을 때 메시지 */}
-          {activeParticipants.length === 0 && (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '40px',
-              color: '#666'
-            }}>
-              No participants yet. Waiting for players...
-            </div>
-          )}
-
-          {/* 참가자 8명까지 표시 (4x2 grid) */}
-          {activeParticipants.length > 0 && (
-            <div className="participants-grid max-eight">
-              {activeParticipants.map((p, index) => {
-                const userObj = typeof p.user === 'object' ? p.user : { _id: p.user, username: `Player ${index + 1}` };
+          {/* === [수정됨] === */}
+          {/* 참가자 8명 리스트 (세로) */}
+          <div className="participant-list">
+            {displaySlots.map((p, index) => {
+              // (1) 참가자가 있는 슬롯
+              if (p) {
+                const userObj = typeof p.user === 'object' ? p.user : { _id: p.user, username: '...loading' };
                 const uid = userObj._id;
                 const isMe = uid === currentUserId;
                 const isUserHost = uid === hostId;
-
-                console.log('Rendering participant:', {
-                  userObj,
-                  uid,
-                  isMe,
-                  isUserHost,
-                  isReady: p.isReady
-                });
 
                 return (
                   <div
@@ -247,16 +225,38 @@ const ArenaRoomPage: React.FC = () => {
                     }`}
                   >
                     <div className="card-content">
-                      <span className="username">{userObj.username || 'Unknown'}</span>
-                      {isUserHost && <span className="host-tag">HOST</span>}
-                      {isMe && <span className="me-tag">(YOU)</span>}
-                      <span className="status">{p.isReady ? 'READY' : 'WAITING'}</span>
+                      <div className="player-info">
+                        <span className="player-slot">PLAYER {index + 1}</span>
+                        <span className="username">{userObj.username || 'Unknown'}</span>
+                      </div>
+                      <div className="player-status">
+                        {isUserHost && <span className="host-tag">HOST</span>}
+                        {isMe && !isUserHost && <span className="me-tag">(YOU)</span>}
+                        {!isUserHost && (
+                          <span className="status">{p.isReady ? 'READY' : 'WAITING'}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          )}
+              } 
+              // (2) 빈 슬롯
+              else {
+                return (
+                  <div key={`empty-${index}`} className="participant-card is-empty">
+                    <div className="card-content">
+                       <div className="player-info">
+                         <span className="player-slot">PLAYER {index + 1}</span>
+                         <span className="username">... WAITING FOR PLAYER ...</span>
+                       </div>
+                    </div>
+                  </div>
+                );
+              }
+            })}
+          </div>
+          {/* ================ */}
+
 
           <div className="footer-actions">
             {isHost ? (
@@ -280,28 +280,6 @@ const ArenaRoomPage: React.FC = () => {
               LEAVE
             </button>
           </div>
-
-          {/* 추가 디버그 정보 */}
-          {process.env.NODE_ENV === 'development' && (
-            <div style={{ 
-              marginTop: '20px',
-              padding: '10px',
-              background: '#222',
-              fontSize: '10px',
-              color: '#0f0',
-              fontFamily: 'monospace',
-              maxHeight: '200px',
-              overflow: 'auto'
-            }}>
-              <pre>{JSON.stringify({ 
-                currentUserId, 
-                hostId, 
-                isHost,
-                participants,
-                activeParticipants 
-              }, null, 2)}</pre>
-            </div>
-          )}
         </div>
       </div>
     </Main>

@@ -1,5 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import Arena from '../models/Arena' // Arena 스키마 import
+import ArenaProgress from '../models/ArenaProgress';
+import User from '../models/User';
+import { terminalProcessCommand } from '../services/terminalEngine';
 
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const endTimers = new Map<string, NodeJS.Timeout>();
@@ -64,11 +67,62 @@ const endArenaProcedure = async (arenaId: string, io: Server) => {
       arena.endTime = new Date(); // 혹시 endTime이 없으면 지금 시간으로
     }
     
-    // (TODO: 랭킹, 승자 계산 로직이 여기에 들어가야 함)
-    // 예: arena.ranking = ...
-    // 예: arena.winner = ...
+    // 1. (신규) ArenaProgress에서 랭킹 계산
+    const progressLogs = await ArenaProgress.find({ arena: arenaId })
+      .sort({ score: -1, completed: -1, updatedAt: 1 }) 
+      .populate('user', '_id username')
+      .lean();
+      
+    // 2. ‼️ (수정) Arena 모델에 랭킹 정보 저장 ‼️
+    arena.ranking = progressLogs.map((log, index) => ({
+      user: (log.user as any)._id,
+      rank: index + 1,
+    })) as any; // ⬅️ ‼️ 'as any'를 추가하여 TypeScript 오류를 해결합니다.
+    
+    // 3. (신규) 승자 결정
+    if (progressLogs.length > 0) {
+      arena.winner = (progressLogs[0].user as any)._id;
+    }
 
     await arena.save();
+
+    const modeMultiplier: Record<string, number> = {
+      'Terminal Race': 1.0,
+      'Defense Battle': 1.5,
+      'Capture Server': 1.8,
+      "Hacker's Deck": 1.3,
+      'Exploit Chain': 2.0,
+    };
+
+    const baseExp = arena.arenaExp || 50;
+    const modeFactor = modeMultiplier[arena.mode] || 1.0;
+
+    const rankMultipliers = [1.0, 0.5, 0.25];
+    const defaultRankMultiplier = 0.1;
+
+    for (let i = 0; i < arena.ranking.length; i++) {
+      const { user, rank } = arena.ranking[i];
+      const rankMultiplier =
+        rankMultipliers[i] !== undefined ? rankMultipliers[i] : defaultRankMultiplier;
+      const gainedExp = Math.floor(baseExp * modeFactor * rankMultiplier);
+
+      // ✅ 정적 import로 User 조회
+      const userDoc = await User.findById(user);
+      if (!userDoc) continue;
+
+      userDoc.exp = (userDoc.exp || 0) + gainedExp;
+      await userDoc.save();
+
+      // ArenaProgress에도 보상 기록
+      await ArenaProgress.updateOne(
+        { arena: arenaId, user },
+        { $set: { expEarned: gainedExp } }
+      );
+
+      console.log(
+        `🎁 ${userDoc.username} gained ${gainedExp} EXP (mode=${arena.mode}, rank=${rank})`
+      );
+    }
 
     console.log(`[scheduleEnd] Arena ${arenaId} has ended.`);
 
@@ -80,14 +134,12 @@ const endArenaProcedure = async (arenaId: string, io: Server) => {
       winner: arena.winner    // 계산된 승자 정보
     });
     
-    // 로비에도 방 상태 업데이트 (목록에서 사라지도록)
     io.emit('arena:room-deleted', arenaId);
 
   } catch (e) {
     console.error(`[endArenaProcedure] error:`, e);
   }
 };
-
 
 // --- 메인 소켓 핸들러 등록 ---
 
@@ -523,6 +575,151 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       });
     } catch (e) {
       console.error('[arena:sync] error:', e);
+    }
+  });
+  // 7. ‼️ 모드 1: Terminal Race 핸들러 (ArenaProgress 사용 버전) ‼️
+  socket.on('terminal:execute', async ({ 
+    command 
+  }: { command: string }) => {
+    
+    const arenaId = (socket as any).arenaId;
+    const userId = (socket as any).userId;
+    if (!arenaId || !userId) return; // 기본 가드
+
+    try {
+      // 1. (수정) 아레나 정보는 간단히 확인
+      // (lean()을 써서 가볍게 가져와도 됩니다)
+      const arena = await Arena.findById(arenaId).select('mode status winner');
+      if (!arena) throw new Error('Arena not found');
+      if (arena.mode !== 'Terminal Race') {
+        throw new Error('Invalid action for this Arena mode');
+      }
+      if (arena.status !== 'started') {
+        throw new Error('Arena is not started');
+      }
+
+      // 2. ‼️ '게임 엔진' 호출 (동일) ‼️
+      // (이 엔진은 ArenaProgress에서 스테이지를 읽어옵니다)
+      console.log(`\n[Terminal Race] User ${userId} executed: "${command}"`);
+      
+      // 🔍 업데이트 전 현재 상태 확인
+      const beforeProgress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
+      console.log('📊 Before Progress:', beforeProgress ? {
+        stage: beforeProgress.stage,
+        score: beforeProgress.score
+      } : 'No progress doc yet');
+      
+      const result = await terminalProcessCommand(arenaId, userId, command);
+      console.log('🎮 Command Result:', {
+        message: result.message,
+        progressDelta: result.progressDelta,
+        advanceStage: result.advanceStage,
+        flagFound: result.flagFound
+      });
+
+      // ----------------------------------------
+      // ‼️ 3. (대체) ArenaProgress 모델에 로그 저장 ‼️
+      // (participant.progress 로직을 이 로직으로 대체합니다)
+      
+      // ‼️ $inc 객체를 먼저 완전히 구성
+      const incUpdate: any = { score: result.progressDelta || 0 };
+      if (result.advanceStage) {
+        incUpdate.stage = 1; // ‼️ 스테이지 1 증가
+      }
+      
+      const updatePayload: any = {
+        $inc: incUpdate, // 점수 누적 (+ 스테이지 증가)
+        $push: { 
+          flags: { // ‼️ 플래그 제출 시도 로그
+            correct: result.flagFound || false,
+            submittedAt: new Date()
+          }
+        }
+      };
+      
+      if (result.flagFound) {
+        updatePayload.$set = { completed: true }; // ‼️ 완료 처리
+      }
+
+      console.log('📝 Update Payload:', JSON.stringify(updatePayload, null, 2));
+
+      // ‼️ upsert: true -> 이 유저의 로그가 없으면 새로 생성, 있으면 업데이트
+      const progressDoc = await ArenaProgress.findOneAndUpdate(
+        { arena: arenaId, user: userId },
+        updatePayload,
+        { 
+          upsert: true, 
+          new: true, 
+          setDefaultsOnInsert: true
+        }
+      );
+      
+      console.log('✅ After Progress:', {
+        stage: progressDoc.stage,
+        score: progressDoc.score
+      });
+      console.log('---\n');
+      // ----------------------------------------
+      
+      // 4. 클라이언트에 결과 전송 (수정)
+      io.to(arenaId).emit('terminal:result', {
+        userId,
+        command,
+        message: result.message,
+        progressDelta: result.progressDelta,
+        flagFound: result.flagFound,
+      });
+      io.to(arenaId).emit('participant:update', {
+        userId,
+        progress: progressDoc // ‼️ 방금 업데이트된 ArenaProgress 문서를 보냄
+      });
+      
+      // 5. ‼️ 게임 종료 처리 (수정) ‼️
+      // (승자가 아직 없고, 플래그를 찾았을 경우)
+      if (result.flagFound && !arena.winner) {
+        // ‼️ Arena 모델 자체에도 승자(winner)는 기록해야 합니다.
+        arena.winner = userId;
+        arena.firstSolvedAt = new Date();
+        await arena.save();
+        
+        // ‼️ 즉시 게임 종료
+        endArenaProcedure(arenaId, io);
+      }
+
+    } catch (e) {
+      console.error('[terminal:execute] error:', e);
+      socket.emit('arena:action-failed', { 
+        reason: (e as Error).message || 'An error occurred' 
+      });
+    }
+  });
+
+  // 8. ‼️ 모드 4: Hacker's Deck 핸들러 (문서 21p 기반) ‼️
+  // (Phase 1  우선순위이므로 미리 틀을 만듭니다)
+  socket.on('deck:play-card', async ({
+    cardId
+  }: { cardId: string }) => {
+    
+    const arenaId = (socket as any).arenaId;
+    const userId = (socket as any).userId;
+    if (!arenaId || !userId) return;
+
+    try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) throw new Error('Arena not found');
+
+      // ‼️ 모드 가드 ‼️
+      if (arena.mode !== "Hacker's Deck") { 
+        throw new Error('Invalid action for this Arena mode');
+      }
+      if (arena.status !== 'started') {
+        throw new Error('Arena is not started');
+      }
+    } catch (e) {
+      console.error('[deck:play-card] error:', e);
+      socket.emit('arena:action-failed', { 
+        reason: (e as Error).message || 'An error occurred' 
+      });
     }
   });
 };

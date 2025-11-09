@@ -1,0 +1,59 @@
+/* --- ActivityFeed Panel --- */
+.activity-feed {
+  height: 250px; // (Feed log의 최대 높이, 조절 가능)
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding-right: 0.5rem; // (스크롤바 공간)
+
+  .feed-item {
+    margin: 0 0 0.5rem 0;
+    padding: 0;
+    line-height: 1.4;
+    color: var(--text-light);
+
+    &.empty {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* 아이콘 색상 (선택 사항) */
+    &::before {
+      display: inline-block;
+      width: 1.2em;
+      text-align: left;
+    }
+
+    /* ✅ Stage Advance */
+    &[class*='✅']::before {
+      content: '✅';
+    }
+    /* 🚩 Flag Found */
+    &[class*='🚩']::before {
+      content: '🚩';
+      filter: saturate(0); // (이모지가 너무 밝으면 채도 낮춤)
+    }
+    /* + Score */
+    &[class*='+']::before {
+      content: '+';
+      color: var(--accent-success);
+      font-weight: 600;
+    }
+  }
+}
+
+/* --- 스크롤바 스타일 (전체 테마와 일치) --- */
+.activity-feed::-webkit-scrollbar {
+  width: 6px;
+}
+.activity-feed::-webkit-scrollbar-track {
+  background: var(--bg-input);
+  border-radius: 10px;
+}
+.activity-feed::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+  &:hover {
+    background: var(--border-color-hover);
+  }
+}

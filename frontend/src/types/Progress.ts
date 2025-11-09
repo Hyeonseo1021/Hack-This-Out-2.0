@@ -34,26 +34,32 @@ export type ContestParticipationItem = {
     contestCompleted: boolean;
 };
 
+// src/types/Progress.ts
 export interface ArenaHistoryItem {
   _id: string;
-  name: string;
-  category: string;
-  machine: {
+  name: string; // 아레나 이름
+  mode: string; // ex: 'Terminal Race', 'Defense Battle', etc.
+  host: {
     _id: string;
-    name: string;
+    username: string;
   };
-  host: string;
   startTime: string;
   endTime: string;
+  status: 'waiting' | 'started' | 'ended';
   winner: {
     _id: string;
     username: string;
   } | null;
   participants: {
-    user: string;
+    user: {
+      _id: string;
+      username: string;
+    };
     rank: number;
     expEarned: number;
     flagCorrect: boolean;
+    score: number;
+    stage: number;
   }[];
   arenaExp: number;
 }

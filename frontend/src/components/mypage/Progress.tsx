@@ -65,8 +65,7 @@ const Progress = () => {
             <thead>
               <tr className="head-detail">
                 <th className="head-name">Arena Name</th>
-                <th className="head-category">Category</th>
-                <th className="head-machine">Machine</th>
+                <th className="head-category">Mode</th>
                 <th className="head-time">End Time</th>
                 <th className="head-winner">Winner</th>
                 <th className="head-exp">EXP</th>
@@ -85,8 +84,7 @@ const Progress = () => {
                       </Avatar>{" "}
                       {arenaName}
                     </td>
-                    <td className="body-category">{arena.category}</td>
-                    <td className="body-machine">{arena.machine?.name || "Unknown"}</td>
+                    <td className="body-category">{arena.mode}</td>
                     <td className="body-time">{arena.endTime ? formatDate(arena.endTime) : "-"}</td>
                     <td className="body-winner">{arena.winner?.username || "N/A"}</td>
                     <td className="body-exp">{arena.arenaExp} EXP</td>

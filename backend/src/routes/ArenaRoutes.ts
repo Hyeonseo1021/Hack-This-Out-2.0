@@ -3,7 +3,8 @@ import {
   createArena,
   getArenas,
   getArenaById,
-  getArenaHistory
+  getArenaHistory,
+  getArenaResult
 } from '../controllers/ArenaController';
 import { verifyToken } from '../middlewares/Token';
 
@@ -13,6 +14,6 @@ ArenaRoutes.post('/create', verifyToken, createArena);
 ArenaRoutes.get('/list', getArenas);
 ArenaRoutes.get('/history', verifyToken, getArenaHistory);
 ArenaRoutes.get('/:arenaId', getArenaById);
-
+ArenaRoutes.get('/result/:arenaId', verifyToken, getArenaResult);
 
 export default ArenaRoutes;

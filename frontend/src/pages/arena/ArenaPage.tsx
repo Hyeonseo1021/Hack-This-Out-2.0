@@ -2,206 +2,228 @@ import React, { useEffect, useState } from 'react';
 import Main from '../../components/main/Main';
 import { useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
-import { getArenaList } from '../../api/axiosArena'; // API 함수 import
+import { getArenaList } from '../../api/axiosArena';
 import '../../assets/scss/arena/ArenaPage.scss';
 
-// 1. API 응답 및 소켓 이벤트에 맞춘 새 인터페이스
-// (getArenas 컨트롤러가 'activeParticipantsCount'를 반환함)
 interface ArenaSummary {
   _id: string;
   name: string;
   mode: string;
   maxParticipants: number;
   status: 'waiting' | 'started' | 'ended';
-  activeParticipantsCount: number; // 'participants' 배열 대신 '활성 인원 수'를 직접 받음
+  activeParticipantsCount: number;
 }
 
 const ArenaPage: React.FC = () => {
   const navigate = useNavigate();
-  // 2. State가 새 인터페이스를 사용하도록 변경
   const [arenas, setArenas] = useState<ArenaSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  
-  // 3. 초기 데이터 로드 + 소켓 연결 시 재로드
+  // 초기 데이터 로드
   useEffect(() => {
+    console.log('[ArenaPage] Component mounted');
+    
     const fetchArenas = async () => {
       try {
+        console.log('[fetchArenas] Fetching arena list...');
         const data = await getArenaList();
+        console.log('[fetchArenas] Received data:', data);
+        console.log('[fetchArenas] Data is array:', Array.isArray(data));
+        console.log('[fetchArenas] Data length:', data?.length);
+        
         setArenas(Array.isArray(data) ? data : []);
-      } catch {
+        setLoading(false);
+      } catch (error) {
+        console.error('[fetchArenas] Error:', error);
         setArenas([]);
-      } finally {
         setLoading(false);
       }
     };
 
-    // 최초 로드
+    // 최초 로드 (즉시 실행)
     fetchArenas();
 
     // 소켓 연결 완료 시 목록 재로드
     const handleConnect = () => {
-      console.log('Socket connected, refreshing arena list');
+      console.log('[Socket] Connected, socket.id:', socket.id);
+      console.log('[Socket] Refreshing arena list...');
       fetchArenas();
     };
 
-    // 소켓이 이미 연결되어 있으면 즉시 로드
-    if (socket.connected) {
-      fetchArenas();
-    }
+    // 소켓 연결 에러 처리
+    const handleConnectError = (error: Error) => {
+      console.error('[Socket] Connection error:', error);
+    };
 
     socket.on('connect', handleConnect);
+    socket.on('connect_error', handleConnectError);
+
+    // 소켓이 이미 연결되어 있는지 확인
+    console.log('[Socket] Initial connection status:', socket.connected);
 
     return () => {
       socket.off('connect', handleConnect);
+      socket.off('connect_error', handleConnectError);
     };
   }, []);
 
-  // 4. 소켓 이벤트 구독 (로직 단순화)
+  // 소켓 이벤트 구독
   useEffect(() => {
+    console.log('[Socket] Setting up event listeners');
     
-    // 'arena:room-updated' 이벤트 핸들러 (방 생성/인원 변경/상태 변경)
     const handleRoomUpdated = (updatedArena: ArenaSummary) => {
-      // API 응답과 동일한 activeParticipantsCount가 온다고 가정
+      console.log('[Socket] arena:room-updated received:', updatedArena);
       
       setArenas(prev => {
+        console.log('[Socket] Current arenas count:', prev.length);
+        
         // 방이 종료되었거나 활성 유저가 0명이면 목록에서 제거
         if (updatedArena.status === 'ended' || updatedArena.activeParticipantsCount === 0) {
+          console.log('[Socket] Removing arena (ended or empty):', updatedArena._id);
           return prev.filter(a => a._id !== updatedArena._id);
         }
 
         const exists = prev.some(a => a._id === updatedArena._id);
         
         if (exists) {
-          // 이미 있으면, 정보 업데이트
+          // 이미 있으면 정보 업데이트
+          console.log('[Socket] Updating existing arena:', updatedArena._id);
           return prev.map(a => a._id === updatedArena._id ? updatedArena : a);
         } else {
-          // 목록에 없으면 (새 방), 새로 추가 (단, 'waiting' 상태일 때만)
+          // 목록에 없으면 새로 추가 (waiting 상태일 때만)
           if (updatedArena.status === 'waiting') {
+            console.log('[Socket] Adding new arena:', updatedArena._id);
             return [updatedArena, ...prev];
           }
+          console.log('[Socket] Ignoring arena (not waiting):', updatedArena._id, 'status:', updatedArena.status);
           return prev;
         }
       });
     };
 
-    // 'arena:room-deleted' 이벤트 핸들러 (방 폭파)
     const handleRoomDeleted = (arenaId: string) => {
+      console.log('[Socket] arena:room-deleted received:', arenaId);
       setArenas(prev => prev.filter(a => a._id !== arenaId));
     };
 
-    // 소켓 구독
-    // 'arena:new-room' 대신 'arena:room-updated'를 사용 (createArena에서 emit)
     socket.on('arena:room-updated', handleRoomUpdated);
     socket.on('arena:room-deleted', handleRoomDeleted);
 
-    // 컴포넌트 언마운트 시 구독 해제
     return () => {
+      console.log('[Socket] Cleaning up event listeners');
       socket.off('arena:room-updated', handleRoomUpdated);
       socket.off('arena:room-deleted', handleRoomDeleted);
     };
   }, []);
 
-  // 5. 방 입장 핸들러 (입장 조건 검사)
   const handleEnterArena = (arenaId: string) => {
     const arena = arenas.find(a => a._id === arenaId);
     
     if (!arena) {
-      console.log('Arena not found');
+      console.log('[handleEnterArena] Arena not found:', arenaId);
       return;
     }
 
-    // waiting 상태이고 자리가 있으면 입장 가능
-    // started 상태여도 자리가 있으면 입장 가능 (재접속 허용)
     const canEnter = 
       (arena.status === 'waiting' || arena.status === 'started') && 
       arena.activeParticipantsCount < arena.maxParticipants;
 
     if (canEnter) {
+      console.log('[handleEnterArena] Entering arena:', arenaId);
       navigate(`/arena/${arenaId}`);
     } else {
-      console.log('Cannot enter room: Full or Ended.');
-      // 알림 표시 (선택사항)
+      console.log('[handleEnterArena] Cannot enter room:', {
+        arenaId,
+        status: arena.status,
+        participants: arena.activeParticipantsCount,
+        maxParticipants: arena.maxParticipants
+      });
     }
   };
 
-  // 6. 정렬된 방 목록 (waiting 먼저)
+  // 정렬된 방 목록 (waiting 먼저)
   const sortedArenas = [...arenas].sort((a, b) => {
     if (a.status === 'waiting' && b.status !== 'waiting') return -1;
     if (a.status !== 'waiting' && b.status === 'waiting') return 1;
-    return 0; // 그 외 정렬 (예:
+    return 0;
   });
 
+  console.log('[Render] Current arenas:', sortedArenas.length, 'loading:', loading);
+
   return (
-        <Main>
-            <div className="blueprint-container">
-                <div className="blueprint-container__scanline"></div>
+    <Main>
+      <div className="blueprint-container">
+        <div className="blueprint-container__scanline"></div>
 
-                {/* 좌측: 아레나 리스트 패널 */}
-                <div className="blueprint-panel blueprint-panel--list">
-                    <div className="blueprint-panel__header">
-                        <h2 className="blueprint-panel__title">ARENA LIST</h2>
-                    </div>
-                    <div className="blueprint-panel__body">
-                        <div className="arena-list">
-                            <div className="arena-list__row arena-list__row--header">
-                                <div className="arena-list__col">ID</div>
-                                <div className="arena-list__col">ROOM NAME</div>
-                                <div className="arena-list__col">MODE</div>
-                                <div className="arena-list__col">PARTICIPATIONS</div>
-                                <div className="arena-list__col">STATUS</div>
-                            </div>
-                            {loading ? (
-                                <p className="arena-list__message">SYSTEM SCANNING...</p>
-                            ) : sortedArenas.length > 0 ? (
-                                sortedArenas.map((arena, index) => {
-                                    // 7. "방 꽉 참" 조건 추가
-                                    const isFull = arena.activeParticipantsCount >= arena.maxParticipants;
-                                    const isLocked = arena.status !== 'waiting' || isFull;
+        {/* 좌측: 아레나 리스트 패널 */}
+        <div className="blueprint-panel blueprint-panel--list">
+          <div className="blueprint-panel__header">
+            <h2 className="blueprint-panel__title">ARENA LIST</h2>
+          </div>
+          <div className="blueprint-panel__body">
+            <div className="arena-list">
+              <div className="arena-list__row arena-list__row--header">
+                <div className="arena-list__col">ID</div>
+                <div className="arena-list__col">ROOM NAME</div>
+                <div className="arena-list__col">MODE</div>
+                <div className="arena-list__col">PARTICIPATIONS</div>
+                <div className="arena-list__col">STATUS</div>
+              </div>
+              {loading ? (
+                <p className="arena-list__message">SYSTEM SCANNING...</p>
+              ) : sortedArenas.length > 0 ? (
+                sortedArenas.map((arena, index) => {
+                  const isFull = arena.activeParticipantsCount >= arena.maxParticipants;
+                  const isLocked = arena.status !== 'waiting' || isFull;
 
-                                    return (
-                                        <div
-                                            key={arena._id}
-                                            className={`arena-list__row ${isLocked ? 'arena-list__row--locked' : ''}`}
-                                            onClick={() => handleEnterArena(arena._id)}
-                                        >
-                                            <div className="arena-list__col" data-label="ID">{`#${(index + 1).toString().padStart(4, '0')}`}</div>
-                                            <div className="arena-list__col" data-label="Room Name">{arena.name}</div>
-                                            <div className="arena-list__col" data-label="Mode">{arena.mode}</div>
-                                            <div className="arena-list__col" data-label="Participations">
-                                                {/* 8. 'activeParticipantsCount'를 직접 사용 */}
-                                                {arena.activeParticipantsCount} / {arena.maxParticipants}
-                                            </div>
-                                            <div className="arena-list__col" data-label="Status">
-                                                <span className={`status-badge status-badge--${isFull ? 'full' : arena.status}`}>
-                                                    {isFull && arena.status === 'waiting' ? 'FULL' : arena.status.toUpperCase()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <p className="arena-list__message">NO SIGNAL DETECTED</p>
-                            )}
-                        </div>
+                  return (
+                    <div
+                      key={arena._id}
+                      className={`arena-list__row ${isLocked ? 'arena-list__row--locked' : ''}`}
+                      onClick={() => handleEnterArena(arena._id)}
+                    >
+                      <div className="arena-list__col" data-label="ID">
+                        {`#${(index + 1).toString().padStart(4, '0')}`}
+                      </div>
+                      <div className="arena-list__col" data-label="Room Name">
+                        {arena.name}
+                      </div>
+                      <div className="arena-list__col" data-label="Mode">
+                        {arena.mode}
+                      </div>
+                      <div className="arena-list__col" data-label="Participations">
+                        {arena.activeParticipantsCount} / {arena.maxParticipants}
+                      </div>
+                      <div className="arena-list__col" data-label="Status">
+                        <span className={`status-badge status-badge--${isFull ? 'full' : arena.status}`}>
+                          {isFull && arena.status === 'waiting' ? 'FULL' : arena.status.toUpperCase()}
+                        </span>
+                      </div>
                     </div>
-                </div>
-
-                {/* 우측: 방 만들기 패널 */}
-                <div className="blueprint-panel blueprint-panel--create">
-                    <div className="blueprint-panel__header">
-                        <h2 className="blueprint-panel__title">NEW CONNECTION</h2>
-                    </div>
-                    <div className="blueprint-panel__body blueprint-panel__body--center">
-                        <button className="blueprint-button" onClick={() => navigate('/arena/create')}>
-                            <span className="blueprint-button__text">CREATE ROOM</span>
-                        </button>
-                        <p className="blueprint-panel__subtext">Create a new arena</p>
-                    </div>
-                </div>
+                  );
+                })
+              ) : (
+                <p className="arena-list__message">NO SIGNAL DETECTED</p>
+              )}
             </div>
-        </Main>
-    );
+          </div>
+        </div>
+
+        {/* 우측: 방 만들기 패널 */}
+        <div className="blueprint-panel blueprint-panel--create">
+          <div className="blueprint-panel__header">
+            <h2 className="blueprint-panel__title">NEW CONNECTION</h2>
+          </div>
+          <div className="blueprint-panel__body blueprint-panel__body--center">
+            <button className="blueprint-button" onClick={() => navigate('/arena/create')}>
+              <span className="blueprint-button__text">CREATE ROOM</span>
+            </button>
+            <p className="blueprint-panel__subtext">Create a new arena</p>
+          </div>
+        </div>
+      </div>
+    </Main>
+  );
 };
 
 export default ArenaPage;

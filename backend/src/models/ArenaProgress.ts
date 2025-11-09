@@ -14,7 +14,7 @@ const ArenaProgressSchema = new mongoose.Schema({
 
   // 💯 기본 점수 및 진행
   score: { type: Number, default: 0 },
-  stage: { type: Number, default: 1 },
+  stage: { type: Number, default: 0 },
   completed: { type: Boolean, default: false },
   timeSpent: { type: Number, default: 0 }, // ms 단위
 
