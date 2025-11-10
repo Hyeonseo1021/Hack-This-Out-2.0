@@ -20,10 +20,37 @@ interface MachineDetailProps {
  * @returns {JSX.Element} The rendered MachineDetail component.
  */
 const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
-  const { _id, name, category, description, exp, rating } = machineDetail;
+  const { _id, name, category, description, exp, rating, difficulty } = machineDetail;
 
   const avatarColorIndex = getAvatarColorIndex(name);
   const avatarBgColor = avatarBackgroundColors[avatarColorIndex];
+
+  // 난이도 색상 매핑
+  const getDifficultyColor = (level: string): string => {
+    const colors: { [key: string]: string } = {
+      'very_easy': '#4ade80',
+      'easy': '#86efac',
+      'medium': '#fbbf24',
+      'hard': '#fb923c',
+      'very_hard': '#ef4444'
+    };
+    return colors[level] || '#94a3b8';
+  };
+
+  // 난이도 레이블
+  const getDifficultyLabel = (level: string): string => {
+    const labels: { [key: string]: string } = {
+      'very_easy': 'Very Easy',
+      'easy': 'Easy',
+      'medium': 'Medium',
+      'hard': 'Hard',
+      'very_hard': 'Very Hard'
+    };
+    return labels[level] || 'Unknown';
+  };
+
+  // 표시할 난이도 결정
+  const displayDifficulty = difficulty?.confirmedLevel || difficulty?.creatorLevel;
 
   return (
     <div className="machine-detail-container">
@@ -45,6 +72,30 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
         <div className='machine-textbox'>
           <p className="machine-name"><b>{name.charAt(0).toUpperCase() + name.slice(1)}</b></p>
           <p className='machine-category'><b>Category: </b>{category || 'N/A'}</p>
+          
+          {/* 난이도 표시 추가 */}
+          {difficulty && displayDifficulty && (
+            <div className='machine-difficulty'>
+              <b>Difficulty: </b>
+              <span 
+                className='difficulty-badge'
+                style={{ 
+                  display: 'inline-block',
+                  backgroundColor: getDifficultyColor(displayDifficulty),
+                  padding: '4px 12px',
+                  borderRadius: '12px',
+                  color: '#000',
+                  fontWeight: 'bold',
+                  marginLeft: '8px',
+                  fontSize: '0.9em'
+                }}
+              >
+                {getDifficultyLabel(displayDifficulty)}
+                {!difficulty.isConfirmed && ' (Est.)'}
+              </span>
+            </div>
+          )}
+          
           <div className='description'><p>"{description || 'N/A'}"</p></div>
         </div>
         <div className='right-part'>

@@ -92,7 +92,9 @@
 .arena-list {
   &__row {
     display: grid;
-    grid-template-columns: 0.5fr 2fr 1fr 1fr;
+    // ⬇️ [수정됨] 4개 -> 5개 컬럼 (mode 컬럼 1fr 추가)
+    // (상태 아이콘 | 방 이름 | 모드 | 인원 | 상태 뱃지)
+    grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
     align-items: center;
     gap: 1rem;
     padding: 1rem 0;

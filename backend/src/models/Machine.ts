@@ -152,7 +152,7 @@ MachineSchema.methods.updateRating = async function() {
 
 // Function to update difficulty based on reviews
 MachineSchema.methods.updateDifficulty = async function() {
-    const MIN_REVIEWS_FOR_CONFIRMATION = 10; // 최소 리뷰 수
+    const MIN_REVIEWS_FOR_CONFIRMATION = 3; // 최소 리뷰 수
     
     if (!this.reviews || this.reviews.length === 0) {
         return this;

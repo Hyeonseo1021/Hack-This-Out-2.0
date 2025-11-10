@@ -1,4 +1,3 @@
-// src/pages/arena/ArenaRoomPage.tsx
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
@@ -7,222 +6,428 @@ import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaRoomPage.scss';
 
-type Participant = {
-  user: { _id: string; username: string } | string;
-  isReady: boolean;
-  hasLeft?: boolean;
-  startTime?: Date;
-  endTime?: Date;
-};
+const MAX_PLAYERS = 8;
 
-type ArenaUpdatePayload = {
-  arenaId: string;
-  status: 'waiting' | 'started' | 'ended' | string;
-  host: string; // 서버가 문자열로 보냄
-  startTime?: string | null;
-  endTime?: string | null;
-  participants: Participant[];
+type ChatMessage = {
+  type: 'chat' | 'system' | 'notification'; 
+  senderId?: string;
+  senderName: string; 
+  message: string;
+  timestamp: string;
 };
 
 const ArenaRoomPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [hostId, setHostId] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [arenaName, setArenaName] = useState('');
   const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [isStarting, setIsStarting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const skipLeaveRef = useRef(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const chatMessagesEndRef = useRef<null | HTMLDivElement>(null);
+  const [tempArenaName, setTempArenaName] = useState('');
+  const [showStartOverlay, setShowStartOverlay] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
 
-  // 내 카드 / 활성 인원 / 전체 준비 여부
+  // 본인 정보
   const myParticipant = useMemo(
-    () => participants.find(p => (typeof p.user === 'string' ? p.user : p.user._id) === currentUserId),
-    [participants, currentUserId]
+    () => activeParticipants.find(p => (typeof p.user === 'string' ? p.user : p.user._id) === currentUserId),
+    [activeParticipants, currentUserId]
   );
-  const activeParticipants = useMemo(
-    () => participants.filter(p => !p.hasLeft),
-    [participants]
-  );
-  const everyoneReady = useMemo(
-    () => activeParticipants.length > 0 && activeParticipants.every(p => p.isReady),
-    [activeParticipants]
-  );
-  // 호스트 제외 활성 참가자
-  const nonHostParticipants = useMemo(() => {
-    return participants.filter(p => {
-      const uid = typeof p.user === 'string' ? p.user : p.user._id;
-      return uid !== hostId; // host 제외
+  
+  // 8개의 슬롯을 만들고, 활성 참가자로 채워넣는 로직
+  const displaySlots = useMemo(() => {
+    const slots = new Array(MAX_PLAYERS).fill(null);
+    activeParticipants.slice(0, MAX_PLAYERS).forEach((p, index) => {
+      slots[index] = p;
     });
-  }, [participants, hostId]);
+    return slots;
+  }, [activeParticipants]);
 
-  // 호스트 제외 모두 준비
-  const everyoneExceptHostReady = useMemo(() => {
-    return nonHostParticipants.length > 0 && nonHostParticipants.every(p => p.isReady);
-  }, [nonHostParticipants]);
-
-
-  // 유저/아레나 이름 로딩
+  // 호스트 판별
   useEffect(() => {
-    getUserStatus()
-      .then(res => setCurrentUserId(res?.user?._id ?? res?.data?.user?._id ?? null))
-      .catch(() => { /* ignore */ });
+    if (hostId && currentUserId) setIsHost(hostId === currentUserId);
+  }, [hostId, currentUserId]);
 
-    if (arenaId) {
-      getArenaById(arenaId)
-        .then(res => setArenaName(res?.name ?? res?.data?.name ?? ''))
-        .catch(() => { /* ignore */ });
+  // 호스트 제외 전원 준비 확인
+  const everyoneExceptHostReady = useMemo(() => {
+    if (!hostId) return false;
+    const others = activeParticipants.filter(p => {
+      const uid = typeof p.user === 'string' ? p.user : p.user._id;
+      return uid !== hostId;
+    });
+    return others.length > 0 && others.every(p => p.isReady);
+  }, [activeParticipants, hostId]);
+
+  // READY 토글
+  const toggleReady = () => {
+    if (!arenaId || !currentUserId || status !== 'waiting') return;
+    const nextReady = !(myParticipant?.isReady ?? false);
+
+    setParticipants(prev =>
+      prev.map(p => {
+        const uid = typeof p.user === 'string' ? p.user : p.user._id;
+        return uid === currentUserId ? { ...p, isReady: nextReady } : p;
+      })
+    );
+
+    socket.emit('arena:ready', { arenaId, userId: currentUserId, ready: nextReady });
+  };
+
+  // 호스트만 시작 가능
+  const handleStart = () => {
+    if (!isHost || !arenaId || !everyoneExceptHostReady) return;
+    setIsStarting(true);
+    socket.emit('arena:start', { arenaId, userId: currentUserId });
+  };
+
+  const handleLeave = () => {
+    socket.emit('arena:leave', { arenaId, userId: currentUserId });
+    navigate('/arena');
+  };
+
+  const handleSendMessage = () => {
+    if (!currentMessage.trim() || !arenaId) return;
+    socket.emit('arena:chat', { arenaId, message: currentMessage });
+    setCurrentMessage('');
+  };
+
+  const handleKick = (kickedUserId: string, username: string) => {
+    if (window.confirm(`정말 ${username}님을 강퇴하시겠습니까?`)) {
+      socket.emit('arena:kick', { kickedUserId });
     }
+  };
+
+  const handleArenaNameChange = () => {
+    if (isHost && status === 'waiting' && tempArenaName !== arenaName) {
+      socket.emit('arena:settingsChange', { 
+        newSettings: { name: tempArenaName } 
+      });
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // 1. 유저 정보 먼저 가져오기
+        const userRes = await getUserStatus();
+        const userId = userRes?.user?._id ?? userRes?.data?.user?._id ?? null;
+        console.log('✅ Current User ID:', userId);
+        setCurrentUserId(userId);
+
+        if (!arenaId) {
+          console.error('❌ Arena ID is missing');
+          return;
+        }
+
+        // 2. 아레나 정보 가져오기
+        const arenaRes = await getArenaById(arenaId);
+        const data = arenaRes?.data || arenaRes;
+        
+        console.log('✅ Arena Data:', data);
+        console.log('✅ Participants:', data?.participants);
+        
+        setArenaName(data?.name ?? 'Arena Room');
+        setTempArenaName(data?.name ?? 'Arena Room');
+        setHostId(data?.host?._id || data?.host || null);
+        setParticipants(data?.participants || []);
+        setStatus(data?.status || 'waiting');
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ Error loading arena data:', error);
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [arenaId]);
 
-  // 소켓 바인딩 + join + cleanup
   useEffect(() => {
-    if (!arenaId || !currentUserId) return;
+    if (!arenaId || !currentUserId) {
+      console.log('⚠️ Waiting for arenaId or currentUserId...');
+      return;
+    }
 
-    // 중복 리스너 방지
+    console.log('🔌 Setting up socket listeners for arena:', arenaId);
+
     socket.off('arena:update');
-    socket.off('arena:join-failed');
     socket.off('arena:start');
-    socket.off('arena:start-failed');
-    socket.off('arena:ready-failed');
+    socket.off('arena:join-failed');
+    socket.off('arena:chatMessage'); 
+    socket.off('arena:notify');      
+    socket.off('arena:kicked');
 
-    const handleUpdate = (payload: ArenaUpdatePayload) => {
-      setStatus((payload.status as any) || 'waiting');
+    socket.on('arena:update', payload => {
+      console.log('📡 arena:update received:', payload);
+      if (payload.arenaId !== arenaId) return;
+      
+      setStatus(payload.status || 'waiting');
       setHostId(payload.host || null);
-      setIsHost(payload.host === currentUserId);
       setParticipants(payload.participants || []);
-    };
+      if (payload.name) {
+        setArenaName(payload.name);
+        setTempArenaName(payload.name);
+      }
+    });
 
-    const handleJoinFailed = ({ reason }: { reason: string }) => {
+    socket.on('arena:start', ({ arenaId: startedId }) => {
+      console.log('🎮 arena:start received:', startedId);
+      if (startedId === arenaId) {
+        skipLeaveRef.current = true;
+        setShowStartOverlay(true);
+        setCountdown(3);
+        
+        // 카운트다운 애니메이션
+        const countdownInterval = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
+        // 3초 후 페이지 이동
+        setTimeout(() => {
+          navigate(`/arena/play/${arenaId}`);
+        }, 3500);
+      }
+    });
+
+    socket.on('arena:join-failed', ({ reason }) => {
+      console.log('❌ arena:join-failed:', reason);
       alert(reason);
       navigate('/arena');
-    };
+    });
 
-    const handleStart = ({ arenaId }: { arenaId: string }) => {
-      skipLeaveRef.current = true;
-      navigate(`/arena/play/${arenaId}`);
-    };
+    socket.on('arena:chatMessage', (payload: ChatMessage) => {
+      setChatMessages((prev) => [...prev, payload]);
+    });
 
-
-    const handleStartFailed = ({ reason }: { reason: string }) => {
+    socket.on('arena:notify', (payload: { type: 'system', message: string }) => {
+      setChatMessages((prev) => [...prev, {
+        ...payload,
+        senderName: 'SYSTEM',
+        timestamp: new Date().toISOString()
+      }]);
+    });
+    
+    socket.on('arena:kicked', ({ reason }: { reason: string }) => {
       alert(reason);
-    };
+      skipLeaveRef.current = true; // 강퇴당했으므로 leave emit 방지
+      navigate('/arena');
+    });
 
-    const handleReadyFailed = ({ reason }: { reason: string }) => {
-      alert(reason);
-    };
-
-    socket.on('arena:update', handleUpdate);
-    socket.on('arena:join-failed', handleJoinFailed);
-    socket.on('arena:start', handleStart);
-    socket.on('arena:start-failed', handleStartFailed);
-    socket.on('arena:ready-failed', handleReadyFailed);
-
-    // 입장
+    // 아레나 입장
+    console.log('🚪 Emitting arena:join...');
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {
-      // 나가기 + 핸들러 해제
-      if (!skipLeaveRef.current) {
-        socket.emit('arena:leave', { arenaId, userId: currentUserId });
-      }
-      socket.off('arena:update', handleUpdate);
-      socket.off('arena:join-failed', handleJoinFailed);
-      socket.off('arena:start', handleStart);
-      socket.off('arena:start-failed', handleStartFailed);
-      socket.off('arena:ready-failed', handleReadyFailed);
+      socket.off('arena:update');
+      socket.off('arena:start');
+      socket.off('arena:join-failed');
+      socket.off('arena:chatMessage');
+      socket.off('arena:notify');     
+      socket.off('arena:kicked');
     };
   }, [arenaId, currentUserId, navigate]);
 
-  // 방 목록 전역 업데이트도 방 화면에서 수신해서 '나간 사람' 즉시 제거 + 동기화 요청
   useEffect(() => {
-    if (!arenaId) return;
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+  
+  useEffect(() => {
+    console.log('=== ARENA ROOM STATE ===');
+    console.log('Current User ID:', currentUserId);
+    console.log('Host ID:', hostId);
+    console.log('Is Host:', isHost);
+    console.log('Status:', status);
+    console.log('Participants:', participants);
+    console.log('Active Participants:', activeParticipants);
+    console.log('My Participant:', myParticipant);
+    console.log('========================');
+  }, [currentUserId, hostId, isHost, status, participants, activeParticipants, myParticipant]);
 
-    const handleRoomUpdatedThisRoom = (updated: {
-      _id: string;
-      participants?: { user: string }[];
-    }) => {
-      if (!updated || updated._id !== arenaId) return;
+  if (loading) {
+    return (
+      <Main>
+        <div className="battle-cyber-container room-variant">
+          <div className="cyber-module">
+            <h1 className="cyber-title">Loading...</h1>
+          </div>
+        </div>
+      </Main>
+    );
+  }
 
-      const ids = new Set((updated.participants ?? []).map(u => String(u.user)));
-
-      // 1) 로컬에서 '없는 사람' 즉시 제거 (새로고침 없이 카드 사라짐)
-      setParticipants(prev => prev.filter(p => {
-        const uid = typeof p.user === 'string' ? p.user : p.user._id;
-        return ids.has(uid);
-      }));
-
-      // 2) 유저명 등 디테일 동기화(짧은 스냅샷 요청) — 서버에 'arena:sync' 핸들러 필요
-      socket.emit('arena:sync', { arenaId });
-    };
-
-    socket.on('arena:room-updated', handleRoomUpdatedThisRoom);
-    return () => {
-      socket.off('arena:room-updated', handleRoomUpdatedThisRoom);
-    };
-  }, [arenaId]);
-
-
-  // 준비 토글
-  const toggleReady = () => {
-    if (!arenaId || !currentUserId) return;
-    if (status !== 'waiting') return;
-    const next = !(myParticipant?.isReady ?? false);
-    socket.emit('arena:ready', { arenaId, userId: currentUserId, ready: next });
-  };
-
-  return (
+return (
     <Main>
       <div className="battle-cyber-container room-variant">
         <div className="background-grid"></div>
+        
+        {/* 게임 시작 오버레이 */}
+        {showStartOverlay && (
+          <div className="game-start-overlay">
+            <div className="start-overlay-content">
+              <div className="start-title">GAME STARTING</div>
+              {countdown > 0 ? (
+                <div className="countdown-number">{countdown}</div>
+              ) : (
+                <div className="countdown-go">GO!</div>
+              )}
+              <div className="start-subtitle">Prepare for battle...</div>
+            </div>
+          </div>
+        )}
+        
         <div className="cyber-module">
-          <h1 className="cyber-title" data-text={arenaName}>{arenaName}</h1>
+          <h1 className="cyber-title" data-text={arenaName}>
+             {arenaName}
+          </h1>
           
-          <div className="participants-grid">
-            {activeParticipants.map(p => {
-              const userObject = typeof p.user === 'object' ? p.user : { _id: p.user, username: 'Loading...' };
-              const isUserHost = userObject._id === hostId;
-              const isMe = userObject._id === currentUserId;
+        
+          <div className="room-content-wrapper">
+            
+            {/* === 왼쪽 열: 참가자 목록 === */}
+            <div className="participant-list">
+              {displaySlots.map((p, index) => {
+                // (1) 참가자가 있는 슬롯
+                if (p) {
+                  const userObj = typeof p.user === 'object' ? p.user : { _id: p.user, username: '...loading' };
+                  const uid = userObj._id;
+                  const username = userObj.username || 'Unknown';
+                  const isMe = uid === currentUserId;
+                  const isUserHost = uid === hostId;
 
-              return (
-                <div 
-                  key={userObject._id}
-                  className={`participant-card ${p.isReady ? 'is-ready' : ''} ${isUserHost ? 'is-host' : ''} ${isMe ? 'is-me' : ''}`}
-                >
-                  <div className="card-bg"></div>
-                  <div className="card-content">
-                    <span className="username">{userObject.username}</span>
-                    <span className="status">{p.isReady ? 'READY' : 'NOT READY'}</span>
-                  </div>
-                  {isUserHost && <div className="host-tag">HOST</div>}
+                  return (
+                    <div
+                      key={uid || index}
+                      className={`participant-card ${isMe ? 'is-me' : ''} ${isUserHost ? 'is-host' : ''} ${
+                        p.isReady ? 'is-ready' : ''
+                      }`}
+                    >
+                      <div className="card-content">
+                        <div className="player-info">
+                          <span className="player-slot">PLAYER {index + 1}</span>
+                          <span className="username">{username}</span>
+                        </div>
+                        <div className="player-status">
+                          {isUserHost && <span className="host-tag">HOST</span>}
+                          {isMe && !isUserHost && <span className="me-tag">(YOU)</span>}
+                          {!isUserHost && (
+                            <span className="status">{p.isReady ? 'READY' : 'WAITING'}</span>
+                          )}
+                        </div>
+                        
+                        {/* 강퇴 버튼 */}
+                        {isHost && !isMe && status === 'waiting' && (
+                          <button
+                            className="cyber-button kick-btn"
+                            onClick={() => handleKick(uid, username)}
+                          >
+                            강퇴
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                } 
+                // (2) 빈 슬롯
+                else {
+                  return (
+                    <div key={`empty-${index}`} className="participant-card is-empty">
+                      <div className="card-content">
+                         <div className="player-info">
+                           <span className="player-slot">PLAYER {index + 1}</span>
+                           <span className="username">... WAITING FOR PLAYER ...</span>
+                         </div>
+                      </div>
+                    </div>
+                  );
+                }
+              })}
+            </div>
+            
+            {/* === [추가] 오른쪽 열: 채팅 + 버튼 === */}
+            <div className="right-column">
+              
+              {/* 채팅창 */}
+              <div className="chat-module">
+                <div className="chat-messages">
+                  {chatMessages.map((msg, index) => (
+                    <div 
+                      key={index} 
+                      className={`chat-message ${msg.type === 'system' ? 'system-message' : ''}`}
+                    >
+                      {msg.type === 'chat' && <strong>{msg.senderName}: </strong>}
+                      {msg.message}
+                    </div>
+                  ))}
+                  <div ref={chatMessagesEndRef} />
                 </div>
-              );
-            })}
+                <div className="chat-input-area">
+                  <input
+                    type="text"
+                    className="cyber-input"
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && currentMessage.trim()) {
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder="메시지 입력..."
+                    disabled={status !== 'waiting'}
+                  />
+                  <button 
+                    className="cyber-button" 
+                    onClick={handleSendMessage} 
+                    disabled={!currentMessage.trim() || status !== 'waiting'}
+                  >
+                    전송
+                  </button>
+                </div>
+              </div>
+
+              {/* 하단 버튼 영역 (위치 이동) */}
+              <div className="footer-actions">
+                {isHost ? (
+                  <button
+                    className="cyber-button start-btn"
+                    disabled={!everyoneExceptHostReady || isStarting || status !== 'waiting'}
+                    onClick={handleStart}
+                  >
+                    {isStarting ? 'STARTING...' : 'START GAME'}
+                  </button>
+                ) : (
+                  <button
+                    className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`}
+                    disabled={status !== 'waiting'}
+                    onClick={toggleReady}
+                  >
+                    {myParticipant?.isReady ? 'CANCEL' : 'READY'}
+                  </button>
+                )}
+                <button className="cyber-button leave-btn" onClick={handleLeave}>
+                  LEAVE
+                </button>
+              </div>
+              
+            </div>
+            {/* ================ */}
+
           </div>
 
-          <div className="footer-actions">
-            {isHost ? (
-              <button
-                className="cyber-button"
-                disabled={status !== 'waiting' || !everyoneExceptHostReady || activeParticipants.length < 2}
-                onClick={() => socket.emit('arena:start', { arenaId, userId: currentUserId })}
-              >
-                <span data-text="START GAME">START GAME</span>
-                <div className="button-loader"></div>
-              </button>
-            ) : (
-              <button
-                className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`}
-                disabled={status !== 'waiting'}
-                onClick={toggleReady}
-              >
-                <span data-text={myParticipant?.isReady ? 'CANCEL' : 'READY'}>
-                  {myParticipant?.isReady ? 'CANCEL' : 'READY'}
-                </span>
-                <div className="button-loader"></div>
-              </button>
-            )}
-          </div>
+          
         </div>
       </div>
     </Main>

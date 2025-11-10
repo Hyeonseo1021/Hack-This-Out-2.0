@@ -294,14 +294,14 @@ $color-bubble: #ffffff;
   20%, 24%, 55% { opacity: 0.3; }
 }
 
-/* === 글리치 텍스트 효과 === */
+/* === 글리치 텍스트 효과 (약화 버전) === */
 .glitch-text, .glitch-subtext {
   position: relative;
   display: inline-block;
   color: #00eaff;
   font-family: 'IBM Plex Mono', monospace;
-  text-shadow: 0 0 5px rgba(0,255,255,0.6), 0 0 10px rgba(255,0,255,0.3);
-  animation: text-glitch 3s infinite linear alternate;
+  text-shadow: 0 0 3px rgba(0,255,255,0.4), 0 0 6px rgba(255,0,255,0.2);
+  animation: text-glitch-soft 5s infinite linear alternate;
 
   &::before,
   &::after {
@@ -309,50 +309,43 @@ $color-bubble: #ffffff;
     position: absolute;
     top: 0;
     left: 0;
-    opacity: 0.7;
+    opacity: 0.4;
     mix-blend-mode: screen;
   }
 
   &::before {
     color: #ff00c8;
-    transform: translate(-2px, 0);
-    animation: glitch-left 2.5s infinite linear alternate;
+    transform: translate(-1px, 0);
+    animation: glitch-left-soft 4s infinite linear alternate;
   }
 
   &::after {
     color: #00ffff;
-    transform: translate(2px, 0);
-    animation: glitch-right 2.5s infinite linear alternate;
+    transform: translate(1px, 0);
+    animation: glitch-right-soft 4s infinite linear alternate;
   }
 }
 
-/* === 깜빡이는 노이즈 === */
-@keyframes text-glitch {
+/* === 애니메이션 세기 감소 === */
+@keyframes text-glitch-soft {
   0%, 100% { opacity: 1; filter: brightness(1); }
-  10% { opacity: 0.9; filter: brightness(1.2) contrast(1.1); }
-  20% { opacity: 0.8; transform: skewX(1deg); }
-  30% { opacity: 1; transform: skewX(-1deg); }
-  40% { opacity: 0.7; filter: hue-rotate(10deg); }
-  50% { opacity: 1; filter: hue-rotate(-10deg); }
-  60%, 100% { opacity: 1; transform: none; }
+  25% { opacity: 0.95; transform: skewX(0.3deg); }
+  50% { opacity: 0.9; filter: hue-rotate(5deg); }
+  75% { opacity: 1; transform: none; }
 }
 
-/* === 좌우 분리 흔들림 === */
-@keyframes glitch-left {
-  0% { transform: translate(-2px, 0); opacity: 0.4; }
-  25% { transform: translate(-4px, -1px); opacity: 0.6; }
-  50% { transform: translate(-1px, 1px); opacity: 0.5; }
-  75% { transform: translate(-3px, 0); opacity: 0.7; }
-  100% { transform: translate(0, 0); opacity: 0.4; }
+@keyframes glitch-left-soft {
+  0% { transform: translate(-1.5px, 0); opacity: 0.3; }
+  50% { transform: translate(-px, -1px); opacity: 0.5; }
+  100% { transform: translate(0, 0); opacity: 0.3; }
 }
 
-@keyframes glitch-right {
-  0% { transform: translate(2px, 0); opacity: 0.4; }
-  25% { transform: translate(4px, 1px); opacity: 0.6; }
-  50% { transform: translate(1px, -1px); opacity: 0.5; }
-  75% { transform: translate(3px, 0); opacity: 0.7; }
-  100% { transform: translate(0, 0); opacity: 0.4; }
+@keyframes glitch-right-soft {
+  0% { transform: translate(1.5px, 0); opacity: 0.3; }
+  50% { transform: translate(2px, 1px); opacity: 0.5; }
+  100% { transform: translate(0, 0); opacity: 0.3; }
 }
+
 
 /* === 말풍선 전체 클릭 가능 === */
 .link-bubble {

@@ -1,254 +1,289 @@
-@use "../style" as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Audiowide&family=Press+Start+2P&display=swap');
+@use '../style' as *;
 
-:root {
-  --bg-dark: #10021d;
-  --mint: #aaffee;
-  --pink: #ffb3ec;
-  --text-main: #f9faff;
-  --soft-white: #fff6fb;
+// --- 1. 창(Window) 등장 애니메이션 ---
+@keyframes widget-load-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-/* ===== 전체 화면 구성 ===== */
-.terminal-form-container {
+// --- 2. CRT 스캔라인 애니메이션 (배경 전체에 적용) ---
+@keyframes scan-line-vertical {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.arena-create-container {
   position: relative;
-  width: 80vw;
-  height: 90vh;
-  background: radial-gradient(circle at 50% 50%, #1a0a2f 0%, #0b0114 90%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  color: var(--text-main);
-  font-family: 'Audiowide', 'Press Start 2P', sans-serif;
-  z-index: 1;
-}
-
-/* ===== 은은한 네온 배경 효과 ===== */
-.terminal-form-container::before,
-.terminal-form-container::after {
-  content: "";
-  position: absolute;
-  width: 900px;
-  height: 900px;
-  border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.35;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.terminal-form-container::before {
-  top: -250px;
-  left: -250px;
-  background: radial-gradient(circle, rgba(255, 179, 236, 0.2), transparent 70%);
-}
-
-.terminal-form-container::after {
-  bottom: -250px;
-  right: -250px;
-  background: radial-gradient(circle, rgba(170, 255, 238, 0.2), transparent 70%);
-}
-
-/* ===== 메인 콘솔 박스 ===== */
-.terminal-module {
-  position: relative;
-  z-index: 2;
-  width: 90%;
-  max-width: 1200px;
-  height: 80vh;
-  background: rgba(18, 5, 31, 0.7);
-  border: 2px solid rgba(255, 179, 236, 0.4);
-  border-radius: 24px;
-  padding: 100px 80px 60px;
+  width: 90%; // 원본 90%
+  min-height: 87vh; // 원본 87vh
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
+  color: #eafaff;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: flex-start;
-  align-items: center;
-  box-shadow: 0 0 60px rgba(255, 179, 236, 0.25);
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-}
-
-/* ===== 상단 SYSTEM READY 헤더 ===== */
-.progress-bar-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 50px;
-  background: rgba(255, 255, 255, 0.02);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  border-bottom: 1px solid rgba(255, 179, 236, 0.2);
-  box-shadow: 0 0 15px rgba(255, 179, 236, 0.05);
-  z-index: 10;
-}
-
-.progress-label {
-  font-family: 'Press Start 2P';
-  font-size: 0.8rem;
-  color: var(--mint);
-  text-shadow: 0 0 6px var(--mint);
-  margin-bottom: 4px;
-}
-
-.progress-bar-track {
-  width: 60%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: var(--mint);
-  box-shadow: 0 0 10px var(--mint);
-  border-radius: 10px;
-  transition: width 0.6s ease;
-}
-
-.progress-percent {
-  position: absolute;
-  right: 10%;
-  top: 14px;
-  font-family: 'Audiowide';
-  font-size: 0.9rem;
-  color: var(--pink);
-  text-shadow: 0 0 6px var(--pink);
-}
-
-/* ===== 단계 인디케이터 ===== */
-.step-indicator {
-  font-family: 'Press Start 2P';
-  color: var(--pink);
-  text-shadow: 0 0 8px var(--pink);
-  font-size: 0.9rem;
-  text-align: center;
-  margin-top: 60px;
-  margin-bottom: 25px;
-}
-
-/* ===== 메인 타이틀 (CREATE ROOM / ARENA) ===== */
-.create-title {
+  padding: 2% 20px 40px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 3.2rem;
-  color: var(--mint);
-  text-shadow: 0 0 12px var(--mint), 0 0 20px var(--mint);
-  letter-spacing: 3px;
-  text-align: center;
-  margin-bottom: 35px;
-}
+  overflow-x: hidden;
 
-/* ===== 스텝 콘텐츠 (중앙 정렬) ===== */
-.step-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow-y: auto;
-  padding: 20px 0;
-}
-
-/* ===== 라벨 ===== */
-.crt-label-line {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-  font-size: 1rem;
-  letter-spacing: 1px;
-}
-
-.crt-label-text {
-  color: var(--soft-white);
-  font-family: 'Audiowide';
-}
-
-/* ✦ 반짝이는 별 효과 */
-.crt-label-text::before {
-  content: '✦ ';
-  color: var(--pink);
-  text-shadow: 0 0 6px var(--pink);
-  animation: sparkle 2.5s infinite ease-in-out;
-}
-
-@keyframes sparkle {
-  0%, 100% { opacity: 1; text-shadow: 0 0 6px var(--pink); }
-  50% { opacity: 0.7; text-shadow: 0 0 12px var(--mint); }
-}
-
-/* ===== 인풋 ===== */
-input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1.5px solid var(--mint);
-  color: var(--mint);
-  font-family: 'Press Start 2P';
-  padding: 14px;
-  width: 60%;
-  border-radius: 12px;
-  text-align: center;
-  margin-top: 12px;
-  box-shadow: 0 0 10px rgba(170, 255, 238, 0.25);
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 22px var(--mint);
+  @media (max-width: 768px) {
+    padding: 60px 20px;
+    min-height: 100vh; // 모바일에선 뷰포트 꽉 채우기
+    width: 100%; // 모바일에선 꽉 채우기
   }
-}
-
-/* ===== 버튼 ===== */
-.navigation-controls {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 25px;
-}
-
-.nav-button {
-  background: transparent;
-  color: var(--mint);
-  border: 1.5px solid var(--mint);
-  border-radius: 12px;
-  padding: 14px 36px;
-  font-size: 1rem;
-  letter-spacing: 1px;
-  text-shadow: 0 0 6px var(--mint);
-  font-family: 'Audiowide';
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background-color: rgba(170, 255, 238, 0.1);
-    box-shadow: 0 0 16px var(--mint), 0 0 24px var(--pink);
-    color: var(--pink);
+  @media (max-width: 576px) {
+    padding: 40px 15px;
   }
-}
 
-/* ===== 에러 메시지 ===== */
-.form-error {
-  color: var(--pink);
-  text-shadow: 0 0 8px var(--pink);
-  font-size: 0.9rem;
-  margin-top: 10px;
-  font-family: 'Press Start 2P';
-  text-align: center;
-}
+  // --- ⬇️ CRT 오버레이 (가로줄 + 세로 스캔라인) ⬇️ ---
+  .crt-overlay {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    opacity: 0.3;
 
-/* ===== 스크롤바 ===== */
-.machine-grid::-webkit-scrollbar {
-  width: 6px;
-}
-.machine-grid::-webkit-scrollbar-thumb {
-  background: var(--pink);
-  border-radius: 6px;
-}
-.machine-grid::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(
+        0deg,
+        transparent 0%,
+        rgba(0, 246, 255, 0.1) 50%,
+        transparent 100%
+      );
+      animation: scan-line-vertical 10s linear infinite;
+    }
+  }
+
+  // 글리치 타이틀
+  .glitch-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #00f6ff;
+    position: relative;
+    margin-bottom: 40px;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    text-align: center;
+
+    &::before, &::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      width: 100%;
+      overflow: hidden;
+      color: #00ff6a;
+      clip: rect(0, 0, 0, 0);
+      animation: glitch 2s infinite;
+    }
+    &::before { left: 2px; text-shadow: -2px 0 #00ff6a; }
+    &::after { left: -2px; text-shadow: 2px 0 #00fff0; }
+
+    @keyframes glitch {
+      /* ... */
+    }
+    @media (max-width: 576px) {
+      font-size: 2rem;
+      margin-bottom: 30px;
+    }
+  }
+
+  // --- ⬇️ 그리드 레이아웃 ⬇️ ---
+  .arena-grid-layout {
+    display: grid;
+    width: 95%; // 원본 95%
+    height: 80%; // 원본 80%
+    max-width: 1200px;
+    gap: 20px;
+
+    grid-template-columns: 2fr 3fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      'main mode'
+      'log  mode';
+
+    @media (max-width: 768px) {
+      display: flex; // 모바일에선 그리드 대신 flex-column 사용
+      flex-direction: column;
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  // --- ⬇️ 공통 창 스타일 ⬇️ ---
+  .widget-window {
+    background: rgba(10, 10, 20, 0.6);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.05),
+                0 0 20px rgba(0, 255, 255, 0.1) inset;
+    overflow: hidden;
+    animation: widget-load-in 0.5s ease-out forwards;
+    
+    // ⬇️ 'mode' 창이 세로로 길어지도록 설정 ⬇️
+    display: flex;
+    flex-direction: column;
+
+    &.main-controls { grid-area: main; }
+    &.mode-selector  { grid-area: mode; }
+    &.system-log     { grid-area: log; }
+
+    .widget-titlebar {
+      background: rgba(0, 246, 255, 0.05);
+      padding: 8px 12px;
+      font-size: 1.5rem;
+      color: #00f6ff;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+      text-shadow: 0 0 5px #00f6ff;
+      flex-shrink: 0; // 타이틀바는 줄어들지 않음
+    }
+
+    .widget-content {
+      padding: 20px;
+      // ⬇️ 내용이 많아지면 스크롤 ⬇️
+      overflow-y: auto; 
+      flex-grow: 1;
+
+      // ⬇️ 스크롤바 스타일링 (선택적) ⬇️
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      &::-webkit-scrollbar-track {
+        background: #00000033;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: #00f6ff55;
+        border-radius: 3px;
+      }
+    }
+  }
+
+  // 폼 그룹 스타일
+  .form-group {
+    /* ... (변경 없음) ... */
+    margin-bottom: 20px;
+    label { display: block; color: #00f6ff; font-size: 0.9rem; margin-bottom: 6px; letter-spacing: 1px; }
+    input { width: 100%; padding: 10px; border: 1px solid #00f6ff55; border-radius: 4px; background: #050510; color: #eafaff; transition: 0.2s; font-size: 1rem;
+      &:focus { outline: none; box-shadow: 0 0 10px #00f6ff; }
+    }
+  }
+
+  .form-inline {
+    /* ... (변경 없음) ... */
+    display: flex; gap: 20px;
+    .form-group.small { flex: 1; margin-bottom: 0; }
+    @media (max-width: 576px) { flex-direction: column; gap: 20px; .form-group.small { margin-bottom: 0; } }
+  }
+
+  // --- ⬇️ (수정됨) 'mode-grid' -> 'mode-table-layout' ⬇️ ---
+  .mode-table-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; // 행(row) 사이의 간격
+  }
+
+  // --- ⬇️ (수정됨) 'mode-card' -> 'mode-row' ⬇️ ---
+  .mode-row {
+    display: flex;
+    align-items: center; // 아이콘과 텍스트를 세로 중앙 정렬
+    background: rgba(0, 10, 15, 0.7);
+    border: 2px solid #222;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    width: 100%; // 꽉 채우기
+
+    .mode-icon {
+      font-size: 24px;
+      margin-right: 15px; // 아이콘과 텍스트 사이 간격
+    }
+    
+    .mode-info {
+      display: flex;
+      flex-direction: column; // 제목과 설명을 세로로 쌓음
+      flex: 1; // 남은 공간을 모두 차지
+    }
+
+    .mode-title {
+      color: #00f6ff;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+    }
+
+    .mode-desc {
+      color: #ccc;
+      font-size: 0.8rem;
+    }
+    
+    &:hover {
+      border-color: #00f6ff;
+      transform: translateY(-2px); // 살짝 뜨는 효과
+      box-shadow: 0 4px 10px rgba(0, 246, 255, 0.1);
+    }
+    
+    &.selected {
+      border-color: #00ff6a; // 그린
+      background: rgba(0, 255, 106, 0.1);
+      box-shadow: 0 0 12px #00ff6a55;
+      transform: translateY(-2px);
+    }
+  }
+
+  // --- ⬇️ 시스템 로그 창 스타일 ⬇️ ---
+  .system-log {
+    .widget-content {
+      display: flex;
+      flex-direction: column;
+      height: 90%; // 원본 90%
+    }
+    
+    .log-area {
+      flex-grow: 1;
+      background: #00000033;
+      border: 1px solid #00f6ff33;
+      border-radius: 4px;
+      padding: 10px;
+      min-height: 80px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+      overflow-y: auto; // 로그가 길어지면 스크롤
+      
+      .log-entry {
+        margin: 0 0 5px;
+        &.info { color: #999; }
+        &.processing { color: #00f6ff; }
+        &.error { color: #ff0066; }
+      }
+    }
+  }
+
+  // 버튼
+  .neon-button {
+    /* ... (변경 없음) ... */
+    display: block; width: 100%; padding: 12px; background: transparent; border: 2px solid #00f6ff; color: #00f6ff; font-size: 1rem; cursor: pointer; border-radius: 6px; transition: all 0.25s ease; text-transform: uppercase; letter-spacing: 2px;
+    &:hover { background: #00f6ff22; box-shadow: 0 0 15px #00f6ff; }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
 }

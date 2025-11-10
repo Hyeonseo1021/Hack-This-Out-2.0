@@ -1,558 +1,17 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import { EC2Client, RunInstancesCommand, TerminateInstancesCommand, DescribeInstancesCommand, _InstanceType as EC2InstanceType } from "@aws-sdk/client-ec2"; 
 import Arena from '../models/Arena';
-import User from '../models/User';
-import Instance from '../models/Instance';
-import config from '../config/config';
-import Machine from '../models/Machine';
-import { Server } from 'http';
-
-// ✅ 수정: unused import 제거
-// import { start } from 'repl';
-
-const dcTimers = new Map<string, NodeJS.Timeout>();
-const gameTimers = new Map<string, NodeJS.Timeout>();
-
-const ec2Client = new EC2Client({
-  region: config.aws.region,
-  credentials: {
-    accessKeyId: config.aws.accessKeyId!,
-    secretAccessKey: config.aws.secretAccessKey!,
-  },
-});
-
-export const scheduleEnd = (arenaId: string, endAt: Date, io: any) => {
-  const old = gameTimers.get(arenaId);
-  if (old) clearTimeout(old);
-
-  const ms = Math.max(0, endAt.getTime() - Date.now());
-  const t = setTimeout(async () => {
-    await endArena(arenaId, io);
-    gameTimers.delete(arenaId);
-  }, ms);
-
-  gameTimers.set(arenaId, t);
-};
-
-// ✅ 수정: timer cleanup 함수 추가
-export const cleanupTimers = (arenaId: string) => {
-  const gameTimer = gameTimers.get(arenaId);
-  if (gameTimer) {
-    clearTimeout(gameTimer);
-    gameTimers.delete(arenaId);
-  }
-  
-  // arenaId로 시작하는 모든 disconnect timer 정리
-  for (const [key, timer] of dcTimers.entries()) {
-    if (key.startsWith(`${arenaId}:`)) {
-      clearTimeout(timer);
-      dcTimers.delete(key);
-    }
-  }
-};
-
-export const registerArenaSocketHandlers = (socket, io) => {
-  socket.on('arena:join', async ({ arenaId, userId }) => {
-    try {
-      const uid = String(userId);
-      (socket as any).userId = uid;
-      (socket as any).arenaId = String(arenaId);
-
-      // disconnect grace 타이머 해제
-      {
-        const key = `${arenaId}:${userId}`;
-        const t = dcTimers.get(key);
-        if (t) { clearTimeout(t); dcTimers.delete(key); }
-      }
-
-      const room = await Arena.findById(arenaId)
-        .select('status maxParticipants participants.user participants.hasLeft host')
-        .lean();
-      if (!room) return socket.emit('arena:join-failed', { reason: '방이 없습니다.' });
-
-      const isListed = (room.participants || []).some(
-        (p: any) => String((p.user && p.user._id) ?? p.user) === uid
-      );
-
-      if (room.status === 'started') {
-        // ▶ 시작 후: 시작 당시 명단에 있는 사람만 재접속 허용
-        if (!isListed) {
-          return socket.emit('arena:join-failed', { reason: '게임이 이미 시작되었습니다.' });
-        }
-        // 재접속: 소켓만 방에 다시 참여
-        socket.join(arenaId);
-        // hasLeft=false로 복구
-        await Arena.updateOne(
-          { _id: arenaId, 'participants.user': userId },
-          { $set: { 'participants.$.hasLeft': false } }
-        );
-      } else {
-        // ▶ 대기중
-        if (isListed) {
-          // 이미 명단에 있으면 소켓만 조인
-          socket.join(arenaId);
-        } else {
-          // ✅ 수정: 원자적 정원 체크 - Race Condition 방지
-          const res = await Arena.updateOne(
-            { 
-              _id: arenaId, 
-              'participants.user': { $ne: userId }, 
-              status: 'waiting',
-              $expr: { $lt: [{ $size: "$participants" }, "$maxParticipants"] }
-            },
-            { $push: { participants: { user: userId, isReady: false, hasLeft: false } } }
-          );
-          if (res.modifiedCount === 0) {
-            return socket.emit('arena:join-failed', { reason: '입장할 수 없습니다. (정원 초과 또는 이미 입장함)' });
-          }
-          socket.join(arenaId);
-        }
-      }
-
-      // 방송
-      const populated = await Arena.findById(arenaId)
-        .populate('participants.user', '_id username')
-        .lean();
-
-      io.to(arenaId).emit('arena:update', {
-        arenaId: String(populated?._id || arenaId),
-        status: populated?.status || 'waiting',
-        host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-        startTime: populated?.startTime || null,
-        endTime: populated?.endTime || null,
-        problemInstanceId: populated?.problemInstanceId || null,
-        problemInstanceIp: populated?.problemInstanceIp || null,
-        participants: (populated?.participants || []).map((pp: any) => ({
-          user: pp.user,
-          isReady: !!pp.isReady,
-          hasLeft: !!pp.hasLeft,
-          vpnIp: pp.vpnIp ?? null,
-          status: pp.status || 'waiting',
-        })),
-      });
-
-      const summary = await Arena.findById(arenaId)
-        .select('name category status maxParticipants participants.user')
-        .lean();
-
-      if (summary) {
-        io.emit('arena:room-updated', {
-          _id: String(summary._id),
-          name: summary.name,
-          category: summary.category,
-          status: summary.status,
-          maxParticipants: summary.maxParticipants,
-          participants: (summary.participants || []).map((p: any) => ({
-            user: String((p.user && (p.user as any)._id) ?? p.user),
-          })),
-        });
-      }
-    } catch (e) {
-      console.error('[arena:join] error:', e);
-      socket.emit('arena:join-failed', { reason: '입장 중 오류가 발생했습니다.' });
-    }
-  });
-
-  // ready 토글
-  socket.on('arena:ready', async ({
-    arenaId,
-    userId,
-    ready,
-  }: { arenaId: string; userId: string; ready: boolean }) => {
-    try {
-      const arena = await Arena.findById(arenaId);
-      if (!arena) return;
-
-      // 대기중에만 준비 변경
-      if (arena.status !== 'waiting') {
-        return socket.emit('arena:ready-failed', { reason: '대기 중에만 준비를 변경할 수 있습니다.' });
-      }
-
-      const uid = String(userId);
-      const p = arena.participants.find(x => String((x.user as any)?._id ?? x.user) === uid && !x.hasLeft);
-      if (!p) {
-        return socket.emit('arena:ready-failed', { reason: '참가자가 아닙니다.' });
-      }
-
-      p.isReady = !!ready;
-
-      await arena.save();
-
-      // 저장 후 다시 읽어 populate 해서 방송(항상 username 포함)
-      const populated = await Arena.findById(arenaId)
-        .populate('participants.user', '_id username')
-        .lean();
-
-      io.to(arenaId).emit('arena:update', {
-        arenaId: String(populated?._id || arenaId),
-        status: populated?.status || 'waiting',
-        host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-        startTime: populated?.startTime || null,
-        endTime: populated?.endTime || null,
-        problemInstanceId: populated?.problemInstanceId || null,
-        problemInstanceIp: populated?.problemInstanceIp || null,
-        participants: (populated?.participants || []).map((pp: any) => ({
-          user: pp.user,
-          isReady: !!pp.isReady,
-          hasLeft: !!pp.hasLeft,
-          vpnIp: pp.vpnIp ?? null,
-          status: pp.status || 'waiting',
-        })),
-      });
-    } catch (e) {
-      console.error('[arena:ready] error:', e);
-      socket.emit('arena:ready-failed', { reason: '준비 상태 변경 중 오류가 발생했습니다.' });
-    }
-  });
-
-  socket.on('arena:start', async ({ arenaId, userId }) => {
-    const arena = await Arena.findById(arenaId).populate('machine');
-    if (!arena) return;
-
-    const hostStr = String(arena.host);
-    if (hostStr !== String(userId)) {
-      return socket.emit('arena:start-failed', { reason: '호스트만 시작할 수 있습니다.' });
-    }
-    if (arena.status !== 'waiting') {
-      return socket.emit('arena:start-failed', { reason: '이미 시작되었거나 종료된 방입니다.' });
-    }
-
-    if ((arena.participants || []).length < 2) {
-      return socket.emit('arena:start-failed', { reason: '최소 2명이 필요합니다.' });
-    }
-
-    const others = (arena.participants || []).filter(p => {
-      const uid = String((p.user as any)?._id ?? p.user);
-      return uid !== hostStr;
-    });
-    const everyoneElseReady = others.length > 0 && others.every(p => !!p.isReady);
-    if (!everyoneElseReady) {
-      return socket.emit('arena:start-failed', { reason: '호스트 제외 전원이 준비되지 않았습니다.' });
-    }
-
-    arena.status = 'started';
-    arena.startTime = new Date();
-    arena.endTime = new Date(arena.startTime.getTime() + arena.duration * 60000);
-
-    try {
-      const machine: any = (arena as any).machine;
-      if (!machine?.amiId) {
-        return socket.emit('arena:start-failed', { reason: 'Missing machine AMI info.'});
-      }
-
-      // 문제 머신이 없으면 생성 (한 번만)
-      if (!arena.problemInstanceId) {
-        const runParams: any = {
-          ImageId: machine.amiId,
-          InstanceType: (machine.InstanceType as any) || 't2.micro',
-          MinCount: 1,
-          MaxCount: 1,
-        };
-
-        if (config.aws.privateSubnetId) {
-          runParams.NetworkInterfaces = [{
-            DeviceIndex: 0,
-            SubnetId: config.aws.privateSubnetId,
-            Groups: [config.aws.securityGroupId],
-            AssociatePublicIpAddress: false,
-          }];
-        } else {
-          runParams.SecurityGroupIds = [config.aws.securityGroupId!];
-        }
-
-        const out = await ec2Client.send(new RunInstancesCommand(runParams));
-        const inst = out.Instances?.[0];
-        arena.problemInstanceId = inst?.InstanceId || null;
-
-        // ✅ 수정: IP 대기 로직 개선
-        let problemIp: string | null = inst?.PrivateIpAddress ?? null;
-        
-        // IP가 없을 때만 재시도
-        if (!problemIp && arena.problemInstanceId) {
-          console.log('[arena:start] Waiting for problem instance IP...');
-          
-          for (let i = 0; i < 5 && !problemIp; i++) {
-            await new Promise(r => setTimeout(r, 2000));
-            const desc = await ec2Client.send(new DescribeInstancesCommand({
-              InstanceIds: [String(arena.problemInstanceId)],
-            }));
-            problemIp = desc.Reservations?.[0]?.Instances?.[0]?.PrivateIpAddress || null;
-            
-            if (problemIp) {
-              console.log('[arena:start] Got problem instance IP:', problemIp);
-              break;
-            }
-          }
-          
-          // ✅ 수정: IP를 받지 못한 경우 경고
-          if (!problemIp) {
-            console.error('[arena:start] Failed to get problem instance IP after retries');
-            // 계속 진행하되 나중에 문제가 될 수 있음을 로그에 남김
-          }
-        }
-        
-        arena.problemInstanceIp = problemIp;
-      }
-
-      // 모든 참가자를 VPN 연결 대기 상태로 변경
-      for (const p of arena.participants.filter(x => !x.hasLeft)) {
-        (p as any).status = 'vpn_connecting';
-        p.vpnIp = null; // VPN IP 초기화
-      }
-
-      await arena.save();
-      
-      // ✅ 수정: endTime이 있을 때만 스케줄링
-      if (arena.endTime) {
-        scheduleEnd(String(arena._id), arena.endTime, io);
-      } else {
-        console.error('[arena:start] endTime is null, cannot schedule end');
-      }
-
-    } catch (e) {
-      console.error('[arena start - problem machine creation]', e);
-      return socket.emit('arena:start-failed', { reason: '문제 인스턴스 생성 실패' });
-    }
-
-    // 업데이트 브로드캐스트
-    const populated = await Arena.findById(arenaId)
-      .populate('participants.user', '_id username')
-      .lean();
-
-    io.to(arenaId).emit('arena:update', {
-      arenaId: String(populated?._id || arenaId),
-      status: 'started',
-      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-      startTime: populated?.startTime || null,
-      endTime: populated?.endTime || null,
-      problemInstanceId: populated?.problemInstanceId || null,
-      problemInstanceIp: populated?.problemInstanceIp || null,
-      participants: (populated?.participants || []).map((pp: any) => ({
-        user: pp.user,
-        isReady: !!pp.isReady,
-        hasLeft: !!pp.hasLeft,
-        vpnIp: pp.vpnIp ?? null,
-        status: pp.status || 'vpn_connecting',
-      })),
-    });
-
-    io.to(arenaId).emit('arena:start', {
-      arenaId,
-      startTime: arena.startTime,
-      endTime: arena.endTime,
-      needVpnConnection: true,
-    });
-  });
-
-  socket.on('arena:leave', async ({ arenaId, userId }) => {
-    try {
-      const arena = await Arena.findById(arenaId);
-      if (!arena) return;
-
-      const uid = String(userId);
-      const wasHost = String(arena.host) === uid;
-
-      if (arena.status === 'waiting') {
-        // 대기중: 완전 제거 + 호스트 승계
-        await Arena.updateOne(
-          { _id: arenaId },
-          { $pull: { participants: { user: userId } } }
-        );
-
-        if (wasHost) {
-          const after = await Arena.findById(arenaId);
-          if (after) {
-            const next = after.participants[0]?.user;
-            if (next) { after.host = (next as any)?._id ?? next; await after.save(); }
-          }
-        }
-      } else {
-        // 시작/종료: 명단 유지, hasLeft만 표시
-        await Arena.updateOne(
-          { _id: arenaId, 'participants.user': userId },
-          { $set: { 'participants.$.hasLeft': true } }
-        );
-      }
-
-      socket.leave(arenaId);
-
-      // 방 내부 업데이트(이름 보이도록 populate)
-      const populated = await Arena.findById(arenaId)
-        .populate('participants.user', '_id username')
-        .lean();
-
-      io.to(arenaId).emit('arena:update', {
-        arenaId: String(populated?._id || arenaId),
-        status: populated?.status || 'waiting',
-        host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-        startTime: populated?.startTime || null,
-        endTime: populated?.endTime || null,
-        problemInstanceId: populated?.problemInstanceId || null,
-        problemInstanceIp: populated?.problemInstanceIp || null,
-        participants: (populated?.participants || []).map((pp: any) => ({
-          user: pp.user,
-          isReady: !!pp.isReady,
-          hasLeft: !!pp.hasLeft,
-          vpnIp: pp.vpnIp ?? null,
-          status: pp.status || 'waiting',
-        })),
-      });
-
-      // 목록 페이지 갱신(전역)
-      const room = await Arena.findById(arenaId)
-        .select('name category status maxParticipants participants.user')
-        .lean();
-
-      if (room) {
-        io.emit('arena:room-updated', {
-          _id: String(room._id),
-          name: room.name,
-          category: room.category,
-          status: room.status,
-          maxParticipants: room.maxParticipants,
-          participants: (room.participants || []).map((p: any) => ({
-            user: String((p.user && (p.user as any)._id) ?? p.user),
-          })),
-        });
-      }
-
-      // ✅ 대기중일 때만 방 비우기 체크
-      if (arena.status === 'waiting') {
-        await deleteArenaIfEmpty(arenaId, io);
-      }
-    } catch (e) {
-      console.error('[arena:leave] error:', e);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    const arenaId = (socket as any).arenaId;
-    const userId  = (socket as any).userId;
-    if (!arenaId || !userId) return;
-
-    const key = `${arenaId}:${userId}`;
-    if (dcTimers.has(key)) return; // 중복 방지
-
-    const timer = setTimeout(async () => {
-      dcTimers.delete(key);
-      try {
-        const arena = await Arena.findById(arenaId);
-        if (!arena) return;
-
-        // ✅ 수정: arena:leave와 로직 일치시킴
-        if (arena.status === 'waiting') {
-          // 대기중: 완전 제거 + 호스트 승계
-          await Arena.updateOne(
-            { _id: arenaId },
-            { $pull: { participants: { user: userId } } }
-          );
-          
-          if (String(arena.host) === String(userId)) {
-            const after = await Arena.findById(arenaId);
-            if (after) {
-              const next = after.participants[0]?.user;
-              if (next) { 
-                after.host = (next as any)?._id ?? next; 
-                await after.save(); 
-              }
-            }
-          }
-        } else {
-          // 시작/종료: 명단 유지, hasLeft만 표시
-          await Arena.updateOne(
-            { _id: arenaId, 'participants.user': userId },
-            { $set: { 'participants.$.hasLeft': true } }
-          );
-        }
-
-        const populated = await Arena.findById(arenaId)
-          .populate('participants.user', '_id username').lean();
-
-        io.to(arenaId).emit('arena:update', {
-          arenaId: String(populated?._id || arenaId),
-          status: populated?.status || 'waiting',
-          host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-          startTime: populated?.startTime || null,
-          endTime: populated?.endTime || null,
-          problemInstanceId: populated?.problemInstanceId || null,
-          problemInstanceIp: populated?.problemInstanceIp || null,
-          participants: (populated?.participants || []).map((pp: any) => ({
-            user: pp.user,
-            isReady: !!pp.isReady,
-            hasLeft: !!pp.hasLeft,
-            vpnIp: pp.vpnIp ?? null,
-            status: pp.status || 'waiting',
-          })),
-        });
-
-        const room = await Arena.findById(arenaId)
-          .select('name category status maxParticipants participants.user').lean();
-
-        if (room) {
-          io.emit('arena:room-updated', {
-            _id: String(room._id),
-            name: room.name,
-            category: room.category,
-            status: room.status,
-            maxParticipants: room.maxParticipants,
-            participants: (room.participants || []).map((p: any) => ({
-              user: String((p.user && (p.user as any)._id) ?? p.user),
-            })),
-          });
-        }
-
-        if (arena.status === 'waiting') {
-          await deleteArenaIfEmpty(arenaId, io);
-        }
-      } catch (e) {
-        console.error('[disconnect grace] error:', e);
-      }
-    }, 3000);
-
-    dcTimers.set(key, timer);
-  });
-
-  socket.on('arena:sync', async ({ arenaId }) => {
-    try {
-      const populated = await Arena.findById(arenaId)
-        .populate('participants.user', '_id username')
-        .lean();
-      if (!populated) return;
-
-      // 요청한 소켓에게만 최신 상태 푸시
-      socket.emit('arena:update', {
-        arenaId: String(populated._id),
-        status: populated.status || 'waiting',
-        host: String((populated.host as any)?._id ?? populated.host ?? ''),
-        startTime: populated.startTime || null,
-        endTime: populated.endTime || null,
-        problemInstanceId: populated.problemInstanceId || null,
-        problemInstanceIp: populated.problemInstanceIp || null,
-        participants: (populated.participants || []).map((pp: any) => ({
-          user: pp.user,
-          isReady: !!pp.isReady,
-          hasLeft: !!pp.hasLeft,
-          vpnIp: pp.vpnIp ?? null,
-          status: pp.status || 'waiting',
-        })),
-      });
-    } catch (e) {
-      console.error('[arena:sync] error:', e);
-    }
-  });
-};
+import ArenaProcess from '../models/ArenaProgress';
 
 export const createArena = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = res.locals.jwtData?.id;
     if (!userId) {
-      res.status(401).json({ msg: 'Unauthorized' });
+      res.status(401).json({ message: 'Unauthorized' });
       return;
     }
 
-    const { name, machineId, maxParticipants, duration } = req.body;
-    if (!name || !machineId || !maxParticipants || !duration) {
+    const { name, mode, maxParticipants, duration } = req.body;
+    if (!name || !mode || !maxParticipants || !duration) {
       res.status(400).json({ message: 'Missing required fields' });
       return;
     }
@@ -562,25 +21,59 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // 선택된 머신이 존재하고 활성화되어 있는지 확인
-    const machine = await Machine.findOne({ _id: machineId, isActive: true });
-    if (!machine) {
-      res.status(404).json({ message: 'Selected machine not found or inactive.' });
+    const existingArena = await Arena.findOne({
+      'participants.user': userId,
+      'participants.hasLeft': { $ne: true },
+      status: { $in: ['waiting', 'started'] }
+    });
+
+    if (existingArena) {
+      console.warn(`[createArena] User ${userId} tried to create arena while in ${existingArena._id}`);
+      res.status(400).json({ 
+        message: '이미 다른 방에 참여 중입니다.',
+        existingArenaId: existingArena._id 
+      });
       return;
     }
 
     const newArena = await Arena.create({
       name, 
+      mode, 
       host: userId,
-      category: machine.category,
-      maxParticipants,
-      duration,
-      machine: machine._id,
+      maxParticipants, 
+      duration,      
       participants: [{ user: userId, isReady: false, hasLeft: false }],
       status: 'waiting'
     });
 
-    req.app.get('io')?.emit('arena:new-room', newArena);
+    console.log('=== CREATE ARENA ===');
+    console.log('Arena ID:', newArena._id);
+    console.log('Name:', newArena.name);
+    console.log('Participants:', newArena.participants);
+    console.log('===================');
+
+    // 저장 직후 다시 조회하여 확인
+    const savedArena = await Arena.findById(newArena._id).lean();
+    console.log('Verified participants in DB:', savedArena?.participants);
+
+    const io = req.app.get('io');
+    
+    if (io) {
+      const payload = {
+        _id: String(newArena._id),
+        name: newArena.name,
+        mode: newArena.mode,
+        status: newArena.status,
+        maxParticipants: newArena.maxParticipants,
+        activeParticipantsCount: 1,
+      };
+      
+      console.log('Emitting to lobby:', payload);
+      io.emit('arena:room-updated', payload);
+    } else {
+      console.error('❌ Socket.IO instance not found');
+    }
+    
     res.status(201).json(newArena);
 
   } catch (err) {
@@ -589,16 +82,60 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getArenaList = async (req: Request, res: Response): Promise<void> => {
+// ✅ 수정된 getArenas - aggregate 대신 find 사용
+export const getArenas = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('\n=== GET ARENAS ===');
+    
+    // 1. 모든 waiting/started 방을 가져옴
     const arenas = await Arena.find({
       status: { $in: ['waiting', 'started'] }
     })
+      .select('name mode maxParticipants status participants host createdAt')
       .sort({ createdAt: -1 })
-      .limit(10);
-    res.json(arenas);
+      .lean();
+
+    console.log('Found arenas in DB:', arenas.length);
+    
+    if (arenas.length > 0) {
+      console.log('Sample arena:', {
+        _id: arenas[0]._id,
+        name: arenas[0].name,
+        participantsCount: arenas[0].participants?.length || 0,
+        participants: arenas[0].participants
+      });
+    }
+
+    // 2. JavaScript에서 activeParticipantsCount 계산
+    const result = arenas
+      .map(arena => {
+        const activeCount = (arena.participants || []).filter(
+          p => p.hasLeft !== true
+        ).length;
+        
+        return {
+          _id: arena._id,
+          name: arena.name,
+          mode: arena.mode,
+          maxParticipants: arena.maxParticipants,
+          status: arena.status,
+          activeParticipantsCount: activeCount,
+          host: arena.host,
+          createdAt: arena.createdAt
+        };
+      })
+      .filter(arena => arena.activeParticipantsCount > 0);
+
+    console.log('After filtering (activeCount > 0):', result.length);
+    console.log('==================\n');
+
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+
+    res.status(200).json(result);
+    
   } catch (err) {
-    console.error('Failed to fetch arenas:', err);
+    console.error('Get arenas error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -613,7 +150,7 @@ export const getArenaById = async (req: Request, res: Response): Promise<void> =
       res.status(404).json({ message: 'Arena not found' });
       return;
     }
- 
+  
     res.json(arena);
   } catch (err) {
     console.error('getArenaById error:', err);
@@ -621,418 +158,261 @@ export const getArenaById = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-// ✅ 수정: 로직 단순화 및 명확화
-export const deleteArenaIfEmpty = async (arenaId: string, io: any) => {
+export const getArenaHistory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const arena = await Arena.findById(arenaId);
-    
-    if (!arena) return;
-    
-    // 대기중 방만 처리
-    if (arena.status !== 'waiting') return;
-    
-    // 참가자가 없으면 삭제
-    if (arena.participants.length === 0) {
-      await Arena.deleteOne({ _id: arenaId });
-      io.emit('arena:deleted', { arenaId });
-      console.log(`[deleteArenaIfEmpty] Arena ${arenaId} deleted (empty)`);
-    }
-  } catch (err) {
-    console.error('deleteArenaIfEmpty error:', err);
-  }
-};
+    const userId = res.locals.jwtData.id;
 
-export const endArena = async (arenaId: string, io: any) => {
-  try {
-    const arena = await Arena.findById(arenaId);
-    if (!arena) return console.error("Arena not found.");
+    console.log('\n=== GET ARENA HISTORY ===');
+    console.log('User ID:', userId);
 
-    // 1️⃣ 상태 변경
-    arena.status = "ended";
-    await arena.save();
+    // 1. 유저가 참가한 ArenaProgress 기록 조회
+    const progressDocs = await ArenaProcess.find({ user: userId })
+      .populate('arena') // Arena 정보 포함
+      .sort({ updatedAt: -1 }) // 최근 순
+      .limit(20)
+      .lean();
 
-    // 2️⃣ EC2 인스턴스 종료
-    const instanceIds = arena.participants
-      .map((p: any) => p.instanceId)
-      .filter((id: string) => !!id);
+    console.log('Progress docs found:', progressDocs.length);
 
-    if (instanceIds.length > 0) {
-      await ec2Client.send(
-        new TerminateInstancesCommand({ InstanceIds: instanceIds })
-      );
-      console.log(`✅ Terminated ${instanceIds.length} instances for arena ${arenaId}`);
-    }
-
-    // 3️⃣ 클라이언트에 종료 이벤트 전송
-    io.to(arenaId).emit("arena-ended", { message: "Arena ended" });
-
-    // 4️⃣ 게임 타이머 정리
-    gameTimers.delete(arenaId);
-  } catch (err) {
-    console.error("Error ending arena:", err);
-  }
-};
-
-export const submitFlagArena = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { arenaId } = req.params;
-    const { flag, machineId } = req.body;
-    const userId = res.locals.jwtData?.id;
-
-    if (!arenaId || !userId || !machineId || !flag) {
-      res.status(400).json({ msg: '필수 정보 누락됨.' });
-      return;
-    }
-
-    const arena = await Arena.findById(arenaId);
-    if (!arena) {
-      res.status(404).json({ msg: 'Arena not found.' });
-      return;
-    }
-
-    const machine = await Machine.findById(machineId);
-    if (!machine) {
-      res.status(404).json({ msg: 'Machine not found.' });
-      return;
-    }
-
-    // ✅ 수정: 중복 제출 체크 강화 (정답/오답 모두)
-    const existingSubmission = arena.submissions.find(
-      (sub) => sub.user.toString() === userId
-    );
-    
-    if (existingSubmission) {
-      if (existingSubmission.flagCorrect) {
-        res.status(400).json({ msg: '이미 정답을 제출했습니다.' });
-        return;
-      }
-      
-      // ✅ 추가: 오답 제출 시간 제한 (30초 이내 재시도 방지)
-      const timeSinceLastSubmit = Date.now() - new Date(existingSubmission.submittedAt).getTime();
-      if (timeSinceLastSubmit < 30000) {
-        res.status(429).json({ 
-          msg: '너무 빠른 재시도입니다. 30초 후에 다시 시도해주세요.',
-          retryAfter: Math.ceil((30000 - timeSinceLastSubmit) / 1000)
-        });
-        return;
-      }
-    }
-
-    const isMatch = await bcrypt.compare(flag, machine.flag);
-    const now = new Date();
-
-    if (!isMatch) {
-      // ❌ 오답 제출 기록
-      arena.submissions.push({
-        user: userId,
-        submittedAt: now,
-        flagCorrect: false,
-      });
-
-      // 참가자 상태 갱신
-      const participant = arena.participants.find(p => p.user.toString() === userId);
-      if (participant) participant.status = 'flag_submitted';
-
-      await arena.save();
-      res.status(400).json({ msg: 'Incorrect flag.' });
-      return;
-    }
-
-    // ✅ 수정: 원자적 첫 풀이자 체크 - Race Condition 방지
-    const graceMs = arena.settings?.graceMs ?? 90_000;
-    
-    const result = await Arena.findOneAndUpdate(
-      { 
-        _id: arenaId, 
-        firstSolvedAt: { $exists: false },
-        status: 'started'
-      },
-      { 
-        $set: { 
-          winner: userId, 
-          firstSolvedAt: now,
-          endTime: new Date(Date.now() + graceMs)
+    // 2. 각 progress에 대해 상세 정보 구성
+    const history = await Promise.all(
+      progressDocs.map(async (progress: any) => {
+        const arenaData = progress.arena;
+        
+        // Arena가 populate되지 않았거나 삭제된 경우 스킵
+        if (!arenaData || !arenaData._id) {
+          return null;
         }
-      },
-      { new: true }
+
+        // 3. 해당 Arena의 모든 참가자 progress 조회 (순위 계산용)
+        const allProgress = await ArenaProcess.find({ arena: arenaData._id })
+          .populate('user', 'username')
+          .sort({ score: -1, updatedAt: 1 })
+          .lean();
+
+        // 4. 내 순위 찾기
+        const myRank = allProgress.findIndex((p: any) => 
+          String(p.user?._id || p.user) === String(userId)
+        ) + 1;
+
+        // 5. 승자 정보
+        let winner = null;
+        if (arenaData.winner) {
+          const winnerProgress = allProgress.find((p: any) => 
+            String(p.user?._id || p.user) === String(arenaData.winner)
+          );
+          winner = {
+            _id: String(arenaData.winner),
+            username: (winnerProgress?.user as any)?.username || 'Unknown'
+          };
+        }
+
+        return {
+          _id: String(arenaData._id),
+          name: arenaData.name,
+          mode: arenaData.mode,
+          endTime: arenaData.endTime,
+          winner,
+          currentUserId: userId, // 프론트엔드에서 내 기록 찾기 위해
+          participants: allProgress.map((p: any, index: number) => ({
+            user: p.user?._id || p.user,
+            username: (p.user as any)?.username || 'Unknown',
+            score: p.score || 0,
+            rank: index + 1,
+            completed: p.completed || false
+          }))
+        };
+      })
     );
-    
-    const isFirstSolve = !!result;
-    
-    // 첫 풀이자가 아니어도 제출 기록은 해야 함
-    if (!isFirstSolve) {
-      const currentArena = await Arena.findById(arenaId);
-      if (currentArena) {
-        currentArena.submissions.push({
-          user: userId,
-          submittedAt: now,
-          flagCorrect: true,
-        });
-        
-        const participant = currentArena.participants.find(p => p.user.toString() === userId);
-        if (participant) participant.status = 'completed';
-        
-        await currentArena.save();
-      }
-    } else {
-      // 첫 풀이자인 경우 result에 이미 업데이트되어 있으므로 submissions만 추가
-      const currentArena = await Arena.findById(arenaId);
-      if (currentArena) {
-        currentArena.submissions.push({
-          user: userId,
-          submittedAt: now,
-          flagCorrect: true,
-        });
-        
-        const participant = currentArena.participants.find(p => p.user.toString() === userId);
-        if (participant) participant.status = 'completed';
-        
-        await currentArena.save();
-      }
-    }
 
-    // 🎁 EXP 지급
-    const user = await User.findById(userId);
-    if (user) {
-      user.exp += arena.arenaExp;
-      // ✅ 수정: optional chaining 제거 (이미 user 체크함)
-      if (typeof (user as any).updateLevel === 'function') {
-        await (user as any).updateLevel();
-      }
-      await user.save();
-    }
+    // null 값 제거 (삭제된 Arena)
+    const filteredHistory = history.filter(h => h !== null);
 
-    // 최신 arena 정보 가져오기
-    const updatedArena = await Arena.findById(arenaId);
-    if (!updatedArena) {
-      res.status(404).json({ msg: 'Arena not found after update.' });
-      return;
-    }
+    console.log('Filtered history count:', filteredHistory.length);
+    console.log('========================\n');
 
-    res.status(200).json({
-      msg: isFirstSolve ? '정답입니다! (그레이스 타임 시작)' : '정답입니다!',
-      correct: true,
-      expEarned: updatedArena.arenaExp,
-      totalExp: user?.exp || 0,
-    });
-
-    // 📡 클라 업데이트
-    const populated = await Arena.findById(arenaId)
-      .populate('participants.user', '_id username')
-      .lean();
-    const io = req.app.get('io');
-    io.to(arenaId).emit('arena:update', {
-      arenaId: String(populated?._id || arenaId),
-      status: populated?.status || 'waiting',
-      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-      startTime: populated?.startTime || null,
-      endTime: populated?.endTime || null,
-      problemInstanceId: populated?.problemInstanceId || null,
-      problemInstanceIp: populated?.problemInstanceIp || null,
-      participants: (populated?.participants || []).map((pp: any) => ({
-        user: pp.user,
-        isReady: !!pp.isReady,
-        hasLeft: !!pp.hasLeft,
-        vpnIp: pp.vpnIp ?? null,
-        status: pp.status || 'waiting',
-      })),
-    });
-
-    // ⏱ 첫 풀이자면 종료 타이머 재예약
-    if (isFirstSolve && updatedArena.endTime) {
-      scheduleEnd(String(updatedArena._id), updatedArena.endTime, io);
-    }
-
-    // 🔚 전원 정답 제출 시 즉시 종료
-    const totalParticipants = updatedArena.participants.filter(p => !p.hasLeft).length;
-    const correctSubmissions = updatedArena.submissions.filter(s => s.flagCorrect).length;
-    if (correctSubmissions >= totalParticipants && totalParticipants > 0) {
-      await endArena(arenaId, io);
-    }
-
-  } catch (error) {
-    console.error('Arena flag 제출 중 오류:', error);
-    res.status(500).json({ msg: 'Arena flag 제출 실패' });
+    res.status(200).json({ arenaHistory: filteredHistory });
+  } catch (err) {
+    console.error("Failed to fetch arena history:", err);
+    res.status(500).json({ message: "Failed to fetch arena history." });
   }
 };
 
-export const receiveArenaVpnIp = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { arenaId, vpnIp } = req.body;
-    const userId = res.locals.jwtData?.id;
-
-    if (!arenaId || !userId || !vpnIp) {
-      res.status(400).json({ msg: '필수 정보 누락됨.' });
-      return;
-    }
-
-    const arena = await Arena.findById(arenaId);
-    if (!arena) {
-      res.status(404).json({ msg: 'Arena not found.' });
-      return;
-    }
-
-    const participant = arena.participants.find(p => 
-      String((p.user as any)?._id ?? p.user) === String(userId)
-    );
-
-    if (!participant) {
-      res.status(404).json({ msg: 'Participant not found.' });
-      return;
-    }
-
-    // VPN IP 할당
-    participant.vpnIp = vpnIp;
-    (participant as any).status = 'vm_connected';
-    
-    await arena.save();
-
-    res.status(200).json({ 
-      msg: 'VPN IP updated successfully',
-      problemInstanceIp: arena.problemInstanceIp 
-    });
-
-    // 실시간 업데이트
-    const io = req.app.get('io');
-    const populated = await Arena.findById(arenaId)
-      .populate('participants.user', '_id username')
-      .lean();
-
-    io.to(arenaId).emit('arena:update', {
-      arenaId: String(populated?._id || arenaId),
-      status: populated?.status || 'started',
-      host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
-      startTime: populated?.startTime || null,
-      endTime: populated?.endTime || null,
-      problemInstanceId: populated?.problemInstanceId || null,
-      problemInstanceIp: populated?.problemInstanceIp || null,
-      participants: (populated?.participants || []).map((pp: any) => ({
-        user: pp.user,
-        isReady: !!pp.isReady,
-        hasLeft: !!pp.hasLeft,
-        vpnIp: pp.vpnIp ?? null,
-        status: pp.status || 'waiting',
-      })),
-    });
-
-  } catch (error) {
-    console.error('Error receiving arena VPN IP:', error);
-    res.status(500).send('Failed to receive VPN IP.');
-  }
-};
-
+// ‼️ 새로 추가: Arena 결과 조회 (ArenaProgress 기반)
 export const getArenaResult = async (req: Request, res: Response): Promise<void> => {
   try {
     const { arenaId } = req.params;
+
+    // 1. Arena 기본 정보 조회
     const arena = await Arena.findById(arenaId)
+      .populate('host', 'username')
       .populate('participants.user', 'username')
-      .populate('winner', 'username');
+      .populate('winner', 'username')
+      .lean();
 
-    // ✅ 수정: return 추가
     if (!arena) {
-      res.status(404).json({ msg : 'Arena not found.'});
+      res.status(404).json({ message: 'Arena not found' });
       return;
     }
 
-    // ✅ 수정: return 추가
-    if (arena.status !== 'ended') {
-      res.status(400).json({ msg: 'Arena is not finished yet.'});
-      return;
-    }
+    // 2. 모든 참가자의 ArenaProgress 조회
+    const progressDocs = await ArenaProcess.find({ arena: arenaId })
+      .populate('user', 'username')
+      .sort({ score: -1, updatedAt: 1 }) // 점수 높은 순, 같으면 빨리 끝낸 순
+      .lean();
 
-    const participants = arena.participants.filter(p => !p.hasLeft).map(p => {
-      // ✅ 수정: optional chaining 추가
-      const userSubmission = arena.submissions?.find(s => 
-        s.user.toString() === p.user._id.toString() && s.flagCorrect === true
-      );
+    console.log('\n=== GET ARENA RESULT ===');
+    console.log('Arena:', arena.name);
+    console.log('Progress docs found:', progressDocs.length);
 
+    // 3. 참가자별 결과 데이터 생성
+    const participants = progressDocs.map((progress, index) => {
+      const user = progress.user as any;
+      const userId = user?._id || progress.user;
+      const username = user?.username || 'Unknown';
+
+      // 완료 시간 계산 (마지막 플래그 제출 시간 기준)
       let completionTime = null;
+      let submittedAt = null;
+      if (progress.completed && progress.flags && progress.flags.length > 0) {
+        const lastFlag = progress.flags[progress.flags.length - 1];
+        if (lastFlag.submittedAt && arena.startTime) {
+          const startMs = new Date(arena.startTime).getTime();
+          const endMs = new Date(lastFlag.submittedAt).getTime();
+          completionTime = Math.floor((endMs - startMs) / 1000); // 초 단위
+          submittedAt = lastFlag.submittedAt;
+        }
+      }
 
-      if (userSubmission && arena.startTime) {
-        const startTime = new Date(arena.startTime).getTime();
-        const submitTime = new Date(userSubmission.submittedAt).getTime();
-        completionTime = Math.floor((submitTime - startTime) / 1000);
+      // 상태 결정
+      let status: 'completed' | 'vm_connected' | 'waiting' = 'waiting';
+      if (progress.completed) {
+        status = 'completed';
+      } else if (progress.stage > 0) {
+        status = 'vm_connected'; // 어느 정도 진행함
       }
 
       return {
-        userId: p.user._id,
-        username: p.user ? (p.user as any).username : "Unknown User",
-        status: p.status,
-        completionTime: completionTime,
-        submittedAt: userSubmission ? userSubmission.submittedAt : null,
-        isCompleted: p.status === 'flag_submitted' || p.status === 'completed'
+        userId: String(userId),
+        username,
+        status,
+        completionTime,
+        submittedAt,
+        isCompleted: progress.completed || false,
+        rank: index + 1, // 순위 (점수순으로 정렬되어 있음)
+        score: progress.score || 0,
+        stage: progress.stage || 0
       };
-    })
-    .sort((a, b) => {
-      if (a.isCompleted && !b.isCompleted) return -1;
-      if (!a.isCompleted && b.isCompleted) return 1;
+    });
 
-      if (a.isCompleted && b.isCompleted) {
-        if (a.completionTime && b.completionTime) {
-          return a.completionTime - b.completionTime;
-        }
-        return 0;
-      }
-      const getStatusPriority = (status) => {
-        if (status === 'vm_connected') return 1;
-        if (status === 'vpn_connecting') return 2;
-        if (status === 'waiting') return 3;
-        return 4;
+    console.log('Participants with scores:', participants.map(p => ({
+      username: p.username,
+      score: p.score,
+      rank: p.rank
+    })));
+
+    // 4. 통계 계산
+    const totalParticipants = participants.length;
+    const completedCount = participants.filter(p => p.isCompleted).length;
+    const successRate = totalParticipants > 0 
+      ? Math.round((completedCount / totalParticipants) * 100) 
+      : 0;
+
+    // 5. 승자 정보
+    let winner = null;
+    if (arena.winner) {
+      const winnerUser = arena.winner as any;
+      winner = {
+        userId: String(winnerUser._id || arena.winner),
+        username: winnerUser.username || 'Unknown',
+        solvedAt: arena.firstSolvedAt || null
       };
-      
-      return getStatusPriority(a.status) - getStatusPriority(b.status);
-    })
-    .map((p, index) => ({
-      ...p,
-      rank: index + 1
-    }));
-
-    let duration = arena.duration * 60;
-    
-    if (arena.startTime && arena.endTime) {
-      const startTime = new Date(arena.startTime);
-      const endTime = new Date(arena.endTime);
-      duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
     }
 
-    const completedCount = participants.filter(p => p.isCompleted).length;
-    
-    const winner = arena.winner ? {
-      userId: arena.winner._id,
-      username: arena.winner ? (arena.winner as any).username : "Unknown User",
-      solvedAt: arena.firstSolvedAt
-    } : null;
-
+    // 6. 최종 결과 반환
     const result = {
-      _id: arena._id,
+      _id: String(arena._id),
       name: arena.name,
-      host: arena.host._id,
-      hostName: arena.host ? (arena.host as any).username : "Unknown Host",
+      host: String((arena.host as any)?._id || arena.host),
+      hostName: (arena.host as any)?.username || 'Unknown',
       status: arena.status,
-      category: arena.category,
+      mode: arena.mode, // category -> mode로 변경
+      maxParticipants: arena.maxParticipants,
       startTime: arena.startTime,
       endTime: arena.endTime,
-      duration: duration,
-      participants: participants,
-      winner: winner,
+      duration: arena.duration,
+      participants,
+      winner,
       firstSolvedAt: arena.firstSolvedAt,
-      arenaExp: arena.arenaExp,
+      arenaExp: 0, // 나중에 구현
       stats: {
-        totalParticipants: participants.length,
-        completedCount: completedCount,
-        successRate: participants.length > 0 ? Math.round((completedCount / participants.length) * 100) : 0
+        totalParticipants,
+        completedCount,
+        successRate
       },
       settings: {
-        endOnFirstSolve: arena.settings.endOnFirstSolve,
-        graceMs: arena.settings.graceMs,
-        hardTimeLimitMs: arena.settings.hardTimeLimitMs
+        endOnFirstSolve: true, // 기본값
+        graceMs: 0,
+        hardTimeLimitMs: arena.duration * 1000
       }
     };
 
-    res.json(result);
+    console.log('Final result:', {
+      name: result.name,
+      participantsCount: result.participants.length,
+      winner: result.winner?.username
+    });
+    console.log('==================\n');
 
-  } catch (error) {
-    console.error('Get arena result error:', error);
-    res.status(500).json({ msg: 'Failed to get arena results' });
+    res.status(200).json(result);
+
+  } catch (err) {
+    console.error('Get arena result error:', err);
+    res.status(500).json({ message: 'Failed to fetch arena results' });
+  }
+};
+
+export const checkArenaParticipation = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { arenaId } = req.params;
+    const userId = res.locals.jwtData?.id;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const arena = await Arena.findById(arenaId)
+      .select('participants')
+      .lean();
+
+    if (!arena) {
+      res.status(404).json({ message: 'Arena not found' });
+      return;
+    }
+
+    // 참가자 목록에서 현재 유저 찾기
+    const participant = arena.participants.find(
+      (p: any) => String(p.user) === String(userId)
+    );
+
+    if (!participant) {
+      // 참가하지 않은 경우
+      res.json({
+        isParticipant: false,
+        hasLeft: false
+      });
+      return;
+    }
+
+    // 참가 중인 경우
+    res.json({
+      isParticipant: true,
+      hasLeft: participant.hasLeft || false
+    });
+
+  } catch (err) {
+    console.error('[checkArenaParticipation] Error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };

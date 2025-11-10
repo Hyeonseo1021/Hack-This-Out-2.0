@@ -1,128 +1,110 @@
-import React, { useState, useEffect } from 'react';
-import { getLeaderboard } from '../../api/axiosUser';
-import LeaderboardTable from './LeaderBoardTable';
-import Main from '../../components/main/Main';
-import { User } from '../../types/User';
-import "../../assets/scss/leaderboard/LearderboardPage.scss";
-import "../../assets/scss/leaderboard/LeaderboardTable.module.scss";
-import "../../assets/scss/leaderboard/ContestLeaderboard.module.scss";
-import "../../assets/scss/leaderboard/CurrentUserInfo.module.scss";
-import "../../assets/scss/leaderboard/HoldCard.scss";
+import React, { useState } from "react";
+import { User } from "../../types/User";
+import Main from "../../components/main/Main";
+import "../../assets/scss/leaderboard/LeaderBoardPage.scss";
 
-// 🔹 홀로그램 카드 컴포넌트
-const HoloCard: React.FC<{ rank: number; username: string; level: number; exp: number }> = ({
-  rank,
-  username,
-  level,
-  exp,
-}) => {
-  return (
-    <div className={`holo-card rank-${rank}`}>
-      <div className="holo-panel">
-        <div className="holo-beam"></div>
-        <div className="holo-ring"></div>
-        <div className="holo-particles"></div>
-
-        <div className="holo-info">
-          <h2>{rank}위</h2>
-          <p>{username}</p>
-          <p>Lv. {level}</p>
-          <p>EXP {exp}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 🔹 리더보드 페이지 본체
 const LeaderBoardPage: React.FC = () => {
-  const [leaderboard, setLeaderboard] = useState<User[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const [language, setLanguage] = useState<"en" | "ko">("en");
+  const toggleLanguage = () => setLanguage((prev) => (prev === "en" ? "ko" : "en"));
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const leaderboardData = await getLeaderboard();
-        const list = Array.isArray(leaderboardData)
-          ? leaderboardData
-          : leaderboardData?.data || [];
-
-        if (!list || list.length === 0) {
-          setLeaderboard([
-            { username: "Alpha", level: 10, exp: 1200 },
-            { username: "Beta", level: 8, exp: 900 },
-            { username: "Gamma", level: 7, exp: 700 },
-          ] as User[]);
-        } else {
-          setLeaderboard(list);
-        }
-      } catch (err) {
-        console.error("리더보드 데이터를 불러오는 중 오류 발생:", err);
-        setLeaderboard([
-          { username: "Alpha", level: 10, exp: 1200 },
-          { username: "Beta", level: 8, exp: 900 },
-          { username: "Gamma", level: 7, exp: 700 },
-        ] as User[]);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const topThree = leaderboard.slice(0, 3);
+  // 🎯 더미 유저 데이터 (보여주기용)
+  const leaderboard: Partial<User>[] = [
+    { username: "Alpha", level: 10, exp: 1250 },
+    { username: "Beta", level: 9, exp: 980 },
+    { username: "Gamma", level: 8, exp: 870 },
+    { username: "Delta", level: 8, exp: 850 },
+    { username: "RockSteel", level: 6, exp: 480 },
+    { username: "Kaiser", level: 6, exp: 420 },
+    { username: "Eve", level: 5, exp: 400 },
+    { username: "Nova", level: 5, exp: 370 },
+    { username: "Orion", level: 4, exp: 320 },
+    { username: "Sigma", level: 3, exp: 260 },
+  ];
 
   return (
     <Main>
-      <div className="leaderboard-container">
-        {!expanded ? (
-          <>
-            <h1 className="leaderboard-title"> TOP 3 RANKERS </h1>
+      <div className="leaderboard-cyber">
+        {/* 🔹 노이즈 오버레이 (상단용) */}
+        <div className="overlay-noise" />
 
-            {/* 🔹 카드 배열 구조 변경 */}
-            <div className="holo-layout">
-              <div className="holo-top">
-                {topThree[0] && (
-                  <HoloCard
-                    rank={1}
-                    username={topThree[0].username}
-                    level={topThree[0].level}
-                    exp={topThree[0].exp}
-                  />
-                )}
-              </div>
+        {/* 헤더 */}
+<header className="cyber-header">
+  <h1 className="title-glitch" data-text="RANKING">
+    <span className="text">RANKING</span>
+  </h1>
+  <div className="header-right">
+    <button className="lang-toggle" onClick={toggleLanguage}>
+      {language === "en" ? "🇺🇸 EN" : "🇰🇷 KR"}
+    </button>
+  </div>
+</header>
 
-              <div className="holo-bottom">
-                {topThree[1] && (
-                  <HoloCard
-                    rank={2}
-                    username={topThree[1].username}
-                    level={topThree[1].level}
-                    exp={topThree[1].exp}
-                  />
-                )}
-                {topThree[2] && (
-                  <HoloCard
-                    rank={3}
-                    username={topThree[2].username}
-                    level={topThree[2].level}
-                    exp={topThree[2].exp}
-                  />
-                )}
+
+        {/* 메인 콘텐츠 */}
+        <div className="leaderboard-grid">
+          {/* 좌측 패널 */}
+          <aside className="user-hud">
+            <h2>{language === "en" ? "PLAYER STATUS" : "플레이어 상태"}</h2>
+            <div className="hud-info">
+              <p>
+                USERNAME: <span>RockSteel</span>
+              </p>
+              <p>
+                LEVEL: <span>6</span>
+              </p>
+              <p>
+                EXP: <span>480</span>
+              </p>
+              <div className="hud-bar">
+                <div className="fill" style={{ width: "70%" }} />
               </div>
             </div>
+          </aside>
 
-            <button className="toggle-btn" onClick={() => setExpanded(true)}>
-              전체 보기
-            </button>
-          </>
-        ) : (
-          <div className="expanded-view">
-            <h1 className="leaderboard-title">전체 리더보드</h1>
-            <LeaderboardTable leaderboard={leaderboard} />
-            <button className="toggle-btn" onClick={() => setExpanded(false)}>
-              TOP 3 보기
-            </button>
-          </div>
-        )}
+          {/* 중앙 랭킹 */}
+          <section className="main-board">
+            <table className="cyber-table">
+              <thead>
+                <tr>
+                  <th>{language === "en" ? "RANK" : "순위"}</th>
+                  <th>{language === "en" ? "USER" : "사용자"}</th>
+                  <th>{language === "en" ? "LEVEL" : "레벨"}</th>
+                  <th>EXP</th>
+                  <th>{language === "en" ? "PROGRESS" : "진행도"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((user, idx) => (
+                  <tr key={idx} className={user.username === "RockSteel" ? "you" : ""}>
+                    <td>{idx + 1}</td>
+                    <td>{user.username}</td>
+                    <td>{user.level}</td>
+                    <td>{user.exp}</td>
+                    <td>
+                      <div className="exp-bar">
+                        <div
+                          className="fill"
+                          style={{ width: `${Math.min((user.exp || 0) / 15, 100)}%` }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          {/* 우측 로그 */}
+          <aside className="activity-log">
+            <h2>{language === "en" ? "RECENT ACTIVITY" : "최근 활동"}</h2>
+            <ul>
+              <li>[+250 EXP] COMPLETE</li>
+              <li>[+180 EXP] RockSteel won “ARENA”</li>
+              <li>[+90 EXP] ARENA</li>
+              <li>[+300 EXP] ARENA WIN</li>
+            </ul>
+          </aside>
+        </div>
       </div>
     </Main>
   );

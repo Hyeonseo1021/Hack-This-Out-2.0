@@ -1,264 +1,182 @@
 @use "../style" as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
 
+:root {
+  --mint: #8BF3FF;
+  --bg-dark: #050912;
+  --white: #EFFFFF;
+}
+
+/* === 리스트 컨테이너 === */
 .machine_list_container {
-  background: var(--color-background-transparent);
-  width: 100%;
-  height: 100%;
-  overflow-y: hidden;
-  padding: clamp(16px, 3vw, 32px) clamp(24px, 4vw, 48px);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(8px, 1.5vw, 12px);
+  background: rgba(6, 15, 25, 0.8);
   border-radius: clamp(16px, 2vw, 24px);
-  border: 1px solid var(--blue-200);
+  border: 1.5px solid rgba(139, 243, 255, 0.3);
+  box-shadow: 0 0 25px rgba(139, 243, 255, 0.08);
+  padding: clamp(16px, 3vw, 32px);
+  color: var(--white);
+  font-family: 'VT323', monospace;
+  overflow-y: hidden;
+  position: relative;
+  backdrop-filter: blur(8px);
 
-  @media (max-width: 768px) {
-    padding: 16px;
-    gap: 8px;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 2px
+    );
+    opacity: 0.15;
+    pointer-events: none;
   }
 
   .machine_list_title {
-    display: flex;
-    position: relative;
+    font-family: 'Orbitron', sans-serif;
     font-size: clamp(2rem, 3vw, 2.5rem);
-    letter-spacing: -0.01em;
-    font-weight: 600;
-    color: var(--color-white);
-    text-align: left;
-    height: clamp(48px, 6vh, 62px);
+    color: var(--mint);
+    text-shadow: 0 0 10px var(--mint);
+    margin-bottom: 1rem;
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      width: 80px;
+      height: 2px;
+      background: var(--mint);
+      box-shadow: 0 0 10px var(--mint);
+    }
   }
 
+  /* === 테이블 === */
   .machine_list_table {
     width: 100%;
-    display: table;
-    flex-direction: column;
     border-collapse: collapse;
     table-layout: fixed;
 
-    @media (max-width: 768px) {
-      display: block;
+    thead {
+      background: rgba(139, 243, 255, 0.05);
+      border-bottom: 1px solid rgba(139, 243, 255, 0.3);
+      th {
+        font-size: 1rem;
+        letter-spacing: 1px;
+        color: var(--mint);
+        text-shadow: 0 0 8px var(--mint);
+        padding: 1rem;
+        font-family: 'VT323', monospace;
+      }
     }
 
+    /* ✅ 수정된 부분 시작 */
     tbody {
-      @include scrollbar-none;
-      display: block;
+      display: table-row-group; /* ✅ block → table-row-group */
+      width: 100%;
       overflow-y: auto;
-      max-height: clamp(250px, 50vh, 350px);
-
-      @media (max-width: 768px) {
-        max-height: calc(100vh - 400px);
-      }
+      max-height: clamp(250px, 50vh, 400px);
+      scrollbar-width: none;
 
       tr {
-        display: table;
+        display: table-row; /* ✅ table-row로 변경 */
         width: 100%;
-        table-layout: fixed;
-      }
-    }
-
-    thead {
-      display: table;
-      width: 100%;
-      position: sticky;
-      top: 0;
-      background-color: var(--color-background);
-      z-index: 1;
-      table-layout: fixed;
-
-      @media (max-width: 768px) {
-        display: none;
-      }
-    }
-
-    .table_text_box {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      padding: clamp(12px, 2vw, 20px) clamp(16px, 2vw, 24px);
-      white-space: nowrap;
-      border-bottom: 1px solid var(--color-list-border);
-
-      th {
-        font-size: clamp(0.875rem, 1.5vw, 1rem);
-        letter-spacing: -0.01em;
-        font-weight: 600;
-        color: var(--color-white-200);
-        text-align: center;
-        padding: 0 clamp(8px, 1.5vw, 16px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .table_name {
-        width: 30%;
-        text-align: left;
-        justify-content: flex-start;
-      }
-
-      .table_category {
-        width: 20%;
-        display: flex;
-        gap: clamp(5px, 1vw, 10px);
+        transition: all 0.25s ease-in-out;
         position: relative;
-        align-items: center;
-        justify-content: center;
 
-        .category_filter_toggle {
-          position: relative;
-          display: flex;
-          align-items: center;
-          margin-left: 8px;
-          height: 100%;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          &:hover {
-            transform: translateX(-0.3rem);
-          }
-
-          .category_filter {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            top: 100%;
-            left: 50%;
-            gap: 8px;
-            background: var(--blue-500);
-            height: clamp(40px, 6vh, 50px);
-            padding: 8px;
-            border: 1px solid white;
-            border-radius: 8px;
-            z-index: 10;
-            white-space: nowrap;
-
-            @media (max-width: 768px) {
-              position: fixed;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              width: 90%;
-              max-width: 300px;
-            }
-
-            .category_label {
-              color: var(--color-white);
-              font-size: clamp(0.875rem, 1.5vw, 1rem);
-            }
-
-            .category_select {
-              border: 2px solid var(--color-white);
-              border-radius: 4px;
-              padding: 4px;
-              background: none;
-              color: var(--color-white);
-            }
-
-            .category {
-              background: var(--blue-400);
-              border: none;
-            }
-          }
+        &:hover {
+          background: rgba(139, 243, 255, 0.05);
+          box-shadow: 0 0 12px rgba(139, 243, 255, 0.15);
+          transform: translateY(-1px);
         }
       }
 
-      .table_rating {
-        width: 20%;
-        justify-content: center;
-      }
-
-      .table_playCount,
-      .table_details {
-        width: 15%;
-        justify-content: center;
-      }
-    }
-
-    .machine_box {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: clamp(8px, 1.5vw, 12px) clamp(16px, 2vw, 24px);
-      border-bottom: 1px solid var(--color-list-border);
-
-      .machine_name,
-      .machine_category,
-      .machine_playCount,
-      .machine_rating,
-      .machine_details,
-      .machine_playCount {
-        display: flex;
-        align-items: center;
+      td {
+        display: table-cell; /* ✅ table-cell로 변경 */
         text-align: center;
-
-        height: 70px;
-        font-size: var(--font-size-small);
-        letter-spacing: -0.01em;
-        font-weight: 600;
-        color: var(--color-white-200);
+        padding: 1rem 0.5rem;
+        vertical-align: middle;
       }
 
+      /* ✅ 각 열의 너비 */
+      .table_name, .machine_name { width: 30%; }
+      .table_category, .machine_category { width: 20%; }
+      .table_rating, .machine_rating { width: 20%; }
+      .table_playCount, .machine_playCount { width: 15%; }
+      .table_details, .machine_details { width: 15%; }
+
+      /* ✅ 드래그 가능 영역 */
       .machine_name {
-        width: 30%;
-        justify-content: flex-start;
-        gap: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        user-select: text;
+
+        span {
+          color: var(--mint);
+          text-shadow: 0 0 6px var(--mint);
+          user-select: text;
+        }
       }
 
-      .machine_details {
-        width: 15%;
+      .machine_category {
+        color: var(--white);
+      }
+
+      .machine_details .details_button {
+        background: transparent;
+        border: 1.5px solid var(--mint);
+        color: var(--mint);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0;
+        transition: all 0.3s ease;
 
-        @media (max-width: 768px) {
-          width: 100%;
+        &:hover {
+          background: rgba(139, 243, 255, 0.15);
+          box-shadow: 0 0 15px var(--mint);
+          animation: glitchMove 0.3s ease-in-out;
         }
-
-        .details_button {
-          justify-content: center;
-          align-items: center;
-          width: clamp(32px, 5vw, 40px);
-          height: clamp(32px, 5vw, 40px);
-          border: 2px solid transparent;
-          border-radius: 50%;
-          background-color: var(--color-layout);
-          transition: all 0.3s ease;
-          cursor: pointer;
-
-          &:hover {
-            background-color: var(--blue-400);
-            transform: translateY(-2px);
-            filter: drop-shadow(0 0 10px var(--blue-500));
-          }
-        }
-      }
-
-      .machine_category,
-      .machine_rating {
-        width: 20%;
-      }
-
-      .machine_playCount {
-        width: 15%;
-      }
-
-      &.no-data {
-        text-align: center;
-        padding: 20px;
-        color: #888;
       }
     }
+    /* ✅ 수정된 부분 끝 */
   }
 }
 
-.MuiRating-root {
-  color: #ffd700;
-  /* Gold color for filled stars */
+/* === 글리치 버튼 진동 === */
+@keyframes glitchMove {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(1px, -1px); }
+  60% { transform: translate(-1px, 0); }
+  80% { transform: translate(1px, 1px); }
+  100% { transform: translate(0, 0); }
 }
 
-.MuiRating-iconEmpty {
-  color: #fff;
-  /* Grey color for empty stars */
+/* === 필터 === */
+.category_filter_toggle {
+  color: var(--mint);
+  &:hover {
+    filter: drop-shadow(0 0 8px var(--mint));
+  }
+
+  .category_filter {
+    background: rgba(6, 15, 25, 0.95);
+    border: 1px solid var(--mint);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(139, 243, 255, 0.2);
+
+    .category_select {
+      border: 1px solid var(--mint);
+      background: transparent;
+      color: var(--mint);
+      font-family: 'VT323', monospace;
+    }
+  }
 }

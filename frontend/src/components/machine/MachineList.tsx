@@ -18,6 +18,11 @@ interface Machine {
   category: string;
   rating: number;
   playerCount: number;
+  difficulty?: {
+    creatorLevel: string;
+    confirmedLevel?: string;
+    isConfirmed: boolean;
+  };
 }
 
 interface MachinesResponse {
@@ -38,6 +43,30 @@ const MachineList: React.FC = () => {
   const categories = [
     'Web', 'Network', 'Database', 'Crypto', 'Cloud', 'AI', 'OS', 'Other'
   ];
+
+  // 난이도 색상 매핑
+  const getDifficultyColor = (level: string): string => {
+    const colors: { [key: string]: string } = {
+      'very_easy': '#4ade80',
+      'easy': '#86efac',
+      'medium': '#fbbf24',
+      'hard': '#fb923c',
+      'very_hard': '#ef4444'
+    };
+    return colors[level] || '#94a3b8';
+  };
+
+  // 난이도 레이블 (짧은 버전)
+  const getDifficultyLabel = (level: string): string => {
+    const labels: { [key: string]: string } = {
+      'very_easy': 'VE',
+      'easy': 'E',
+      'medium': 'M',
+      'hard': 'H',
+      'very_hard': 'VH'
+    };
+    return labels[level] || 'N/A';
+  };
 
   useEffect(() => {
     const fetchMachines = async (): Promise<void> => {
@@ -123,6 +152,7 @@ const MachineList: React.FC = () => {
                 </div>
               </ClickAwayListener>
             </th>
+            <th className={styles.table_difficulty}>Difficulty</th>
             <th className={styles.table_rating}>Rating</th>
             <th className={styles.table_playCount}>Played</th>
             <th className={styles.table_details}>Detail</th>
@@ -131,12 +161,14 @@ const MachineList: React.FC = () => {
         <tbody>
           {filteredMachines.length === 0 ? (
             <tr className={styles['no-data']}>
-              {/* <td colSpan={5}>No machines available.</td> */}
+              {/* <td colSpan={6}>No machines available.</td> */}
             </tr>
           ) : (
             filteredMachines.map((machine) => {
               const avatarColorIndex = getAvatarColorIndex(machine.name);
               const avatarBgColor = avatarBackgroundColors[avatarColorIndex];
+              const displayDifficulty = machine.difficulty?.confirmedLevel || machine.difficulty?.creatorLevel;
+              
               return (
                 <tr className={styles.machine_box} key={machine._id}>
                   <td className={styles.machine_name}>
@@ -158,6 +190,26 @@ const MachineList: React.FC = () => {
                   <td className={styles.machine_category}>
                     <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                       {machine.category}
+                    </Box>
+                  </td>
+                  
+                  {/* 난이도 추가 */}
+                  <td className={styles.machine_difficulty}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                      {displayDifficulty && (
+                        <span
+                          style={{
+                            backgroundColor: getDifficultyColor(displayDifficulty),
+                            color: '#000',
+                            padding: '4px 8px',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            fontSize: 'clamp(12px, 1.5vw, 14px)'
+                          }}
+                        >
+                          {getDifficultyLabel(displayDifficulty)}
+                        </span>
+                      )}
                     </Box>
                   </td>
                   <td className={styles.machine_rating}>

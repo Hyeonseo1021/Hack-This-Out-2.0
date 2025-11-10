@@ -1,136 +1,195 @@
+@use "../style" as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
+
+:root {
+  --mint: #8BF3FF;
+  --mint-glow: rgba(139, 243, 255, 0.6);
+  --bg-dark: #02060a;
+  --white: #eafaff;
+}
+
+/* ===== 전체 컨테이너 ===== */
 .machine-detail-container {
   width: 100%;
   height: 80%;
   position: relative;
-  border-radius: clamp(16px, 3vw, 30px);
-  background: var(--secondary-layout);
-  
-  .machine-detail {
-    display: flex;
-    justify-content: space-between;
-    height: 100%;
-    padding: clamp(24px, 4vw, 48px) clamp(24px, 4vw, 48px) clamp(12px, 2vw, 16px);
-    flex-grow: 1;
-    gap: clamp(16px, 3vw, 32px);
+  border-radius: 18px;
+  background: radial-gradient(circle at 50% 50%, #031017 0%, #000 90%);
+  border: 1px solid rgba(139, 243, 255, 0.25);
+  box-shadow: 0 0 40px rgba(139, 243, 255, 0.08);
+  overflow: hidden;
 
-    @media (max-width: 768px) {
-      flex-direction: column;
-      align-items: center;
-      padding: 16px;
-      gap: 16px;
-    }
-    
-    .avatar-container {
-      width: clamp(100px, 15vw, 150px);
-      flex-shrink: 0;
+  /* CRT Flicker 효과 */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 2px
+    );
+    opacity: 0.15;
+    animation: flicker 0.3s infinite;
+    pointer-events: none;
+  }
 
-      @media (max-width: 768px) {
-        width: clamp(80px, 20vw, 100px);
-      }
-    }
-    
-    .machine-textbox {
-      color: var(--color-white);
-      height: auto;
-      flex-basis: 30%;
-      
-      .machine-name {
-        position: relative;
-        height: auto;
-        text-align: left;
-        font-size: clamp(1.5rem, 3vw, 48px);
-        font-weight: 900;
-        filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
-        margin-bottom: clamp(8px, 2vw, 16px);
-      }
-      
-      .machine-category {
-        padding-left: clamp(8px, 2vw, 16px);
-        padding-top: clamp(8px, 2vw, 16px);
-        font-size: clamp(1rem, 2vw, 20px);
-      }
+  @keyframes flicker {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.1; }
+  }
+}
 
-      .description {
-        margin-top: clamp(8px, 1.5vw, 10px);
-        padding-left: clamp(8px, 2vw, 16px);
-        line-height: 1.4;
-        font-size: clamp(1rem, 2vw, 20px);
-        text-wrap: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-    }
-    
-    .right-part {
-      display: flex;
-      flex-basis: 51%;
-      justify-content: space-between;
-      gap: clamp(16px, 3vw, 32px);
+/* ===== 내부 구조 ===== */
+.machine-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  padding: clamp(24px, 4vw, 48px);
+  gap: clamp(16px, 3vw, 32px);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
 
-      @media (max-width: 768px) {
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-      }
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
 
-      .rating-box {
-        margin-top: clamp(120px, 3vw, 160px);
-        margin-left: clamp(16px, 3vw, 150px);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
+/* ===== 좌측: 아바타 ===== */
+.avatar-container {
+  width: clamp(100px, 15vw, 150px);
 
-        @media (max-width: 768px) {
-          margin-left: 0;
-        }
+  .MuiAvatar-root {
+    border: 1.5px solid var(--mint);
+    box-shadow: 0 0 12px var(--mint-glow);
+    transition: all 0.3s ease;
+    color: var(--mint);
+    font-family: 'VT323', monospace;
 
-        .MuiRating-root {
-          font-size: clamp(24px, 3vw, 32px);
-        }
-
-        .rating-text {
-          color: var(--color-white);
-          font-size: clamp(14px, 2vw, 16px);
-        }
-      }
-
-      .machine-reward-box {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        width: clamp(140px, 15vw, 180px);
-        border-radius: clamp(4px, 2vw, 8px);
-        background-color: var(--color-layout);
-        height: clamp(60px, 8vh, 77px);
-        font-weight: 600;
-
-        .text,
-        .reward-text {
-          padding-left: clamp(12px, 3vw, 30px);
-          padding-right: clamp(12px, 3vw, 30px);
-        }
-
-        .text {
-          color: var(--color-white);
-          font-size: clamp(14px, 2vw, 16px);
-        }
-
-        .reward-text {
-          font-size: clamp(18px, 2vw, 24px);
-          color: #fbff8f;
-        }
-      }
-    }
-    
-    .MuiRating-root {
-      color: #ffd700;
-      /* Gold color for filled stars */
-    }
-
-    .MuiRating-iconEmpty {
-      color: #ccc;
-      /* Grey color for empty stars */
+    &:hover {
+      box-shadow: 0 0 20px var(--mint), 0 0 40px var(--mint-glow);
+      transform: scale(1.05);
     }
   }
+}
+
+/* ===== 중앙: 머신 텍스트 ===== */
+.machine-textbox {
+  flex-basis: 35%;
+  color: var(--white);
+  text-shadow: 0 0 6px rgba(139, 243, 255, 0.2);
+
+  .machine-name {
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 700;
+    color: var(--mint);
+    text-shadow: 0 0 10px var(--mint);
+    letter-spacing: 1px;
+    margin-bottom: clamp(8px, 2vw, 16px);
+  }
+
+  .machine-category {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--white);
+    opacity: 0.9;
+    margin-bottom: 12px;
+  }
+
+  .description {
+    font-size: clamp(1rem, 2vw, 1.1rem);
+    opacity: 0.8;
+    line-height: 1.4;
+  }
+}
+
+/* ===== 우측: 평점 + EXP ===== */
+.right-part {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  flex-basis: 40%;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    align-items: center;
+  }
+
+  /* ⭐ Rating */
+  .rating-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .MuiRating-root {
+      color: var(--mint);
+      filter: drop-shadow(0 0 4px var(--mint-glow));
+      font-size: clamp(28px, 3vw, 36px);
+    }
+
+    .rating-text {
+      color: var(--white);
+      font-size: 1.1rem;
+      text-shadow: 0 0 6px var(--mint-glow);
+    }
+  }
+
+  /* 💎 Reward Box */
+  .machine-reward-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 30, 40, 0.5);
+    border: 1.5px solid rgba(139, 243, 255, 0.3);
+    border-radius: 8px;
+    width: clamp(140px, 15vw, 180px);
+    height: clamp(60px, 8vh, 77px);
+    box-shadow: 0 0 16px rgba(139, 243, 255, 0.1);
+    text-align: center;
+    transition: 0.3s ease-in-out;
+
+    &:hover {
+      box-shadow: 0 0 24px var(--mint), inset 0 0 12px var(--mint);
+      transform: translateY(-2px);
+    }
+
+    .text {
+      font-size: 1rem;
+      color: var(--white);
+      opacity: 0.9;
+    }
+
+    .reward-text {
+      font-size: 1.3rem;
+      color: var(--mint);
+      font-weight: 700;
+      text-shadow: 0 0 8px var(--mint-glow);
+    }
+  }
+}
+/* 💠 Reward Box 점멸 효과 */
+@keyframes mintPulse {
+  0%, 100% { box-shadow: 0 0 10px var(--mint), inset 0 0 10px rgba(139, 243, 255, 0.2); }
+  50% { box-shadow: 0 0 25px var(--mint), inset 0 0 20px rgba(139, 243, 255, 0.4); }
+}
+
+.machine-reward-box {
+  animation: mintPulse 3s infinite ease-in-out;
+}
+
+/* ⭐ Rating hover 반짝임 */
+.rating-box:hover .MuiRating-root {
+  filter: drop-shadow(0 0 12px var(--mint)) brightness(1.2);
+  transition: all 0.3s ease;
+}
+
+.rating-box:hover .rating-text {
+  text-shadow: 0 0 10px var(--mint);
+  color: var(--mint);
+  transition: all 0.3s ease;
 }

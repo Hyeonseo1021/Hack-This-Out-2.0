@@ -3,17 +3,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
 import Main from '../../components/main/Main';
-import DownloadVPNProfile from '../../components/play/DownloadVPNProfile';
-import { getArenaById, submitFlagArena, sendArenaVpnIp } from '../../api/axiosArena';
+import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaPlayPage.scss';
+
+import TerminalRace from '../../components/arena/TerminalRace';
+import ActivityFeed from '../../components/arena/ActivityFeed';
 
 type Participant = {
   user: { _id: string; username: string } | string;
   isReady: boolean;
   hasLeft?: boolean;
-  vpnIp?: string | null;
-  status?: 'waiting' | 'vpn_connecting' | 'vm_connected' | 'flag_submitted' | 'completed';
+  progress?: any;
 };
 
 type ArenaUpdatePayload = {
@@ -23,8 +24,7 @@ type ArenaUpdatePayload = {
   startTime?: string | null;
   endTime?: string | null;
   participants: Participant[];
-  problemInstanceId?: string | null;  // 추가
-  problemInstanceIp?: string | null;  // 추가
+  mode: string;
 };
 
 const ArenaPlayPage: React.FC = () => {
@@ -38,35 +38,30 @@ const ArenaPlayPage: React.FC = () => {
   const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
   const [startAt, setStartAt] = useState<Date | null>(null);
   const [endAt, setEndAt] = useState<Date | null>(null);
-  const [remaining, setRemaining] = useState<number>(0); // ms
-
-  // 변경된 부분: 개별 인스턴스 대신 공통 문제 인스턴스
-  const [problemInstanceId, setProblemInstanceId] = useState<string | null>(null);
-  const [problemInstanceIp, setProblemInstanceIp] = useState<string | null>(null);
-  const [myVpnIp, setMyVpnIp] = useState<string | null>(null);
-  const [machineId, setMachineId] = useState<string | null>(null);
-  const [needVpnConnection, setNeedVpnConnection] = useState(false);
-
-  const [flag, setFlag] = useState('');
-  const [submitMsg, setSubmitMsg] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [remaining, setRemaining] = useState<number>(0);
+  const [mode, setMode] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
 
-  const statusText = (p: Participant) => {
-    if (p.hasLeft) return 'left';
-    switch (p.status) {
-      case 'waiting':        return 'waiting';
-      case 'vpn_connecting': return 'vpn connecting';
-      case 'vm_connected':   return 'vm connected';
-      case 'flag_submitted': return 'flag submitted';
-      case 'completed':      return 'completed';
-      default:               return '';
+  const getParticipantStatus = (p: Participant) => {
+    if (p.hasLeft) return { text: 'Left', color: '#666' };
+    
+    if (status === 'waiting') {
+      return p.isReady 
+        ? { text: 'Ready', color: '#00ff88' } 
+        : { text: 'Waiting', color: '#ff9500' };
     }
+    
+    if (status === 'started') {
+      return { text: 'Active', color: '#00d4ff' };
+    }
+    
+    return { text: '', color: '#666' };
   };
 
-  // 1) 유저/아레나 초기 로드 + 방 진입
+  // 초기 로드
   useEffect(() => {
     if (!arenaId) return;
 
@@ -78,68 +73,60 @@ const ArenaPlayPage: React.FC = () => {
       setArenaName(arenaData.name);
       setHostId(String(arenaData.host));
       setStatus(arenaData.status);
+      setMode(arenaData.mode);
       if (arenaData.startTime) setStartAt(new Date(arenaData.startTime));
       if (arenaData.endTime) setEndAt(new Date(arenaData.endTime));
       setParticipants(arenaData.participants || []);
 
-      // 문제 인스턴스 정보 설정
-      setProblemInstanceId(arenaData.problemInstanceId || null);
-      setProblemInstanceIp(arenaData.problemInstanceIp || null);
-
-      // machineId(문자/객체 모두 대응)
-      setMachineId(String((arenaData as any).machine?._id ?? (arenaData as any).machine ?? '') || null);
-
-      // 소켓 join(중복 방지)
       if (!joinedRef.current) {
         joinedRef.current = true;
         const doJoin = () => socket.emit('arena:join', { arenaId, userId: user._id });
         if (socket.connected) doJoin();
         else socket.once('connect', doJoin);
       }
-
-      // 내 VPN IP 초기 설정
-      const me = (arenaData.participants || []).find((p: any) =>
-        (typeof p.user === 'string' ? p.user : p.user._id) === user._id
-      ) as Participant | undefined;
-      if (me) {
-        setMyVpnIp(me.vpnIp ?? null);
-      }
     })();
   }, [arenaId, navigate]);
 
-  // 2) 타이머 관리
+  // 타이머 관리
   useEffect(() => {
-    if (!endAt) return;
-    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (!endAt) {
+      setRemaining(0);
+      return;
+    }
 
     const tick = () => {
       const now = Date.now();
-      const left = Math.max(0, endAt.getTime() - now);
-      setRemaining(left);
-      if (left === 0 && timerRef.current) {
-        window.clearInterval(timerRef.current);
+      const end = endAt.getTime();
+      const diff = end - now;
+      setRemaining(Math.max(0, diff));
+      
+      if (diff <= 0) {
+        clearInterval(timerRef.current!);
         timerRef.current = null;
+        socket.emit('arena:end', { arenaId });
+        navigate(`/arena/result/${arenaId}`);
       }
     };
+
     tick();
-    timerRef.current = window.setInterval(tick, 1000) as unknown as number;
+    timerRef.current = window.setInterval(tick, 1000);
 
     return () => {
       if (timerRef.current) {
-        window.clearInterval(timerRef.current);
+        clearInterval(timerRef.current);
         timerRef.current = null;
       }
     };
-  }, [endAt]);
+  }, [endAt, status, arenaId, navigate]);
 
-  // 2-1) 타임업 안전망: 남은시간 0이면 이동
+  // 타임업 처리
   useEffect(() => {
     if (status === 'ended') {
       navigate(`/arena/result/${arenaId}`);
     }
   }, [status, arenaId, navigate]);
 
-  // 3) 소켓 이벤트 바인딩
+  // 소켓 이벤트
   useEffect(() => {
     const handleUpdate = (payload: ArenaUpdatePayload) => {
       setStatus(payload.status);
@@ -147,33 +134,15 @@ const ArenaPlayPage: React.FC = () => {
       setParticipants(payload.participants || []);
       if (payload.startTime) setStartAt(new Date(payload.startTime));
       if (payload.endTime) setEndAt(new Date(payload.endTime));
-
-      // 문제 인스턴스 정보 업데이트
-      setProblemInstanceId(payload.problemInstanceId || null);
-      setProblemInstanceIp(payload.problemInstanceIp || null);
-
-      // 내 VPN IP 갱신
-      if (currentUserId) {
-        const me = payload.participants.find(p =>
-          (typeof p.user === 'string' ? p.user : p.user._id) === currentUserId
-        );
-        if (me) {
-          setMyVpnIp(me.vpnIp ?? null);
-        }
-      }
-
-      // 서버가 ended 푸시 시 이동
+      if (payload.mode) setMode(payload.mode);
+      
       if (payload.status === 'ended') {
         navigate(`/arena/result/${payload.arenaId}`);
       }
     };
 
-    const handleStart = (data: { arenaId: string; startTime: string; endTime: string; needVpnConnection?: boolean }) => {
-      setNeedVpnConnection(data.needVpnConnection || false);
-      // VPN 연결 필요 알림
-      if (data.needVpnConnection) {
-        alert('게임이 시작되었습니다! VPN 연결 후 IP를 입력해주세요.');
-      }
+    const handleStart = (data: { arenaId: string; startTime: string; endTime: string; }) => {
+      console.log('Arena started!', data);
     };
 
     const handleDeleted = ({ arenaId: deleted }: { arenaId: string }) => {
@@ -185,13 +154,17 @@ const ArenaPlayPage: React.FC = () => {
       navigate('/arena');
     };
 
+    const handleEnded = (data?: { arenaId?: string }) => {
+      navigate(`/arena/result/${data?.arenaId ?? arenaId}`);
+    };
+
     socket.on('arena:update', handleUpdate);
     socket.on('arena:start', handleStart);
     socket.on('arena:deleted', handleDeleted);
     socket.on('arena:join-failed', handleJoinFailed);
+    socket.on('arena:ended', handleEnded);
 
     return () => {
-      // 떠날 때 나가기
       if (currentUserId && arenaId) {
         socket.emit('arena:leave', { arenaId, userId: currentUserId });
       }
@@ -199,212 +172,180 @@ const ArenaPlayPage: React.FC = () => {
       socket.off('arena:start', handleStart);
       socket.off('arena:deleted', handleDeleted);
       socket.off('arena:join-failed', handleJoinFailed);
+      socket.off('arena:ended', handleEnded);
     };
   }, [arenaId, currentUserId, navigate]);
 
-  // 3-1) arena:ended 이벤트도 잡아서 이동(옵션이지만 안전)
-  useEffect(() => {
-    const handleEnded = (data?: { arenaId?: string }) => {
-      navigate(`/arena/result/${data?.arenaId ?? arenaId}`);
-    };
-
-    socket.on('arena:ended', handleEnded);
-
-    return () => {
-      socket.off('arena:ended', handleEnded);
-    };
-  }, [arenaId, navigate]);
-
-  // VPN IP 입력 및 전송 함수
-  const [vpnIpInput, setVpnIpInput] = useState('');
-  const [sendingVpnIp, setSendingVpnIp] = useState(false);
-
-  const sendVpnIp = async () => {
-    if (!vpnIpInput.trim()) {
-      alert('VPN IP를 입력해주세요.');
-      return;
-    }
-
-    try {
-      setSendingVpnIp(true);
-      const res = await sendArenaVpnIp(arenaId!, vpnIpInput.trim());
-      alert('VPN IP가 등록되었습니다!');
-      setVpnIpInput('');
-      setNeedVpnConnection(false);
-    } catch (error: any) {
-      alert(error?.msg || 'VPN IP 등록 실패');
-    } finally {
-      setSendingVpnIp(false);
-    }
-  };
-
-  // 표시용 포맷
+  // 시간 포맷
   const mm = Math.floor(remaining / 60000);
   const ss = Math.floor((remaining % 60000) / 1000);
 
-  // 타임업/종료 시 입력/버튼 비활성화
-  const isTimeUp = remaining === 0 || status !== 'started';
-
-  // 4) 플래그 제출
-  const submitFlag = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!machineId) {
-      setSubmitMsg('machineId를 불러오지 못했습니다.');
-      return;
+  const renderGameContent = () => {
+    if (!mode) {
+      return (
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Loading game mode...</p>
+        </div>
+      );
     }
-    try {
-      setSubmitting(true);
-      setSubmitMsg(null);
-      const res = await submitFlagArena(arenaId!, flag, machineId);
-      setSubmitMsg(res?.msg || '정답입니다!');
-    } catch (err: any) {
-      setSubmitMsg(err?.msg || '제출 실패');
-    } finally {
-      setSubmitting(false);
+
+    const currentArenaProps = {
+      _id: arenaId!,
+      name: arenaName,
+      mode: mode!,
+      status: status,
+      host: hostId!,
+      startTime: startAt?.toISOString() || null,
+      endTime: endAt?.toISOString() || null,
+      participants: participants
+    };
+
+    switch (mode) {
+      case 'Terminal Race':
+        return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
+      case "Hacker's Deck":
+        return (
+          <div className="coming-soon">
+            <h2>Hacker's Deck</h2>
+            <p>Coming Soon</p>
+          </div>
+        );
+      case 'Defense Battle':
+      case 'Capture Server':
+      case 'Exploit Chain':
+        return (
+          <div className="coming-soon">
+            <h2>{mode}</h2>
+            <p>Coming Soon</p>
+          </div>
+        );
+      default:
+        return (
+          <div className="error-state">
+            <h2>Unknown Game Mode</h2>
+            <p>{mode}</p>
+          </div>
+        );
     }
   };
 
+  const activeCount = participants.filter(p => !p.hasLeft).length;
+
   return (
     <Main>
-      <div className="ap-container">
-        <div className="ap-grid-background"></div>
-        <div className="ap-hud-corners">
-          <div className="ap-corner top-left"></div>
-          <div className="ap-corner top-right"></div>
-          <div className="ap-corner bottom-left"></div>
-          <div className="ap-corner bottom-right"></div>
-        </div>
-
+      <div className="arena-play-page">
+        
         {/* 상단 헤더 */}
-        <header className="ap-header">
-          <div className="ap-title-group">
-            <h1>{arenaName}</h1>
-            <span className={`ap-status-tag status-${status}`}>{status}</span>
+        <header className="arena-header">
+          <div className="header-left">
+            <h1 className="arena-title">{arenaName}</h1>
+            <span className={`status-badge status-${status}`}>
+              {status.toUpperCase()}
+            </span>
+            <span className="mode-badge">{mode || 'Loading...'}</span>
           </div>
-          <div className="ap-timer">
-            <span className="ap-timer-value">{mm}:{String(ss).padStart(2, '0')}</span>
-            <span className="ap-timer-label">TIME REMAINING</span>
+          
+          <div className="header-right">
+            <div className="timer-display">
+              <div className="timer-value">
+                {mm}:{String(ss).padStart(2, '0')}
+              </div>
+              <div className="timer-label">Remaining</div>
+            </div>
+            
+            <button 
+              className="sidebar-toggle"
+              onClick={() => setShowSidebar(!showSidebar)}
+              title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              {showSidebar ? '✕' : '☰'}  
+            </button>
           </div>
         </header>
 
-        {/* 메인 콘텐츠 */}
-        <div className="ap-content">
-
-          {/* 왼쪽 사이드바 */}
-          <aside className="ap-sidebar">
-            <div className="ap-panel">
-              <div className="ap-panel-header">
-                <h3>CONNECTION</h3>
-              </div>
-              <div className="ap-panel-body">
-                <div className="ap-info-item">
-                  <label>VPN Profile</label>
-                  <DownloadVPNProfile />
-                </div>
-                <div className="ap-info-item">
-                  <label>Target IP</label>
-                  <p className="ap-data-text">{problemInstanceIp || '---.---.---.---'}</p>
-                </div>
-                <div className="ap-info-item">
-                  <label>My VPN IP</label>
-                  <p className={`ap-data-text ${myVpnIp ? 'connected' : 'disconnected'}`}>
-                    {myVpnIp || 'Disconnected'}
-                  </p>
-                </div>
-                {needVpnConnection && !myVpnIp && (
-                  <div className="ap-info-item vpn-form">
-                    <label>Enter VPN IP</label>
-                    <div className="ap-input-group">
-                      <input
-                        type="text"
-                        placeholder="Your IP Address"
-                        value={vpnIpInput}
-                        onChange={(e) => setVpnIpInput(e.target.value)}
-                        disabled={sendingVpnIp}
-                      />
-                      <button
-                        className="ap-button small"
-                        onClick={sendVpnIp}
-                        disabled={sendingVpnIp || !vpnIpInput.trim()}
-                      >
-                        {sendingVpnIp ? '...' : 'EXEC'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </aside>
-
-          {/* 중앙 메인 영역 */}
-          <main className="ap-main">
-            <div className="ap-panel">
-              <div className="ap-panel-header">
-                <h3>FLAG SUBMISSION</h3>
-              </div>
-              <div className="ap-panel-body">
-                <form onSubmit={submitFlag} className="ap-flag-form">
-                  <input
-                    type="text"
-                    className="ap-flag-input"
-                    placeholder="FLAG{...}"
-                    value={flag}
-                    onChange={(e) => setFlag(e.target.value)}
-                    disabled={isTimeUp || !myVpnIp}
-                  />
-                  <button
-                    type="submit"
-                    className="ap-button primary"
-                    disabled={isTimeUp || submitting || !flag || !myVpnIp}
-                  >
-                    {submitting ? 'PROCESSING...' : 'SUBMIT'}
-                  </button>
-                </form>
-                <div className="ap-message-box">
-                  {submitMsg && <p className="ap-message msg-success">[+] {submitMsg}</p>}
-                  {isTimeUp && <p className="ap-message msg-error">[!] Mission Failed: Time Expired</p>}
-                  {!myVpnIp && status === 'started' && (
-                    <p className="ap-message msg-warning">[*] Notice: VPN Connection Required</p>
-                  )}
-                </div>
-              </div>
-            </div>
+        {/* 메인 컨텐츠 영역 */}
+        <div className="arena-content">
+          
+          {/* 게임 영역 */}
+          <main className="game-area">
+            {renderGameContent()}
           </main>
 
-          {/* 오른쪽 사이드바 */}
-          <aside className="ap-sidebar">
-            <div className="ap-panel">
-              <div className="ap-panel-header">
-                <h3>OPERATORS ({participants.filter(p => !p.hasLeft).length})</h3>
-              </div>
-              <div className="ap-panel-body">
-                <ul className="ap-participant-list">
+          {/* 사이드바 */}
+          {showSidebar && (
+            <aside className="arena-sidebar">
+              
+              {/* 참가자 목록 */}
+              <div className="sidebar-section">
+                <div className="section-header">
+                  <h3>Players</h3>
+                  <span className="player-count">{activeCount}/{participants.length}</span>
+                </div>
+                
+                <div className="participants-list">
                   {participants.map(p => {
                     const uid = typeof p.user === 'string' ? p.user : p.user._id;
                     const name = typeof p.user === 'string' ? '...' : p.user.username;
                     const isHost = uid === hostId;
-                    const status = statusText(p);
-                    const displayIp = uid === currentUserId ? p.vpnIp : '***.***.***.***';
+                    const isMe = uid === currentUserId;
+                    const { text, color } = getParticipantStatus(p);
 
                     return (
-                      <li key={uid} className="ap-participant-item">
-                        <div className="ap-participant-info">
-                          <span className="name">
+                      <div 
+                        key={uid} 
+                        className={`participant-card ${isMe ? 'is-me' : ''} ${p.hasLeft ? 'has-left' : ''}`}
+                      >
+                        <div className="participant-info">
+                          <div className="participant-name">
                             {name}
-                            {isHost && <span className="host-tag">H</span>}
-                          </span>
-                          <span className="ip">{displayIp || 'offline'}</span>
+                            {isHost && <span className="badge badge-host">HOST</span>}
+                            {isMe && <span className="badge badge-you">YOU</span>}
+                          </div>
                         </div>
-                        <span className={`ap-participant-status status-${status.replace(/ /g, '-')}`}>
-                          {status}
-                        </span>
-                      </li>
+                        <div 
+                          className="participant-status"
+                          style={{ color }}
+                        >
+                          {text}
+                        </div>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               </div>
-            </div>
-          </aside>
+
+              {/* Activity Feed - 자신의 활동만 표시 */}
+              {mode === 'Terminal Race' && status === 'started' && (
+                <div className="sidebar-section">
+                  <ActivityFeed 
+                    socket={socket} 
+                    currentUserId={currentUserId}
+                    participants={participants}
+                  />
+                </div>
+              )}
+
+              {/* 게임 정보 */}
+              <div className="sidebar-section">
+                <div className="section-header">
+                  <h3>Info</h3>
+                </div>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <label>Start Time</label>
+                    <span>{startAt ? new Date(startAt).toLocaleTimeString() : 'Pending'}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Duration</label>
+                    <span>{endAt && startAt ? `${Math.round((endAt.getTime() - startAt.getTime()) / 60000)}min` : '---'}</span>
+                  </div>
+                </div>
+              </div>
+
+            </aside>
+          )}
+
         </div>
       </div>
     </Main>
