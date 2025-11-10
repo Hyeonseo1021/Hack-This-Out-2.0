@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Main from '../../components/main/Main';
 import { useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
-import { getArenaList } from '../../api/axiosArena';
+import { getArenaList, checkArenaParticipation } from '../../api/axiosArena';
 import '../../assets/scss/arena/ArenaPage.scss';
 
 interface ArenaSummary {
@@ -116,7 +116,7 @@ const ArenaPage: React.FC = () => {
     };
   }, []);
 
-  const handleEnterArena = (arenaId: string) => {
+  const handleEnterArena = async (arenaId: string) => {
     const arena = arenas.find(a => a._id === arenaId);
     
     if (!arena) {
@@ -124,20 +124,67 @@ const ArenaPage: React.FC = () => {
       return;
     }
 
-    const canEnter = 
-      (arena.status === 'waiting' || arena.status === 'started') && 
-      arena.activeParticipantsCount < arena.maxParticipants;
+    try {
+      // 서버에 참가 여부 확인 요청
+      const { isParticipant, hasLeft } = await checkArenaParticipation(arenaId);
+      
+      // 이미 참가 중인 경우
+      if (isParticipant) {
+        if (hasLeft) {
+          // 나갔던 방 - 재접속 확인
+          const confirmReconnect = window.confirm(
+            `You previously left this room.\nWould you like to reconnect?`
+          );
+          
+          if (confirmReconnect) {
+            console.log('[handleEnterArena] Reconnecting to arena:', arenaId);
+            navigate(`/arena/play/${arenaId}`);
+          }
+        } else {
+          // 이미 참가 중 - 바로 입장
+          console.log('[handleEnterArena] Already in arena, rejoining:', arenaId);
+          navigate(`/arena/play/${arenaId}`);
+        }
+        return;
+      }
 
-    if (canEnter) {
-      console.log('[handleEnterArena] Entering arena:', arenaId);
-      navigate(`/arena/${arenaId}`);
-    } else {
-      console.log('[handleEnterArena] Cannot enter room:', {
-        arenaId,
-        status: arena.status,
-        participants: arena.activeParticipantsCount,
-        maxParticipants: arena.maxParticipants
-      });
+      // 새로 입장하는 경우
+      const canEnter = 
+        (arena.status === 'waiting' || arena.status === 'started') && 
+        arena.activeParticipantsCount < arena.maxParticipants;
+
+      if (canEnter) {
+        if (arena.status === 'started') {
+          alert('This game has already started. You cannot join.');
+          return;
+        }
+        
+        console.log('[handleEnterArena] Entering new arena:', arenaId);
+        navigate(`/arena/${arenaId}`);
+      } else {
+        console.log('[handleEnterArena] Cannot enter room:', {
+          arenaId,
+          status: arena.status,
+          participants: arena.activeParticipantsCount,
+          maxParticipants: arena.maxParticipants
+        });
+        
+        if (arena.activeParticipantsCount >= arena.maxParticipants) {
+          alert('This room is full.');
+        } else if (arena.status === 'ended') {
+          alert('This game has ended.');
+        }
+      }
+    } catch (error) {
+      console.error('[handleEnterArena] Error checking participation:', error);
+      // 에러 시 기본 로직으로 진행
+      const canEnter = 
+        (arena.status === 'waiting') && 
+        arena.activeParticipantsCount < arena.maxParticipants;
+        
+      if (canEnter) {
+        navigate(`/arena/${arenaId}`);
+      }
     }
   };
 

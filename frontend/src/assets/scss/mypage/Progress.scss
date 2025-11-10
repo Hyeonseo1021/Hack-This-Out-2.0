@@ -5,15 +5,18 @@
   padding: 2rem;
   color: var(--color-white);
   font-family: 'Orbitron', sans-serif;
+  overflow: hidden;
+  
 
   h2 {
     text-align: center;
     font-size: 2rem;
     margin-bottom: 2rem;
-    color: var(--bp-accent, #00f6ff);
-    text-shadow: 0 0 8px #00f6ff;
+    color: #00f6ff;
+    text-shadow: 0 0 10px #00f6ff;
   }
 
+  /* ===== Tabs ===== */
   .tabs {
     display: flex;
     justify-content: center;
@@ -37,27 +40,51 @@
       }
 
       &.active {
-        background: rgba(0, 255, 255, 0.25);
+        background: rgba(0, 255, 255, 0.3);
         box-shadow: 0 0 15px #00f6ff;
       }
     }
   }
 
-  // ====== 공통 테이블 스타일 ======
+  /* ===== Table Scroll Wrapper ===== */
+  .table-wrapper {
+    width: 100%;
+    max-height: 65vh; // ✅ 표만 스크롤
+    overflow-x: auto;
+    overflow-y: auto;
+    margin-top: 1rem;
+    border-radius: 10px;
+
+    /* 스크롤바 스타일 */
+    &::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 255, 0.4);
+      border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 255, 255, 0.7);
+    }
+  }
+
+  /* ===== Table Base ===== */
   table {
     width: 100%;
     border-collapse: collapse;
-    margin: 1rem auto;
-    background: rgba(0, 0, 20, 0.4);
+    min-width: 850px; // ✅ 스크롤 활성화 기준
+    margin: 0 auto;
+    background: rgba(0, 10, 25, 0.6);
     border: 1px solid rgba(0, 255, 255, 0.3);
-    border-radius: 10px;
-    overflow: hidden;
+    border-radius: 0px;
     box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
 
     th, td {
       padding: 0.9rem 1rem;
       text-align: center;
       border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+      white-space: nowrap;
     }
 
     thead {
@@ -65,7 +92,7 @@
       th {
         font-size: 1rem;
         color: #00f6ff;
-        text-shadow: 0 0 6px #00f6ff;
+        text-shadow: 0 0 8px #00f6ff;
       }
     }
 
@@ -83,76 +110,72 @@
     }
   }
 
-  // ====== Arena History 전용 ======
+  /* ===== Arena Table Variant (Blue tone) ===== */
   .arena-table {
-    border: 1px solid rgba(255, 0, 200, 0.3);
-    box-shadow: 0 0 15px rgba(255, 0, 200, 0.15);
+    border: 1px solid rgba(0, 200, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.15);
 
     thead {
-      background: rgba(255, 0, 200, 0.1);
-      
+      background: rgba(0, 200, 255, 0.1);
       .head-detail th {
-        color: #ff00c1;
-        text-shadow: 0 0 6px #ff00c1;
+        color: #00d9ff;
+        text-shadow: 0 0 6px #00d9ff;
       }
     }
 
     tbody {
       .body-detail {
         transition: background 0.2s ease;
-        
+
         &:hover {
-          background: rgba(255, 0, 200, 0.07);
+          background: rgba(0, 200, 255, 0.07);
         }
 
-        // Arena Name 컬럼 (Avatar + 이름)
         .body-name {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.75rem;
           font-weight: 600;
-          color: #ff00c1;
+          color: #00eaff;
         }
 
-        .body-category {
-          color: #eafaff;
-          font-weight: 500;
-        }
-
+        .body-category,
         .body-machine {
-          color: #00f6ff;
+          color: #bdefff;
           font-weight: 500;
         }
 
         .body-time {
-          color: #b8b8b8;
+          color: #a0a0a0;
           font-size: 0.9rem;
         }
 
         .body-winner {
-          color: #ffd700;
+          color: #00ffea;
           font-weight: 600;
+          text-shadow: 0 0 6px #00fff2;
         }
 
         .body-exp {
           color: #00ff88;
           font-weight: 600;
+          text-shadow: 0 0 6px #00ff88;
         }
       }
     }
   }
 
-  // ====== 메시지 스타일 ======
+  /* ===== Empty Message ===== */
   p {
     text-align: center;
-    color: #b8b8b8;
+    color: #b8dfff;
     font-size: 1.1rem;
     padding: 2rem;
     font-style: italic;
   }
 
-  // ====== 반응형 ======
+  /* ===== Responsive ===== */
   @media (max-width: 768px) {
     padding: 1rem;
 
@@ -160,19 +183,15 @@
       font-size: 1.5rem;
     }
 
+    .table-wrapper {
+      max-height: 55vh;
+    }
+
     table {
       font-size: 0.85rem;
 
       th, td {
         padding: 0.5rem;
-      }
-    }
-
-    .arena-table {
-      .body-name {
-        flex-direction: column;
-        gap: 0.5rem;
-        font-size: 0.85rem;
       }
     }
 

@@ -371,3 +371,48 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
     res.status(500).json({ message: 'Failed to fetch arena results' });
   }
 };
+
+export const checkArenaParticipation = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { arenaId } = req.params;
+    const userId = res.locals.jwtData?.id;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const arena = await Arena.findById(arenaId)
+      .select('participants')
+      .lean();
+
+    if (!arena) {
+      res.status(404).json({ message: 'Arena not found' });
+      return;
+    }
+
+    // 참가자 목록에서 현재 유저 찾기
+    const participant = arena.participants.find(
+      (p: any) => String(p.user) === String(userId)
+    );
+
+    if (!participant) {
+      // 참가하지 않은 경우
+      res.json({
+        isParticipant: false,
+        hasLeft: false
+      });
+      return;
+    }
+
+    // 참가 중인 경우
+    res.json({
+      isParticipant: true,
+      hasLeft: participant.hasLeft || false
+    });
+
+  } catch (err) {
+    console.error('[checkArenaParticipation] Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

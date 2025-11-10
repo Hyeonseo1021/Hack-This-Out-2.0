@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
-import '../../assets/scss/arena/TerminalRace.scss'; // ‼️ SCSS 파일 임포트 ‼️
-
-// --- (Interface 정의는 동일) ---
+import '../../assets/scss/arena/TerminalRace.scss';
 
 type Participant = {
   user: { _id: string; username: string } | string;
@@ -14,8 +12,8 @@ type Participant = {
 interface TerminalRaceProps {
   arena: { _id: string; mode: string; };
   socket: Socket;
-  currentUserId: string | null; // ‼️ 부모로부터 받아올 내 ID
-  participants: Participant[];  // ‼️ (ActivityFeed에서만 필요하지만, props 일관성을 위해 유지)
+  currentUserId: string | null;
+  participants: Participant[];
 }
 
 interface TerminalResultData {
@@ -29,7 +27,7 @@ interface TerminalResultData {
 interface LogEntry {
   id: number;
   text: string;
-  isPrompt?: boolean; // ‼️ 내가 입력한 라인인지 구분용
+  type: 'prompt' | 'command' | 'output' | 'success' | 'error';
 }
 
 const TerminalRace: React.FC<TerminalRaceProps> = ({ 
@@ -38,126 +36,231 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   currentUserId, 
   participants 
 }) => {
-  // 1. 상태 관리 (동일)
   const [command, setCommand] = useState('');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const logCounter = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // (getUsernameById 헬퍼 함수는 이제 이 컴포넌트에서 필요 X, 삭제)
-
-  // 2. 서버 이벤트 수신 (useEffect)
+  // 초기 진행 상황 로드
   useEffect(() => {
-    // 2-1. ‼️ "내" 터미널 결과만 수신하도록 수정 ‼️
+    const loadProgress = async () => {
+      try {
+        // 서버에서 현재 유저의 진행 상황 요청
+        socket.emit('terminal:get-progress', { arenaId: arena._id });
+      } catch (error) {
+        console.error('Failed to load progress:', error);
+        // 에러 시 기본 웰컴 메시지만 표시
+        setLogs([
+          { id: logCounter.current++, text: 'Welcome to the Terminal Race!', type: 'success' },
+          { id: logCounter.current++, text: "Type 'nmap -sV' to begin...", type: 'output' }
+        ]);
+        setIsLoading(false);
+      }
+    };
+
+    loadProgress();
+  }, [arena._id, socket]);
+
+  // 서버 이벤트 수신
+  useEffect(() => {
+    // 진행 상황 응답 핸들러
+    const handleProgressData = (data: { stage: number; score: number; completed: boolean }) => {
+      const initialLogs: LogEntry[] = [
+        { id: logCounter.current++, text: 'Welcome to the Terminal Race!', type: 'success' },
+        { id: logCounter.current++, text: '='.repeat(50), type: 'output' }
+      ];
+
+      // 현재 스테이지에 따른 안내 메시지
+      if (data.stage === 0) {
+        initialLogs.push(
+          { id: logCounter.current++, text: 'Stage 1: Reconnaissance', type: 'success' },
+          { id: logCounter.current++, text: "Start by scanning the target.", type: 'output' }
+        );
+      } else if (data.stage === 1) {
+        initialLogs.push(
+          { id: logCounter.current++, text: 'Stage 1: Completed ✓', type: 'success' },
+          { id: logCounter.current++, text: 'Stage 2: Attack', type: 'success' },
+          { id: logCounter.current++, text: "Try to exploit the services.", type: 'output' }
+        );
+      } else if (data.stage === 2) {
+        initialLogs.push(
+          { id: logCounter.current++, text: 'Stage 1-2: Completed ✓', type: 'success' },
+          { id: logCounter.current++, text: 'Stage 3: Privilege Escalation', type: 'success' },
+          { id: logCounter.current++, text: "Find SUID binaries.", type: 'output' }
+        );
+      } else if (data.stage === 3) {
+        initialLogs.push(
+          { id: logCounter.current++, text: 'Stage 1-3: Completed ✓', type: 'success' },
+          { id: logCounter.current++, text: 'Stage 4: Flag Capture', type: 'success' },
+          { id: logCounter.current++, text: "Get the final flag.", type: 'output' }
+        );
+      } else if (data.completed) {
+        initialLogs.push(
+          { id: logCounter.current++, text: 'All Stages Completed! 🎉', type: 'success' },
+          { id: logCounter.current++, text: `Final Score: ${data.score} points`, type: 'success' }
+        );
+      }
+
+      initialLogs.push(
+        { id: logCounter.current++, text: '='.repeat(50), type: 'output' },
+        { id: logCounter.current++, text: `Current Score: ${data.score} points`, type: 'output' },
+        { id: logCounter.current++, text: '', type: 'output' }
+      );
+
+      setLogs(initialLogs);
+      setIsLoading(false);
+    };
+
     const handleTerminalResult = (data: TerminalResultData) => {
-      // ‼️ 서버가 보낸 결과의 주인이 "내가" 아니면 무시 ‼️
+      // 내 결과만 수신
       if (data.userId !== currentUserId) {
         return;
       }
 
       const newLogs: LogEntry[] = [];
       
-      // 2. 서버 응답 메시지를 여러 줄로 분리하여 추가
+      // 서버 응답 처리
       data.message.split('\n').forEach(line => {
-        newLogs.push({ id: logCounter.current++, text: line });
+        let logType: LogEntry['type'] = 'output';
+        
+        // 메시지 타입 자동 감지
+        if (line.includes('FLAG{') || data.flagFound) {
+          logType = 'success';
+        } else if (line.includes('Error') || line.includes('failed') || line.includes('not found')) {
+          logType = 'error';
+        } else if (data.progressDelta && data.progressDelta > 0) {
+          logType = 'success';
+        }
+        
+        newLogs.push({ 
+          id: logCounter.current++, 
+          text: line,
+          type: logType
+        });
       });
 
       setLogs(prev => [...prev, ...newLogs]);
-      
-      // 3. (중요) '전송 중' 상태 해제
       setIsSubmitting(false);
+      
+      // 입력창에 다시 포커스
+      setTimeout(() => inputRef.current?.focus(), 100);
     };
 
-    // 2-2. (참고) 'participant:update'는 이제 부모(ArenaPlayPage)나
-    //      ActivityFeed가 직접 듣고 처리해야 합니다.
-    const handleParticipantUpdate = (data: any) => {
-      // (이 터미널은 이제 이 이벤트에 반응할 필요가 없음)
-    };
-
-    // 2-3. 소켓 리스너 등록
+    socket.on('terminal:progress-data', handleProgressData);
     socket.on('terminal:result', handleTerminalResult);
-    socket.on('participant:update', handleParticipantUpdate);
 
-    // 2-4. 컴포넌트 언마운트 시 리스너 해제
     return () => {
+      socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:result', handleTerminalResult);
-      socket.off('participant:update', handleParticipantUpdate);
     };
-    
-  // 2. ‼️ 수정: 의존성 배열 수정 ‼️
-  }, [socket, currentUserId]); // currentUserId가 바뀔 때 리스너 갱신
+  }, [socket, currentUserId]);
 
-  // 3. 로그 변경 시 자동 스크롤 (동일)
+  // 자동 스크롤
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs]);
 
-  // 4. ‼️ 명령어 전송 (handleSubmit) (수정) ‼️
+  // 명령어 전송
   const handleSubmitCommand = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!command || isSubmitting) return;
+    if (!command.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
     
-    // 1. ‼️ "낙관적 업데이트" 부활 ‼️
-    // (내 화면에 내가 친 명령어를 즉시 표시)
+    // 프롬프트 표시
     setLogs(prev => [
       ...prev,
-      { id: logCounter.current++, text: `root@target:~$ ${command}`, isPrompt: true }
+      { 
+        id: logCounter.current++, 
+        text: 'root@target:~$', 
+        type: 'prompt' 
+      },
+      { 
+        id: logCounter.current++, 
+        text: command, 
+        type: 'command' 
+      }
     ]);
 
-    // 2. 백엔드로 'terminal:execute' 이벤트 전송 (동일)
-    socket.emit('terminal:execute', { command: command });
+    // 서버로 전송
+    socket.emit('terminal:execute', { command: command.trim() });
     
-    // 3. 입력창 비우기 (동일)
+    // 입력창 초기화
     setCommand('');
   };
 
-  // 5. 렌더링 (동일)
+  // Enter 키 처리
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmitCommand(e as any);
+    }
+  };
+
   return (
-    <div className="ap-panel">
-      <div className="ap-panel-header">
-        <h3>MODE: {arena.mode}</h3>
+    <div className="terminal-race-container">
+      
+      {/* 터미널 헤더 */}
+      <div className="terminal-header">
+        <h2>Terminal Race</h2>
+        <p>Complete the stages by executing the correct commands!</p>
       </div>
-      <div className="ap-panel-body terminal-ui">
-        {/* 가상 터미널 출력창 */}
-        <div className="terminal-output" ref={logContainerRef}>
-          <pre>Welcome to the Terminal Race!</pre>
-          <pre>Type 'nmap -sV' to begin...</pre>
-          <hr />
-          {logs.map(log => (
-            <pre 
-              key={log.id} 
-              className={log.isPrompt ? 'prompt-line' : ''}
-            >
-              {log.text}
-            </pre>
-          ))}
+
+      {/* 로딩 중 */}
+      {isLoading ? (
+        <div className="terminal-loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading your progress...</p>
         </div>
-        
-        {/* 터미널 입력 폼 */}
-        <form onSubmit={handleSubmitCommand} className="ap-flag-form">
-          <span className="terminal-prompt">root@target:~$</span>
-          <input
-            type="text"
-            className="ap-flag-input terminal-input"
-            placeholder="Enter command..."
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <button
-            type="submit"
-            className="ap-button primary terminal-submit-btn"
-            disabled={isSubmitting || !command}
-          >
-            <span>{isSubmitting ? '...' : 'RUN'}</span>
-          </button>
-        </form>
+      ) : (
+        <>
+          {/* 터미널 출력창 */}
+          <div className="terminal-output" ref={logContainerRef}>
+        {logs.map(log => (
+          <div key={log.id} className={`terminal-line ${log.type}`}>
+            {log.type === 'prompt' && <span className="prompt-symbol">{log.text}</span>}
+            {log.type === 'command' && <span className="command-text">$ {log.text}</span>}
+            {(log.type === 'output' || log.type === 'success' || log.type === 'error') && (
+              <span>{log.text}</span>
+            )}
+          </div>
+        ))}
+        {isSubmitting && (
+          <div className="terminal-line output">
+            <span className="loading-indicator">Processing...</span>
+          </div>
+        )}
       </div>
+
+      {/* 터미널 입력창 */}
+      <form onSubmit={handleSubmitCommand} className="terminal-input-area">
+        <span className="terminal-prompt">root@target:~$</span>
+        <input
+          ref={inputRef}
+          type="text"
+          className="terminal-input"
+          placeholder="Enter command..."
+          value={command}
+          onChange={(e) => setCommand(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isSubmitting}
+          autoFocus
+        />
+        <button
+          type="submit"
+          className="terminal-submit-btn"
+          disabled={isSubmitting || !command.trim()}
+        >
+          {isSubmitting ? '⏳' : '▶ RUN'}
+        </button>
+      </form>
+        </>
+      )}
     </div>
   );
 }

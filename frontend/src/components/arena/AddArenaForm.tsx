@@ -61,7 +61,7 @@ const AddArenaForm: React.FC = () => {
         
         {/* --- 1. 메인 컨트롤 창 --- */}
         <div className="widget-window main-controls">
-          <div className="widget-titlebar">:: MAIN_CONTROL.EXE</div>
+          <div className="widget-titlebar">MAIN_CONTROL</div>
           <div className="widget-content">
             <div className="form-group">
               <label>ROOM NAME</label>
@@ -105,7 +105,7 @@ const AddArenaForm: React.FC = () => {
 
         {/* --- 2. 모드 선택 창 (수정됨) --- */}
         <div className="widget-window mode-selector">
-          <div className="widget-titlebar">:: MODE_SELECT.MOD</div>
+          <div className="widget-titlebar">MODE_SELECT</div>
           <div className="widget-content">
             {/* ⬇️ 'mode-grid' -> 'mode-table-layout'로 변경 ⬇️ */}
             <div className="mode-table-layout">
@@ -130,10 +130,10 @@ const AddArenaForm: React.FC = () => {
 
         {/* --- 3. 시스템 로그 창 --- */}
         <div className="widget-window system-log">
-          <div className="widget-titlebar">:: SYSTEM_LOG.DAT</div>
+          <div className="widget-titlebar">SYSTEM_LOG</div>
           <div className="widget-content">
             <div className="log-area">
-              {!error && !loading && <p className="log-entry info">System ready. Awaiting command...</p>}
+              {!error && !loading && <p className="log-entry info">System ready.  Awaiting command...</p>}
               {loading && <p className="log-entry processing">Connecting to host... Creating arena...</p>}
               {error && <p className="log-entry error">{error}</p>}
             </div>

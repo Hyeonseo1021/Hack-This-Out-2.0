@@ -6,6 +6,7 @@ import { terminalProcessCommand } from '../services/terminalEngine';
 
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const endTimers = new Map<string, NodeJS.Timeout>();
+const MAX_PLAYERS = 8;
 
 const deleteArenaIfEmpty = async (arenaId: string, io: Server) => {
   try {
@@ -220,6 +221,14 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
         })),
       });
 
+      const user = await User.findById(userId).select('username').lean();
+      if (user) {
+        io.to(arenaId).emit('arena:notify', {
+          type: 'system',
+          message: `${user.username}님이 입장했습니다.`
+        });
+      }
+
       // (6) 로비(전역)에 방 목록 업데이트 방송
       const summary = await Arena.findById(arenaId)
         .select('name mode status maxParticipants participants.user participants.hasLeft') // mode, hasLeft 추가
@@ -326,9 +335,6 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       arena.status = 'started';
       arena.startTime = new Date();
       arena.endTime = new Date(arena.startTime.getTime() + arena.duration * 60000);
-
-      // (2) EC2/VPN 관련 코드 모두 제거됨
-
       await arena.save();
       
       // (3) 종료 스케줄링
@@ -373,6 +379,14 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
   // 4. 나가기 (arena:leave)
   socket.on('arena:leave', async ({ arenaId, userId }) => {
     try {
+      const user = await User.findById(userId).select('username').lean();
+      if (user) {
+        io.to(arenaId).emit('arena:notify', {
+          type: 'system',
+          message: `${user.username}님이 퇴장했습니다.`
+        });
+      }
+
       const arena = await Arena.findById(arenaId);
       if (!arena) return;
 
@@ -471,6 +485,13 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     const timer = setTimeout(async () => {
       dcTimers.delete(key);
       try {
+        const user = await User.findById(userId).select('username').lean();
+        if (user) {
+          io.to(arenaId).emit('arena:notify', {
+            type: 'system',
+            message: `${user.username}님이 연결이 끊겨 퇴장했습니다.`
+          });
+        }
         const arena = await Arena.findById(arenaId);
         if (!arena) return;
 
@@ -532,7 +553,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
           io.emit('arena:room-updated', {
             _id: String(room._id),
             name: room.name,
-            mode: room.mode, // category -> mode
+            mode: room.mode, 
             status: room.status,
             maxParticipants: room.maxParticipants,
             activeParticipantsCount: activeParticipantsCount,
@@ -577,6 +598,195 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       console.error('[arena:sync] error:', e);
     }
   });
+
+  socket.on('arena:chat', async ({ message }: { message: string }) => {
+    const arenaId = (socket as any).arenaId;
+    const userId = (socket as any).userId;
+    if (!arenaId || !userId || !message || message.trim().length === 0) return;
+
+    try {
+      // (1) 메시지를 보낸 유저 정보 가져오기
+      const user = await User.findById(userId).select('username').lean();
+      if (!user) return;
+
+      // (2) 해당 방(arenaId)에만 채팅 메시지 전송
+      io.to(arenaId).emit('arena:chatMessage', {
+        type: 'chat',
+        senderId: userId,
+        senderName: user.username,
+        message: message.trim(), // 앞뒤 공백 제거
+        timestamp: new Date(),
+      });
+
+    } catch (e) {
+      console.error('[arena:chat] error:', e);
+    }
+  });
+
+  // 8. [추가] 강퇴 (arena:kick)
+  socket.on('arena:kick', async ({ kickedUserId }: { kickedUserId: string }) => {
+    const arenaId = (socket as any).arenaId;
+    const hostId = (socket as any).userId;
+    if (!arenaId || !hostId || !kickedUserId) return;
+    
+    try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) return;
+
+      // (1) 보안: 요청자가 정말 호스트인지 확인
+      if (String(arena.host) !== hostId) {
+        return socket.emit('arena:kick-failed', { reason: '호스트만 강퇴할 수 있습니다.' });
+      }
+      
+      // (2) 스스로 강퇴 불가
+      if (hostId === kickedUserId) return;
+      
+      // (3) 강퇴당할 유저 정보 (알림용)
+      const kickedUser = await User.findById(kickedUserId).select('username').lean();
+
+      // (4) 강퇴 로직 ('arena:leave'와 유사하게 처리)
+      if (arena.status === 'waiting') {
+        await Arena.updateOne(
+          { _id: arenaId },
+          { $pull: { participants: { user: kickedUserId } } }
+        );
+      } else {
+        // 게임 중에는 강퇴 비활성화 또는 hasLeft: true 처리 (현재는 waiting만 가정)
+        return socket.emit('arena:kick-failed', { reason: '게임 중에는 강퇴할 수 없습니다.' });
+      }
+      
+      // (5) 방 전체에 업데이트 방송 (populate)
+      const populated = await Arena.findById(arenaId)
+        .populate('participants.user', '_id username').lean();
+        
+      if (populated) {
+        io.to(arenaId).emit('arena:update', {
+          arenaId: String(populated._id || arenaId),
+          status: populated.status || 'waiting',
+          host: String((populated.host as any)?._id ?? populated.host ?? ''),
+          startTime: populated.startTime || null,
+          endTime: populated.endTime || null,
+          participants: (populated.participants || []).map((pp: any) => ({
+            user: pp.user,
+            isReady: !!pp.isReady,
+            hasLeft: !!pp.hasLeft,
+            progress: pp.progress
+          })),
+        });
+      }
+      
+      // (6) 로비(전역) 업데이트 (lean)
+      const room = await Arena.findById(arenaId)
+        .select('name mode status maxParticipants participants.user participants.hasLeft').lean();
+      
+      if (room) {
+        const activeParticipantsCount = (room.participants || []).filter(p => !p.hasLeft).length;
+        io.emit('arena:room-updated', {
+          _id: String(room._id),
+          name: room.name,
+          mode: room.mode,
+          status: room.status,
+          maxParticipants: room.maxParticipants,
+          activeParticipantsCount: activeParticipantsCount,
+        });
+      }
+      
+      // (7) 강퇴당한 유저에게 알리고 방에서 내보내기
+      for (const [id, s] of io.of("/").sockets) {
+        if ((s as any).userId === kickedUserId && (s as any).arenaId === arenaId) {
+          s.emit('arena:kicked', { reason: '방장에 의해 강퇴당했습니다.' });
+          s.leave(arenaId);
+          break;
+        }
+      }
+      
+      // (8) 강퇴 알림
+      if (kickedUser) {
+        io.to(arenaId).emit('arena:notify', {
+          type: 'system',
+          message: `${kickedUser.username}님이 방장에 의해 강퇴당했습니다.`
+        });
+      }
+
+    } catch (e) {
+      console.error('[arena:kick] error:', e);
+    }
+  });
+  
+  // 9. [추가] 설정 변경 (arena:settingsChange)
+  socket.on('arena:settingsChange', async ({ newSettings }: { newSettings: { name?: string, maxParticipants?: number } }) => {
+    const arenaId = (socket as any).arenaId;
+    const hostId = (socket as any).userId;
+    if (!arenaId || !hostId) return;
+    
+    try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) return;
+
+      // (1) 보안: 호스트인지, 'waiting' 상태인지 확인
+      if (String(arena.host) !== hostId) return;
+      if (arena.status !== 'waiting') return;
+
+      // (2) 설정 값 업데이트
+      let changed = false;
+      
+      // 방 제목 변경
+      if (newSettings.name && newSettings.name.trim().length > 0 && newSettings.name.length <= 30) {
+        arena.name = newSettings.name.trim();
+        changed = true;
+      }
+      
+      // 최대 인원 변경 (현재 인원보다 적게 설정 불가)
+      const activeParticipantsCount = arena.participants.filter(p => !p.hasLeft).length;
+      if (newSettings.maxParticipants && newSettings.maxParticipants >= activeParticipantsCount && newSettings.maxParticipants <= MAX_PLAYERS) { // MAX_PLAYERS는 상수로 정의 필요
+        arena.maxParticipants = newSettings.maxParticipants;
+        changed = true;
+      }
+      
+      if (!changed) return; // 변경 사항 없음
+      
+      await arena.save();
+
+      // (3) 방 전체에 업데이트 방송 (populate)
+      const populated = await Arena.findById(arenaId)
+        .populate('participants.user', '_id username').lean();
+      if (populated) {
+        io.to(arenaId).emit('arena:update', {
+          arenaId: String(populated._id || arenaId),
+          status: populated.status || 'waiting',
+          host: String((populated.host as any)?._id ?? populated.host ?? ''),
+          startTime: populated.startTime || null,
+          endTime: populated.endTime || null,
+          participants: (populated.participants || []).map((pp: any) => ({
+            user: pp.user,
+            isReady: !!pp.isReady,
+            hasLeft: !!pp.hasLeft,
+            progress: pp.progress
+          })),
+        });
+      }
+      
+      // (4) 로비(전역) 업데이트 (lean)
+      const room = await Arena.findById(arenaId)
+        .select('name mode status maxParticipants participants.user participants.hasLeft').lean();
+      if (room) {
+        const activeParticipantsCount = (room.participants || []).filter(p => !p.hasLeft).length;
+        io.emit('arena:room-updated', {
+          _id: String(room._id),
+          name: room.name,
+          mode: room.mode,
+          status: room.status,
+          maxParticipants: room.maxParticipants,
+          activeParticipantsCount: activeParticipantsCount,
+        });
+      }
+      
+    } catch (e) {
+      console.error('[arena:settingsChange] error:', e);
+    }
+  });
+
+  
   // 7. ‼️ 모드 1: Terminal Race 핸들러 (ArenaProgress 사용 버전) ‼️
   socket.on('terminal:execute', async ({ 
     command 
@@ -617,11 +827,6 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
         flagFound: result.flagFound
       });
 
-      // ----------------------------------------
-      // ‼️ 3. (대체) ArenaProgress 모델에 로그 저장 ‼️
-      // (participant.progress 로직을 이 로직으로 대체합니다)
-      
-      // ‼️ $inc 객체를 먼저 완전히 구성
       const incUpdate: any = { score: result.progressDelta || 0 };
       if (result.advanceStage) {
         incUpdate.stage = 1; // ‼️ 스테이지 1 증가
@@ -694,6 +899,44 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
+  socket.on('terminal:get-progress', async ({ arenaId }: { arenaId: string }) => {
+    const userId = (socket as any).userId;
+    if (!arenaId || !userId) return;
+
+    try {
+      // ArenaProgress에서 현재 유저의 진행 상황 조회
+      const progressDoc = await ArenaProgress.findOne({ 
+        arena: arenaId, 
+        user: userId 
+      }).lean();
+
+      // 진행 상황이 없으면 초기 상태 반환
+      if (!progressDoc) {
+        socket.emit('terminal:progress-data', {
+          stage: 0,
+          score: 0,
+          completed: false
+        });
+        return;
+      }
+
+      // 진행 상황 반환
+      socket.emit('terminal:progress-data', {
+        stage: progressDoc.stage || 0,
+        score: progressDoc.score || 0,
+        completed: progressDoc.completed || false
+      });
+
+    } catch (e) {
+      console.error('[terminal:get-progress] error:', e);
+      // 에러 시 초기 상태 반환
+      socket.emit('terminal:progress-data', {
+        stage: 0,
+        score: 0,
+        completed: false
+      });
+    }
+  });
   // 8. ‼️ 모드 4: Hacker's Deck 핸들러 (문서 21p 기반) ‼️
   // (Phase 1  우선순위이므로 미리 틀을 만듭니다)
   socket.on('deck:play-card', async ({

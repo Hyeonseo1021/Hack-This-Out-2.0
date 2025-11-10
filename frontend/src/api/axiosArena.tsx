@@ -61,3 +61,8 @@ export const getArenaHistory = async () => {
   const res = await axiosInstance.get("/arena/history", { withCredentials: true });
   return res.data;
 };
+
+export const checkArenaParticipation = async (arenaId: string) => {
+  const res = await axiosInstance.get(`/arena/${arenaId}/check-participation`);
+  return res.data;
+}
