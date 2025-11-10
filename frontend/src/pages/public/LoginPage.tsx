@@ -12,8 +12,8 @@ const LoginPage: React.FC = () => {
   const [isClicked, setIsClicked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state management
   const navigate = useNavigate(); // Initialize navigate
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isPreGlitch, setIsPreGlitch] = useState(false);
+  const [, setIsTransitioning] = useState(false);
+  const [, setIsPreGlitch] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Consume AuthUserContext
@@ -71,19 +71,17 @@ const LoginPage: React.FC = () => {
     );
   }
 
+  // ✅ 수정된 return 블록
   return (
     <div>
       <div
         ref={containerRef}
-        className={`background-image ${isClicked ? 'change-background' : ''} ${isTransitioning ? 'transitioning' : ''} ${isPreGlitch ? 'pre-glitch' : ''}`}
+        className={`background-image ${1 ? 'change-background' : ''} ${1 ? 'transitioning' : ''} ${1 ? 'pre-glitch' : ''}`}
         onClick={handleBackgroundClick}
       >
-        <div className="channel r"></div>
-        <div className="channel g"></div>
-        <div className="channel b"></div>
-        <div className="noise"></div>
+        <Loading />
       </div>
-      <div className={isClicked ? "content-wrapper visible" : "content-wrapper"}>
+      <div className={1 ? "content-wrapper visible" : "content-wrapper"}>
         <LoginForm openRegisterModal={openModal} /> {/* Pass the modal opening function to LoginForm */}
       </div>
 
