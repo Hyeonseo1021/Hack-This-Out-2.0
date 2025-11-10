@@ -526,84 +526,21 @@
   }
 }
 
-/* === 로딩 전환 화면 (기존과 동일) === */
-.game-loading-fullscreen {
-  position: fixed;
-  inset: 0;
-  background: #01010a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  z-index: 999;
-  overflow: hidden;
-
-  .loading-background {
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.05) 0px,
-      rgba(255, 255, 255, 0.05) 1px,
-      transparent 2px
-    );
-    opacity: 0.2;
-    animation: flicker 2s infinite;
-  }
-
-  .loading-title {
-    color: #00f6ff;
-    font-size: 2rem;
-    text-shadow: 0 0 15px #00f6ff;
-    margin-bottom: 20px;
-  }
-
-  .loading-bar {
-    width: 300px;
-    height: 10px;
-    background: rgba(0, 255, 255, 0.2);
-    border-radius: 4px;
-    overflow: hidden;
-    .loading-bar-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #00f6ff, #00ffae);
-      animation: progress 2.5s linear infinite;
-    }
-  }
-
-  .loading-text {
-    margin-top: 16px;
-    font-family: 'VT323', monospace;
-    font-size: 1.2rem;
-    color: #ccc;
-  }
-
-  @keyframes progress {
-    0% { width: 0%; }
-    100% { width: 100%; }
-  }
-
-  @keyframes flicker {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.4; }
-  }
-}
-
+/* 게임 시작 오버레이 */
 .game-start-overlay {
-  position: fixed;
+  position: fixed;  /* 화면에 고정 */
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100vw;  /* 화면 너비 */
+  height: 100vh;  /* 화면 높이 */
   background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%);
-  z-index: 9999;
+  z-index: 9999;  /* 다른 요소들 위에 표시 */
   display: flex;
   align-items: center;
   justify-content: center;
   animation: overlayFadeIn 0.5s ease-out;
 
-  // 배경 그리드 효과
+  /* 배경 그리드 효과 */
   &::before {
     content: '';
     position: absolute;
@@ -618,7 +555,7 @@
     animation: gridMove 20s linear infinite;
   }
 
-  // 빛나는 입자 효과
+  /* 빛나는 입자 효과 */
   &::after {
     content: '';
     position: absolute;
@@ -632,13 +569,7 @@
   }
 }
 
-.start-overlay-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  animation: contentZoomIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
+/* 타이틀 애니메이션 */
 .start-title {
   font-size: 4rem;
   font-weight: 900;
@@ -658,6 +589,7 @@
   }
 }
 
+/* 카운트다운 숫자 */
 .countdown-number {
   font-size: 15rem;
   font-weight: 900;
@@ -676,6 +608,7 @@
   }
 }
 
+/* GO 애니메이션 */
 .countdown-go {
   font-size: 12rem;
   font-weight: 900;
@@ -693,6 +626,7 @@
   }
 }
 
+/* 하위 텍스트 */
 .start-subtitle {
   font-size: 1.5rem;
   color: rgba(0, 255, 255, 0.7);
@@ -706,9 +640,9 @@
   }
 }
 
-// ========================================
-// 애니메이션 정의
-// ========================================
+/* ======================================== */
+/* 애니메이션 정의 */
+/* ======================================== */
 
 @keyframes overlayFadeIn {
   from {

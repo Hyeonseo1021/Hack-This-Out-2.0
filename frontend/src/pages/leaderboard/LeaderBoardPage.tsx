@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { User } from "../../types/User";
 import Main from "../../components/main/Main";
-import "../../assets/scss/leaderboard/LeaderBoardPage.scss";
+import "../../assets/scss/leaderboard/LearderboardPage.scss";
 
 const LeaderBoardPage: React.FC = () => {
   const [language, setLanguage] = useState<"en" | "ko">("en");
