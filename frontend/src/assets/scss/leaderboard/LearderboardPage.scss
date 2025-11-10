@@ -1,58 +1,299 @@
 @use "../style" as *;
 
-.leaderboard-container {
+.leaderboard-cyber {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100vh;
-  background: #000;
-  color: #fff;
+  height: 100%;
+  background: #02010a;
+  color: #00f6ff;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+  z-index: 1;
 
-  .top-three {
+  /* ⚡ 노이즈 + CRT 라인 효과 */
+  .overlay-noise {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+    opacity: 0.08;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.02) 0px,
+        rgba(255, 255, 255, 0.02) 1px,
+        transparent 2px,
+        transparent 4px
+      ),
+      repeating-conic-gradient(
+        from 0deg,
+        rgba(255,255,255,0.03) 0deg 10deg,
+        rgba(0,0,0,0.03) 10deg 20deg
+      );
+    background-size: 250% 250%;
+    animation:
+      flicker 0.15s infinite alternate,
+      noiseDrift 3.5s infinite linear;
+    filter: contrast(1.3) brightness(1.1);
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.05; transform: translate(0, 0); }
+    25% { opacity: 0.09; transform: translate(1px, -1px); }
+    50% { opacity: 0.06; transform: translate(-1px, 1px); }
+    75% { opacity: 0.1; transform: translate(1px, 1px); }
+    100% { opacity: 0.07; transform: translate(-1px, -1px); }
+  }
+
+  @keyframes noiseDrift {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 15% 20%; }
+    100% { background-position: 0% 30%; }
+  }
+
+  /* 🧠 헤더 영역 */
+  .cyber-header {
     display: flex;
-    gap: 40px;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0 10px;
+    z-index: 3;
+    position: relative;
 
-    .rank-card {
-      width: 250px;
-      height: 400px;
-      background: rgba(0, 255, 255, 0.1);
-      border: 2px solid cyan;
-      border-radius: 20px;
-      box-shadow: 0 0 20px cyan;
+    /* ✅ 글자 크기 맞춘 완전한 RGB 글리치 */
+    .title-glitch {
+      position: relative;
+      display: inline-block;
+      font-size: clamp(32px, 3.8vw, 64px);
+      line-height: 1;
+      letter-spacing: 0.12em;
+      color: #fff;
+      text-transform: uppercase;
       text-align: center;
-      padding: 20px;
-      font-family: 'Orbitron', sans-serif;
+      text-shadow:
+        0 0 20px #00f6ff,
+        0 0 40px #ff00c1,
+        0 0 60px rgba(255,255,255,0.7);
+      filter: drop-shadow(0 0 15px rgba(255,255,255,0.5));
 
-      h2 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-        color: #31e8ee;
+      .text {
+        display: block;
+        font: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
       }
 
-      p {
-        margin: 10px 0;
+      &::before,
+      &::after {
+        content: attr(data-text);
+        position: absolute;
+        inset: 0;
+        font: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        color: #fff;
+        pointer-events: none;
+      }
+
+      &::before {
+        text-shadow: -2px 0 #ff00c1;
+        animation: glitchA 1.9s infinite linear;
+      }
+
+      &::after {
+        text-shadow: 2px 0 #00ffff;
+        animation: glitchB 1.5s infinite linear;
+      }
+    }
+
+    .header-right {
+      position: absolute;
+      right: 60px;
+      top: 45px;
+
+      .lang-toggle {
+        background: transparent;
+        border: 1px solid cyan;
+        color: cyan;
+        font-family: "Orbitron", sans-serif;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-shadow: 0 0 10px cyan;
+
+        &:hover {
+          background: cyan;
+          color: #000;
+          box-shadow: 0 0 15px cyan, 0 0 25px #00f6ff;
+        }
       }
     }
   }
 
-  .expanded-view {
-    width: 80%;
-    height: 60%;
-    background: rgba(0, 0, 50, 0.7);
-    border: 3px solid cyan;
-    border-radius: 15px;
-    box-shadow: 0 0 30px cyan;
+  @keyframes glitchA {
+    0% { clip-path: inset(0 0 85% 0); transform: translate(0,0); }
+    20% { clip-path: inset(10% 0 60% 0); transform: translate(-.5px,.5px); }
+    40% { clip-path: inset(30% 0 40% 0); transform: translate(.5px,-.5px); }
+    60% { clip-path: inset(50% 0 20% 0); transform: translate(-.5px,.3px); }
+    80% { clip-path: inset(70% 0 5% 0);  transform: translate(.3px,.2px); }
+    100% { clip-path: inset(0 0 100% 0); transform: translate(0,0); }
+  }
+
+  @keyframes glitchB {
+    0% { clip-path: inset(80% 0 0 0); transform: translate(0,0); }
+    20% { clip-path: inset(55% 0 10% 0); transform: translate(.5px,-.3px); }
+    40% { clip-path: inset(35% 0 30% 0); transform: translate(-.4px,.4px); }
+    60% { clip-path: inset(15% 0 50% 0); transform: translate(.4px,.2px); }
+    80% { clip-path: inset(5% 0 70% 0);  transform: translate(-.3px,-.2px); }
+    100% { clip-path: inset(0 0 100% 0); transform: translate(0,0); }
+  }
+
+  /* 이하 기존 유지 */
+  .leaderboard-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 2.8fr 1.2fr;
+    gap: 50px;
+    width: 90%;
+    height: 80vh;
+    margin: 20px auto;
+    z-index: 2;
+    align-items: stretch;
+  }
+
+  .user-hud, .main-board, .activity-log {
+    background: rgba(0, 20, 40, 0.45);
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.25);
+    backdrop-filter: blur(6px);
+    padding: 25px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    position: relative;
+    overflow: hidden;
 
-    h1 {
-      color: #31e8ee;
-      font-size: 2.5rem;
-      margin-bottom: 20px;
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.02) 0px,
+        rgba(255, 255, 255, 0.02) 1px,
+        transparent 2px,
+        transparent 4px
+      );
+      mix-blend-mode: overlay;
+      opacity: 0.3;
+      pointer-events: none;
     }
+  }
+
+  /* HUD */
+  .user-hud {
+    h2 {
+      font-size: 1.1rem;
+      color: #00f6ff;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px #00ffff;
+    }
+    p {
+      font-family: 'VT323', monospace;
+      color: #aefcff;
+      margin: 6px 0;
+    }
+
+    .hud-bar {
+      height: 8px;
+      background: rgba(0,255,255,0.1);
+      border-radius: 6px;
+      overflow: hidden;
+
+      .fill {
+        height: 100%;
+        background: linear-gradient(90deg,#00f6ff,#ff00c1);
+        animation: neonFlow 3s linear infinite;
+      }
+    }
+  }
+
+  .main-board {
+    justify-content: flex-start;
+    background: rgba(0, 0, 40, 0.55);
+    padding: 25px;
+    overflow-y: auto;
+
+    .cyber-table {
+      width: 100%;
+      border-collapse: collapse;
+
+      th, td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid rgba(0,255,255,0.2);
+        font-family: 'VT323', monospace;
+        color: #aefcff;
+      }
+
+      th {
+        font-size: 1.1rem;
+        color: #00f6ff;
+        text-shadow: 0 0 10px #00ffff;
+      }
+
+      tr:hover {
+        background: rgba(0,255,255,0.08);
+        box-shadow: inset 0 0 20px rgba(0,255,255,0.2);
+        animation: pulse-scan 1.5s infinite linear;
+      }
+
+      .you {
+        background: rgba(84, 190, 213, 0.15);
+        box-shadow: 0 0 20px rgba(101, 140, 181, 0.4);
+      }
+
+      .exp-bar {
+        width: 100%;
+        height: 6px;
+        background: rgba(0,255,255,0.1);
+        border-radius: 5px;
+        overflow: hidden;
+
+        .fill {
+          height: 100%;
+          background: linear-gradient(90deg, #00f6ff, #ff00c1);
+          animation: neonFlow 2s linear infinite;
+        }
+      }
+    }
+  }
+
+  .activity-log {
+    h2 {
+      font-size: 1.1rem;
+      color: #00f6ff;
+      margin-bottom: 12px;
+      text-shadow: 0 0 10px #00ffff;
+    }
+    li {
+      font-family: 'VT323', monospace;
+      font-size: 1rem;
+      color: #aefcff;
+      margin: 8px 0;
+    }
+  }
+
+  @keyframes neonFlow { 0% {filter: hue-rotate(0deg);} 100% {filter: hue-rotate(360deg);} }
+  @keyframes pulse-scan {
+    0% { box-shadow: 0 0 4px #00fff7, 0 0 8px #00fff7; }
+    50% { box-shadow: 0 0 20px #00fff7, 0 0 35px #00fff7; }
+    100% { box-shadow: 0 0 4px #00fff7, 0 0 8px #00fff7; }
   }
 }
