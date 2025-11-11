@@ -1,14 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import '../../assets/scss/admin/AdminSidebar.scss';
-import { FaTachometerAlt, FaUsers, FaHome, FaCogs, FaClipboardList, FaServer, FaShopify } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaHome, FaCogs, FaClipboardList, FaServer, FaShopify, FaGamepad } from 'react-icons/fa';
 
 const Sidebar: React.FC = () => {
   return (
     <div className="admin-sidebar">
       <h2 className="sidebar-title">Admin Dashboard</h2>
       <nav className="sidebar-nav">
-      <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>
+        <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>
           <FaHome className="sidebar-icon" />
           Main Page
         </NavLink>
@@ -31,6 +31,11 @@ const Sidebar: React.FC = () => {
         <NavLink to="/admin/instances" className={({ isActive }) => (isActive ? 'active' : '')}>
           <FaCogs className="sidebar-icon" />
           Instances
+        </NavLink>
+        {/* ✅ 새로 추가: Arena Scenarios */}
+        <NavLink to="/admin/scenarios" className={({ isActive }) => (isActive ? 'active' : '')}>
+          <FaGamepad className="sidebar-icon" />
+          Arena Scenarios
         </NavLink>
         <NavLink to="/admin/item" className={({ isActive }) => (isActive ? 'active' : '')}>
           <FaShopify className="sidebar-icon" />

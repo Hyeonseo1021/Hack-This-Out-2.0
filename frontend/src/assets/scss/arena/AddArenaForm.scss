@@ -12,7 +12,7 @@
   }
 }
 
-// --- 2. CRT 스캔라인 애니메이션 (배경 전체에 적용) ---
+// --- 2. CRT 스캔라인 애니메이션 ---
 @keyframes scan-line-vertical {
   0% {
     transform: translateY(-100%);
@@ -24,8 +24,8 @@
 
 .arena-create-container {
   position: relative;
-  width: 90%; // 원본 90%
-  min-height: 87vh; // 원본 87vh
+  width: 90%;
+  min-height: 87vh;
   background: radial-gradient(circle at 20% 20%, #02010a, #000);
   color: #eafaff;
   display: flex;
@@ -38,14 +38,14 @@
 
   @media (max-width: 768px) {
     padding: 60px 20px;
-    min-height: 100vh; // 모바일에선 뷰포트 꽉 채우기
-    width: 100%; // 모바일에선 꽉 채우기
+    min-height: 100vh;
+    width: 100%;
   }
   @media (max-width: 576px) {
     padding: 40px 15px;
   }
 
-  // --- ⬇️ CRT 오버레이 (가로줄 + 세로 스캔라인) ⬇️ ---
+  // CRT 오버레이
   .crt-overlay {
     position: absolute;
     inset: 0;
@@ -99,37 +99,52 @@
     &::after { left: -2px; text-shadow: 2px 0 #00fff0; }
 
     @keyframes glitch {
-      /* ... */
+      0% { clip: rect(42px, 9999px, 44px, 0); }
+      5% { clip: rect(12px, 9999px, 59px, 0); }
+      10% { clip: rect(48px, 9999px, 29px, 0); }
+      100% { clip: rect(0, 9999px, 0, 0); }
     }
+
     @media (max-width: 576px) {
       font-size: 2rem;
       margin-bottom: 30px;
     }
   }
 
-  // --- ⬇️ 그리드 레이아웃 ⬇️ ---
+  // ✅ 그리드 레이아웃 (3x2로 수정)
   .arena-grid-layout {
     display: grid;
-    width: 95%; // 원본 95%
-    height: 80%; // 원본 80%
-    max-width: 1200px;
+    width: 95%;
+    height: 80%;
+    max-width: 1400px;
     gap: 20px;
 
-    grid-template-columns: 2fr 3fr;
+    // ✅ 3열 레이아웃: main | mode | difficulty
+    //                  log  | mode | difficulty
+    grid-template-columns: 1.5fr 2fr 1.5fr;
     grid-template-rows: auto auto;
     grid-template-areas:
-      'main mode'
-      'log  mode';
+      'main mode difficulty'
+      'log  mode difficulty';
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      grid-template-areas:
+        'main main'
+        'mode difficulty'
+        'log  log';
+    }
 
     @media (max-width: 768px) {
-      display: flex; // 모바일에선 그리드 대신 flex-column 사용
+      display: flex;
       flex-direction: column;
       width: 100%;
       height: auto;
     }
   }
 
-  // --- ⬇️ 공통 창 스타일 ⬇️ ---
+  // 공통 창 스타일
   .widget-window {
     background: rgba(10, 10, 20, 0.6);
     border: 1px solid rgba(0, 255, 255, 0.2);
@@ -140,12 +155,12 @@
     overflow: hidden;
     animation: widget-load-in 0.5s ease-out forwards;
     
-    // ⬇️ 'mode' 창이 세로로 길어지도록 설정 ⬇️
     display: flex;
     flex-direction: column;
 
     &.main-controls { grid-area: main; }
     &.mode-selector  { grid-area: mode; }
+    &.difficulty-selector { grid-area: difficulty; } // ✅ 추가
     &.system-log     { grid-area: log; }
 
     .widget-titlebar {
@@ -155,16 +170,14 @@
       color: #00f6ff;
       border-bottom: 1px solid rgba(0, 255, 255, 0.15);
       text-shadow: 0 0 5px #00f6ff;
-      flex-shrink: 0; // 타이틀바는 줄어들지 않음
+      flex-shrink: 0;
     }
 
     .widget-content {
       padding: 20px;
-      // ⬇️ 내용이 많아지면 스크롤 ⬇️
       overflow-y: auto; 
       flex-grow: 1;
 
-      // ⬇️ 스크롤바 스타일링 (선택적) ⬇️
       &::-webkit-scrollbar {
         width: 6px;
       }
@@ -178,51 +191,81 @@
     }
   }
 
-  // 폼 그룹 스타일
+  // 폼 그룹
   .form-group {
-    /* ... (변경 없음) ... */
     margin-bottom: 20px;
-    label { display: block; color: #00f6ff; font-size: 0.9rem; margin-bottom: 6px; letter-spacing: 1px; }
-    input { width: 100%; padding: 10px; border: 1px solid #00f6ff55; border-radius: 4px; background: #050510; color: #eafaff; transition: 0.2s; font-size: 1rem;
-      &:focus { outline: none; box-shadow: 0 0 10px #00f6ff; }
+    
+    label { 
+      display: block; 
+      color: #00f6ff; 
+      font-size: 0.9rem; 
+      margin-bottom: 6px; 
+      letter-spacing: 1px; 
+    }
+    
+    input { 
+      width: 100%; 
+      padding: 10px; 
+      border: 1px solid #00f6ff55; 
+      border-radius: 4px; 
+      background: #050510; 
+      color: #eafaff; 
+      transition: 0.2s; 
+      font-size: 1rem;
+      
+      &:focus { 
+        outline: none; 
+        box-shadow: 0 0 10px #00f6ff; 
+      }
     }
   }
 
   .form-inline {
-    /* ... (변경 없음) ... */
-    display: flex; gap: 20px;
-    .form-group.small { flex: 1; margin-bottom: 0; }
-    @media (max-width: 576px) { flex-direction: column; gap: 20px; .form-group.small { margin-bottom: 0; } }
+    display: flex; 
+    gap: 20px;
+    
+    .form-group.small { 
+      flex: 1; 
+      margin-bottom: 0; 
+    }
+    
+    @media (max-width: 576px) { 
+      flex-direction: column; 
+      gap: 20px; 
+      
+      .form-group.small { 
+        margin-bottom: 0; 
+      } 
+    }
   }
 
-  // --- ⬇️ (수정됨) 'mode-grid' -> 'mode-table-layout' ⬇️ ---
+  // 모드 선택 (테이블 레이아웃)
   .mode-table-layout {
     display: flex;
     flex-direction: column;
-    gap: 10px; // 행(row) 사이의 간격
+    gap: 10px;
   }
 
-  // --- ⬇️ (수정됨) 'mode-card' -> 'mode-row' ⬇️ ---
   .mode-row {
     display: flex;
-    align-items: center; // 아이콘과 텍스트를 세로 중앙 정렬
+    align-items: center;
     background: rgba(0, 10, 15, 0.7);
     border: 2px solid #222;
     padding: 15px;
     cursor: pointer;
     transition: all 0.2s ease;
     border-radius: 8px;
-    width: 100%; // 꽉 채우기
+    width: 100%;
 
     .mode-icon {
       font-size: 24px;
-      margin-right: 15px; // 아이콘과 텍스트 사이 간격
+      margin-right: 15px;
     }
     
     .mode-info {
       display: flex;
-      flex-direction: column; // 제목과 설명을 세로로 쌓음
-      flex: 1; // 남은 공간을 모두 차지
+      flex-direction: column;
+      flex: 1;
     }
 
     .mode-title {
@@ -239,24 +282,75 @@
     
     &:hover {
       border-color: #00f6ff;
-      transform: translateY(-2px); // 살짝 뜨는 효과
+      transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0, 246, 255, 0.1);
     }
     
     &.selected {
-      border-color: #00ff6a; // 그린
+      border-color: #00ff6a;
       background: rgba(0, 255, 106, 0.1);
       box-shadow: 0 0 12px #00ff6a55;
       transform: translateY(-2px);
     }
   }
 
-  // --- ⬇️ 시스템 로그 창 스타일 ⬇️ ---
+  // ✅ 난이도 선택 (그리드 레이아웃)
+  .difficulty-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .difficulty-card {
+    background: rgba(0, 10, 15, 0.7);
+    border: 2px solid #222;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    text-align: center;
+
+    .difficulty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .difficulty-title {
+      color: #00f6ff;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .difficulty-desc {
+      color: #999;
+      font-size: 0.75rem;
+    }
+
+    &:hover {
+      border-color: #00f6ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 246, 255, 0.1);
+    }
+
+    &.selected {
+      border-color: #00ff6a;
+      background: rgba(0, 255, 106, 0.1);
+      box-shadow: 0 0 12px #00ff6a55;
+      transform: translateY(-2px);
+
+      .difficulty-title {
+        color: #00ff6a;
+      }
+    }
+  }
+
+  // 시스템 로그
   .system-log {
     .widget-content {
       display: flex;
       flex-direction: column;
-      height: 90%; // 원본 90%
+      height: 90%;
     }
     
     .log-area {
@@ -268,11 +362,13 @@
       min-height: 80px;
       margin-bottom: 15px;
       font-size: 0.9rem;
-      overflow-y: auto; // 로그가 길어지면 스크롤
+      overflow-y: auto;
       
       .log-entry {
         margin: 0 0 5px;
+        
         &.info { color: #999; }
+        &.success { color: #00ff6a; } // ✅ 추가
         &.processing { color: #00f6ff; }
         &.error { color: #ff0066; }
       }
@@ -281,9 +377,27 @@
 
   // 버튼
   .neon-button {
-    /* ... (변경 없음) ... */
-    display: block; width: 100%; padding: 12px; background: transparent; border: 2px solid #00f6ff; color: #00f6ff; font-size: 1rem; cursor: pointer; border-radius: 6px; transition: all 0.25s ease; text-transform: uppercase; letter-spacing: 2px;
-    &:hover { background: #00f6ff22; box-shadow: 0 0 15px #00f6ff; }
-    &:disabled { opacity: 0.6; cursor: not-allowed; }
+    display: block; 
+    width: 100%; 
+    padding: 12px; 
+    background: transparent; 
+    border: 2px solid #00f6ff; 
+    color: #00f6ff; 
+    font-size: 1rem; 
+    cursor: pointer; 
+    border-radius: 6px; 
+    transition: all 0.25s ease; 
+    text-transform: uppercase; 
+    letter-spacing: 2px;
+    
+    &:hover { 
+      background: #00f6ff22; 
+      box-shadow: 0 0 15px #00f6ff; 
+    }
+    
+    &:disabled { 
+      opacity: 0.6; 
+      cursor: not-allowed; 
+    }
   }
 }

@@ -246,10 +246,7 @@ const ArenaRoomPage: React.FC = () => {
 
   return (
     <Main>
-      <div className="battle-cyber-container room-variant">
-        <div className="background-grid"></div>
-        
-        {/* 게임 시작 오버레이 */}
+      {/* 게임 시작 오버레이 */}
         {showStartOverlay && (
           <div className="game-start-overlay">
             <div className="start-overlay-content">
@@ -263,6 +260,8 @@ const ArenaRoomPage: React.FC = () => {
             </div>
           </div>
         )}
+      <div className="battle-cyber-container room-variant">
+        <div className="background-grid"></div>
 
         <div className="cyber-module">
           <h1 className="cyber-title" data-text={arenaName}>
