@@ -43,6 +43,8 @@ const ArenaPlayPage = lazy(() => import('./pages/arena/ArenaPlayPage'));
 const ArenaResultPage = lazy(() => import('./pages/arena/ArenaResultPage'));
 const MatchPage = lazy(() => import('./pages/match/MatchPage'));
 const ShopPage = lazy(() => import('./pages/shop/ShopPage'));
+const InventoryPage = lazy(() => import('./pages/shop/InventoryPage'));
+const RoulettePage = lazy(() => import('./pages/shop/RoulettePage'));
 const ItemManagement = lazy(() => import('./pages/admin/ItemManagement'));
 const PlayPage = lazy(() => import('./pages/TutorialPlayPage'));
 const routes: RouteObject[] = [
@@ -266,6 +268,22 @@ const routes: RouteObject[] = [
           <ProtectedRoute>
             <ShopPage />
           </ProtectedRoute>
+        ),
+      },
+      { 
+        path: 'inventory',
+        element: (
+          <ProtectedRoute>
+           <InventoryPage />
+          </ProtectedRoute> 
+        ),
+      },
+      { 
+        path: 'roulette',
+        element: (
+         <ProtectedRoute>
+          <RoulettePage />
+        </ProtectedRoute> 
         ),
       },
       {

@@ -114,13 +114,12 @@ const ArenaRoomPage: React.FC = () => {
     }
   };
 
+  // 유저 정보와 아레나 정보를 로드하는 useEffect
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 1. 유저 정보 먼저 가져오기
         const userRes = await getUserStatus();
         const userId = userRes?.user?._id ?? userRes?.data?.user?._id ?? null;
-        console.log('✅ Current User ID:', userId);
         setCurrentUserId(userId);
 
         if (!arenaId) {
@@ -128,12 +127,8 @@ const ArenaRoomPage: React.FC = () => {
           return;
         }
 
-        // 2. 아레나 정보 가져오기
         const arenaRes = await getArenaById(arenaId);
         const data = arenaRes?.data || arenaRes;
-        
-        console.log('✅ Arena Data:', data);
-        console.log('✅ Participants:', data?.participants);
         
         setArenaName(data?.name ?? 'Arena Room');
         setTempArenaName(data?.name ?? 'Arena Room');
@@ -156,8 +151,6 @@ const ArenaRoomPage: React.FC = () => {
       return;
     }
 
-    console.log('🔌 Setting up socket listeners for arena:', arenaId);
-
     socket.off('arena:update');
     socket.off('arena:start');
     socket.off('arena:join-failed');
@@ -166,7 +159,6 @@ const ArenaRoomPage: React.FC = () => {
     socket.off('arena:kicked');
 
     socket.on('arena:update', payload => {
-      console.log('📡 arena:update received:', payload);
       if (payload.arenaId !== arenaId) return;
       
       setStatus(payload.status || 'waiting');
@@ -179,13 +171,11 @@ const ArenaRoomPage: React.FC = () => {
     });
 
     socket.on('arena:start', ({ arenaId: startedId }) => {
-      console.log('🎮 arena:start received:', startedId);
       if (startedId === arenaId) {
         skipLeaveRef.current = true;
         setShowStartOverlay(true);
         setCountdown(3);
         
-        // 카운트다운 애니메이션
         const countdownInterval = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
@@ -196,7 +186,6 @@ const ArenaRoomPage: React.FC = () => {
           });
         }, 1000);
         
-        // 3초 후 페이지 이동
         setTimeout(() => {
           navigate(`/arena/play/${arenaId}`);
         }, 3500);
@@ -204,34 +193,32 @@ const ArenaRoomPage: React.FC = () => {
     });
 
     socket.on('arena:join-failed', ({ reason }) => {
-      console.log('❌ arena:join-failed:', reason);
       alert(reason);
       navigate('/arena');
     });
 
     socket.on('arena:chatMessage', (payload: ChatMessage) => {
-      setChatMessages((prev) => [...prev, payload]);
+      setChatMessages(prev => [...prev, payload]);
     });
 
     socket.on('arena:notify', (payload: { type: 'system', message: string }) => {
-      setChatMessages((prev) => [...prev, {
+      setChatMessages(prev => [...prev, {
         ...payload,
         senderName: 'SYSTEM',
         timestamp: new Date().toISOString()
       }]);
     });
-    
+
     socket.on('arena:kicked', ({ reason }: { reason: string }) => {
       alert(reason);
-      skipLeaveRef.current = true; // 강퇴당했으므로 leave emit 방지
+      skipLeaveRef.current = true;
       navigate('/arena');
     });
 
-    // 아레나 입장
-    console.log('🚪 Emitting arena:join...');
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {
+      socket.emit('arena:leave', { arenaId, userId: currentUserId }); // 페이지 떠날 때 방을 나간다
       socket.off('arena:update');
       socket.off('arena:start');
       socket.off('arena:join-failed');
@@ -244,18 +231,6 @@ const ArenaRoomPage: React.FC = () => {
   useEffect(() => {
     chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
-  
-  useEffect(() => {
-    console.log('=== ARENA ROOM STATE ===');
-    console.log('Current User ID:', currentUserId);
-    console.log('Host ID:', hostId);
-    console.log('Is Host:', isHost);
-    console.log('Status:', status);
-    console.log('Participants:', participants);
-    console.log('Active Participants:', activeParticipants);
-    console.log('My Participant:', myParticipant);
-    console.log('========================');
-  }, [currentUserId, hostId, isHost, status, participants, activeParticipants, myParticipant]);
 
   if (loading) {
     return (
@@ -269,7 +244,7 @@ const ArenaRoomPage: React.FC = () => {
     );
   }
 
-return (
+  return (
     <Main>
       <div className="battle-cyber-container room-variant">
         <div className="background-grid"></div>
@@ -288,19 +263,16 @@ return (
             </div>
           </div>
         )}
-        
+
         <div className="cyber-module">
           <h1 className="cyber-title" data-text={arenaName}>
-             {arenaName}
+            {arenaName}
           </h1>
-          
-        
+
           <div className="room-content-wrapper">
-            
-            {/* === 왼쪽 열: 참가자 목록 === */}
+            {/* 왼쪽 열: 참가자 목록 */}
             <div className="participant-list">
               {displaySlots.map((p, index) => {
-                // (1) 참가자가 있는 슬롯
                 if (p) {
                   const userObj = typeof p.user === 'object' ? p.user : { _id: p.user, username: '...loading' };
                   const uid = userObj._id;
@@ -309,12 +281,7 @@ return (
                   const isUserHost = uid === hostId;
 
                   return (
-                    <div
-                      key={uid || index}
-                      className={`participant-card ${isMe ? 'is-me' : ''} ${isUserHost ? 'is-host' : ''} ${
-                        p.isReady ? 'is-ready' : ''
-                      }`}
-                    >
+                    <div key={uid || index} className={`participant-card ${isMe ? 'is-me' : ''} ${isUserHost ? 'is-host' : ''} ${p.isReady ? 'is-ready' : ''}`}>
                       <div className="card-content">
                         <div className="player-info">
                           <span className="player-slot">PLAYER {index + 1}</span>
@@ -327,47 +294,37 @@ return (
                             <span className="status">{p.isReady ? 'READY' : 'WAITING'}</span>
                           )}
                         </div>
-                        
+
                         {/* 강퇴 버튼 */}
                         {isHost && !isMe && status === 'waiting' && (
-                          <button
-                            className="cyber-button kick-btn"
-                            onClick={() => handleKick(uid, username)}
-                          >
+                          <button className="cyber-button kick-btn" onClick={() => handleKick(uid, username)}>
                             강퇴
                           </button>
                         )}
                       </div>
                     </div>
                   );
-                } 
-                // (2) 빈 슬롯
-                else {
+                } else {
                   return (
                     <div key={`empty-${index}`} className="participant-card is-empty">
                       <div className="card-content">
-                         <div className="player-info">
-                           <span className="player-slot">PLAYER {index + 1}</span>
-                           <span className="username">... WAITING FOR PLAYER ...</span>
-                         </div>
+                        <div className="player-info">
+                          <span className="player-slot">PLAYER {index + 1}</span>
+                          <span className="username">... WAITING FOR PLAYER ...</span>
+                        </div>
                       </div>
                     </div>
                   );
                 }
               })}
             </div>
-            
-            {/* === [추가] 오른쪽 열: 채팅 + 버튼 === */}
+
+            {/* 오른쪽 열: 채팅 + 버튼 */}
             <div className="right-column">
-              
-              {/* 채팅창 */}
               <div className="chat-module">
                 <div className="chat-messages">
                   {chatMessages.map((msg, index) => (
-                    <div 
-                      key={index} 
-                      className={`chat-message ${msg.type === 'system' ? 'system-message' : ''}`}
-                    >
+                    <div key={index} className={`chat-message ${msg.type === 'system' ? 'system-message' : ''}`}>
                       {msg.type === 'chat' && <strong>{msg.senderName}: </strong>}
                       {msg.message}
                     </div>
@@ -388,32 +345,19 @@ return (
                     placeholder="메시지 입력..."
                     disabled={status !== 'waiting'}
                   />
-                  <button 
-                    className="cyber-button" 
-                    onClick={handleSendMessage} 
-                    disabled={!currentMessage.trim() || status !== 'waiting'}
-                  >
+                  <button className="cyber-button" onClick={handleSendMessage} disabled={!currentMessage.trim() || status !== 'waiting'}>
                     전송
                   </button>
                 </div>
               </div>
 
-              {/* 하단 버튼 영역 (위치 이동) */}
               <div className="footer-actions">
                 {isHost ? (
-                  <button
-                    className="cyber-button start-btn"
-                    disabled={!everyoneExceptHostReady || isStarting || status !== 'waiting'}
-                    onClick={handleStart}
-                  >
+                  <button className="cyber-button start-btn" disabled={!everyoneExceptHostReady || isStarting || status !== 'waiting'} onClick={handleStart}>
                     {isStarting ? 'STARTING...' : 'START GAME'}
                   </button>
                 ) : (
-                  <button
-                    className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`}
-                    disabled={status !== 'waiting'}
-                    onClick={toggleReady}
-                  >
+                  <button className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`} disabled={status !== 'waiting'} onClick={toggleReady}>
                     {myParticipant?.isReady ? 'CANCEL' : 'READY'}
                   </button>
                 )}
@@ -421,13 +365,8 @@ return (
                   LEAVE
                 </button>
               </div>
-              
             </div>
-            {/* ================ */}
-
           </div>
-
-          
         </div>
       </div>
     </Main>

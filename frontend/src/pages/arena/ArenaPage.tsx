@@ -118,7 +118,7 @@ const ArenaPage: React.FC = () => {
 
   const handleEnterArena = async (arenaId: string) => {
     const arena = arenas.find(a => a._id === arenaId);
-    
+
     if (!arena) {
       console.log('[handleEnterArena] Arena not found:', arenaId);
       return;
@@ -127,7 +127,7 @@ const ArenaPage: React.FC = () => {
     try {
       // 서버에 참가 여부 확인 요청
       const { isParticipant, hasLeft } = await checkArenaParticipation(arenaId);
-      
+
       // 이미 참가 중인 경우
       if (isParticipant) {
         if (hasLeft) {
@@ -138,55 +138,53 @@ const ArenaPage: React.FC = () => {
           
           if (confirmReconnect) {
             console.log('[handleEnterArena] Reconnecting to arena:', arenaId);
-            navigate(`/arena/play/${arenaId}`);
+            
+            // 방 상태가 "대기 중"일 때만 대기방으로 이동
+            if (arena.status === 'waiting') {
+              navigate(`/arena/${arenaId}`);
+            } else {
+              // 게임이 시작되었으면 플레이 화면으로 이동
+              navigate(`/arena/play/${arenaId}`);
+            }
           }
         } else {
           // 이미 참가 중 - 바로 입장
           console.log('[handleEnterArena] Already in arena, rejoining:', arenaId);
-          navigate(`/arena/play/${arenaId}`);
+          // 게임이 시작되지 않은 경우에는 대기방으로 가야 하므로
+          if (arena.status === 'waiting') {
+            navigate(`/arena/${arenaId}`);
+          } else {
+            navigate(`/arena/play/${arenaId}`);
+          }
         }
         return;
       }
 
       // 새로 입장하는 경우
-      const canEnter = 
-        (arena.status === 'waiting' || arena.status === 'started') && 
-        arena.activeParticipantsCount < arena.maxParticipants;
-
-      if (canEnter) {
-        if (arena.status === 'started') {
-          alert('This game has already started. You cannot join.');
-          return;
-        }
-        
-        console.log('[handleEnterArena] Entering new arena:', arenaId);
-        navigate(`/arena/${arenaId}`);
-      } else {
-        console.log('[handleEnterArena] Cannot enter room:', {
-          arenaId,
-          status: arena.status,
-          participants: arena.activeParticipantsCount,
-          maxParticipants: arena.maxParticipants
-        });
-        
-        if (arena.activeParticipantsCount >= arena.maxParticipants) {
+      if (arena.status === 'waiting') {
+        // 대기 중인 아레나에만 참가 가능
+        if (arena.activeParticipantsCount < arena.maxParticipants) {
+          console.log('[handleEnterArena] Entering new arena:', arenaId);
+          navigate(`/arena/${arenaId}`); // 대기방으로 이동
+        } else {
           alert('This room is full.');
-        } else if (arena.status === 'ended') {
-          alert('This game has ended.');
         }
+      } else if (arena.status === 'started') {
+        // 게임이 시작된 경우
+        alert('This game has already started. You cannot join.');
+      } else if (arena.status === 'ended') {
+        // 게임이 종료된 경우
+        alert('This game has ended.');
       }
     } catch (error) {
       console.error('[handleEnterArena] Error checking participation:', error);
-      // 에러 시 기본 로직으로 진행
-      const canEnter = 
-        (arena.status === 'waiting') && 
-        arena.activeParticipantsCount < arena.maxParticipants;
-        
-      if (canEnter) {
+      // 에러 시 대기 방으로 이동
+      if (arena.status === 'waiting' && arena.activeParticipantsCount < arena.maxParticipants) {
         navigate(`/arena/${arenaId}`);
       }
     }
   };
+
 
   // 정렬된 방 목록 (waiting 먼저)
   const sortedArenas = [...arenas].sort((a, b) => {

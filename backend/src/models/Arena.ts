@@ -5,7 +5,6 @@ const ArenaSchema = new mongoose.Schema({
     type: String,
     required: true,
     maxlength: 30,
-    unique: true
   },
   host: {
     type: mongoose.Schema.Types.ObjectId,
@@ -30,7 +29,6 @@ const ArenaSchema = new mongoose.Schema({
     max: 8
   },
 
-  // 🎮 아레나 모드
   mode: {
     type: String,
     enum: [
@@ -43,7 +41,6 @@ const ArenaSchema = new mongoose.Schema({
     required: true
   },
 
-  // ⚙️ 모드별 세부 설정
   modeSettings: {
     terminalRace: {
       commandLimit: { type: Number, default: 50 } // 최대 명령어 수
@@ -68,19 +65,16 @@ const ArenaSchema = new mongoose.Schema({
     }
   },
 
-  // 🕒 시간 관련
-  duration: { type: Number, default: 10 }, // 분 단위
+  duration: { type: Number, default: 10 }, 
   startTime: { type: Date, required: false },
   endTime: { type: Date, required: false },
 
-  // 🧩 진행 상태
   status: {
     type: String,
     enum: ['waiting', 'started', 'ended'],
     default: 'waiting'
   },
 
-  // 🏆 결과 관련
   submissions: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     submittedAt: Date,
@@ -97,7 +91,6 @@ const ArenaSchema = new mongoose.Schema({
   },
   firstSolvedAt: { type: Date, default: null },
 
-  // 🎁 경험치 및 설정
   arenaExp: { type: Number, default: 50 },
   settings: {
     endOnFirstSolve: { type: Boolean, default: true },

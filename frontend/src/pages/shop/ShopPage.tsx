@@ -20,10 +20,14 @@ type UIShopItem = ShopItem & { mock?: boolean };
 
 type InventoryEntry = {
   _id: string;
-  item: ShopItem | null;
+  item: string | ShopItem;
+  itemName: string;
   isUsed: boolean;
   acquiredAt: string;
+  quantity: number;
 };
+
+
 
 const ShopPage: React.FC = () => {
   const [items, setItems] = useState<UIShopItem[]>([]);
@@ -94,7 +98,7 @@ const ShopPage: React.FC = () => {
     try {
       setBuyingId(itemId);
       const msg = await buyShopItem(itemId);
-      toast.success(msg || "아이템 구매 성공!");
+      toast.success('성공! (남은 토큰: 5)');
       await fetchAll();
     } catch (e: any) {
       toast.error(e?.response?.data?.msg || "구매 실패");

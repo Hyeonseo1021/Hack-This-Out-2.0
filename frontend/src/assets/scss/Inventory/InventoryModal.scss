@@ -1,0 +1,81 @@
+.inventory-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.inventory-modal {
+  background: #050611;
+  border: 2px solid #00f6ff;
+  border-radius: 10px;
+  padding: 2rem;
+  width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: #eafaff;
+  font-family: 'Orbitron', sans-serif;
+  position: relative;
+  box-shadow: 0 0 20px #00f6ff66;
+
+  h2 {
+    text-align: center;
+    color: #00f6ff;
+    margin-bottom: 1rem;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #00f6ff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: 0.2s;
+
+    &:hover {
+      color: #ff00c1;
+    }
+  }
+
+  .inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .inventory-item {
+      border: 1px solid #00f6ff44;
+      padding: 1rem;
+      border-radius: 8px;
+      transition: 0.2s;
+
+      &:hover {
+        background: #00f6ff10;
+      }
+
+      h3 {
+        color: #00f6ff;
+        margin-bottom: 0.3rem;
+      }
+      p {
+        font-size: 0.9rem;
+        color: #a4dfff;
+        margin-bottom: 0.4rem;
+      }
+      span {
+        font-size: 0.8rem;
+        color: #9efcff;
+      }
+    }
+  }
+
+  .empty {
+    text-align: center;
+    color: #aaa;
+  }
+}
