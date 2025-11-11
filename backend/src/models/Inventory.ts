@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-/** 🎒 인벤토리 스키마 */
 const InventorySchema = new mongoose.Schema(
   {
     user: {
