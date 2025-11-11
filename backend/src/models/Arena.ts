@@ -115,6 +115,7 @@ const ArenaSchema = new mongoose.Schema({
   settings: {
     endOnFirstSolve: { type: Boolean, default: true },
     graceMs: { type: Number, default: 90_000 },
+
   }
 
 }, {

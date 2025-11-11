@@ -759,3 +759,61 @@
   }
 }
 
+
+// ArenaRoomPage.scss에 추가할 스타일
+
+.arena-header-info {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  .cyber-title {
+    margin-bottom: 0.75rem;
+  }
+
+  .arena-metadata {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+
+    .mode-badge {
+      padding: 6px 16px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 153, 204, 0.2) 100%);
+      border: 2px solid rgba(0, 212, 255, 0.5);
+      border-radius: 20px;
+      color: #00d4ff;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+      animation: pulse-subtle 2s ease-in-out infinite;
+    }
+
+    .difficulty-badge {
+      padding: 6px 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px currentColor;
+      animation: pulse-subtle 2s ease-in-out infinite;
+      animation-delay: 0.5s;
+    }
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}

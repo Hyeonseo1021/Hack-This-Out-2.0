@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
+import '../../../assets/scss/admin/DefenseBattleForm.scss';
 
 interface DefenseAction {
   name: string;
@@ -50,14 +51,12 @@ const DefenseBattleForm: React.FC<Props> = ({ data, onChange }) => {
   };
 
   return (
-    <div>
-      <h3 style={{ color: '#00d4ff', marginBottom: '15px' }}>Defense Battle Settings</h3>
+    <div className="defense-battle-form">
+      <h3>Defense Battle Settings</h3>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-        <div>
-          <label style={{ fontSize: '11px', opacity: 0.7, display: 'block', marginBottom: '4px' }}>
-            Duration (seconds)
-          </label>
+      <div className="form-grid-2">
+        <div className="form-field">
+          <label>Duration (seconds)</label>
           <input
             type="number"
             min={300}
@@ -68,10 +67,8 @@ const DefenseBattleForm: React.FC<Props> = ({ data, onChange }) => {
           />
         </div>
 
-        <div>
-          <label style={{ fontSize: '11px', opacity: 0.7, display: 'block', marginBottom: '4px' }}>
-            Starting Health
-          </label>
+        <div className="form-field">
+          <label>Starting Health</label>
           <input
             type="number"
             min={50}
@@ -85,33 +82,23 @@ const DefenseBattleForm: React.FC<Props> = ({ data, onChange }) => {
 
       {/* Actions */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <label style={{ fontSize: '11px', opacity: 0.7 }}>Actions ({data.actions.length})</label>
-          <button type="button" onClick={addAction} style={{ padding: '4px 8px', fontSize: '11px' }}>
+        <div className="section-header">
+          <label>Actions ({data.actions.length})</label>
+          <button type="button" onClick={addAction}>
             <FaPlus /> Add Action
           </button>
         </div>
 
         {data.actions.map((action, idx) => (
-          <div key={idx} style={{ 
-            background: '#16213e', 
-            padding: '10px', 
-            borderRadius: '4px', 
-            marginBottom: '8px',
-            border: '1px solid #2d2d44'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#999' }}>Action {idx + 1}</span>
-              <button 
-                type="button" 
-                onClick={() => removeAction(idx)}
-                style={{ padding: '2px 6px', fontSize: '10px' }}
-              >
+          <div key={idx} className="action-card">
+            <div className="action-header">
+              <span>Action {idx + 1}</span>
+              <button type="button" onClick={() => removeAction(idx)}>
                 <FaTrash />
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '8px' }}>
+            <div className="action-inputs">
               <input
                 type="text"
                 placeholder="Action name"

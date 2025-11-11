@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
+import '../../../assets/scss/admin/CaptureServerForm.scss';
 
 interface ServerData {
   id: string;
@@ -50,37 +51,27 @@ const CaptureServerForm: React.FC<Props> = ({ data, onChange }) => {
   };
 
   return (
-    <div>
-      <h3 style={{ color: '#00d4ff', marginBottom: '15px' }}>Capture The Server Settings</h3>
+    <div className="capture-server-form">
+      <h3>Capture The Server Settings</h3>
 
-      <div style={{ marginBottom: '10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <label style={{ fontSize: '11px', opacity: 0.7 }}>Servers ({data.servers.length})</label>
-          <button type="button" onClick={addServer} style={{ padding: '4px 8px', fontSize: '11px' }}>
+      <div>
+        <div className="section-header">
+          <label>Servers ({data.servers.length})</label>
+          <button type="button" onClick={addServer}>
             <FaPlus /> Add Server
           </button>
         </div>
 
         {data.servers.map((server, idx) => (
-          <div key={idx} style={{ 
-            background: '#16213e', 
-            padding: '10px', 
-            borderRadius: '4px', 
-            marginBottom: '8px',
-            border: '1px solid #2d2d44'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#999' }}>Server {idx + 1}</span>
-              <button 
-                type="button" 
-                onClick={() => removeServer(idx)}
-                style={{ padding: '2px 6px', fontSize: '10px' }}
-              >
+          <div key={idx} className="server-card">
+            <div className="server-header">
+              <span>Server {idx + 1}</span>
+              <button type="button" onClick={() => removeServer(idx)}>
                 <FaTrash />
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: '8px' }}>
+            <div className="server-inputs">
               <input
                 type="text"
                 placeholder="ID"

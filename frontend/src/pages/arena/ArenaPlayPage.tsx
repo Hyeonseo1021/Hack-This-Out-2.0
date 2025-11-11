@@ -45,6 +45,18 @@ const ArenaPlayPage: React.FC = () => {
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
 
+  // Mode 이름 변환 헬퍼
+  const getModeName = (mode: string) => {
+    const names: Record<string, string> = {
+      'TERMINAL_HACKING_RACE': 'Terminal Race',
+      'CYBER_DEFENSE_BATTLE': 'Defense Battle',
+      'CAPTURE_THE_SERVER': 'Capture Server',
+      'HACKERS_DECK': "Hacker's Deck",
+      'EXPLOIT_CHAIN_CHALLENGE': 'Exploit Chain'
+    };
+    return names[mode] || mode;
+  };
+
   const getParticipantStatus = (p: Participant) => {
     if (p.hasLeft) return { text: 'Left', color: '#666' };
     
@@ -201,25 +213,43 @@ const ArenaPlayPage: React.FC = () => {
       participants: participants
     };
 
+    // DB에 저장된 실제 Mode 값으로 비교
     switch (mode) {
-      case 'Terminal Race':
+      case 'TERMINAL_HACKING_RACE':
         return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
-      case "Hacker's Deck":
+      
+      case 'CYBER_DEFENSE_BATTLE':
         return (
           <div className="coming-soon">
-            <h2>Hacker's Deck</h2>
+            <h2>⚔️ Defense Battle</h2>
             <p>Coming Soon</p>
           </div>
         );
-      case 'Defense Battle':
-      case 'Capture Server':
-      case 'Exploit Chain':
+      
+      case 'CAPTURE_THE_SERVER':
         return (
           <div className="coming-soon">
-            <h2>{mode}</h2>
+            <h2>🏰 Capture Server</h2>
             <p>Coming Soon</p>
           </div>
         );
+      
+      case 'HACKERS_DECK':
+        return (
+          <div className="coming-soon">
+            <h2>🎲 Hacker's Deck</h2>
+            <p>Coming Soon</p>
+          </div>
+        );
+      
+      case 'EXPLOIT_CHAIN_CHALLENGE':
+        return (
+          <div className="coming-soon">
+            <h2>🎯 Exploit Chain</h2>
+            <p>Coming Soon</p>
+          </div>
+        );
+      
       default:
         return (
           <div className="error-state">
@@ -243,7 +273,7 @@ const ArenaPlayPage: React.FC = () => {
             <span className={`status-badge status-${status}`}>
               {status.toUpperCase()}
             </span>
-            <span className="mode-badge">{mode || 'Loading...'}</span>
+            <span className="mode-badge">{mode ? getModeName(mode) : 'Loading...'}</span>
           </div>
           
           <div className="header-right">
@@ -316,7 +346,7 @@ const ArenaPlayPage: React.FC = () => {
               </div>
 
               {/* Activity Feed - 자신의 활동만 표시 */}
-              {mode === 'Terminal Race' && status === 'started' && (
+              {mode === 'TERMINAL_HACKING_RACE' && status === 'started' && (
                 <div className="sidebar-section">
                   <ActivityFeed 
                     socket={socket} 

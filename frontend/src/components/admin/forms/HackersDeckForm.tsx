@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
+import '../../../assets/scss/admin/HackersDeckForm.scss';
 
 interface CardData {
   name: string;
@@ -48,14 +49,12 @@ const HackersDeckForm: React.FC<Props> = ({ data, onChange }) => {
   };
 
   return (
-    <div>
-      <h3 style={{ color: '#00d4ff', marginBottom: '15px' }}>Hacker's Deck Settings</h3>
+    <div className="hackers-deck-form">
+      <h3>Hacker's Deck Settings</h3>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-        <div>
-          <label style={{ fontSize: '11px', opacity: 0.7, display: 'block', marginBottom: '4px' }}>
-            Total Turns
-          </label>
+      <div className="form-grid-2">
+        <div className="form-field">
+          <label>Total Turns</label>
           <input
             type="number"
             min={5}
@@ -66,10 +65,8 @@ const HackersDeckForm: React.FC<Props> = ({ data, onChange }) => {
           />
         </div>
 
-        <div>
-          <label style={{ fontSize: '11px', opacity: 0.7, display: 'block', marginBottom: '4px' }}>
-            Starting Points
-          </label>
+        <div className="form-field">
+          <label>Starting Points</label>
           <input
             type="number"
             min={50}
@@ -83,33 +80,23 @@ const HackersDeckForm: React.FC<Props> = ({ data, onChange }) => {
 
       {/* Cards */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <label style={{ fontSize: '11px', opacity: 0.7 }}>Cards ({data.cards.length})</label>
-          <button type="button" onClick={addCard} style={{ padding: '4px 8px', fontSize: '11px' }}>
+        <div className="section-header">
+          <label>Cards ({data.cards.length})</label>
+          <button type="button" onClick={addCard}>
             <FaPlus /> Add Card
           </button>
         </div>
 
         {data.cards.map((card, idx) => (
-          <div key={idx} style={{ 
-            background: '#16213e', 
-            padding: '10px', 
-            borderRadius: '4px', 
-            marginBottom: '8px',
-            border: '1px solid #2d2d44'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#999' }}>Card {idx + 1}</span>
-              <button 
-                type="button" 
-                onClick={() => removeCard(idx)}
-                style={{ padding: '2px 6px', fontSize: '10px' }}
-              >
+          <div key={idx} className="card-item">
+            <div className="card-header">
+              <span>Card {idx + 1}</span>
+              <button type="button" onClick={() => removeCard(idx)}>
                 <FaTrash />
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '8px' }}>
+            <div className="card-inputs">
               <input
                 type="text"
                 placeholder="Card name"
