@@ -29,38 +29,67 @@ interface Scenario {
   data: any;
 }
 
+// ✅ 새로운 Form 컴포넌트와 완전히 일치하는 초기 데이터 구조
 const getInitialData = (mode: string) => {
   switch (mode) {
     case 'TERMINAL_HACKING_RACE':
       return {
         totalStages: 1,
-        stages: [{ stage: 1, prompt: '', commands: [] }]
+        stages: [{ 
+          stage: 1, 
+          prompt: '', 
+          commands: [],
+          defaultResponse: '유효하지 않은 명령어입니다.'
+        }]
       };
+      
     case 'CYBER_DEFENSE_BATTLE':
       return {
-        duration: 900,
-        teams: ['RED', 'BLUE'],
-        actions: [],
-        startingHealth: 100
+        serverHealth: 100,
+        attackActions: [],
+        defenseActions: [],
+        victoryConditions: {
+          attackTeam: '서버 HP를 0으로 만들기',
+          defenseTeam: '15분 동안 서버 방어'
+        }
       };
+      
     case 'CAPTURE_THE_SERVER':
       return {
-        totalServers: 0,
-        servers: []
+        servers: [],
+        mapLayout: {
+          rows: 3,
+          cols: 3
+        }
       };
+      
     case 'HACKERS_DECK':
       return {
-        totalTurns: 10,
-        startingPoints: 100,
-        cards: []
+        deck: {
+          attack: [],
+          defense: [],
+          special: []
+        },
+        startingHand: 5,
+        startingEnergy: 3,
+        maxTurns: 15,
+        victoryCondition: '상대 HP 0 또는 최대 턴 후 HP 높은 플레이어'
       };
+      
     case 'EXPLOIT_CHAIN_CHALLENGE':
       return {
-        totalChains: 0,
-        chains: []
+        missionBrief: {
+          target: '',
+          goal: '',
+          constraint: ''
+        },
+        steps: [],
+        hintsAvailable: 3,
+        hintPenalty: 5
       };
+      
     default:
-      return { totalStages: 0, stages: [] };
+      return { totalStages: 1, stages: [] };
   }
 };
 
@@ -132,16 +161,16 @@ const ScenariosManagement: React.FC = () => {
 
     switch (form.mode) {
       case 'TERMINAL_HACKING_RACE':
-        if (form.data.stages.length === 0) {
+        if (form.data.stages?.length === 0) {
           alert('At least one stage is required');
           return false;
         }
-        for (let i = 0; i < form.data.stages.length; i++) {
-          if (!form.data.stages[i].prompt.trim()) {
+        for (let i = 0; i < (form.data.stages?.length || 0); i++) {
+          if (!form.data.stages[i].prompt?.trim()) {
             alert(`Stage ${i + 1} prompt is required`);
             return false;
           }
-          if (form.data.stages[i].commands.length === 0) {
+          if (form.data.stages[i].commands?.length === 0) {
             alert(`Stage ${i + 1} must have at least one command`);
             return false;
           }
@@ -149,34 +178,37 @@ const ScenariosManagement: React.FC = () => {
         break;
 
       case 'CYBER_DEFENSE_BATTLE':
-        if (form.data.actions.length === 0) {
-          alert('At least one action is required');
+        if ((form.data.attackActions?.length || 0) === 0 && (form.data.defenseActions?.length || 0) === 0) {
+          alert('At least one attack or defense action is required');
           return false;
         }
         break;
 
       case 'CAPTURE_THE_SERVER':
-        if (form.data.servers.length === 0) {
+        if ((form.data.servers?.length || 0) === 0) {
           alert('At least one server is required');
           return false;
         }
         break;
 
       case 'HACKERS_DECK':
-        if (form.data.cards.length === 0) {
+        const totalCards = (form.data.deck?.attack?.length || 0) + 
+                          (form.data.deck?.defense?.length || 0) + 
+                          (form.data.deck?.special?.length || 0);
+        if (totalCards === 0) {
           alert('At least one card is required');
           return false;
         }
         break;
 
       case 'EXPLOIT_CHAIN_CHALLENGE':
-        if (form.data.chains.length === 0) {
-          alert('At least one chain is required');
+        if ((form.data.steps?.length || 0) === 0) {
+          alert('At least one step is required');
           return false;
         }
-        for (let i = 0; i < form.data.chains.length; i++) {
-          if (form.data.chains[i].vulnerabilities.length === 0) {
-            alert(`Chain ${i + 1} must have at least one vulnerability`);
+        for (let i = 0; i < (form.data.steps?.length || 0); i++) {
+          if (!form.data.steps[i].question?.trim()) {
+            alert(`Step ${i + 1} question is required`);
             return false;
           }
         }
@@ -235,89 +267,103 @@ const ScenariosManagement: React.FC = () => {
       await toggleScenarioActive(id, !currentStatus);
       setScenarios(prev => prev.map(s => s._id === id ? { ...s, isActive: !currentStatus } : s));
     } catch (err) {
-      alert('Failed to toggle scenario status.');
+      alert('Failed to toggle scenario status');
     }
   };
 
   const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`Delete "${title}"?`)) return;
+    if (!window.confirm(`Delete scenario "${title}"?`)) return;
     try {
       await deleteScenario(id);
       setScenarios(prev => prev.filter(s => s._id !== id));
       alert('Scenario deleted!');
     } catch (err) {
-      alert('Failed to delete scenario.');
+      alert('Failed to delete scenario');
     }
   };
 
   const getModeIcon = (mode: string) => {
     const icons: Record<string, string> = {
-      'TERMINAL_HACKING_RACE': '⚡',
-      'CYBER_DEFENSE_BATTLE': '⚔️',
-      'CAPTURE_THE_SERVER': '🏰',
-      'HACKERS_DECK': '🎲',
-      'EXPLOIT_CHAIN_CHALLENGE': '🎯'
+      TERMINAL_HACKING_RACE: '⚡',
+      CYBER_DEFENSE_BATTLE: '⚔️',
+      CAPTURE_THE_SERVER: '🏰',
+      HACKERS_DECK: '🎲',
+      EXPLOIT_CHAIN_CHALLENGE: '🎯'
     };
-    return icons[mode] || '📝';
+    return icons[mode] || '🎮';
   };
 
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
-      'TERMINAL_HACKING_RACE': 'Terminal Race',
-      'CYBER_DEFENSE_BATTLE': 'Defense Battle',
-      'CAPTURE_THE_SERVER': 'Capture Server',
-      'HACKERS_DECK': "Hacker's Deck",
-      'EXPLOIT_CHAIN_CHALLENGE': 'Exploit Chain'
+      TERMINAL_HACKING_RACE: 'Terminal Race',
+      CYBER_DEFENSE_BATTLE: 'Defense Battle',
+      CAPTURE_THE_SERVER: 'Capture Server',
+      HACKERS_DECK: "Hacker's Deck",
+      EXPLOIT_CHAIN_CHALLENGE: 'Exploit Chain'
     };
     return names[mode] || mode;
   };
 
   const getStageCount = (scenario: Scenario) => {
+    if (!scenario || !scenario.data) return '-'; // ✅ data가 비어있을 때 바로 리턴
+
     switch (scenario.mode) {
       case 'TERMINAL_HACKING_RACE':
-        return scenario.data?.totalStages || 0;
+        return `${scenario.data?.stages?.length || 0} stages`;
+
       case 'CYBER_DEFENSE_BATTLE':
-        return scenario.data?.actions?.length || 0;
+        const totalActions =
+          (scenario.data?.attackActions?.length || 0) +
+          (scenario.data?.defenseActions?.length || 0);
+        return `${totalActions} actions`;
+
       case 'CAPTURE_THE_SERVER':
-        return scenario.data?.totalServers || 0;
+        return `${scenario.data?.servers?.length || 0} servers`;
+
       case 'HACKERS_DECK':
-        return scenario.data?.cards?.length || 0;
+        const totalCards =
+          (scenario.data?.deck?.attack?.length || 0) +
+          (scenario.data?.deck?.defense?.length || 0) +
+          (scenario.data?.deck?.special?.length || 0);
+        return `${totalCards} cards`;
+
       case 'EXPLOIT_CHAIN_CHALLENGE':
-        return scenario.data?.totalChains || 0;
+        return `${scenario.data?.steps?.length || 0} steps`;
+
       default:
-        return 0;
+        return '-';
     }
   };
 
-  return (
-    <div className="admin-dashboard">
-      <Sidebar />
 
-      <div className="admin-content scenarios-management">
-        <h1>Arena Scenarios Management</h1>
+  return (
+    <div className="admin-layout scenarios-management">
+      <Sidebar />
+      <div className="admin-content">
+        <h1 className="page-title">🎮 Scenarios Management</h1>
+
         {error && <ErrorMessage message={error} />}
 
-        {/* 생성/수정 폼 */}
-        <div className={`form-container ${editingId ? 'editing' : ''}`}>
+        {/* 폼 섹션 */}
+        <div className="form-card">
           <h2>{editingId ? '✏️ Edit Scenario' : '➕ Create New Scenario'}</h2>
           
           <form onSubmit={onSubmit}>
-            {/* 기본 정보 */}
             <div className="basic-info">
               <div className="form-row-3">
                 <div className="form-group">
-                  <label>Mode *</label>
+                  <label>Game Mode *</label>
                   <select 
                     value={form.mode} 
                     onChange={e => handleModeChange(e.target.value)}
+                    disabled={!!editingId}
                     required
-                    disabled={editingId !== null}
                   >
-                    <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
-                    <option value="CYBER_DEFENSE_BATTLE">⚔️ Defense Battle</option>
-                    <option value="CAPTURE_THE_SERVER">🏰 Capture Server</option>
+                    <option value="TERMINAL_HACKING_RACE">⚡ Terminal Hacking Race</option>
+                    <option value="CYBER_DEFENSE_BATTLE">⚔️ Cyber Defense Battle</option>
+                    <option value="CAPTURE_THE_SERVER">🏰 Capture The Server</option>
                     <option value="HACKERS_DECK">🎲 Hacker's Deck</option>
-                    <option value="EXPLOIT_CHAIN_CHALLENGE">🎯 Exploit Chain</option>
+                    <option value="EXPLOIT_CHAIN_CHALLENGE">🎯 Exploit Chain Challenge</option>
                   </select>
                 </div>
 

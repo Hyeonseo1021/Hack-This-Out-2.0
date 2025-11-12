@@ -1,0 +1,268 @@
+// DefenseBattleForm.scss
+
+.defense-battle-form {
+  h3 {
+    color: #00d4ff;
+    margin: 0 0 20px 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #2d2d44;
+  }
+
+  // Form Section
+  .form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #0f1624;
+    border-radius: 8px;
+    border: 2px solid #2d2d44;
+
+    h4 {
+      color: #fff;
+      margin: 0 0 15px 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      svg {
+        color: #00d4ff;
+      }
+    }
+  }
+
+  // Section Header
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+
+    h4 {
+      margin: 0;
+    }
+
+    .btn-add {
+      padding: 6px 14px;
+      font-size: 13px;
+      background: #00d4ff;
+      border: none;
+      color: #000;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #00b8e6;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 212, 255, 0.3);
+      }
+    }
+  }
+
+  // Form Grid
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Form Field
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      background: #16213e;
+      border: 1px solid #2d2d44;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      transition: all 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: #00d4ff;
+        box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+      }
+
+      &::placeholder {
+        color: #666;
+      }
+    }
+
+    small {
+      font-size: 11px;
+      color: #777;
+      font-style: italic;
+    }
+  }
+
+  // Action Card (공통)
+  .action-card {
+    background: #16213e;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    // 공격 카드
+    &.attack-card {
+      border-color: rgba(248, 113, 113, 0.3);
+
+      &:hover {
+        border-color: rgba(248, 113, 113, 0.6);
+        box-shadow: 0 4px 12px rgba(248, 113, 113, 0.2);
+      }
+
+      .action-header span {
+        color: #f87171;
+      }
+    }
+
+    // 방어 카드
+    &.defense-card {
+      border-color: rgba(96, 165, 250, 0.3);
+
+      &:hover {
+        border-color: rgba(96, 165, 250, 0.6);
+        box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
+      }
+
+      .action-header span {
+        color: #60a5fa;
+      }
+    }
+
+    .action-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #2d2d44;
+
+      span {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      button {
+        padding: 4px 10px;
+        font-size: 11px;
+        background: transparent;
+        border: 1px solid #f87171;
+        color: #f87171;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(248, 113, 113, 0.15);
+        }
+      }
+    }
+
+    .action-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        label {
+          font-size: 11px;
+          color: #999;
+          font-weight: 600;
+        }
+
+        input,
+        select,
+        textarea {
+          width: 100%;
+          padding: 8px;
+          background: #0f1624;
+          border: 1px solid #2d2d44;
+          border-radius: 4px;
+          color: #fff;
+          font-size: 13px;
+
+          &:focus {
+            outline: none;
+            border-color: #00d4ff;
+          }
+
+          &::placeholder {
+            color: #666;
+            font-size: 12px;
+          }
+        }
+
+        select {
+          cursor: pointer;
+        }
+
+        small {
+          font-size: 10px;
+          color: #777;
+          font-style: italic;
+        }
+      }
+
+      // Input Row
+      .input-row-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .input-row-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+}

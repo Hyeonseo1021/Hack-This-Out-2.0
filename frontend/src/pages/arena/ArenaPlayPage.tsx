@@ -8,6 +8,7 @@ import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaPlayPage.scss';
 
 import TerminalRace from '../../components/arena/TerminalRace';
+import DefenseBattle from '../../components/arena/DefenseBattle';
 import ActivityFeed from '../../components/arena/ActivityFeed';
 
 type Participant = {
@@ -251,12 +252,8 @@ const ArenaPlayPage: React.FC = () => {
         return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       
       case 'CYBER_DEFENSE_BATTLE':
-        return (
-          <div className="coming-soon">
-            <h2>⚔️ Defense Battle</h2>
-            <p>Coming Soon</p>
-          </div>
-        );
+        console.log('⚔️ Loading Defense Battle component...');
+        return <DefenseBattle arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       
       case 'CAPTURE_THE_SERVER':
         return (

@@ -5,6 +5,8 @@ import User from '../models/User';
 import { endArenaProcedure }  from './utils/endArenaProcedure';
 import { terminalProcessCommand } from '../services/terminalRace/terminalEngine';
 import { registerTerminalRaceHandlers } from './modes/terminalRaceHandler';
+import { registerDefenseBattleHandlers } from './modes/DefenseBattleHandler';
+import { initializeDefenseBattleTeams } from '../services/defenseBattle/defenseBattleEngine';
 
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const endTimers = new Map<string, NodeJS.Timeout>();
@@ -60,6 +62,10 @@ const scheduleEnd = (arenaId: string, endTime: Date, io: Server) => {
 // --- 메인 소켓 핸들러 등록 ---
 
 export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
+
+  // ✅ 모드별 핸들러 등록
+  registerTerminalRaceHandlers(io, socket);
+  registerDefenseBattleHandlers(io, socket);
 
   // 1. 방 참가 (arena:join)
   socket.on('arena:join', async ({ arenaId, userId }) => {
@@ -221,7 +227,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
   // 3. 시작 (arena:start)
   socket.on('arena:start', async ({ arenaId, userId }) => {
     try {
-      const arena = await Arena.findById(arenaId);
+      const arena = await Arena.findById(arenaId).populate('scenarioId');
       if (!arena) return;
 
       const hostStr = String(arena.host);
@@ -253,6 +259,37 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       arena.startTime = new Date();
       arena.endTime = new Date(arena.startTime.getTime() + arena.timeLimit * 1000);
       await arena.save();
+
+      // ✅ (2) 모드별 초기화
+      if (arena.mode === 'CYBER_DEFENSE_BATTLE') {
+        console.log('⚔️ Initializing Defense Battle teams...');
+        
+        try {
+          const teams = await initializeDefenseBattleTeams(arenaId);
+          
+          console.log('✅ Teams assigned:', {
+            attack: teams.attackTeam.count,
+            defense: teams.defenseTeam.count
+          });
+
+          // 팀 배정 완료 알림
+          io.to(arenaId).emit('arena:notify', {
+            type: 'system',
+            message: '⚔️ 팀이 랜덤으로 배정되었습니다! Attack vs Defense'
+          });
+
+        } catch (error) {
+          console.error('❌ Failed to initialize teams:', error);
+          // 팀 배정 실패 시 게임 시작 취소
+          arena.status = 'waiting';
+          arena.startTime = undefined;
+          arena.endTime = undefined;
+          await arena.save();
+          return socket.emit('arena:start-failed', { 
+            reason: '팀 배정에 실패했습니다. 다시 시도해주세요.' 
+          });
+        }
+      }
       
       // (3) 종료 스케줄링
       if (arena.endTime) {
@@ -328,30 +365,39 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
             
             if (nextHost) { 
               after.host = (nextHost as any)?._id ?? nextHost; 
-              await after.save(); 
+              await after.save();
+              
+              io.to(arenaId).emit('arena:notify', {
+                type: 'system',
+                message: `호스트가 변경되었습니다.`
+              });
+            } else {
+              // 남은 사람이 없으면 방 자동 삭제
+              await Arena.findByIdAndDelete(arenaId);
+              io.emit('arena:room-deleted', arenaId);
+              console.log(`[arena:leave] Arena ${arenaId} deleted as no participants remain.`);
+              return; // 방 삭제 후 더 이상 처리 불필요
             }
           }
         }
       } else {
-        // (3) 시작/종료 후: 명단 유지, 'hasLeft: true'로 설정
+        // (3) 시작 후: hasLeft=true (ArenaProgress는 유지)
         await Arena.updateOne(
           { _id: arenaId, 'participants.user': userId },
           { $set: { 'participants.$.hasLeft': true } }
         );
       }
 
-      socket.leave(arenaId);
-
-      // (4) 방 내부 업데이트 (populate)
+      // (4) 방 전체에 업데이트 방송
       const populated = await Arena.findById(arenaId)
         .populate('participants.user', '_id username')
         .lean();
 
       if (populated) {
         io.to(arenaId).emit('arena:update', {
-          arenaId: String(populated._id || arenaId),
+          arenaId: String(populated._id),
           mode: populated?.mode,
-          status: populated.status || 'waiting',
+          status: populated.status,
           host: String((populated.host as any)?._id ?? populated.host ?? ''),
           startTime: populated.startTime || null,
           endTime: populated.endTime || null,
@@ -364,120 +410,138 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
         });
       }
 
-      // (5) 로비(전역) 업데이트 (lean)
-      const room = await Arena.findById(arenaId)
+      // (5) 로비(전역) 업데이트
+      const summary = await Arena.findById(arenaId)
         .select('name mode status maxParticipants participants.user participants.hasLeft')
         .lean();
-
-      if (room) {
-        const activeParticipantsCount = (room.participants || []).filter(p => !p.hasLeft).length;
-
+      if (summary) {
+        const activeParticipantsCount = (summary.participants || []).filter(p => !p.hasLeft).length;
         io.emit('arena:room-updated', {
-          _id: String(room._id),
-          name: room.name,
-          mode: room.mode, // category -> mode
-          status: room.status,
-          maxParticipants: room.maxParticipants,
+          _id: String(summary._id),
+          name: summary.name,
+          mode: summary.mode,
+          status: summary.status,
+          maxParticipants: summary.maxParticipants,
           activeParticipantsCount: activeParticipantsCount,
         });
       }
 
-      // (6) 방이 비었는지 확인 (대기/시작 상태 모두)
-      if (arena.status === 'waiting' || arena.status === 'started') {
-        await deleteArenaIfEmpty(arenaId, io);
-      }
     } catch (e) {
       console.error('[arena:leave] error:', e);
     }
   });
 
-  // 5. 연결 끊김 (disconnect)
+  // 5. 종료 (arena:end)
+  socket.on('arena:end', async ({ arenaId }) => {
+    try {
+      await endArenaProcedure(arenaId, io);
+    } catch (e) {
+      console.error('[arena:end] error:', e);
+    }
+  });
+
+  // 5-1. disconnect (연결 해제 시 유예 시간 부여)
   socket.on('disconnect', () => {
     const arenaId = (socket as any).arenaId;
-    const userId  = (socket as any).userId;
+    const userId = (socket as any).userId;
+
     if (!arenaId || !userId) return;
 
     const key = `${arenaId}:${userId}`;
-    if (dcTimers.has(key)) return; // 중복 타이머 방지
-
-    // 3초의 재연결 유예 시간
     const timer = setTimeout(async () => {
-      dcTimers.delete(key);
       try {
-        const user = await User.findById(userId).select('username').lean();
-        if (user) {
-          io.to(arenaId).emit('arena:notify', {
-            type: 'system',
-            message: `${user.username}님이 연결이 끊겨 퇴장했습니다.`
-          });
-        }
         const arena = await Arena.findById(arenaId);
         if (!arena) return;
 
-        // 'arena:leave'와 동일한 로직 수행
-        
+        const participant = arena.participants.find(
+          (p: any) => String((p.user as any)?._id ?? p.user) === userId
+        );
+
+        if (!participant) return;
+
+        // (1) 대기 중
         if (arena.status === 'waiting') {
-          // (1) 대기중: 완전 제거 + 호스트 승계
+          const wasHost = String(arena.host) === userId;
+          
           await Arena.updateOne(
             { _id: arenaId },
             { $pull: { participants: { user: userId } } }
           );
-          
-          if (String(arena.host) === String(userId)) {
+
+          if (wasHost) {
             const after = await Arena.findById(arenaId);
-            if (after) {
-              const nextParticipant = after.participants.find(p => !p.hasLeft);
-              const nextHost = nextParticipant?.user;
-              if (nextHost) { 
-                after.host = (nextHost as any)?._id ?? nextHost; 
-                await after.save(); 
+            if (after && after.participants.length > 0) {
+              const next = after.participants.find(p => !p.hasLeft)?.user;
+              if (next) {
+                after.host = (next as any)?._id ?? next;
+                await after.save();
               }
             }
           }
-        } else {
-          // (2) 시작/종료: 'hasLeft: true'
+
+          const user = await User.findById(userId).select('username').lean();
+          if (user) {
+            io.to(arenaId).emit('arena:notify', {
+              type: 'system',
+              message: `${user.username}님이 연결이 끊어졌습니다.`
+            });
+          }
+
+          const populated = await Arena.findById(arenaId)
+            .populate('participants.user', '_id username')
+            .lean();
+          if (populated) {
+            io.to(arenaId).emit('arena:update', {
+              arenaId: String(populated._id || arenaId),
+              mode: populated?.mode,
+              status: populated.status || 'waiting',
+              host: String((populated.host as any)?._id ?? populated.host ?? ''),
+              startTime: populated.startTime || null,
+              endTime: populated.endTime || null,
+              participants: (populated.participants || []).map((pp: any) => ({
+                user: pp.user,
+                isReady: !!pp.isReady,
+                hasLeft: !!pp.hasLeft,
+                progress: pp.progress
+              })),
+            });
+          }
+        }
+
+        // (2) 시작 후
+        else if (arena.status === 'started') {
           await Arena.updateOne(
             { _id: arenaId, 'participants.user': userId },
             { $set: { 'participants.$.hasLeft': true } }
           );
-        }
 
-        // (3) 방 내부 업데이트 (populate)
-        const populated = await Arena.findById(arenaId)
-          .populate('participants.user', '_id username').lean();
+          const user = await User.findById(userId).select('username').lean();
+          if (user) {
+            io.to(arenaId).emit('arena:notify', {
+              type: 'system',
+              message: `${user.username}님이 연결이 끊어졌습니다.`
+            });
+          }
 
-        if (populated) {
-          io.to(arenaId).emit('arena:update', {
-            arenaId: String(populated._id || arenaId),
-            mode: populated?.mode,
-            status: populated.status || 'waiting',
-            host: String((populated.host as any)?._id ?? populated.host ?? ''),
-            startTime: populated.startTime || null,
-            endTime: populated.endTime || null,
-            participants: (populated.participants || []).map((pp: any) => ({
-              user: pp.user,
-              isReady: !!pp.isReady,
-              hasLeft: !!pp.hasLeft,
-              progress: pp.progress
-            })),
-          });
-        }
-
-        // (4) 로비(전역) 업데이트 (lean)
-        const room = await Arena.findById(arenaId)
-          .select('name mode status maxParticipants participants.user participants.hasLeft').lean();
-
-        if (room) {
-          const activeParticipantsCount = (room.participants || []).filter(p => !p.hasLeft).length;
-
-          io.emit('arena:room-updated', {
-            _id: String(room._id),
-            name: room.name,
-            mode: room.mode, 
-            status: room.status,
-            maxParticipants: room.maxParticipants,
-            activeParticipantsCount: activeParticipantsCount,
-          });
+          const populated = await Arena.findById(arenaId)
+            .populate('participants.user', '_id username')
+            .lean();
+          if (populated) {
+            io.to(arenaId).emit('arena:update', {
+              arenaId: String(populated._id || arenaId),
+              mode: populated?.mode,
+              status: populated.status || 'started',
+              host: String((populated.host as any)?._id ?? populated.host ?? ''),
+              startTime: populated.startTime || null,
+              endTime: populated.endTime || null,
+              participants: (populated.participants || []).map((pp: any) => ({
+                user: pp.user,
+                isReady: !!pp.isReady,
+                hasLeft: !!pp.hasLeft,
+                progress: pp.progress
+              })),
+            });
+          }
         }
 
         // (5) 방이 비었는지 확인 (대기/시작 상태 모두)
@@ -660,7 +724,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       
       // 최대 인원 변경 (현재 인원보다 적게 설정 불가)
       const activeParticipantsCount = arena.participants.filter(p => !p.hasLeft).length;
-      if (newSettings.maxParticipants && newSettings.maxParticipants >= activeParticipantsCount && newSettings.maxParticipants <= MAX_PLAYERS) { // MAX_PLAYERS는 상수로 정의 필요
+      if (newSettings.maxParticipants && newSettings.maxParticipants >= activeParticipantsCount && newSettings.maxParticipants <= MAX_PLAYERS) {
         arena.maxParticipants = newSettings.maxParticipants;
         changed = true;
       }

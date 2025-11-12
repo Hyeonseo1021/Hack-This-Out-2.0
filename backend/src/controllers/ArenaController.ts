@@ -48,6 +48,23 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // ✅ Defense Battle 전용 검증
+    if (mode === 'CYBER_DEFENSE_BATTLE') {
+      if (maxParticipants % 2 !== 0) {
+        res.status(400).json({ 
+          message: 'Defense Battle requires an even number of participants for balanced teams' 
+        });
+        return;
+      }
+      
+      if (maxParticipants < 2) {
+        res.status(400).json({ 
+          message: 'Defense Battle requires at least 2 players (1v1)' 
+        });
+        return;
+      }
+    }
+
     const existingArena = await Arena.findOne({
       'participants.user': userId,
       'participants.hasLeft': { $ne: true },
@@ -248,7 +265,10 @@ export const getArenaHistory = async (req: Request, res: Response): Promise<void
             username: (p.user as any)?.username || 'Unknown',
             score: p.score || 0,
             rank: index + 1,
-            completed: p.completed || false
+            completed: p.completed || false,
+            // ✅ Defense Battle용 추가 정보
+            team: p.teamName || null,
+            kills: p.kills || 0
           }))
         };
       })
@@ -280,56 +300,52 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    console.log('Arena status:', arena.status);
+    
+    if (arena.status !== 'ended') {
+      res.status(400).json({ message: 'Arena has not ended yet' });
+      return;
+    }
+
     const progressDocs = await ArenaProgress.find({ arena: arenaId })
       .populate('user', 'username')
       .sort({ score: -1, updatedAt: 1 })
       .lean();
 
-    const participants = progressDocs.map((progress, index) => {
-      const user = progress.user as any;
-      const userId = user?._id || progress.user;
-      const username = user?.username || 'Unknown';
+    console.log('Progress docs found:', progressDocs.length);
 
-      let completionTime = null;
-      let submittedAt = null;
-      if (progress.completed && progress.flags && progress.flags.length > 0) {
-        const lastFlag = progress.flags[progress.flags.length - 1];
-        if (lastFlag.submittedAt && arena.startTime) {
-          const startMs = new Date(arena.startTime).getTime();
-          const endMs = new Date(lastFlag.submittedAt).getTime();
-          completionTime = Math.floor((endMs - startMs) / 1000);
-          submittedAt = lastFlag.submittedAt;
-        }
-      }
-
-      let status: 'completed' | 'vm_connected' | 'waiting' = 'waiting';
-      if (progress.completed) {
-        status = 'completed';
-      } else if (progress.stage > 0) {
-        status = 'vm_connected';
+    const participants = await Promise.all(progressDocs.map(async (progress: any, index: number) => {
+      const user = progress.user;
+      
+      if (!user) {
+        console.warn('Missing user in progress doc:', progress._id);
+        return null;
       }
 
       return {
-        userId: String(userId),
-        username,
-        status,
-        completionTime,
-        submittedAt,
-        isCompleted: progress.completed || false,
-        rank: index + 1,
+        userId: String(user._id || user),
+        username: (user as any).username || 'Unknown',
         score: progress.score || 0,
-        stage: progress.stage || 0
+        rank: index + 1,
+        isCompleted: progress.completed || false,
+        // ✅ Defense Battle용 추가 정보
+        team: progress.teamName || null,
+        role: progress.teamRole || null,
+        kills: progress.kills || 0,
+        deaths: progress.deaths || 0
       };
-    });
+    }));
 
-    console.log('Participants with scores:', participants.map(p => ({
+    const filteredParticipants = participants.filter(p => p !== null);
+
+    console.log('Filtered participants:', filteredParticipants.map(p => ({
       username: p.username,
       score: p.score,
       rank: p.rank
     })));
 
-    const totalParticipants = participants.length;
-    const completedCount = participants.filter(p => p.isCompleted).length;
+    const totalParticipants = filteredParticipants.length;
+    const completedCount = filteredParticipants.filter(p => p.isCompleted).length;
     const successRate = totalParticipants > 0 
       ? Math.round((completedCount / totalParticipants) * 100) 
       : 0;
@@ -349,6 +365,26 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       description: (arena.scenarioId as any).description
     } : null;
 
+    // ✅ Defense Battle용 팀별 통계
+    let teamStats = null;
+    if (arena.mode === 'CYBER_DEFENSE_BATTLE') {
+      const attackTeam = filteredParticipants.filter(p => p.team === 'ATTACK');
+      const defenseTeam = filteredParticipants.filter(p => p.team === 'DEFENSE');
+      
+      teamStats = {
+        attackTeam: {
+          score: attackTeam.reduce((sum, p) => sum + p.score, 0),
+          kills: attackTeam.reduce((sum, p) => sum + (p.kills || 0), 0),
+          members: attackTeam.length
+        },
+        defenseTeam: {
+          score: defenseTeam.reduce((sum, p) => sum + p.score, 0),
+          kills: defenseTeam.reduce((sum, p) => sum + (p.kills || 0), 0),
+          members: defenseTeam.length
+        }
+      };
+    }
+
     const result = {
       _id: String(arena._id),
       name: arena.name,
@@ -362,7 +398,7 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       startTime: arena.startTime,
       endTime: arena.endTime,
       timeLimit: arena.timeLimit,
-      participants,
+      participants: filteredParticipants,
       winner,
       firstSolvedAt: arena.firstSolvedAt,
       arenaExp: 0,
@@ -370,7 +406,8 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
         totalParticipants,
         completedCount,
         successRate
-      }
+      },
+      teamStats // ✅ Defense Battle용 팀 통계
     };
 
     console.log('Final result:', {
@@ -378,7 +415,8 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       mode: result.mode,
       difficulty: result.difficulty,
       participantsCount: result.participants.length,
-      winner: result.winner?.username
+      winner: result.winner?.username,
+      teamStats: result.teamStats
     });
 
     res.status(200).json(result);
