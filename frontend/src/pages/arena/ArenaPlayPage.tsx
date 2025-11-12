@@ -35,7 +35,7 @@ const ArenaPlayPage: React.FC = () => {
   const [hostId, setHostId] = useState<string | null>(null);
   const [arenaName, setArenaName] = useState('');
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
+  const [status, setStatus] = useState<'waiting' | 'started' | 'ended' | string>('waiting');
   const [startAt, setStartAt] = useState<Date | null>(null);
   const [endAt, setEndAt] = useState<Date | null>(null);
   const [remaining, setRemaining] = useState<number>(0);
@@ -44,6 +44,7 @@ const ArenaPlayPage: React.FC = () => {
 
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
+  const navigatedRef = useRef(false); // ✅ 중복 navigate 방지
 
   // Mode 이름 변환 헬퍼
   const getModeName = (mode: string) => {
@@ -78,14 +79,23 @@ const ArenaPlayPage: React.FC = () => {
     if (!arenaId) return;
 
     (async () => {
+      
       const { user } = await getUserStatus();
       setCurrentUserId(user._id);
 
       const arenaData = await getArenaById(arenaId);
+      
+      // ✅ 게임이 이미 종료되었으면 result로 즉시 이동
+      if (arenaData.status === 'ended') {
+        navigate(`/arena/result/${arenaId}`, { replace: true });
+        return;
+      }
+      
       setArenaName(arenaData.name);
       setHostId(String(arenaData.host));
       setStatus(arenaData.status);
       setMode(arenaData.mode);
+      
       if (arenaData.startTime) setStartAt(new Date(arenaData.startTime));
       if (arenaData.endTime) setEndAt(new Date(arenaData.endTime));
       setParticipants(arenaData.participants || []);
@@ -101,8 +111,13 @@ const ArenaPlayPage: React.FC = () => {
 
   // 타이머 관리
   useEffect(() => {
-    if (!endAt) {
+    // ✅ 게임이 종료되었거나 endAt이 없으면 타이머 작동 안 함
+    if (!endAt || status === 'ended') {
       setRemaining(0);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       return;
     }
 
@@ -112,11 +127,12 @@ const ArenaPlayPage: React.FC = () => {
       const diff = end - now;
       setRemaining(Math.max(0, diff));
       
-      if (diff <= 0) {
+      // ✅ 타이머 만료 시 한 번만 처리
+      if (diff <= 0 && status !== 'ended' && !navigatedRef.current) {
         clearInterval(timerRef.current!);
         timerRef.current = null;
         socket.emit('arena:end', { arenaId });
-        navigate(`/arena/result/${arenaId}`);
+        // navigate는 arena:ended 이벤트 핸들러에서 처리
       }
     };
 
@@ -129,45 +145,55 @@ const ArenaPlayPage: React.FC = () => {
         timerRef.current = null;
       }
     };
-  }, [endAt, status, arenaId, navigate]);
-
-  // 타임업 처리
-  useEffect(() => {
-    if (status === 'ended') {
-      navigate(`/arena/result/${arenaId}`);
-    }
-  }, [status, arenaId, navigate]);
+  }, [endAt, status, arenaId]);
 
   // 소켓 이벤트
   useEffect(() => {
     const handleUpdate = (payload: ArenaUpdatePayload) => {
+      
       setStatus(payload.status);
       setHostId(payload.host);
       setParticipants(payload.participants || []);
       if (payload.startTime) setStartAt(new Date(payload.startTime));
       if (payload.endTime) setEndAt(new Date(payload.endTime));
-      if (payload.mode) setMode(payload.mode);
       
-      if (payload.status === 'ended') {
-        navigate(`/arena/result/${payload.arenaId}`);
+      if (payload.mode) {
+        setMode(payload.mode);
+      } else {
+        console.error('⚠️ MODE IS MISSING IN PAYLOAD!');
       }
+      
+      // ✅ status === 'ended'일 때 navigate는 handleEnded에서만 처리
     };
 
     const handleStart = (data: { arenaId: string; startTime: string; endTime: string; }) => {
-      console.log('Arena started!', data);
+      console.log('🎬 Arena started!', data);
     };
 
     const handleDeleted = ({ arenaId: deleted }: { arenaId: string }) => {
-      if (deleted === arenaId) navigate('/arena');
+      console.log('🗑️ Arena deleted:', deleted);
+      if (deleted === arenaId && !navigatedRef.current) {
+        navigatedRef.current = true;
+        navigate('/arena', { replace: true });
+      }
     };
 
     const handleJoinFailed = ({ reason }: { reason: string }) => {
-      alert(reason);
-      navigate('/arena');
+      console.error('❌ Join failed:', reason);
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        alert(reason);
+        navigate('/arena', { replace: true });
+      }
     };
 
     const handleEnded = (data?: { arenaId?: string }) => {
-      navigate(`/arena/result/${data?.arenaId ?? arenaId}`);
+      console.log('🏁 Arena ended event received:', data);
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        console.log('🚀 Navigating to result page...');
+        navigate(`/arena/result/${data?.arenaId ?? arenaId}`, { replace: true });
+      }
     };
 
     socket.on('arena:update', handleUpdate);
@@ -177,7 +203,8 @@ const ArenaPlayPage: React.FC = () => {
     socket.on('arena:ended', handleEnded);
 
     return () => {
-      if (currentUserId && arenaId) {
+      if (currentUserId && arenaId && !navigatedRef.current) {
+        console.log('👋 Emitting arena:leave...');
         socket.emit('arena:leave', { arenaId, userId: currentUserId });
       }
       socket.off('arena:update', handleUpdate);
@@ -192,7 +219,9 @@ const ArenaPlayPage: React.FC = () => {
   const mm = Math.floor(remaining / 60000);
   const ss = Math.floor((remaining % 60000) / 1000);
 
+
   const renderGameContent = () => {
+    // ✅ mode가 없으면 로딩 상태 표시
     if (!mode) {
       return (
         <div className="loading-state">
@@ -201,6 +230,8 @@ const ArenaPlayPage: React.FC = () => {
         </div>
       );
     }
+
+    console.log('✅ Rendering game with mode:', mode);
 
     const currentArenaProps = {
       _id: arenaId!,
@@ -216,6 +247,7 @@ const ArenaPlayPage: React.FC = () => {
     // DB에 저장된 실제 Mode 값으로 비교
     switch (mode) {
       case 'TERMINAL_HACKING_RACE':
+        console.log('🎮 Loading Terminal Race component...');
         return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       
       case 'CYBER_DEFENSE_BATTLE':
@@ -251,6 +283,7 @@ const ArenaPlayPage: React.FC = () => {
         );
       
       default:
+        console.error('❌ Unknown game mode:', mode);
         return (
           <div className="error-state">
             <h2>Unknown Game Mode</h2>

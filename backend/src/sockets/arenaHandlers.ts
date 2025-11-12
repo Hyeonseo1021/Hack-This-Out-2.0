@@ -124,6 +124,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
       io.to(arenaId).emit('arena:update', {
         arenaId: String(populated?._id || arenaId),
+        mode: populated?.mode,
         status: populated?.status || 'waiting',
         host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
         startTime: populated?.startTime || null,
@@ -199,6 +200,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
       io.to(arenaId).emit('arena:update', {
         arenaId: String(populated?._id || arenaId),
+        mode: populated?.mode,
         status: populated?.status || 'waiting',
         host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
         startTime: populated?.startTime || null,
@@ -266,6 +268,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
       io.to(arenaId).emit('arena:update', {
         arenaId: String(populated?._id || arenaId),
+        mode: populated?.mode,
         status: 'started',
         host: String((populated?.host as any)?._id ?? populated?.host ?? ''),
         startTime: populated?.startTime || null,
@@ -347,6 +350,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (populated) {
         io.to(arenaId).emit('arena:update', {
           arenaId: String(populated._id || arenaId),
+          mode: populated?.mode,
           status: populated.status || 'waiting',
           host: String((populated.host as any)?._id ?? populated.host ?? ''),
           startTime: populated.startTime || null,
@@ -445,6 +449,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
         if (populated) {
           io.to(arenaId).emit('arena:update', {
             arenaId: String(populated._id || arenaId),
+            mode: populated?.mode,
             status: populated.status || 'waiting',
             host: String((populated.host as any)?._id ?? populated.host ?? ''),
             startTime: populated.startTime || null,
@@ -498,6 +503,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       // 요청한 소켓(본인)에게만 최신 상태 전송
       socket.emit('arena:update', {
         arenaId: String(populated._id),
+        mode: populated?.mode,
         status: populated.status || 'waiting',
         host: String((populated.host as any)?._id ?? populated.host ?? ''),
         startTime: populated.startTime || null,
@@ -577,6 +583,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (populated) {
         io.to(arenaId).emit('arena:update', {
           arenaId: String(populated._id || arenaId),
+          mode: populated?.mode,
           status: populated.status || 'waiting',
           host: String((populated.host as any)?._id ?? populated.host ?? ''),
           startTime: populated.startTime || null,
@@ -668,6 +675,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (populated) {
         io.to(arenaId).emit('arena:update', {
           arenaId: String(populated._id || arenaId),
+          mode: populated?.mode,
           status: populated.status || 'waiting',
           host: String((populated.host as any)?._id ?? populated.host ?? ''),
           startTime: populated.startTime || null,

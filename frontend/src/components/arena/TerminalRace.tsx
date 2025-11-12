@@ -35,6 +35,12 @@ interface ProgressData {
   totalStages?: number;
 }
 
+interface PromptData {
+  prompt: string;
+  stage: number;
+  totalStages: number;
+}
+
 interface LogEntry {
   id: number;
   text: string;
@@ -63,7 +69,21 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   useEffect(() => {
     const loadProgress = async () => {
       try {
+        console.log('🚀 [TerminalRace] Loading progress for arena:', arena._id);
         socket.emit('terminal:get-progress', { arenaId: arena._id });
+        
+        // ✅ 초기 문제 프롬프트도 함께 요청
+        setTimeout(() => {
+          console.log('📤 [TerminalRace] Requesting initial prompt...');
+          socket.emit('terminal:get-prompt', { arenaId: arena._id });
+        }, 300);
+        
+        // ✅ 5초 후에도 응답이 없으면 강제로 로딩 해제
+        setTimeout(() => {
+          console.warn('⚠️ [TerminalRace] Loading timeout - forcing loading to false');
+          setIsLoading(false);
+        }, 5000);
+        
       } catch (error) {
         console.error('Failed to load progress:', error);
         setLogs([
@@ -80,7 +100,8 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   useEffect(() => {
     // 진행 상황 응답 핸들러
     const handleProgressData = (data: ProgressData) => {
-      const { stage, score, completed, prompt, totalStages: total } = data;
+      console.log('📊 [TerminalRace] Progress data received:', data);
+      const { stage, score, completed, totalStages: total } = data;
       
       setCurrentStage(stage);
       setCurrentScore(score);
@@ -91,32 +112,19 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         { id: logCounter.current++, text: '╔═══════════════════════════════════════════════════╗', type: 'system' },
         { id: logCounter.current++, text: '║          TERMINAL HACKING RACE - MISSION          ║', type: 'system' },
         { id: logCounter.current++, text: '╚═══════════════════════════════════════════════════╝', type: 'system' },
+        { id: logCounter.current++, text: '', type: 'output' },
+        { id: logCounter.current++, text: `📊 Stage: ${stage + 1}/${total || '?'}`, type: 'system' },
+        { id: logCounter.current++, text: `⭐ Current Score: ${score} points`, type: 'system' },
         { id: logCounter.current++, text: '', type: 'output' }
       ];
 
       if (completed) {
         initialLogs.push(
+          { id: logCounter.current++, text: '', type: 'output' },
           { id: logCounter.current++, text: '🎉 MISSION ACCOMPLISHED! 🎉', type: 'success' },
           { id: logCounter.current++, text: `Final Score: ${score} points`, type: 'success' },
           { id: logCounter.current++, text: '', type: 'output' }
         );
-      } else {
-        // 현재 스테이지 정보 표시
-        initialLogs.push(
-          { id: logCounter.current++, text: `📊 Stage: ${stage + 1}/${total || '?'}`, type: 'system' },
-          { id: logCounter.current++, text: `⭐ Current Score: ${score} points`, type: 'system' },
-          { id: logCounter.current++, text: '', type: 'output' }
-        );
-
-        // 서버에서 받은 프롬프트 표시
-        if (prompt) {
-          initialLogs.push(
-            { id: logCounter.current++, text: '─'.repeat(50), type: 'output' },
-            { id: logCounter.current++, text: `📌 ${prompt}`, type: 'output' },
-            { id: logCounter.current++, text: '─'.repeat(50), type: 'output' },
-            { id: logCounter.current++, text: '', type: 'output' }
-          );
-        }
       }
 
       setLogs(initialLogs);
@@ -126,7 +134,40 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       setTimeout(() => inputRef.current?.focus(), 100);
     };
 
+    // 프롬프트 데이터 핸들러
+    const handlePromptData = (data: PromptData) => {
+      console.log('📨 [TerminalRace] Received prompt data:', data);
+      
+      const newLogs: LogEntry[] = [];
+      
+      if (data.stage && data.totalStages) {
+        newLogs.push(
+          { id: logCounter.current++, text: '', type: 'output' },
+          { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
+          { id: logCounter.current++, text: `📍 Stage ${data.stage}/${data.totalStages}`, type: 'system' },
+          { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
+          { id: logCounter.current++, text: '', type: 'output' }
+        );
+        
+        // 백엔드는 1-based로 보내므로 -1해서 0-based로 저장
+        setCurrentStage(data.stage - 1);
+        setTotalStages(data.totalStages);
+      }
+      
+      if (data.prompt) {
+        newLogs.push(
+          { id: logCounter.current++, text: `🎯 MISSION: ${data.prompt}`, type: 'output' },
+          { id: logCounter.current++, text: '', type: 'output' }
+        );
+      }
+      
+      setLogs(prev => [...prev, ...newLogs]);
+    };
+
+    // 터미널 결과 핸들러
     const handleTerminalResult = (data: TerminalResultData) => {
+      console.log('✅ [TerminalRace] Terminal result received:', data);
+      
       // 내 결과만 수신
       if (data.userId !== currentUserId) {
         return;
@@ -171,18 +212,24 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
           { id: logCounter.current++, text: '', type: 'output' }
         );
         
-        // 상태 업데이트 (서버에서 새 프롬프트를 받음)
+        // 상태 업데이트
         if (data.currentStage !== undefined) {
           setCurrentStage(data.currentStage);
         }
+        
+        // ✅ 새 스테이지 프롬프트 요청
+        setTimeout(() => {
+          console.log('📤 [TerminalRace] Requesting new stage prompt...');
+          socket.emit('terminal:get-prompt', { arenaId: arena._id });
+        }, 500);
       }
 
-      // 미션 완료
+      // 미션 완료 (모든 스테이지 완료)
       if (data.completed) {
         newLogs.push(
           { id: logCounter.current++, text: '', type: 'output' },
           { id: logCounter.current++, text: '═'.repeat(50), type: 'system' },
-          { id: logCounter.current++, text: '🏆 MISSION COMPLETE! 🏆', type: 'success' },
+          { id: logCounter.current++, text: '🏆 ALL MISSIONS COMPLETE! 🏆', type: 'success' },
           { id: logCounter.current++, text: `🎉 Final Score: ${data.totalScore || 0} points`, type: 'success' },
           { id: logCounter.current++, text: '═'.repeat(50), type: 'system' },
           { id: logCounter.current++, text: '', type: 'output' }
@@ -204,6 +251,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     // 에러 핸들러
     const handleTerminalError = (data: { message: string }) => {
+      console.error('❌ [TerminalRace] Error:', data.message);
       setLogs(prev => [...prev, {
         id: logCounter.current++,
         text: `❌ ${data.message}`,
@@ -214,11 +262,13 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     };
 
     socket.on('terminal:progress-data', handleProgressData);
+    socket.on('terminal:prompt-data', handlePromptData);
     socket.on('terminal:result', handleTerminalResult);
     socket.on('terminal:error', handleTerminalError);
 
     return () => {
       socket.off('terminal:progress-data', handleProgressData);
+      socket.off('terminal:prompt-data', handlePromptData);
       socket.off('terminal:result', handleTerminalResult);
       socket.off('terminal:error', handleTerminalError);
     };
@@ -280,7 +330,9 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
             <>
               <div className="terminal-stat">
                 <span className="stat-label">Stage:</span>
-                <span className="stat-value">{currentStage + 1}/{totalStages || '?'}</span>
+                <span className="stat-value">
+                  {isCompleted ? totalStages : currentStage + 1}/{totalStages || '?'}
+                </span>
               </div>
               <div className="terminal-stat">
                 <span className="stat-label">Score:</span>

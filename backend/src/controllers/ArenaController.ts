@@ -4,10 +4,6 @@ import ArenaProgress from '../models/ArenaProgress';
 import ArenaScenario from '../models/ArenaScenario';
 import { ArenaScenarioService } from '../services/ArenaScenarioService';
 
-// ============================================
-// Arena 관련 함수들
-// ============================================
-
 export const createArena = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = res.locals.jwtData?.id;
@@ -59,7 +55,6 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
     });
 
     if (existingArena) {
-      console.warn(`[createArena] User ${userId} tried to create arena while in ${existingArena._id}`);
       res.status(400).json({ 
         message: '이미 다른 방에 참여 중입니다.',
         existingArenaId: existingArena._id 
@@ -71,14 +66,11 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
     try {
       scenario = await ArenaScenarioService.getRandomScenario(mode, difficulty);
     } catch (error: any) {
-      console.error('[createArena] Scenario fetch error:', error);
       res.status(400).json({ 
         message: `${difficulty} 난이도의 ${mode} 시나리오를 찾을 수 없습니다. 시나리오를 먼저 추가해주세요.` 
       });
       return;
     }
-
-    console.log(`✅ Selected scenario: ${scenario.title} (${scenario._id})`);
 
     const newArena = await Arena.create({
       name, 
@@ -92,18 +84,7 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       status: 'waiting'
     });
 
-    console.log('=== CREATE ARENA ===');
-    console.log('Arena ID:', newArena._id);
-    console.log('Name:', newArena.name);
-    console.log('Mode:', newArena.mode);
-    console.log('Difficulty:', newArena.difficulty);
-    console.log('Scenario:', scenario.title);
-    console.log('Time Limit:', scenario.timeLimit, 'seconds');
-    console.log('Participants:', newArena.participants);
-    console.log('===================');
-
     const savedArena = await Arena.findById(newArena._id).lean();
-    console.log('Verified participants in DB:', savedArena?.participants);
 
     const io = req.app.get('io');
     
@@ -117,8 +98,7 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
         maxParticipants: newArena.maxParticipants,
         activeParticipantsCount: 1,
       };
-      
-      console.log('Emitting to lobby:', payload);
+
       io.emit('arena:room-updated', payload);
     } else {
       console.error('❌ Socket.IO instance not found');
@@ -142,7 +122,6 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
 
 export const getArenas = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('\n=== GET ARENAS ===');
     
     const arenas = await Arena.find({
       status: { $in: ['waiting', 'started'] }
@@ -151,8 +130,6 @@ export const getArenas = async (req: Request, res: Response): Promise<void> => {
       .sort({ createdAt: -1 })
       .lean();
 
-    console.log('Found arenas in DB:', arenas.length);
-    
     if (arenas.length > 0) {
       console.log('Sample arena:', {
         _id: arenas[0]._id,
@@ -184,7 +161,6 @@ export const getArenas = async (req: Request, res: Response): Promise<void> => {
       .filter(arena => arena.activeParticipantsCount > 0);
 
     console.log('After filtering (activeCount > 0):', result.length);
-    console.log('==================\n');
 
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
@@ -221,7 +197,6 @@ export const getArenaHistory = async (req: Request, res: Response): Promise<void
   try {
     const userId = res.locals.jwtData.id;
 
-    console.log('\n=== GET ARENA HISTORY ===');
     console.log('User ID:', userId);
 
     const progressDocs = await ArenaProgress.find({ user: userId })
@@ -282,8 +257,6 @@ export const getArenaHistory = async (req: Request, res: Response): Promise<void
     const filteredHistory = history.filter(h => h !== null);
 
     console.log('Filtered history count:', filteredHistory.length);
-    console.log('========================\n');
-
     res.status(200).json({ arenaHistory: filteredHistory });
   } catch (err) {
     console.error("Failed to fetch arena history:", err);
@@ -311,12 +284,6 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       .populate('user', 'username')
       .sort({ score: -1, updatedAt: 1 })
       .lean();
-
-    console.log('\n=== GET ARENA RESULT ===');
-    console.log('Arena:', arena.name);
-    console.log('Mode:', arena.mode);
-    console.log('Difficulty:', arena.difficulty);
-    console.log('Progress docs found:', progressDocs.length);
 
     const participants = progressDocs.map((progress, index) => {
       const user = progress.user as any;
@@ -413,7 +380,6 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       participantsCount: result.participants.length,
       winner: result.winner?.username
     });
-    console.log('==================\n');
 
     res.status(200).json(result);
 
@@ -464,10 +430,6 @@ export const checkArenaParticipation = async (req: Request, res: Response): Prom
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-// ============================================
-// Scenario 관련 함수들 (관리자 전용)
-// ============================================
 
 export const getAllScenarios = async (req: Request, res: Response): Promise<void> => {
   try {

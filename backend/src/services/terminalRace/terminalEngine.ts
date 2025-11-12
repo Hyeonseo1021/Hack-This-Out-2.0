@@ -83,15 +83,15 @@ export const terminalProcessCommand = async (
     if (matchedCommand) {
       console.log(`   ✅ Command matched!`);
       return {
-        message: matchedCommand.response,
-        progressDelta: matchedCommand.progressDelta,
-        advanceStage: matchedCommand.advanceStage,
-        flagFound: matchedCommand.flagFound
+        message: matchedCommand.message || matchedCommand.response,
+        progressDelta: matchedCommand.scoreGain || matchedCommand.progressDelta || 0,
+        advanceStage: true,  // ✅ 무조건 다음 스테이지로
+        flagFound: matchedCommand.flagFound || false
       };
     } else {
       console.log(`   ⚠️ Using default response`);
       return {
-        message: stageData.defaultResponse.replace('{command}', command)
+        message: stageData.defaultResponse?.replace('{command}', command) || `Command '${command}' not recognized.`
       };
     }
 

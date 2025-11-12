@@ -8,55 +8,58 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
   socket.on('terminal:execute', async ({ 
     command 
   }: { command: string }) => {
-    
     const arenaId = (socket as any).arenaId;
     const userId = (socket as any).userId;
-    if (!arenaId || !userId) return;
+
+    console.log(`\n🎮 [terminal:execute] Arena: ${arenaId}, User: ${userId}`);
+    console.log(`   Command: "${command}"`);
+
+    if (!arenaId || !userId) {
+      socket.emit('terminal:error', { message: 'Invalid request: missing arenaId or userId' });
+      return;
+    }
 
     try {
-      // 1. Arena 상태 확인
-      const arena = await Arena.findById(arenaId).select('mode status winner');
-      if (!arena) throw new Error('Arena not found');
-      if (arena.mode !== 'TERMINAL_HACKING_RACE') {
-        throw new Error('Invalid action for this Arena mode');
-      }
-      if (arena.status !== 'started') {
-        throw new Error('Arena is not started');
-      }
-      
-      // ✅ 이미 게임이 종료된 경우 (승자가 있음)
-      if (arena.winner) {
-        socket.emit('terminal:result', {
-          userId,
-          command,
-          message: '⚠️ Game has already ended. Winner has been determined.',
-          progressDelta: 0,
-          flagFound: false
-        });
+      // 1. Arena 상태 확인 (시나리오 정보 포함)
+      const arena = await Arena.findById(arenaId).populate('scenarioId');
+      if (!arena) {
+        socket.emit('terminal:error', { message: 'Arena not found' });
         return;
       }
+      if (arena.status !== 'started') {
+        socket.emit('terminal:error', { message: 'Arena has not started yet' });
+        return;
+      }
+
+      // 2. 명령어 처리 (terminalEngine 호출)
+      const result = await terminalProcessCommand(arenaId, String(userId), command);
       
-      // 2. 명령어 처리
-      const result = await terminalProcessCommand(arenaId, userId, command);
+      console.log('📤 Engine Result:', result);
 
-      // ✅ 현재 진행 상황 가져오기 (stage 정보를 위해)
-      const currentProgress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
-      const currentStage = currentProgress?.stage || 0;
-
-      // 3. 업데이트 페이로드 구성
-      const incUpdate: any = { score: result.progressDelta || 0 };
-      if (result.advanceStage) {
-        incUpdate.stage = 1; // 스테이지 1 증가
+      // 3. 진행 상황 업데이트
+      const updatePayload: any = {};
+      
+      if (result.progressDelta && result.progressDelta > 0) {
+        updatePayload.$inc = { score: result.progressDelta };
       }
       
-      const updatePayload: any = {
-        $inc: incUpdate,
-        $push: { 
-          flags: {
-            stage: currentStage + 1, // ✅ 현재 플레이 중인 스테이지 번호 기록
-            correct: result.flagFound || false,
-            submittedAt: new Date()
-          }
+      if (result.advanceStage) {
+        // 스테이지 진행
+        const currentProgress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
+        const currentStage = currentProgress?.stage || 0;
+        const newStage = currentStage + 1;
+        
+        console.log(`🎯 Stage advancement: ${currentStage} → ${newStage}`);
+        
+        updatePayload.$set = { stage: newStage };
+        
+        // 시나리오 확인
+        const scenario = arena.scenarioId as any;
+        const totalStages = scenario?.data?.totalStages || 0;
+        
+        if (newStage >= totalStages) {
+          console.log('🏆 All stages completed!');
+          updatePayload.$set.completed = true;
         }
       };
       
@@ -85,21 +88,21 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
       });
       console.log('---\n');
       
-      // 5. 클라이언트에 결과 전송
+      // 5. 클라이언트에 결과 전송 (프론트엔드가 기대하는 필드명으로)
       io.to(arenaId).emit('terminal:result', {
         userId,
         command,
         message: result.message,
-        progressDelta: result.progressDelta,
-        flagFound: result.flagFound,
-        newScore: progressDoc.score,      // ✅ 현재 총점 추가
-        newStage: progressDoc.stage,      // ✅ 현재 스테이지 추가
-        completed: progressDoc.completed  // ✅ 완료 여부 추가
+        scoreGain: result.progressDelta,        // ✅ scoreGain으로 전송
+        stageAdvanced: result.advanceStage,     // ✅ stageAdvanced 추가
+        currentStage: progressDoc.stage,        // ✅ currentStage로 전송
+        totalScore: progressDoc.score,          // ✅ totalScore 추가
+        completed: progressDoc.completed
       });
 
       // ✅ 전체 참가자 진행 상황 브로드캐스트
       io.to(arenaId).emit('participant:update', {
-        userId,
+        userId: String(userId),
         progress: {
           score: progressDoc.score,
           stage: progressDoc.stage,
@@ -108,8 +111,9 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
       });
       
       // 6. 게임 종료 처리
-      if (result.flagFound && !arena.winner) {
-        console.log(`🏆 Winner detected: ${userId}`);
+      // 모든 스테이지 완료 시 게임 종료
+      if (progressDoc.completed && !arena.winner) {
+        console.log(`🏆 Winner detected: ${userId} (completed all stages)`);
         
         // Arena 모델에 승자 기록
         arena.winner = userId;
@@ -117,6 +121,16 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         await arena.save();
         
         // 즉시 게임 종료
+        await endArenaProcedure(arenaId, io);
+      }
+      // 또는 flagFound로 게임 종료
+      else if (result.flagFound && !arena.winner) {
+        console.log(`🏆 Winner detected: ${userId} (flag found)`);
+        
+        arena.winner = userId;
+        arena.firstSolvedAt = new Date();
+        await arena.save();
+        
         await endArenaProcedure(arenaId, io);
       }
 
@@ -134,6 +148,14 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
     if (!arenaId || !userId) return;
 
     try {
+      // Arena에서 시나리오 정보 가져오기
+      const arena = await Arena.findById(arenaId)
+        .select('scenarioId')
+        .populate('scenarioId');
+      
+      const scenario = arena?.scenarioId as any;
+      const totalStages = scenario?.data?.totalStages || scenario?.data?.stages?.length || 0;
+      
       // ArenaProgress에서 현재 유저의 진행 상황 조회
       const progressDoc = await ArenaProgress.findOne({ 
         arena: arenaId, 
@@ -146,7 +168,8 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
           stage: 0,
           score: 0,
           completed: false,
-          flags: []  // ✅ 빈 배열 추가
+          flags: [],
+          totalStages: totalStages
         });
         return;
       }
@@ -156,7 +179,8 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         stage: progressDoc.stage || 0,
         score: progressDoc.score || 0,
         completed: progressDoc.completed || false,
-        flags: progressDoc.flags || []  // ✅ 제출 기록도 반환
+        flags: progressDoc.flags || [],
+        totalStages: totalStages
       });
 
     } catch (e) {
@@ -165,7 +189,8 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         stage: 0,
         score: 0,
         completed: false,
-        flags: []
+        flags: [],
+        totalStages: 0
       });
     }
   });
@@ -173,40 +198,54 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
   // ✅ 새로운 이벤트: 현재 스테이지 프롬프트 가져오기
   socket.on('terminal:get-prompt', async ({ arenaId }: { arenaId: string }) => {
     const userId = (socket as any).userId;
-    if (!arenaId || !userId) return;
+    console.log('🔍 [terminal:get-prompt] Request received:', { arenaId, userId });
+    
+    if (!arenaId || !userId) {
+      console.warn('⚠️ [terminal:get-prompt] Missing arenaId or userId');
+      return;
+    }
 
     try {
       // Arena에서 시나리오 정보 가져오기
+      console.log('📡 [terminal:get-prompt] Fetching arena and scenario...');
       const arena = await Arena.findById(arenaId)
         .select('scenarioId')
         .populate('scenarioId');
       
       if (!arena || !arena.scenarioId) {
+        console.error('❌ [terminal:get-prompt] Arena or scenario not found');
         socket.emit('terminal:prompt-data', { prompt: 'Scenario not found.' });
         return;
       }
 
+      console.log('✅ [terminal:get-prompt] Arena found:', arena._id);
+
       // 유저의 현재 스테이지
       const progressDoc = await ArenaProgress.findOne({ arena: arenaId, user: userId });
       const currentStage = (progressDoc?.stage || 0) + 1;
+      console.log('📊 [terminal:get-prompt] Current stage:', currentStage);
 
-      // 시나리오 데이터에서 프롬프트 찾기
       const scenario = arena.scenarioId as any;
-      const stageData = scenario.data.stages.find((s: any) => s.stage === currentStage);
-
-      if (stageData) {
-        socket.emit('terminal:prompt-data', { 
-          prompt: stageData.prompt,
-          stage: currentStage,
-          totalStages: scenario.data.totalStages
-        });
-      } else {
+      const stageData = scenario.data?.stages?.find((s: any) => s.stage === currentStage);
+      
+      if (!stageData) {
+        console.warn('⚠️ [terminal:get-prompt] No stage data found for stage', currentStage);
         socket.emit('terminal:prompt-data', { 
           prompt: 'All stages completed!',
           stage: currentStage,
-          totalStages: scenario.data.totalStages
+          totalStages: scenario.data?.totalStages || scenario.data?.stages?.length || 0
         });
+        return;
       }
+
+      // ✅ stage의 prompt 사용
+      console.log('✅ [terminal:get-prompt] Using stage prompt');
+      socket.emit('terminal:prompt-data', { 
+        prompt: stageData.prompt || 'No prompt available',
+        stage: currentStage,
+        totalStages: scenario.data?.totalStages || scenario.data?.stages?.length
+      });
+      console.log('📤 [terminal:get-prompt] Sent stage prompt to client');
 
     } catch (e) {
       console.error('[terminal:get-prompt] error:', e);
