@@ -24,6 +24,8 @@ const ArenaRoomPage: React.FC = () => {
   const [hostId, setHostId] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [arenaName, setArenaName] = useState('');
+  const [mode, setMode] = useState<string>('');
+  const [difficulty, setDifficulty] = useState<string>('');
   const [status, setStatus] = useState<'waiting' | 'started' | 'ended'>('waiting');
   const [participants, setParticipants] = useState<any[]>([]);
   const [isStarting, setIsStarting] = useState(false);
@@ -36,6 +38,28 @@ const ArenaRoomPage: React.FC = () => {
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
+
+  // Mode/Difficulty 헬퍼
+  const getModeName = (mode: string) => {
+    const names: Record<string, string> = {
+      'TERMINAL_HACKING_RACE': '⚡ Terminal Race',
+      'CYBER_DEFENSE_BATTLE': '⚔️ Defense Battle',
+      'CAPTURE_THE_SERVER': '🏰 Capture Server',
+      'HACKERS_DECK': "🎲 Hacker's Deck",
+      'EXPLOIT_CHAIN_CHALLENGE': '🎯 Exploit Chain'
+    };
+    return names[mode] || mode;
+  };
+
+  const getDifficultyInfo = (diff: string) => {
+    const info: Record<string, { emoji: string; color: string }> = {
+      'EASY': { emoji: '🟢', color: '#4ade80' },
+      'MEDIUM': { emoji: '🟡', color: '#fbbf24' },
+      'HARD': { emoji: '🔴', color: '#f87171' },
+      'EXPERT': { emoji: '💀', color: '#a855f7' }
+    };
+    return info[diff] || { emoji: '⚪', color: '#999' };
+  };
 
   // 본인 정보
   const myParticipant = useMemo(
@@ -135,6 +159,8 @@ const ArenaRoomPage: React.FC = () => {
         setHostId(data?.host?._id || data?.host || null);
         setParticipants(data?.participants || []);
         setStatus(data?.status || 'waiting');
+        setMode(data?.mode || '');
+        setDifficulty(data?.difficulty || '');
         setLoading(false);
       } catch (error) {
         console.error('❌ Error loading arena data:', error);
@@ -168,6 +194,8 @@ const ArenaRoomPage: React.FC = () => {
         setArenaName(payload.name);
         setTempArenaName(payload.name);
       }
+      if (payload.mode) setMode(payload.mode);
+      if (payload.difficulty) setDifficulty(payload.difficulty);
     });
 
     socket.on('arena:start', ({ arenaId: startedId }) => {
@@ -218,7 +246,7 @@ const ArenaRoomPage: React.FC = () => {
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {
-      socket.emit('arena:leave', { arenaId, userId: currentUserId }); // 페이지 떠날 때 방을 나간다
+      socket.emit('arena:leave', { arenaId, userId: currentUserId });
       socket.off('arena:update');
       socket.off('arena:start');
       socket.off('arena:join-failed');
@@ -244,12 +272,11 @@ const ArenaRoomPage: React.FC = () => {
     );
   }
 
+  const diffInfo = getDifficultyInfo(difficulty);
+
   return (
     <Main>
-      <div className="battle-cyber-container room-variant">
-        <div className="background-grid"></div>
-        
-        {/* 게임 시작 오버레이 */}
+      {/* 게임 시작 오버레이 */}
         {showStartOverlay && (
           <div className="game-start-overlay">
             <div className="start-overlay-content">
@@ -263,11 +290,32 @@ const ArenaRoomPage: React.FC = () => {
             </div>
           </div>
         )}
+      <div className="battle-cyber-container room-variant">
+        <div className="background-grid"></div>
 
         <div className="cyber-module">
-          <h1 className="cyber-title" data-text={arenaName}>
-            {arenaName}
-          </h1>
+          {/* 헤더에 Mode/Difficulty 추가 */}
+          <div className="arena-header-info">
+            <h1 className="cyber-title" data-text={arenaName}>
+              {arenaName}
+            </h1>
+            {mode && (
+              <div className="arena-metadata">
+                <span className="mode-badge">{getModeName(mode)}</span>
+                {difficulty && (
+                  <span 
+                    className="difficulty-badge" 
+                    style={{ 
+                      color: diffInfo.color,
+                      borderColor: diffInfo.color 
+                    }}
+                  >
+                    {diffInfo.emoji} {difficulty}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="room-content-wrapper">
             {/* 왼쪽 열: 참가자 목록 */}

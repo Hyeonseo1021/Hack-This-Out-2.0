@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import StatCard from '../../components/admin/StatCard';
-import { FaUsers, FaServer, FaClipboardList, FaCogs } from 'react-icons/fa';
+import { FaUsers, FaServer, FaClipboardList, FaCogs, FaGamepad } from 'react-icons/fa';
 import { getAllUser } from '../../api/axiosUser';
 import { getAllMachines } from '../../api/axiosMachine';
 import { getContests } from '../../api/axiosContest';
 import { getAllInstances } from '../../api/axiosInstance';
+import { getAllScenarios } from '../../api/axiosScenario'; // ✅ 추가
 import ErrorMessage from '../../components/admin/ErrorMessage';
 import Sidebar from '../../components/admin/AdminSidebar';
 
@@ -30,11 +31,18 @@ interface DashboardStats {
     pending: number;
     terminated: number;
   };
-  /*battleMachines: {
-    total: number,
-    active: number,
-    inactive: number
-  }*/
+  // ✅ 추가
+  scenarios: {
+    total: number;
+    active: number;
+    byMode: {
+      terminalRace: number;
+      defenseBattle: number;
+      captureServer: number;
+      hackersDeck: number;
+      exploitChain: number;
+    };
+  };
 }
 
 const DashboardHome: React.FC = () => {
@@ -43,18 +51,29 @@ const DashboardHome: React.FC = () => {
     machines: { total: 0, active: 0, inactive: 0 },
     contests: { total: 0, active: 0, inactive: 0 },
     instances: { total: 0, running: 0, pending: 0, terminated: 0 },
-    //battleMachines: { total: 0, active: 0, inactive: 0 }
+    scenarios: { 
+      total: 0, 
+      active: 0,
+      byMode: {
+        terminalRace: 0,
+        defenseBattle: 0,
+        captureServer: 0,
+        hackersDeck: 0,
+        exploitChain: 0
+      }
+    }
   });
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [usersRes, machinesRes, contestsRes, instancesRes] = await Promise.all([
+        const [usersRes, machinesRes, contestsRes, instancesRes, scenariosRes] = await Promise.all([
           getAllUser(),
           getAllMachines(),
           getContests(),
           getAllInstances(),
+          getAllScenarios(), // ✅ 추가
         ]);
 
         setStats({
@@ -79,6 +98,18 @@ const DashboardHome: React.FC = () => {
             pending: instancesRes.instances.filter((instance: any) => instance.status === 'pending').length,
             terminated: instancesRes.instances.filter((instance: any) => instance.status === 'terminated').length,
           },
+          // ✅ 추가
+          scenarios: {
+            total: scenariosRes.scenarios.length,
+            active: scenariosRes.scenarios.filter((s: any) => s.isActive).length,
+            byMode: {
+              terminalRace: scenariosRes.scenarios.filter((s: any) => s.mode === 'TERMINAL_HACKING_RACE').length,
+              defenseBattle: scenariosRes.scenarios.filter((s: any) => s.mode === 'CYBER_DEFENSE_BATTLE').length,
+              captureServer: scenariosRes.scenarios.filter((s: any) => s.mode === 'CAPTURE_THE_SERVER').length,
+              hackersDeck: scenariosRes.scenarios.filter((s: any) => s.mode === 'HACKERS_DECK').length,
+              exploitChain: scenariosRes.scenarios.filter((s: any) => s.mode === 'EXPLOIT_CHAIN_CHALLENGE').length,
+            }
+          }
         });
       } catch (err: any) {
         console.error('Error fetching dashboard stats:', err);
@@ -131,6 +162,18 @@ const DashboardHome: React.FC = () => {
               { label: 'Running', value: stats.instances.running },
               { label: 'Pending', value: stats.instances.pending },
               { label: 'Terminated', value: stats.instances.terminated },
+            ]}
+          />
+          {/* ✅ 새로 추가: Arena Scenarios */}
+          <StatCard 
+            title="Arena Scenarios" 
+            count={stats.scenarios.total} 
+            icon={<FaGamepad />}
+            details={[
+              { label: 'Active', value: stats.scenarios.active },
+              { label: 'Terminal Race', value: stats.scenarios.byMode.terminalRace },
+              { label: 'Defense Battle', value: stats.scenarios.byMode.defenseBattle },
+              { label: 'Capture Server', value: stats.scenarios.byMode.captureServer },
             ]}
           />
         </div>

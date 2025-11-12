@@ -4,11 +4,43 @@ import { createArena } from '../../api/axiosArena';
 import '../../assets/scss/arena/AddArenaForm.scss'; 
 
 const modes = [
-  { id: 'Terminal Race', icon: '⚡', title: 'Terminal Race', desc: '터미널 명령어로 가장 빠르게 해킹!' },
-  { id: 'Defense Battle', icon: '⚔️', title: 'Defense Battle', desc: '2팀으로 나뉘어 실시간 공방전!' },
-  { id: 'Capture Server', icon: '🏰', title: 'Capture Server', desc: '서버를 점령해 영토를 확장하세요.' },
-  { id: "Hacker's Deck", icon: '🎲', title: "Hacker's Deck", desc: '해킹 카드를 활용한 턴제 전략 대결!' },
-  { id: 'Exploit Chain', icon: '🎯', title: 'Exploit Chain', desc: '단계별 취약점 퍼즐을 해결하세요.' },
+  { 
+    id: 'TERMINAL_HACKING_RACE', 
+    icon: '⚡', 
+    title: 'Terminal Hacking Race', 
+    desc: '터미널 명령어로 가장 빠르게 해킹!' 
+  },
+  { 
+    id: 'CYBER_DEFENSE_BATTLE', 
+    icon: '⚔️', 
+    title: 'Cyber Defense Battle', 
+    desc: '2팀으로 나뉘어 실시간 공방전!' 
+  },
+  { 
+    id: 'CAPTURE_THE_SERVER', 
+    icon: '🏰', 
+    title: 'Capture The Server', 
+    desc: '서버를 점령해 영토를 확장하세요.' 
+  },
+  { 
+    id: 'HACKERS_DECK', 
+    icon: '🎲', 
+    title: "Hacker's Deck", 
+    desc: '해킹 카드를 활용한 턴제 전략 대결!' 
+  },
+  { 
+    id: 'EXPLOIT_CHAIN_CHALLENGE', 
+    icon: '🎯', 
+    title: 'Exploit Chain Challenge', 
+    desc: '단계별 취약점 퍼즐을 해결하세요.' 
+  },
+];
+
+const difficulties = [
+  { id: 'EASY', icon: '🟢', title: 'Easy' },
+  { id: 'MEDIUM', icon: '🟡', title: 'Medium'},
+  { id: 'HARD', icon: '🔴', title: 'Hard' },
+  { id: 'EXPERT', icon: '💀', title: 'Expert'},
 ];
 
 const AddArenaForm: React.FC = () => {
@@ -16,8 +48,8 @@ const AddArenaForm: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     mode: '',
+    difficulty: '',  // ✅ 추가
     maxParticipants: 2,
-    duration: 10,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,11 +63,17 @@ const AddArenaForm: React.FC = () => {
     setFormData(prev => ({ ...prev, mode }));
   };
 
+  // ✅ 난이도 선택 핸들러 추가
+  const handleDifficultySelect = (difficulty: string) => {
+    setFormData(prev => ({ ...prev, difficulty }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.name.trim() || !formData.mode) {
+    // ✅ 난이도 검증 추가
+    if (!formData.name.trim() || !formData.mode || !formData.difficulty) {
       setError('System Error: All fields are required.');
       return;
     }
@@ -43,9 +81,11 @@ const AddArenaForm: React.FC = () => {
     try {
       setLoading(true);
       const res = await createArena(formData);
-      navigate(`/arena/${res._id}`);
+      console.log('✅ Arena created:', res);
+      navigate(`/arena/${res.arena._id}`);  // ✅ res.arena._id로 수정 (서버에서 { arena, scenario } 반환)
     } catch (err: any) {
-      const msg = err?.response?.data?.msg || 'Failed to create arena.';
+      console.error('❌ Create arena error:', err);
+      const msg = err?.response?.data?.message || 'Failed to create arena.';
       setError(`System Error: ${msg}`);
     } finally {
       setLoading(false);
@@ -71,6 +111,7 @@ const AddArenaForm: React.FC = () => {
                 placeholder="Enter room name..."
                 value={formData.name}
                 onChange={handleChange}
+                maxLength={30}
               />
             </div>
             
@@ -87,37 +128,23 @@ const AddArenaForm: React.FC = () => {
                 />
               </div>
 
-              <div className="form-group small">
-                <label>DURATION (MIN)</label>
-                <input
-                  type="number"
-                  name="duration"
-                  value={formData.duration}
-                  onChange={handleChange}
-                  min={5}
-                  max={60}
-                  step={5}
-                />
-              </div>
+              {/* ✅ duration 제거됨 - 시나리오에서 자동으로 설정 */}
             </div>
           </div>
         </div>
 
-        {/* --- 2. 모드 선택 창 (수정됨) --- */}
+        {/* --- 2. 모드 선택 창 --- */}
         <div className="widget-window mode-selector">
           <div className="widget-titlebar">MODE_SELECT</div>
           <div className="widget-content">
-            {/* ⬇️ 'mode-grid' -> 'mode-table-layout'로 변경 ⬇️ */}
             <div className="mode-table-layout">
               {modes.map(mode => (
-                // ⬇️ 'mode-card' -> 'mode-row'로 변경 및 내부 구조 수정 ⬇️
                 <div
                   key={mode.id}
                   className={`mode-row ${formData.mode === mode.id ? 'selected' : ''}`}
                   onClick={() => handleModeSelect(mode.id)}
                 >
                   <div className="mode-icon">{mode.icon}</div>
-                  {/* ⬇️ 텍스트를 묶는 'mode-info' 그룹 추가 ⬇️ */}
                   <div className="mode-info">
                     <div className="mode-title">{mode.title}</div>
                     <div className="mode-desc">{mode.desc}</div>
@@ -128,12 +155,41 @@ const AddArenaForm: React.FC = () => {
           </div>
         </div>
 
-        {/* --- 3. 시스템 로그 창 --- */}
+        {/* --- 3. 난이도 선택 창 (새로 추가) --- */}
+        <div className="widget-window difficulty-selector">
+          <div className="widget-titlebar">DIFFICULTY_SELECT</div>
+          <div className="widget-content">
+            <div className="difficulty-grid">
+              {difficulties.map(diff => (
+                <div
+                  key={diff.id}
+                  className={`difficulty-card ${formData.difficulty === diff.id ? 'selected' : ''}`}
+                  onClick={() => handleDifficultySelect(diff.id)}
+                >
+                  <div className="difficulty-icon">{diff.icon}</div>
+                  <div className="difficulty-title">{diff.title}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* --- 4. 시스템 로그 창 --- */}
         <div className="widget-window system-log">
           <div className="widget-titlebar">SYSTEM_LOG</div>
           <div className="widget-content">
             <div className="log-area">
-              {!error && !loading && <p className="log-entry info">System ready.  Awaiting command...</p>}
+              {!error && !loading && !formData.mode && (
+                <p className="log-entry info">System ready. Awaiting command...</p>
+              )}
+              {!error && !loading && formData.mode && !formData.difficulty && (
+                <p className="log-entry info">Mode selected: {formData.mode}. Select difficulty...</p>
+              )}
+              {!error && !loading && formData.mode && formData.difficulty && (
+                <p className="log-entry success">
+                  Configuration complete: {formData.mode} - {formData.difficulty}
+                </p>
+              )}
               {loading && <p className="log-entry processing">Connecting to host... Creating arena...</p>}
               {error && <p className="log-entry error">{error}</p>}
             </div>

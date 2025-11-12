@@ -19,9 +19,9 @@ interface TerminalResultData {
   userId: string;
   command: string;
   message: string;
-  progressDelta?: number;
-  advanceStage?: boolean;
-  flagFound?: boolean;
+  scoreGain?: number;          // ✅ 수정
+  stageAdvanced?: boolean;     // ✅ 수정
+  completed?: boolean;         // ✅ 추가
 }
 
 interface FeedEntry {
@@ -52,7 +52,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   // 초기 활동 내역 복원 (participants의 progress 기반)
   useEffect(() => {
-    console.log('📜 Restoring activity from participants progress');
+    console.log('📜 [ActivityFeed] Restoring activity from participants progress');
     
     const initialFeeds: FeedEntry[] = [];
     
@@ -72,7 +72,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           initialFeeds.push({
             id: feedCounter.current++,
             userId: uid,
-            text: `${username} found the FLAG! 🏆`,
+            text: `${username} completed all stages! 🏆`,
             type: 'flag',
             timestamp: new Date(),
             isMe
@@ -113,36 +113,38 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   useEffect(() => {
     const handleTerminalResult = (data: TerminalResultData) => {
+      console.log('📢 [ActivityFeed] Terminal result:', data);
+      
       const username = getUsernameById(data.userId);
       const isMe = data.userId === currentUserId;
       let entry: { text: string; type: FeedEntry['type'] } | null = null;
 
-      // 🚩 플래그 발견 - 모두에게 표시 (경쟁 요소)
-      if (data.flagFound) {
+      // 🏆 모든 스테이지 완료 - 모두에게 표시
+      if (data.completed) {
         entry = {
-          text: `${username} found the FLAG! 🏆`,
+          text: `${username} completed all stages! 🏆`,
           type: 'flag'
         };
       } 
       // ✅ 스테이지 진행 - 모두에게 표시 (누가 앞서가는지)
-      else if (data.advanceStage) {
+      else if (data.stageAdvanced) {
         entry = {
           text: `${username} advanced to next stage`,
           type: 'stage'
         };
       } 
       // 📈 점수 획득 - 모두에게 표시 (단, 명령어는 본인만)
-      else if (data.progressDelta && data.progressDelta > 0) {
+      else if (data.scoreGain && data.scoreGain > 0) {
         if (isMe) {
           // 본인: 명령어 포함
           entry = {
-            text: `You executed '${data.command}' (+${data.progressDelta} pts)`,
+            text: `You executed '${data.command}' (+${data.scoreGain} pts)`,
             type: 'command'
           };
         } else {
           // 다른 사람: 점수만 표시
           entry = {
-            text: `${username} scored +${data.progressDelta} points`,
+            text: `${username} scored +${data.scoreGain} points`,
             type: 'score'
           };
         }
@@ -157,6 +159,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           timestamp: new Date(),
           isMe
         };
+
+        console.log('✅ [ActivityFeed] Adding entry:', newEntry);
 
         setFeeds(prev => {
           const updated = [...prev, newEntry];

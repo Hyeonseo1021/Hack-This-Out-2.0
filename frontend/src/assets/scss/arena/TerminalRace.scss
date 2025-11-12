@@ -4,332 +4,265 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 100%;
-  padding: 1.5rem;
+  background: #0a0e27;
+  border-radius: 8px;
   overflow: hidden;
-}
 
-// ========================================
-// 터미널 헤더
-// ========================================
-
-.terminal-header {
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
-  
-  h2 {
-    font-size: 1.7rem;
-    color: #00ff88;
-    margin: 0 0 0.5rem 0;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-  }
-  
-  p {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.6);
-    margin: 0;
-    line-height: 1.5;
-  }
-}
-
-// ========================================
-// 터미널 출력창
-// ========================================
-
-.terminal-output {
-  flex: 1;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid rgba(0, 255, 136, 0.2);
-  border-radius: 10px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
-  font-size: 1.1rem;
-  line-height: 1.6;
-  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
-  
-  // 스크롤바 스타일
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 255, 136, 0.3);
-    border-radius: 4px;
-    border: 2px solid rgba(0, 0, 0, 0.3);
-
-    &:hover {
-      background: rgba(0, 255, 136, 0.5);
-    }
-  }
-
-  // 터미널 라인 스타일
-  .terminal-line {
-    margin-bottom: 0.5rem;
-    word-wrap: break-word;
-    animation: fadeIn 0.2s ease-out;
-    
-    // 프롬프트 (root@target:~$)
-    &.prompt {
-      .prompt-symbol {
-        color: #00d4ff;
-        font-weight: 700;
-        text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
-      }
-    }
-    
-    // 사용자가 입력한 명령어
-    &.command {
-      .command-text {
-        color: #ffffff;
-        font-weight: 500;
-        background: rgba(255, 255, 255, 0.05);
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        display: inline-block;
-      }
-    }
-    
-    // 일반 출력
-    &.output {
-      color: rgba(255, 255, 255, 0.85);
-      padding-left: 1rem;
-    }
-    
-    // 에러 메시지
-    &.error {
-      color: #ff3b5c;
-      padding-left: 1rem;
-      font-weight: 500;
-      
-      &::before {
-        content: '✗ ';
-        color: #ff3b5c;
-        margin-right: 0.5rem;
-      }
-    }
-    
-    // 성공 메시지
-    &.success {
-      color: #00ff88;
-      padding-left: 1rem;
-      font-weight: 600;
-      text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
-      
-      &::before {
-        content: '✓ ';
-        color: #00ff88;
-        margin-right: 0.5rem;
-      }
-    }
-  }
-  
-  // 로딩 인디케이터
-  .loading-indicator {
-    color: #00d4ff;
-    animation: pulse 1.5s ease-in-out infinite;
-    
-    &::after {
-      content: '...';
-      animation: dots 1.5s steps(4, end) infinite;
-    }
-  }
-}
-
-// ========================================
-// 터미널 입력 영역
-// ========================================
-
-.terminal-input-area {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(0, 0, 0, 0.4);
-  border: 2px solid rgba(0, 255, 136, 0.3);
-  border-radius: 10px;
-  padding: 0.875rem 1.25rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  
-  &:focus-within {
-    border-color: rgba(0, 255, 136, 0.6);
-    box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
-    background: rgba(0, 0, 0, 0.5);
-  }
-
-  .terminal-prompt {
-    color: #00d4ff;
-    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
-    font-size: 1.2rem;
-    font-weight: 700;
-    white-space: nowrap;
-    text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
-  }
-
-  .terminal-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #ffffff;
-    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
-    font-size: 1.2rem;
-    padding: 0;
-    font-weight: 500;
-    
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.3);
-      font-style: italic;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-
-  .terminal-submit-btn {
-    padding: 0.625rem 1.5rem;
-    background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
-    border: none;
-    border-radius: 8px;
-    color: #0a0e27;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
-    
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
-    }
-    
-    &:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: 0 2px 10px rgba(0, 255, 136, 0.4);
-    }
-    
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-  }
-}
-
-// ========================================
-// 애니메이션
-// ========================================
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes dots {
-  0%, 20% {
-    content: '';
-  }
-  40% {
-    content: '.';
-  }
-  60% {
-    content: '..';
-  }
-  80%, 100% {
-    content: '...';
-  }
-}
-
-// ========================================
-// 반응형
-// ========================================
-
-@media (max-width: 768px) {
-  .terminal-race-container {
-    padding: 1rem;
-  }
-  
+  // 터미널 헤더
   .terminal-header {
-    margin-bottom: 1rem;
-    
-    h2 {
-      font-size: 1.25rem;
-    }
-    
-    p {
-      font-size: 0.8125rem;
-    }
-  }
-  
-  .terminal-output {
-    font-size: 0.8125rem;
-    padding: 1rem;
-  }
-  
-  .terminal-input-area {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    
-    .terminal-prompt {
-      font-size: 0.875rem;
-    }
-    
-    .terminal-input {
-      font-size: 0.875rem;
-      min-width: 0;
-    }
-    
-    .terminal-submit-btn {
-      padding: 0.5rem 1rem;
-      font-size: 0.8125rem;
-      width: 100%;
-    }
-  }
-}
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #1a1f3a 0%, #0f1624 100%);
+    border-bottom: 2px solid #00d4ff;
 
-@media (max-width: 480px) {
-  .terminal-race-container {
-    padding: 0.75rem;
+    .terminal-header-left {
+      h2 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: #00d4ff;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 4px 0 0 0;
+        font-size: 0.85rem;
+        color: #8892b0;
+      }
+    }
+
+    .terminal-header-right {
+      display: flex;
+      gap: 20px;
+
+      .terminal-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+
+        .stat-label {
+          font-size: 0.75rem;
+          color: #8892b0;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+          font-size: 1.1rem;
+          color: #00ff88;
+          font-weight: 600;
+          margin-top: 2px;
+        }
+      }
+    }
   }
-  
+
+  // 로딩 컨테이너
+  .terminal-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 400px;
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #1a1f3a;
+      border-top: 4px solid #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    p {
+      margin-top: 20px;
+      color: #8892b0;
+      font-size: 0.95rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  }
+
+  // 터미널 출력창
   .terminal-output {
-    font-size: 0.75rem;
-    padding: 0.75rem;
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #0a0e27;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #ccd6f6;
+
+    // 스크롤바 스타일링
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #0a0e27;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #1a1f3a;
+      border-radius: 4px;
+
+      &:hover {
+        background: #2a2f4a;
+      }
+    }
+
+    .terminal-line {
+      margin-bottom: 4px;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+
+      &.command {
+        .command-text {
+          color: #00d4ff;
+          font-weight: 600;
+        }
+      }
+
+      &.system {
+        .system-text {
+          color: #8892b0;
+        }
+      }
+
+      &.output {
+        color: #ccd6f6;
+      }
+
+      &.success {
+        color: #00ff88;
+        font-weight: 500;
+      }
+
+      &.error {
+        color: #ff6b6b;
+        font-weight: 500;
+      }
+
+      .loading-indicator {
+        color: #ffa500;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    }
   }
-  
+
+  // 터미널 입력창
   .terminal-input-area {
-    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    background: #0f1624;
+    border-top: 1px solid #1a1f3a;
+
+    .terminal-prompt {
+      color: #00ff88;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .terminal-input {
+      flex: 1;
+      padding: 10px 15px;
+      background: #1a1f3a;
+      border: 1px solid #2d3548;
+      border-radius: 4px;
+      color: #ccd6f6;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: #00d4ff;
+        background: #1e2438;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &::placeholder {
+        color: #5a6485;
+      }
+    }
+
+    .terminal-submit-btn {
+      padding: 10px 20px;
+      background: #00d4ff;
+      color: #0a0e27;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+
+      &:hover:not(:disabled) {
+        background: #00b8e6;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  // 반응형
+  @media (max-width: 768px) {
+    .terminal-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+
+      .terminal-header-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    .terminal-input-area {
+      flex-wrap: wrap;
+
+      .terminal-prompt {
+        width: 100%;
+      }
+
+      .terminal-input {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .terminal-submit-btn {
+        width: auto;
+      }
+    }
   }
 }

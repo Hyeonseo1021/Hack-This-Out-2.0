@@ -32,12 +32,29 @@ const ArenaSchema = new mongoose.Schema({
   mode: {
     type: String,
     enum: [
-      'Terminal Race',
-      'Defense Battle',
-      'Capture Server',
-      "Hacker's Deck",
-      'Exploit Chain'
+      'TERMINAL_HACKING_RACE',     
+      'CYBER_DEFENSE_BATTLE',
+      'CAPTURE_THE_SERVER',
+      'HACKERS_DECK',
+      'EXPLOIT_CHAIN_CHALLENGE'
     ],
+    required: true
+  },
+
+  difficulty: {
+    type: String,
+    enum: ['EASY', 'MEDIUM', 'HARD', 'EXPERT'],
+    required: true
+  },
+
+  scenarioId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ArenaScenario',
+    required: true
+  },
+
+  timeLimit: {
+    type: Number,
     required: true
   },
 
@@ -65,7 +82,6 @@ const ArenaSchema = new mongoose.Schema({
     }
   },
 
-  duration: { type: Number, default: 10 }, 
   startTime: { type: Date, required: false },
   endTime: { type: Date, required: false },
 
@@ -80,22 +96,26 @@ const ArenaSchema = new mongoose.Schema({
     submittedAt: Date,
     flagCorrect: Boolean
   }],
+
   ranking: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     rank: Number
   }],
+
   winner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null
   },
+
   firstSolvedAt: { type: Date, default: null },
 
   arenaExp: { type: Number, default: 50 },
+
   settings: {
     endOnFirstSolve: { type: Boolean, default: true },
     graceMs: { type: Number, default: 90_000 },
-    hardTimeLimitMs: { type: Number, default: 10 * 60_000 }
+
   }
 
 }, {

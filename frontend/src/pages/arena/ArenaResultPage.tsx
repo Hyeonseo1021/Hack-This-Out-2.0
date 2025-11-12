@@ -1,5 +1,5 @@
 // src/pages/arena/ArenaResultPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
 import Main from '../../components/main/Main';
@@ -35,7 +35,7 @@ type ArenaResult = {
   maxParticipants: number;
   startTime: string;
   endTime: string;
-  duration: number;
+  duration?: number;  // ✅ Optional - calculate from startTime/endTime if missing
   participants: Participant[];
   winner: Winner;
   firstSolvedAt: string | null;
@@ -61,31 +61,42 @@ const ArenaResultPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
+  
+  const checkedRef = useRef(false); // ✅ 중복 체크 방지
 
   useEffect(() => {
-    if (!arenaId) return;
+    if (!arenaId || checkedRef.current) return;
 
     const loadResults = async () => {
       try {
+        checkedRef.current = true; // ✅ 중복 실행 방지
         setLoading(true);
+        
+        console.log('📊 [ArenaResultPage] Loading results for:', arenaId);
+        
         const { user } = await getUserStatus();
         setCurrentUserId(user._id);
 
         const result = await getArenaResult(arenaId);
         
-        // 게임이 끝나지 않았다면 플레이 페이지로 리디렉션
+        console.log('📦 Arena result:', result);
+        console.log('📊 Arena status:', result.status);
+        
+        // ✅ 게임이 끝나지 않았다면 플레이 페이지로 리다이렉션
         if (result.status !== 'ended') {
-          navigate(`/arena/play/${arenaId}`);
+          console.log('⚠️ Game not ended, redirecting to play page...');
+          navigate(`/arena/play/${arenaId}`, { replace: true });
           return;
         }
 
+        console.log('✅ Game ended, displaying results');
         setArenaResult(result);
 
         // 결과 애니메이션 지연
         setTimeout(() => setShowResults(true), 500);
 
       } catch (err: any) {
-        console.error('Failed to load arena results:', err);
+        console.error('❌ Failed to load arena results:', err);
         setError(err?.message || 'Failed to load results');
       } finally {
         setLoading(false);
@@ -152,12 +163,6 @@ const ArenaResultPage: React.FC = () => {
 
   const myResult = arenaResult.participants.find(p => p.userId === currentUserId);
 
-  // 포디움 배치를 위한 순위별 참가자
-  const first = arenaResult.participants.find(p => p.rank === 1);
-  const second = arenaResult.participants.find(p => p.rank === 2);
-  const third = arenaResult.participants.find(p => p.rank === 3);
-  const fourth = arenaResult.participants.find(p => p.rank === 4);
-
   return (
     <Main>
       <div className="ar-container">
@@ -175,7 +180,7 @@ const ArenaResultPage: React.FC = () => {
             <h1 className="ar-game-over-text">MISSION COMPLETE</h1>
             <div className="ar-arena-name">{arenaResult.name}</div>
             <div className="ar-mission-stats">
-              <span className="ar-stat">{formatDuration(arenaResult.duration)} MIN</span>
+              <span className="ar-stat">{formatDuration(arenaResult.duration || Math.floor((new Date(arenaResult.endTime).getTime() - new Date(arenaResult.startTime).getTime()) / 1000))} MIN</span>
               <span className="ar-separator">|</span>
               <span className="ar-stat">{arenaResult.stats.totalParticipants}/{arenaResult.maxParticipants} PARTICIPANTS</span>
               <span className="ar-separator">|</span>
@@ -205,152 +210,49 @@ const ArenaResultPage: React.FC = () => {
           </div>
         )}
 
-        {/* 포디움 스타일 순위 */}
-        <div className={`ar-podium ${showResults ? 'show' : ''}`}>
-          {/* 2등 (왼쪽) */}
-          {second && (
-            <div className="ar-podium-position second" style={{ animationDelay: '0.5s' }}>
-              <div className="ar-podium-player">
-                <div className="ar-rank-badge silver">2</div>
-                <div className="ar-player-info">
-                  <div className="ar-player-name">
-                    {second.username}
-                  </div>
-                  <div className={`ar-player-status ${getStatusClass(second)}`}>
-                    {getStatusText(second)}
-                  </div>
-                  <div className="ar-player-stats">
-                    <span className="ar-stat-item">⭐ {second.score} pts</span>
-                    <span className="ar-stat-separator">|</span>
-                    <span className="ar-stat-item">📊 Stage {second.stage + 1}</span>
-                  </div>
-                  {second.completionTime && (
-                    <div className="ar-completion-time">
-                      ⏱️ {formatDuration(second.completionTime)}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="ar-podium-stand second-place"></div>
-            </div>
-          )}
+        {/* 순위 리스트 */}
+        <div className={`ar-rankings ${showResults ? 'show' : ''}`}>
+          {arenaResult.participants
+            .sort((a, b) => a.rank - b.rank)
+            .map((participant) => (
+              <div
+                key={participant.userId}
+                className={`ar-rank-item rank-${participant.rank} ${
+                  participant.userId === currentUserId ? 'is-me' : ''
+                }`}
+              >
+                {/* 순위 번호 */}
+                <div className="ar-rank-number">{participant.rank}</div>
 
-          {/* 1등 (가운데) */}
-          {first && (
-            <div className="ar-podium-position first" style={{ animationDelay: '0.8s' }}>
-              <div className="ar-podium-player">
-                <div className="ar-rank-badge gold">1</div>
-                <div className="ar-player-info">
-                  <div className="ar-player-name">
-                    {first.username}
-                    {first.userId === currentUserId && (
+                {/* 플레이어 정보 */}
+                <div className="ar-rank-player-info">
+                  <div className="ar-rank-player-name">
+                    {participant.rank === 1 && <span className="ar-crown-icon">👑</span>}
+                    {participant.username}
+                    {participant.userId === currentUserId && (
                       <span className="ar-you-tag">YOU</span>
                     )}
                   </div>
-                  <div className={`ar-player-status ${getStatusClass(first)}`}>
-                    {getStatusText(first)}
+                  <div className={`ar-rank-player-status ${getStatusClass(participant)}`}>
+                    {getStatusText(participant)} • ⭐ {participant.score} pts • 
+                    {participant.isCompleted ? ' ✅ Completed' : ` 📊 Stage ${participant.stage + 1}`}
                   </div>
-                  <div className="ar-player-stats">
-                    <span className="ar-stat-item">⭐ {first.score} pts</span>
-                    <span className="ar-stat-separator">|</span>
-                    <span className="ar-stat-item">📊 Stage {first.stage + 1}</span>
-                  </div>
-                  {first.completionTime && (
-                    <div className="ar-completion-time">
-                      ⏱️ {formatDuration(first.completionTime)}
-                    </div>
-                  )}
                 </div>
-              </div>
-              <div className="ar-podium-stand first-place"></div>
-            </div>
-          )}
 
-          {/* 3등 (오른쪽) */}
-          {third && (
-            <div className="ar-podium-position third" style={{ animationDelay: '1.1s' }}>
-              <div className="ar-podium-player">
-                <div className="ar-rank-badge bronze">3</div>
-                <div className="ar-player-info">
-                  <div className="ar-player-name">
-                    {third.username}
+                {/* 완료 시간 */}
+                {participant.completionTime !== null && (
+                  <div className="ar-rank-completion-time">
+                    {formatDuration(participant.completionTime)}
                   </div>
-                  <div className={`ar-player-status ${getStatusClass(third)}`}>
-                    {getStatusText(third)}
-                  </div>
-                  <div className="ar-player-stats">
-                    <span className="ar-stat-item">⭐ {third.score} pts</span>
-                    <span className="ar-stat-separator">|</span>
-                    <span className="ar-stat-item">📊 Stage {third.stage + 1}</span>
-                  </div>
-                  {third.completionTime && (
-                    <div className="ar-completion-time">
-                      ⏱️ {formatDuration(third.completionTime)}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="ar-podium-stand third-place"></div>
-            </div>
-          )}
-        </div>
-
-        {/* 4등이 있다면 별도 표시 */}
-        {fourth && (
-          <div className={`ar-fourth-place ${showResults ? 'show' : ''}`} style={{ animationDelay: '1.4s' }}>
-            <div className="ar-fourth-player">
-              <div className="ar-rank-badge fourth">4</div>
-              <div className="ar-player-info">
-                <div className="ar-player-name">
-                  {fourth.username}
-                  {fourth.userId === currentUserId && (
-                    <span className="ar-you-tag">YOU</span>
-                  )}
-                </div>
-                <div className={`ar-player-status ${getStatusClass(fourth)}`}>
-                  {getStatusText(fourth)}
-                </div>
-                <div className="ar-player-stats">
-                  <span className="ar-stat-item">⭐ {fourth.score} pts</span>
-                  <span className="ar-stat-separator">|</span>
-                  <span className="ar-stat-item">📊 Stage {fourth.stage + 1}</span>
-                </div>
-                {fourth.completionTime && (
-                  <div className="ar-completion-time">
-                    ⏱️ {formatDuration(fourth.completionTime)}
+                )}
+                {participant.completionTime === null && (
+                  <div className="ar-rank-completion-time" style={{ opacity: 0.4 }}>
+                    DNF
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* 내 결과 하이라이트 (포디움에 없을 경우만) */}
-        {myResult && myResult.rank && myResult.rank > 3 && (
-          <div className={`ar-my-result ${showResults ? 'show' : ''}`}>
-            <div className="ar-my-result-panel">
-              <div className="ar-my-result-header">YOUR PERFORMANCE</div>
-              <div className="ar-my-result-content">
-                <div className="ar-my-rank">#{myResult.rank}</div>
-                <div className="ar-my-status">
-                  <span className={`ar-status-badge ${getStatusClass(myResult)}`}>
-                    {getStatusText(myResult)}
-                  </span>
-                </div>
-                <div className="ar-my-stats">
-                  <div className="ar-stat-row">
-                    <span className="ar-stat-label">Score:</span>
-                    <span className="ar-stat-value">⭐ {myResult.score} pts</span>
-                  </div>
-                  <div className="ar-stat-row">
-                    <span className="ar-stat-label">Progress:</span>
-                    <span className="ar-stat-value">📊 Stage {myResult.stage + 1}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            ))}
+        </div>
 
         {/* 액션 버튼들 */}
         <div className={`ar-actions ${showResults ? 'show' : ''}`}>

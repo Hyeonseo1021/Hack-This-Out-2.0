@@ -1,31 +1,71 @@
-@use "../style" as *;
+// ArenaPage.scss - Cyberpunk Theme
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=VT323&display=swap');
 
+// ========================================
+// 애니메이션
+// ========================================
 
-// --- 애니메이션 ---
+@keyframes grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
 @keyframes scanline {
   0% { transform: translateY(-10%); }
   100% { transform: translateY(110vh); }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
-// --- 전체 컨테이너 ---
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(0, 246, 255, 0.3); 
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(0, 246, 255, 0.6); 
+  }
+}
+
+// ========================================
+// 전체 컨테이너
+// ========================================
+
 .blueprint-container {
-  @include scrollbar-none;
   display: flex;
-  height: calc(100vh - 100px);
-  width: 100%;
-  max-width: 2200px;
+  height: 99%;
+  width: 180vh;
   margin: 0 auto;
   gap: 32px;
   padding: 32px;
-  background-size: 40px 40px;
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+  font-family: 'Orbitron', sans-serif;
+
+  // 배경 그리드
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 225, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.1) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.07;
+    animation: grid-pan 10s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
 
   &__scanline {
     position: absolute;
@@ -33,18 +73,25 @@
     left: 0;
     width: 100%;
     height: 3px;
-    background: linear-gradient(to bottom, transparent, var(--color-gainsboro), transparent);
+    background: linear-gradient(to bottom, transparent, rgba(0, 246, 255, 0.8), transparent);
     animation: scanline 8s linear infinite;
     opacity: 0.5;
+    z-index: 1;
   }
 }
 
-// --- 공통 패널 스타일 ---
+// ========================================
+// 공통 패널 스타일
+// ========================================
+
 .blueprint-panel {
-  background: var(--color-background-transparent);
+  background: rgba(0, 5, 15, 0.7);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--color-white);
+  border: 2px solid rgba(0, 246, 255, 0.3);
   border-radius: 5px;
+  box-shadow: 
+    0 0 20px rgba(0, 246, 255, 0.15),
+    inset 0 0 30px rgba(0, 246, 255, 0.03);
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -55,21 +102,43 @@
 
   &__header {
     padding: 1rem 1.5rem;
-    border-bottom: 2px solid var(--color-gray-400);
+    border-bottom: 2px solid rgba(0, 246, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
   }
 
   &__title {
-    color: var(--color-gainsboro);
+    color: #00f6ff;
     font-size: 1.2rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0, 246, 255, 0.5);
+    font-family: 'Orbitron', sans-serif;
   }
 
   &__body {
     padding: 1.5rem;
     overflow-y: auto;
     flex-grow: 1;
+
+    // 커스텀 스크롤바
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 246, 255, 0.5);
+      border-radius: 3px;
+
+      &:hover {
+        background: rgba(0, 246, 255, 0.8);
+      }
+    }
 
     &--center {
       display: flex;
@@ -82,34 +151,35 @@
   
   &__subtext {
     margin-top: 1.5rem;
-    color: var(--color-white);
+    color: rgba(234, 250, 255, 0.7);
     opacity: 0.7;
     font-size: 0.9rem;
   }
 }
 
-// --- 아레나 리스트 ---
+// ========================================
+// 아레나 리스트
+// ========================================
+
 .arena-list {
   &__row {
     display: grid;
-    // ⬇️ [수정됨] 4개 -> 5개 컬럼 (mode 컬럼 1fr 추가)
-    // (상태 아이콘 | 방 이름 | 모드 | 인원 | 상태 뱃지)
     grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
     align-items: center;
     gap: 1rem;
     padding: 1rem 0;
-    color: var(--color-white);
-    border-bottom: 2px solid var(--color-gray-400);
+    color: #eafaff;
+    border-bottom: 2px solid rgba(0, 246, 255, 0.15);
     transition: background-color 0.2s ease, color 0.2s ease;
     cursor: pointer;
 
     &:hover {
-      background-color: rgba(100, 255, 218, 0.1);
+      background-color: rgba(0, 246, 255, 0.1);
       color: #fff;
     }
     
     &--header {
-      color: var(--color-white);
+      color: #00f6ff;
       font-weight: bold;
       cursor: default;
       &:hover { background-color: transparent; }
@@ -126,34 +196,43 @@
 
   &__message {
     text-align: center;
-    color: var(--color-white);
+    color: rgba(234, 250, 255, 0.7);
     font-size: 1.1rem;
     margin-top: 4rem;
   }
 }
 
-// --- 상태 뱃지 ---
+// ========================================
+// 상태 뱃지
+// ========================================
+
 .status-badge {
   padding: 0.3em 0.8em;
   border-radius: 20px;
   font-weight: bold;
   font-size: 0.8rem;
+  border: 1px solid;
 
   &--waiting {
-    background-color: rgba(100, 255, 218, 0.1);
-    color: var(--color-white);
+    background-color: rgba(0, 255, 174, 0.1);
+    color: #00ffae;
+    border-color: rgba(0, 255, 174, 0.3);
   }
   &--started, &--ended {
     background-color: rgba(255, 138, 128, 0.1);
-    color: var(--color-white);
+    color: #ff8a80;
+    border-color: rgba(255, 138, 128, 0.3);
   }
 }
 
-// --- 생성 버튼 ---
+// ========================================
+// 생성 버튼
+// ========================================
+
 .blueprint-button {
   background-color: transparent;
-  border: 2px solid var(--color-list-border);
-  color: var(--color-white);
+  border: 2px solid #00f6ff;
+  color: #00f6ff;
   padding: 1rem 3rem;
   font-size: 1.2rem;
   font-weight: 600;
@@ -163,6 +242,8 @@
   position: relative;
   transition: all 0.3s ease;
   overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+  box-shadow: 0 0 15px rgba(0, 246, 255, 0.3);
 
   &__text {
     position: relative;
@@ -176,20 +257,24 @@
     left: 0;
     width: 0;
     height: 100%;
-    background-color: black;
+    background-color: rgba(0, 246, 255, 0.2);
     transition: width 0.3s ease;
     z-index: 1;
   }
 
   &:hover {
-    color: var(--color-gainsboro);
+    color: #fff;
+    box-shadow: 0 0 25px rgba(0, 246, 255, 0.6);
     &::before {
       width: 100%;
     }
   }
 }
 
-// --- 반응형 디자인 ---
+// ========================================
+// 반응형 디자인
+// ========================================
+
 @media (max-width: 1024px) {
   .blueprint-container {
     flex-direction: column;
@@ -206,7 +291,7 @@
   .arena-list__row {
     display: block;
     padding: 1rem;
-    border: 2px solid var(--color-gray-400);
+    border: 2px solid rgba(0, 246, 255, 0.3);
     border-radius: 4px;
     margin-bottom: 1rem;
   }
@@ -220,7 +305,7 @@
     &::before {
       content: attr(data-label);
       font-weight: bold;
-      color: var(--color-gray-400);
+      color: #00f6ff;
       margin-right: 1em;
     }
   }
