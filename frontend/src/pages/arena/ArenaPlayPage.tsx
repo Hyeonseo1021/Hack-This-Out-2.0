@@ -255,30 +255,6 @@ const ArenaPlayPage: React.FC = () => {
         console.log('⚔️ Loading Defense Battle component...');
         return <DefenseBattle arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       
-      case 'CAPTURE_THE_SERVER':
-        return (
-          <div className="coming-soon">
-            <h2>🏰 Capture Server</h2>
-            <p>Coming Soon</p>
-          </div>
-        );
-      
-      case 'HACKERS_DECK':
-        return (
-          <div className="coming-soon">
-            <h2>🎲 Hacker's Deck</h2>
-            <p>Coming Soon</p>
-          </div>
-        );
-      
-      case 'EXPLOIT_CHAIN_CHALLENGE':
-        return (
-          <div className="coming-soon">
-            <h2>🎯 Exploit Chain</h2>
-            <p>Coming Soon</p>
-          </div>
-        );
-      
       default:
         console.error('❌ Unknown game mode:', mode);
         return (

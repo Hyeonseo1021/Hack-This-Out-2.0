@@ -41,9 +41,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const feedCounter = useRef(0);
   const feedEndRef = useRef<HTMLDivElement>(null);
+  const listenersRegisteredRef = useRef(false);
+  const participantsRef = useRef(participants);
+
+  // participants를 ref로 유지하여 최신 값 참조
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
 
   const getUsernameById = (userId: string): string => {
-    const p = participants.find(p => (typeof p.user === 'string' ? p.user : p.user._id) === userId);
+    const p = participantsRef.current.find(p => (typeof p.user === 'string' ? p.user : p.user._id) === userId);
     if (p && typeof p.user === 'object') {
       return p.user.username;
     }
@@ -112,9 +119,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   }, [feeds]);
 
   useEffect(() => {
+    if (listenersRegisteredRef.current) return;
+    listenersRegisteredRef.current = true;
+
     const handleTerminalResult = (data: TerminalResultData) => {
       console.log('📢 [ActivityFeed] Terminal result:', data);
-      
+
       const username = getUsernameById(data.userId);
       const isMe = data.userId === currentUserId;
       let entry: { text: string; type: FeedEntry['type'] } | null = null;
@@ -175,7 +185,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return () => {
       socket.off('terminal:result', handleTerminalResult);
     };
-  }, [socket, currentUserId, participants]);
+  }, [socket, currentUserId]);
 
   return (
     <div className="activity-feed-container">

@@ -39,80 +39,129 @@
     p {
       color: #ccc;
       font-size: 1.1rem;
-      margin-bottom: 25px;
+      margin-bottom: 30px;
     }
   }
   
-  .teams-preview {
+  .duel-preview {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    gap: 20px;
+    gap: 30px;
     align-items: center;
-    margin: 20px 0;
+    margin: 30px 0;
   }
   
-  .team-preview {
-    padding: 25px;
+  .player-slot {
+    padding: 30px 25px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    transition: all 0.3s;
     
-    .team-icon {
-      font-size: 3rem;
-      display: block;
-      margin-bottom: 10px;
+    &:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
     
-    .team-name {
-      display: block;
-      font-size: 1.3rem;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-    
-    .team-desc {
-      color: #999;
-      font-size: 0.95rem;
-      margin: 0;
-    }
-    
-    &.attack {
+    &:first-child {
       border-color: rgba(255, 107, 107, 0.3);
       background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 111, 0.05));
       
-      .team-name {
+      .slot-role {
         color: #ff6b6b;
       }
     }
     
-    &.defense {
+    &:last-child {
       border-color: rgba(78, 205, 196, 0.3);
       background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(68, 163, 160, 0.05));
       
-      .team-name {
+      .slot-role {
         color: #4ecdc4;
       }
     }
+    
+    .slot-icon {
+      font-size: 4rem;
+      margin-bottom: 15px;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .slot-role {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .slot-desc {
+      color: #999;
+      font-size: 0.95rem;
+      margin: 0;
+    }
   }
   
-  .vs {
-    font-size: 2rem;
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .vs-large {
+    font-size: 2.5rem;
     font-weight: bold;
     color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    animation: pulse 2s infinite;
   }
   
   .waiting-info {
-    padding: 15px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+  }
+  
+  .player-count {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 20px 40px;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    display: inline-block;
-    margin-top: 20px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
     
-    span {
-      color: #ffd700;
+    .count-current {
+      font-size: 3rem;
       font-weight: bold;
-      font-size: 1.1rem;
+      color: #ffd700;
     }
+    
+    .count-divider {
+      font-size: 2rem;
+      color: #666;
+    }
+    
+    .count-max {
+      font-size: 2rem;
+      color: #999;
+    }
+    
+    .count-label {
+      font-size: 1rem;
+      color: #999;
+      text-transform: uppercase;
+      margin-left: 10px;
+    }
+  }
+  
+  .waiting-message {
+    color: #4ecdc4;
+    font-size: 1.1rem;
+    font-weight: 500;
+    animation: pulse 2s infinite;
   }
 }
 

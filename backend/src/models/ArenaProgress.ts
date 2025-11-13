@@ -52,14 +52,14 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: 0
   },
 
-  // 🃏 Hacker's Deck 모드용 카드 로그
+  // 🃏 Hacker's Deck 모드용 카드 로그 (기존 유지 - 혹시 나중에 다시 쓸 수도)
   cardsUsed: [{
     name: String,
     cost: Number,       // ✅ 카드 비용 기록
     usedAt: Date
   }],
 
-  // 🏰 Capture The Server 모드용
+  // 🏰 Capture The Server 모드용 (기존 유지 - 혹시 나중에 다시 쓸 수도)
   serversCaptured: { 
     type: Number, 
     default: 0 
@@ -72,7 +72,7 @@ const ArenaProgressSchema = new mongoose.Schema({
     lostAt: { type: Date, default: null }  // null = 여전히 소유 중
   }],
 
-  // ⚔️ Defense Battle 모드용
+  // ⚔️ Defense Battle 모드용 (기존 유지)
   teamName: { 
     type: String, 
     default: null 
@@ -102,7 +102,64 @@ const ArenaProgressSchema = new mongoose.Schema({
     damage: Number,       // 가한 피해
     heal: Number,         // 회복량
     timestamp: Date
-  }]
+  }],
+
+  // 👑 King of the Hill 전용 - NEW
+  kingOfTheHill: {
+    totalKingTime: { type: Number, default: 0 },  // 초 단위
+    longestKingStreak: { type: Number, default: 0 },  // 초 단위
+    timesKing: { type: Number, default: 0 },  // 왕이 된 횟수
+    timesDethroned: { type: Number, default: 0 },  // 왕좌에서 쫓겨난 횟수
+    attacksSucceeded: { type: Number, default: 0 },
+    attacksFailed: { type: Number, default: 0 },
+    defensesSucceeded: { type: Number, default: 0 },
+    defensesFailed: { type: Number, default: 0 },
+    firstBlood: { type: Boolean, default: false },  // 첫 점령 성공
+    kingDurations: [{
+      crownedAt: Date,
+      dethronedAt: Date,
+      duration: Number  // 초 단위
+    }]
+  },
+
+  // 🔍 Forensics Rush 전용 - NEW
+  forensicsRush: {
+    questionsAnswered: { type: Number, default: 0 },
+    questionsCorrect: { type: Number, default: 0 },
+    totalAttempts: { type: Number, default: 0 },
+    penalties: { type: Number, default: 0 },  // 오답 페널티 점수
+    perfectScore: { type: Boolean, default: false },  // 10문제 전부 정답
+    answers: [{
+      questionId: String,
+      answer: String,
+      correct: Boolean,
+      attempts: { type: Number, default: 1 },
+      answeredAt: Date,
+      points: Number
+    }]
+  },
+
+  // 💬 Social Engineering Challenge 전용 - NEW
+  socialEngineering: {
+    objectiveAchieved: { type: Boolean, default: false },
+    finalSuspicion: { type: Number, default: 0 },
+    turnsUsed: { type: Number, default: 0 },
+    blocked: { type: Boolean, default: false },  // 의심도 100% 도달로 차단됨
+    techniquesUsed: [{
+      technique: String,  // 'PRETEXTING', 'AUTHORITY', 'URGENCY', etc.
+      message: String,
+      suspicionDelta: Number,
+      timestamp: Date
+    }],
+    naturalness: { type: Number, default: 0 },  // AI 평가 점수 (0-20점)
+    conversation: [{
+      from: { type: String, enum: ['PLAYER', 'AI'] },
+      message: String,
+      suspicionBefore: Number,
+      suspicionAfter: Number,
+      timestamp: Date
+    }]
+  }
 
 }, { 
   timestamps: true 

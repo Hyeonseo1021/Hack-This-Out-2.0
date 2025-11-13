@@ -46,15 +46,15 @@ interface Action {
 }
 
 interface GameState {
-  attackTeam: {
+  attacker: {
     score: number;
     health: number;
-    members: number;
+    maxHealth: number;
   };
-  defenseTeam: {
+  defender: {
     score: number;
     health: number;
-    members: number;
+    maxHealth: number;
   };
 }
 
@@ -114,10 +114,10 @@ const DefenseBattle: React.FC<DefenseBattleProps> = ({
       setMyScore(data.myScore || 0);
       setMyKills(data.myKills || 0);
       
-      if (data.attackTeam && data.defenseTeam) {
+      if (data.attacker && data.defender) {
         setGameState({
-          attackTeam: data.attackTeam,
-          defenseTeam: data.defenseTeam
+          attacker: data.attacker,
+          defender: data.defender
         });
       }
 
@@ -215,30 +215,42 @@ const DefenseBattle: React.FC<DefenseBattleProps> = ({
 
   // 게임 시작 전 대기
   if (arena.status === 'waiting') {
+    const currentPlayers = participants.filter(p => !p.hasLeft).length;
+    
     return (
       <div className="defense-battle-waiting">
         <div className="waiting-content">
           <div className="waiting-icon">⚔️</div>
           <h2>Defense Battle</h2>
-          <p className="subtitle">팀전 모드입니다</p>
+          <p className="subtitle">1 vs 1 듀얼 매치</p>
           <div className="waiting-description">
-            <p>게임 시작 시 자동으로 팀이 배정됩니다</p>
-            <div className="teams-preview">
-              <div className="team-preview attack">
-                <span className="team-icon">🗡️</span>
-                <span className="team-name">Attack Team</span>
-                <p className="team-desc">서버를 공격하세요!</p>
+            <p>게임 시작 시 자동으로 Attack/Defense 역할이 배정됩니다</p>
+            <div className="duel-preview">
+              <div className="player-slot">
+                <div className="slot-icon">🗡️</div>
+                <div className="slot-role">Attacker</div>
+                <div className="slot-desc">서버를 공격하세요!</div>
               </div>
-              <div className="vs">VS</div>
-              <div className="team-preview defense">
-                <span className="team-icon">🛡️</span>
-                <span className="team-name">Defense Team</span>
-                <p className="team-desc">서버를 방어하세요!</p>
+              <div className="vs-large">VS</div>
+              <div className="player-slot">
+                <div className="slot-icon">🛡️</div>
+                <div className="slot-role">Defender</div>
+                <div className="slot-desc">서버를 방어하세요!</div>
               </div>
             </div>
           </div>
           <div className="waiting-info">
-            <span>Players: {participants.filter(p => !p.hasLeft).length}</span>
+            <div className="player-count">
+              <span className="count-current">{currentPlayers}</span>
+              <span className="count-divider">/</span>
+              <span className="count-max">2</span>
+              <span className="count-label">Players</span>
+            </div>
+            {currentPlayers === 1 && (
+              <div className="waiting-message">
+                상대를 기다리는 중...
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -318,24 +330,18 @@ const DefenseBattle: React.FC<DefenseBattleProps> = ({
         <div className="teams-status">
           <div className={`team-panel attack ${myTeam === 'ATTACK' ? 'my-team' : ''}`}>
             <div className="team-header">
-              <h3>🗡️ Attack Team</h3>
+              <h3>🗡️ Attacker</h3>
               <div className="team-score">
                 <span className="score-label">Score</span>
-                <span className="score-value">{gameState.attackTeam.score}</span>
+                <span className="score-value">{gameState.attacker.score}</span>
               </div>
             </div>
             {renderHealthBar(
-              gameState.attackTeam.health,
-              100,
-              'Team Health',
+              gameState.attacker.health,
+              gameState.attacker.maxHealth,
+              'Health',
               'attack'
             )}
-            <div className="team-info">
-              <span className="info-item">
-                <span className="info-icon">👥</span>
-                {gameState.attackTeam.members} members
-              </span>
-            </div>
           </div>
 
           <div className="vs-divider">
@@ -344,24 +350,18 @@ const DefenseBattle: React.FC<DefenseBattleProps> = ({
 
           <div className={`team-panel defense ${myTeam === 'DEFENSE' ? 'my-team' : ''}`}>
             <div className="team-header">
-              <h3>🛡️ Defense Team</h3>
+              <h3>🛡️ Defender</h3>
               <div className="team-score">
                 <span className="score-label">Score</span>
-                <span className="score-value">{gameState.defenseTeam.score}</span>
+                <span className="score-value">{gameState.defender.score}</span>
               </div>
             </div>
             {renderHealthBar(
-              gameState.defenseTeam.health,
-              gameState.defenseTeam.health,
+              gameState.defender.health,
+              gameState.defender.maxHealth,
               'Server Health',
               'defense'
             )}
-            <div className="team-info">
-              <span className="info-item">
-                <span className="info-icon">👥</span>
-                {gameState.defenseTeam.members} members
-              </span>
-            </div>
           </div>
         </div>
       )}

@@ -67,14 +67,24 @@ export const terminalProcessCommand = async (
 
     console.log(`   Parsed - Command: "${command}", Args:`, args);
 
-    // 6. 명령어 매칭
+    // 6. 명령어 매칭 (개선: 순서 무관)
     const matchedCommand = stageData.commands.find((cmd: any) => {
       if (cmd.command !== command) return false;
-      
-      // args가 정의되어 있으면 정확히 일치하는지 확인
+
+      // args가 정의되어 있으면 일치하는지 확인
       if (cmd.args && cmd.args.length > 0) {
-        // 모든 args가 일치해야 함
-        return cmd.args.every((arg: string, idx: number) => args[idx] === arg);
+        // 필수 args가 모두 포함되어 있는지 확인 (순서 무관)
+        const requiredArgs = cmd.args;
+        const hasAllArgs = requiredArgs.every((reqArg: string) =>
+          args.some(userArg => userArg === reqArg)
+        );
+
+        // 정확한 개수와 내용이 일치하는지 확인
+        if (!hasAllArgs || args.length !== requiredArgs.length) {
+          return false;
+        }
+
+        return true;
       }
       return true; // args가 없으면 command만 일치하면 OK
     });
@@ -85,7 +95,7 @@ export const terminalProcessCommand = async (
       return {
         message: matchedCommand.message || matchedCommand.response,
         progressDelta: matchedCommand.scoreGain || matchedCommand.progressDelta || 0,
-        advanceStage: true,  // ✅ 무조건 다음 스테이지로
+        advanceStage: matchedCommand.advanceStage !== false,  // ✅ 시나리오 데이터 기준 (기본값: true)
         flagFound: matchedCommand.flagFound || false
       };
     } else {

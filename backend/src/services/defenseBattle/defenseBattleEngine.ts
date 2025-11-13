@@ -64,17 +64,18 @@ export async function processDefenseBattleAction(
     return { success: false, message: 'Invalid action' };
   }
 
-  // 4. 쿨다운 체크 (간단 버전 - 마지막 액션 시간 기반)
-  const lastAction = userProgress.actions[userProgress.actions.length - 1];
-  if (lastAction && lastAction.actionName === actionName) {
-    const timeSinceLastAction = Date.now() - new Date(lastAction.timestamp).getTime();
+  // 4. 쿨다운 체크 (개선: 특정 액션의 마지막 사용 시간 기반)
+  const actionsOfType = userProgress.actions.filter(a => a.actionName === actionName);
+  if (actionsOfType.length > 0) {
+    const lastActionOfType = actionsOfType[actionsOfType.length - 1];
+    const timeSinceLastAction = Date.now() - new Date(lastActionOfType.timestamp).getTime();
     const cooldownMs = (actionData.cooldown || 0) * 1000; // 초를 밀리초로
-    
+
     if (timeSinceLastAction < cooldownMs) {
       const remainingSeconds = Math.ceil((cooldownMs - timeSinceLastAction) / 1000);
-      return { 
-        success: false, 
-        message: `Action on cooldown. ${remainingSeconds}s remaining.` 
+      return {
+        success: false,
+        message: `Action on cooldown. ${remainingSeconds}s remaining.`
       };
     }
   }
@@ -89,14 +90,11 @@ export async function processDefenseBattleAction(
 
   if (actionType === 'attack') {
     damage = actionData.damage || 0;
-    scoreGain = Math.floor(damage / 10);
-    
-    // 상대팀 전체에 데미지 적용 (실제로는 공유 체력)
-    // 여기서는 점수로만 처리
+    scoreGain = Math.floor(damage / 10);  // 공격: 10 데미지 = 1점
   } else {
     heal = actionData.heal || 0;
     shield = actionData.shield || 0;
-    scoreGain = Math.floor((heal + shield) / 5);
+    scoreGain = Math.floor((heal + shield) / 10);  // ✅ 방어도 공격과 동일한 비율로 변경
   }
 
   // 6. 게임 상태 가져오기
@@ -122,8 +120,8 @@ export async function processDefenseBattleAction(
 
   if (gameOver) {
     winner = determineWinner(attackScore, defenseScore);
-    
-    // 승리팀의 첫 번째 유저를 대표 승자로
+
+    // ✅ 1:1 매치이므로 승리팀의 유저가 승자
     if (winner === 'ATTACK' && attackTeamProgress.length > 0) {
       winnerUserId = attackTeamProgress[0].user.toString();
     } else if (winner === 'DEFENSE' && defenseTeamProgress.length > 0) {
@@ -191,6 +189,7 @@ function determineWinner(attackScore: number, defenseScore: number): string {
 
 /**
  * 팀 초기화 (게임 시작 시 호출)
+ * ✅ 1:1 매치: 정확히 2명만 참가 가능
  */
 export async function initializeDefenseBattleTeams(arenaId: string) {
   const arena = await Arena.findById(arenaId);
@@ -199,52 +198,53 @@ export async function initializeDefenseBattleTeams(arenaId: string) {
   }
 
   const participants = arena.participants.filter((p: any) => !p.hasLeft);
+
+  // ✅ 정확히 2명만 참가 가능
+  if (participants.length !== 2) {
+    throw new Error(`Defense Battle requires exactly 2 players. Current: ${participants.length}`);
+  }
+
+  // 랜덤하게 공격/방어 팀 배정
   const shuffled = participants.sort(() => Math.random() - 0.5);
-  
-  const midPoint = Math.ceil(shuffled.length / 2);
-  const attackMembers = shuffled.slice(0, midPoint);
-  const defenseMembers = shuffled.slice(midPoint);
+  const attackMember = shuffled[0];
+  const defenseMember = shuffled[1];
 
-  // Attack 팀 설정
-  for (const member of attackMembers) {
-    await ArenaProgress.findOneAndUpdate(
-      { arena: arenaId, user: member.user },
-      {
-        teamName: 'ATTACK',
-        teamRole: 'ATTACKER',
-        score: 0,
-        kills: 0,
-        deaths: 0,
-        actions: []
-      },
-      { upsert: true, new: true }
-    );
-  }
+  // Attack 팀 설정 (1명)
+  await ArenaProgress.findOneAndUpdate(
+    { arena: arenaId, user: attackMember.user },
+    {
+      teamName: 'ATTACK',
+      teamRole: 'ATTACKER',
+      score: 0,
+      kills: 0,
+      deaths: 0,
+      actions: []
+    },
+    { upsert: true, new: true }
+  );
 
-  // Defense 팀 설정
-  for (const member of defenseMembers) {
-    await ArenaProgress.findOneAndUpdate(
-      { arena: arenaId, user: member.user },
-      {
-        teamName: 'DEFENSE',
-        teamRole: 'DEFENDER',
-        score: 0,
-        kills: 0,
-        deaths: 0,
-        actions: []
-      },
-      { upsert: true, new: true }
-    );
-  }
+  // Defense 팀 설정 (1명)
+  await ArenaProgress.findOneAndUpdate(
+    { arena: arenaId, user: defenseMember.user },
+    {
+      teamName: 'DEFENSE',
+      teamRole: 'DEFENDER',
+      score: 0,
+      kills: 0,
+      deaths: 0,
+      actions: []
+    },
+    { upsert: true, new: true }
+  );
 
   return {
     attackTeam: {
-      members: attackMembers.map((m: any) => m.user.toString()),
-      count: attackMembers.length
+      members: [attackMember.user.toString()],
+      count: 1
     },
     defenseTeam: {
-      members: defenseMembers.map((m: any) => m.user.toString()),
-      count: defenseMembers.length
+      members: [defenseMember.user.toString()],
+      count: 1
     }
   };
 }

@@ -25,12 +25,19 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
     }
 
     const validModes = [
-      'TERMINAL_HACKING_RACE',
-      'CYBER_DEFENSE_BATTLE',
-      'CAPTURE_THE_SERVER',
-      'HACKERS_DECK',
-      'EXPLOIT_CHAIN_CHALLENGE'
+      'TERMINAL_HACKING_RACE',      // 유지
+      'CYBER_DEFENSE_BATTLE',       // 유지
+      'KING_OF_THE_HILL',           // NEW
+      'FORENSICS_RUSH',             // NEW
+      'SOCIAL_ENGINEERING_CHALLENGE' // NEW
     ];
+
+    // Social Engineering 검증 추가
+    if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
+      if (maxParticipants < 1 || maxParticipants > 4) {
+        return;
+      }
+    }
     
     if (!validModes.includes(mode)) {
       res.status(400).json({ message: 'Invalid game mode' });
@@ -48,18 +55,11 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // ✅ Defense Battle 전용 검증
+    // ✅ Defense Battle 전용 검증 (1:1 매치만 허용)
     if (mode === 'CYBER_DEFENSE_BATTLE') {
-      if (maxParticipants % 2 !== 0) {
-        res.status(400).json({ 
-          message: 'Defense Battle requires an even number of participants for balanced teams' 
-        });
-        return;
-      }
-      
-      if (maxParticipants < 2) {
-        res.status(400).json({ 
-          message: 'Defense Battle requires at least 2 players (1v1)' 
+      if (maxParticipants !== 2) {
+        res.status(400).json({
+          message: 'Defense Battle은 1:1 매치만 지원합니다. 참가자 수는 정확히 2명이어야 합니다.'
         });
         return;
       }

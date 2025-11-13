@@ -1,7 +1,6 @@
 // src/pages/arena/ArenaResultPage.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import socket from '../../utils/socket';
 import Main from '../../components/main/Main';
 import { getArenaResult } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
@@ -160,8 +159,6 @@ const ArenaResultPage: React.FC = () => {
       </Main>
     );
   }
-
-  const myResult = arenaResult.participants.find(p => p.userId === currentUserId);
 
   return (
     <Main>

@@ -184,21 +184,44 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
       const attackScore = attackTeamProgress.reduce((sum, p) => sum + (p.score || 0), 0);
       const defenseScore = defenseTeamProgress.reduce((sum, p) => sum + (p.score || 0), 0);
 
+      // 1v1 체력 계산
+      const totalAttackDamage = attackTeamProgress.reduce((sum, p) => {
+        return sum + (p.actions?.reduce((actionSum: number, action: any) => 
+          actionSum + (action.damage || 0), 0) || 0);
+      }, 0);
+      
+      const totalDefenseHeal = defenseTeamProgress.reduce((sum, p) => {
+        return sum + (p.actions?.reduce((actionSum: number, action: any) => 
+          actionSum + (action.heal || 0), 0) || 0);
+      }, 0);
+
+      const attackerMaxHealth = 100;
+      const attackerDamageTaken = defenseTeamProgress.reduce((sum, p) => {
+        return sum + (p.actions?.reduce((actionSum: number, action: any) => 
+          actionSum + (action.damage || 0), 0) || 0);
+      }, 0);
+      const attackerHealth = Math.max(0, attackerMaxHealth - attackerDamageTaken);
+
+      const defenderMaxHealth = scenarioData.serverHealth || 200;
+      const defenderHealth = Math.max(0, Math.min(defenderMaxHealth, 
+        defenderMaxHealth - totalAttackDamage + totalDefenseHeal
+      ));
+
       // 응답 데이터
       socket.emit('defenseBattle:state-data', {
         myTeam: progressDoc?.teamName || null,
         myRole: progressDoc?.teamRole || null,
         myScore: progressDoc?.score || 0,
         myKills: progressDoc?.kills || 0,
-        attackTeam: {
+        attacker: {
           score: attackScore,
-          health: scenarioData.serverHealth || 100, // TODO: 실시간 체력 계산
-          members: attackTeamProgress.length
+          health: attackerHealth,
+          maxHealth: attackerMaxHealth
         },
-        defenseTeam: {
+        defender: {
           score: defenseScore,
-          health: scenarioData.serverHealth || 200,
-          members: defenseTeamProgress.length
+          health: defenderHealth,
+          maxHealth: defenderMaxHealth
         },
         availableActions: progressDoc?.teamRole === 'ATTACKER' 
           ? scenarioData.attackActions 

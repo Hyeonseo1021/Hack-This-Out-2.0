@@ -11,9 +11,9 @@ import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
 import TerminalRaceForm from '../../components/admin/forms/TerminalRaceForm';
 import DefenseBattleForm from '../../components/admin/forms/DefenseBattleForm';
-import CaptureServerForm from '../../components/admin/forms/CaptureServerForm';
-import HackersDeckForm from '../../components/admin/forms/HackersDeckForm';
-import ExploitChainForm from '../../components/admin/forms/ExploitChainForm';
+import KingOfTheHillForm from '../../components/admin/forms/KingOfTheHillForm';
+import ForensicsRushForm from '../../components/admin/forms/ForensicsRushForm';
+import SocialEngineeringForm from '../../components/admin/forms/SocialEngineeringForm';
 import { FaEdit, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import '../../assets/scss/admin/ScenariosManagement.scss';
 
@@ -29,7 +29,7 @@ interface Scenario {
   data: any;
 }
 
-// ✅ 새로운 Form 컴포넌트와 완전히 일치하는 초기 데이터 구조
+// ✅ 모든 모드의 초기 데이터 구조
 const getInitialData = (mode: string) => {
   switch (mode) {
     case 'TERMINAL_HACKING_RACE':
@@ -53,39 +53,94 @@ const getInitialData = (mode: string) => {
           defenseTeam: '15분 동안 서버 방어'
         }
       };
-      
-    case 'CAPTURE_THE_SERVER':
+
+    case 'KING_OF_THE_HILL':
       return {
-        servers: [],
-        mapLayout: {
-          rows: 3,
-          cols: 3
+        serverInfo: {
+          name: '',
+          description: '',
+          os: '',
+          initialVulnerabilities: []
+        },
+        attackActions: [],
+        defenseActions: [],
+        scoring: {
+          pointsPerSecond: 1,
+          firstCaptureBonus: 20,
+          fiveSecondBonus: 5,
+          oneMinuteBonus: 50,
+          captureBonus: 30
+        },
+        energySettings: {
+          initial: 100,
+          regenRate: 2,
+          maxEnergy: 100
         }
       };
-      
-    case 'HACKERS_DECK':
+
+    case 'FORENSICS_RUSH':
       return {
-        deck: {
-          attack: [],
-          defense: [],
-          special: []
+        scenario: {
+          title: '',
+          description: '',
+          incidentType: 'ransomware',
+          date: '',
+          context: ''
         },
-        startingHand: 5,
-        startingEnergy: 3,
-        maxTurns: 15,
-        victoryCondition: '상대 HP 0 또는 최대 턴 후 HP 높은 플레이어'
+        evidenceFiles: [],
+        availableTools: ['grep', 'awk', 'sed', 'wireshark', 'volatility'],
+        questions: [],
+        scoring: {
+          wrongAnswerPenalty: 5,
+          perfectScoreBonus: 50,
+          speedBonus: true
+        },
+        totalQuestions: 0
       };
-      
-    case 'EXPLOIT_CHAIN_CHALLENGE':
+
+    case 'SOCIAL_ENGINEERING_CHALLENGE':
       return {
-        missionBrief: {
-          target: '',
-          goal: '',
-          constraint: ''
+        scenarioType: 'IT_HELPDESK',
+        objective: {
+          title: '',
+          description: '',
+          targetInformation: []
         },
-        steps: [],
-        hintsAvailable: 3,
-        hintPenalty: 5
+        aiTarget: {
+          name: '',
+          role: '',
+          department: '',
+          personality: {
+            helpfulness: 8,
+            securityAwareness: 3,
+            authorityRespect: 7,
+            skepticism: 4
+          },
+          suspicionThreshold: 70,
+          knownInfo: [],
+          secretInfo: []
+        },
+        availableTechniques: [],
+        conversationRules: {
+          maxTurns: 20,
+          turnTimeLimit: undefined,
+          warningThresholds: [30, 60, 90]
+        },
+        scoring: {
+          objectiveComplete: 100,
+          turnEfficiency: {
+            maxBonus: 50,
+            optimalTurns: 10
+          },
+          suspicionManagement: {
+            bonus: 30,
+            threshold: 30
+          },
+          naturalnessBonus: {
+            maxPoints: 20,
+            evaluationCriteria: ['대화 흐름', '자연스러운 질문', '상황에 맞는 반응']
+          }
+        }
       };
       
     default:
@@ -184,33 +239,40 @@ const ScenariosManagement: React.FC = () => {
         }
         break;
 
-      case 'CAPTURE_THE_SERVER':
-        if ((form.data.servers?.length || 0) === 0) {
-          alert('At least one server is required');
+      case 'KING_OF_THE_HILL':
+        if (!form.data.serverInfo?.name?.trim()) {
+          alert('Server name is required');
+          return false;
+        }
+        if ((form.data.attackActions?.length || 0) === 0) {
+          alert('At least one attack action is required');
+          return false;
+        }
+        if ((form.data.defenseActions?.length || 0) === 0) {
+          alert('At least one defense action is required');
           return false;
         }
         break;
 
-      case 'HACKERS_DECK':
-        const totalCards = (form.data.deck?.attack?.length || 0) + 
-                          (form.data.deck?.defense?.length || 0) + 
-                          (form.data.deck?.special?.length || 0);
-        if (totalCards === 0) {
-          alert('At least one card is required');
+      case 'FORENSICS_RUSH':
+        if (!form.data.scenario?.title?.trim()) {
+          alert('Scenario title is required');
+          return false;
+        }
+        if ((form.data.questions?.length || 0) === 0) {
+          alert('At least one question is required');
           return false;
         }
         break;
 
-      case 'EXPLOIT_CHAIN_CHALLENGE':
-        if ((form.data.steps?.length || 0) === 0) {
-          alert('At least one step is required');
+      case 'SOCIAL_ENGINEERING_CHALLENGE':
+        if (!form.data.objective?.title?.trim()) {
+          alert('Objective title is required');
           return false;
         }
-        for (let i = 0; i < (form.data.steps?.length || 0); i++) {
-          if (!form.data.steps[i].question?.trim()) {
-            alert(`Step ${i + 1} question is required`);
-            return false;
-          }
+        if (!form.data.aiTarget?.name?.trim()) {
+          alert('AI target name is required');
+          return false;
         }
         break;
     }
@@ -286,9 +348,9 @@ const ScenariosManagement: React.FC = () => {
     const icons: Record<string, string> = {
       TERMINAL_HACKING_RACE: '⚡',
       CYBER_DEFENSE_BATTLE: '⚔️',
-      CAPTURE_THE_SERVER: '🏰',
-      HACKERS_DECK: '🎲',
-      EXPLOIT_CHAIN_CHALLENGE: '🎯'
+      KING_OF_THE_HILL: '👑',
+      FORENSICS_RUSH: '🔍',
+      SOCIAL_ENGINEERING_CHALLENGE: '💬'
     };
     return icons[mode] || '🎮';
   };
@@ -297,44 +359,35 @@ const ScenariosManagement: React.FC = () => {
     const names: Record<string, string> = {
       TERMINAL_HACKING_RACE: 'Terminal Race',
       CYBER_DEFENSE_BATTLE: 'Defense Battle',
-      CAPTURE_THE_SERVER: 'Capture Server',
-      HACKERS_DECK: "Hacker's Deck",
-      EXPLOIT_CHAIN_CHALLENGE: 'Exploit Chain'
+      KING_OF_THE_HILL: 'King of the Hill',
+      FORENSICS_RUSH: 'Forensics Rush',
+      SOCIAL_ENGINEERING_CHALLENGE: 'Social Engineering'
     };
     return names[mode] || mode;
   };
 
   const getStageCount = (scenario: Scenario) => {
-    if (!scenario || !scenario.data) return '-'; // ✅ data가 비어있을 때 바로 리턴
+    if (!scenario || !scenario.data) return '-';
 
     switch (scenario.mode) {
       case 'TERMINAL_HACKING_RACE':
-        return `${scenario.data?.stages?.length || 0} stages`;
-
+        return `${scenario.data.stages?.length || 0} stages`;
       case 'CYBER_DEFENSE_BATTLE':
-        const totalActions =
-          (scenario.data?.attackActions?.length || 0) +
-          (scenario.data?.defenseActions?.length || 0);
-        return `${totalActions} actions`;
-
-      case 'CAPTURE_THE_SERVER':
-        return `${scenario.data?.servers?.length || 0} servers`;
-
-      case 'HACKERS_DECK':
-        const totalCards =
-          (scenario.data?.deck?.attack?.length || 0) +
-          (scenario.data?.deck?.defense?.length || 0) +
-          (scenario.data?.deck?.special?.length || 0);
-        return `${totalCards} cards`;
-
-      case 'EXPLOIT_CHAIN_CHALLENGE':
-        return `${scenario.data?.steps?.length || 0} steps`;
-
+        const attacks = scenario.data.attackActions?.length || 0;
+        const defenses = scenario.data.defenseActions?.length || 0;
+        return `${attacks}/${defenses} actions`;
+      case 'KING_OF_THE_HILL':
+        const kothAttacks = scenario.data.attackActions?.length || 0;
+        const kothDefenses = scenario.data.defenseActions?.length || 0;
+        return `${kothAttacks}/${kothDefenses} actions`;
+      case 'FORENSICS_RUSH':
+        return `${scenario.data.questions?.length || 0} questions`;
+      case 'SOCIAL_ENGINEERING_CHALLENGE':
+        return `${scenario.data.availableTechniques?.length || 0} techniques`;
       default:
         return '-';
     }
   };
-
 
   return (
     <div className="admin-layout scenarios-management">
@@ -361,9 +414,9 @@ const ScenariosManagement: React.FC = () => {
                   >
                     <option value="TERMINAL_HACKING_RACE">⚡ Terminal Hacking Race</option>
                     <option value="CYBER_DEFENSE_BATTLE">⚔️ Cyber Defense Battle</option>
-                    <option value="CAPTURE_THE_SERVER">🏰 Capture The Server</option>
-                    <option value="HACKERS_DECK">🎲 Hacker's Deck</option>
-                    <option value="EXPLOIT_CHAIN_CHALLENGE">🎯 Exploit Chain Challenge</option>
+                    <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
+                    <option value="FORENSICS_RUSH">🔍 Forensics Rush</option>
+                    <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
                   </select>
                 </div>
 
@@ -448,22 +501,22 @@ const ScenariosManagement: React.FC = () => {
                 />
               )}
 
-              {form.mode === 'CAPTURE_THE_SERVER' && (
-                <CaptureServerForm
+              {form.mode === 'KING_OF_THE_HILL' && (
+                <KingOfTheHillForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
                 />
               )}
 
-              {form.mode === 'HACKERS_DECK' && (
-                <HackersDeckForm
+              {form.mode === 'FORENSICS_RUSH' && (
+                <ForensicsRushForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
                 />
               )}
 
-              {form.mode === 'EXPLOIT_CHAIN_CHALLENGE' && (
-                <ExploitChainForm
+              {form.mode === 'SOCIAL_ENGINEERING_CHALLENGE' && (
+                <SocialEngineeringForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
                 />
@@ -487,9 +540,9 @@ const ScenariosManagement: React.FC = () => {
             <option value="ALL">All Modes</option>
             <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
             <option value="CYBER_DEFENSE_BATTLE">⚔️ Defense Battle</option>
-            <option value="CAPTURE_THE_SERVER">🏰 Capture Server</option>
-            <option value="HACKERS_DECK">🎲 Hacker's Deck</option>
-            <option value="EXPLOIT_CHAIN_CHALLENGE">🎯 Exploit Chain</option>
+            <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
+            <option value="FORENSICS_RUSH">🔍 Forensics Rush</option>
+            <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
           </select>
 
           <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)}>

@@ -47,11 +47,10 @@ interface LogEntry {
   type: 'prompt' | 'command' | 'output' | 'success' | 'error' | 'system';
 }
 
-const TerminalRace: React.FC<TerminalRaceProps> = ({ 
-  arena, 
-  socket, 
-  currentUserId, 
-  participants 
+const TerminalRace: React.FC<TerminalRaceProps> = ({
+  arena,
+  socket,
+  currentUserId
 }) => {
   const [command, setCommand] = useState('');
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -64,26 +63,30 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const logContainerRef = useRef<HTMLDivElement>(null);
   const logCounter = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isInitializedRef = useRef(false);
 
   // 초기 진행 상황 로드
   useEffect(() => {
+    if (isInitializedRef.current) return;
+
     const loadProgress = async () => {
       try {
+        isInitializedRef.current = true;
         console.log('🚀 [TerminalRace] Loading progress for arena:', arena._id);
         socket.emit('terminal:get-progress', { arenaId: arena._id });
-        
+
         // ✅ 초기 문제 프롬프트도 함께 요청
         setTimeout(() => {
           console.log('📤 [TerminalRace] Requesting initial prompt...');
           socket.emit('terminal:get-prompt', { arenaId: arena._id });
         }, 300);
-        
+
         // ✅ 5초 후에도 응답이 없으면 강제로 로딩 해제
         setTimeout(() => {
           console.warn('⚠️ [TerminalRace] Loading timeout - forcing loading to false');
           setIsLoading(false);
         }, 5000);
-        
+
       } catch (error) {
         console.error('Failed to load progress:', error);
         setLogs([
