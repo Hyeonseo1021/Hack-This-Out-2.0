@@ -1,5 +1,5 @@
 /* * BattlePage.scss - Unstable Data Stream Theme (v4 - Star Removed)
- */
+ */
 @use "../style" as *;
 
 // --- 테마 변수 ---
@@ -21,9 +21,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 16px;
   overflow: hidden;
-  /* 유성 효과를 위한 ::before 블록이 여기서 삭제되었습니다. */
+  width: 100%;
+  min-height: 100vh;
+  padding: 2rem 1rem;
 }
 
 // --- 동적 배경 그리드 ---
@@ -44,7 +47,6 @@
   text-align: center;
   padding: 2rem;
   width: clamp(300px, 90vw, 900px);
-  transform: translateY(60%);
 }
 
 // --- 글리치 타이틀 ---
@@ -174,5 +176,3 @@
   75% { clip-path: inset(85% 0 10% 0); }
   100% { clip-path: none; transform: translateY(0); }
 }
-
-/* @keyframes shooting-star 부분이 여기서 삭제되었습니다. */

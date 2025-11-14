@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
-import Main from '../../components/main/Main';
 import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaPlayPage.scss';
@@ -274,10 +273,9 @@ const ArenaPlayPage: React.FC = () => {
   const activeCount = participants.filter(p => !p.hasLeft).length;
 
   return (
-    <Main>
-      <div className="arena-play-page">
-        
-        {/* 상단 헤더 */}
+    <div className="arena-play-page">
+      
+      {/* 상단 헤더 */}
         <header className="arena-header">
           <div className="header-left">
             <h1 className="arena-title">{arenaName}</h1>
@@ -389,7 +387,6 @@ const ArenaPlayPage: React.FC = () => {
 
         </div>
       </div>
-    </Main>
   );
 }
 
