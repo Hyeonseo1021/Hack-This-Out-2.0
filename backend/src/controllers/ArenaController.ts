@@ -638,3 +638,143 @@ export const getScenarioStats = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ message: 'Failed to fetch stats' });
   }
 };
+// ===== 아레나 방 관리 (관리자 전용) =====
+
+/**
+ * 모든 아레나 방 조회 (관리자용)
+ */
+export const getAllArenas = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const arenas = await Arena.find()
+      .populate('host', 'username')
+      .populate('participants.user', 'username')
+      .populate('scenarioId', 'title difficulty mode')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedArenas = arenas.map(arena => ({
+      _id: arena._id,
+      roomCode: arena._id,
+      name: arena.name,
+      gameMode: arena.mode,
+      scenario: arena.scenarioId ? {
+        _id: (arena.scenarioId as any)._id,
+        title: (arena.scenarioId as any).title,
+        difficulty: (arena.scenarioId as any).difficulty,
+        mode: (arena.scenarioId as any).mode
+      } : null,
+      maxPlayers: arena.maxParticipants,
+      currentPlayers: arena.participants.filter((p: any) => !p.hasLeft).length,
+      participants: arena.participants.map((p: any) => ({
+        userId: p.user?._id || p.user,
+        username: p.user?.username || 'Unknown',
+        team: p.teamName || null,
+        joinedAt: p.joinedAt || arena.createdAt
+      })),
+      status: arena.status.toUpperCase(),
+      host: {
+        userId: (arena.host as any)?._id || arena.host,
+        username: (arena.host as any)?.username || 'Unknown'
+      },
+      settings: {
+        endOnFirstSolve: arena.settings?.endOnFirstSolve ?? true,
+        graceMs: arena.settings?.graceMs ?? 90000
+      },
+      createdAt: arena.createdAt,
+      startedAt: arena.startTime,
+      completedAt: arena.endTime
+    }));
+
+    res.status(200).json({ arenas: formattedArenas });
+  } catch (err) {
+    console.error('Error fetching all arenas:', err);
+    res.status(500).json({ message: 'Failed to fetch arenas' });
+  }
+};
+
+/**
+ * 아레나 방 삭제 (관리자 전용)
+ * - 데이터베이스에서 방 완전 삭제
+ * - 관련 ArenaProgress 데이터도 삭제
+ * - Socket.IO로 참가자들에게 알림
+ */
+export const deleteArena = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { arenaId } = req.params;
+    
+    const arena = await Arena.findById(arenaId).lean();
+    
+    if (!arena) {
+      res.status(404).json({ message: 'Arena not found' });
+      return;
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`arena:${arenaId}`).emit('arena:room-deleted', {
+        message: '관리자에 의해 방이 삭제되었습니다.',
+        arenaId: String(arenaId)
+      });
+
+      io.emit('arena:room-removed', { arenaId: String(arenaId) });
+    }
+
+    await ArenaProgress.deleteMany({ arena: arenaId });
+    console.log(`Deleted ArenaProgress records for arena ${arenaId}`);
+
+    await Arena.findByIdAndDelete(arenaId);
+    console.log(`Deleted arena ${arenaId}`);
+
+    res.status(200).json({ 
+      message: 'Arena deleted successfully',
+      arenaId: String(arenaId)
+    });
+  } catch (err) {
+    console.error('Error deleting arena:', err);
+    res.status(500).json({ message: 'Failed to delete arena' });
+  }
+};
+
+/**
+ * 활성 아레나 방 조회 (WAITING 또는 IN_PROGRESS)
+ */
+export const getActiveArenas = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const arenas = await Arena.find({
+      status: { $in: ['waiting', 'started'] }
+    })
+      .populate('host', 'username')
+      .populate('participants.user', 'username')
+      .populate('scenarioId', 'title difficulty mode')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedArenas = arenas
+      .filter(arena => arena.participants.filter((p: any) => !p.hasLeft).length > 0)
+      .map(arena => ({
+        _id: arena._id,
+        roomCode: arena._id,
+        name: arena.name,
+        gameMode: arena.mode,
+        scenario: arena.scenarioId ? {
+          _id: (arena.scenarioId as any)._id,
+          title: (arena.scenarioId as any).title,
+          difficulty: (arena.scenarioId as any).difficulty,
+          mode: (arena.scenarioId as any).mode
+        } : null,
+        maxPlayers: arena.maxParticipants,
+        currentPlayers: arena.participants.filter((p: any) => !p.hasLeft).length,
+        status: arena.status.toUpperCase(),
+        host: {
+          userId: (arena.host as any)?._id || arena.host,
+          username: (arena.host as any)?.username || 'Unknown'
+        },
+        createdAt: arena.createdAt
+      }));
+
+    res.status(200).json({ rooms: formattedArenas });
+  } catch (err) {
+    console.error('Error fetching active arenas:', err);
+    res.status(500).json({ message: 'Failed to fetch active arenas' });
+  }
+};

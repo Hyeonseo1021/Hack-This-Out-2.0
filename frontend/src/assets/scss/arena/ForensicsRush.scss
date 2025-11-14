@@ -1,0 +1,850 @@
+// src/assets/scss/arena/ForensicsRush.scss
+
+.forensics-rush.terminal-theme {
+  width: 100%;
+  height: 100vh;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'Courier New', 'Consolas', monospace;
+  overflow: hidden;  // ✅ 전체 스크롤 제거
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  // ============================================
+  // 터미널 헤더
+  // ============================================
+  .terminal-header {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border-bottom: 2px solid #00ff00;
+    box-shadow: 0 2px 10px rgba(0, 255, 0, 0.3);
+
+    .terminal-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: #0a0a0a;
+
+      .terminal-icon {
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+        animation: pulse 2s infinite;
+      }
+
+      .terminal-title {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #00ff00;  // 타이틀만 녹색 유지
+        text-shadow: 0 0 10px #00ff00;
+        letter-spacing: 2px;
+      }
+
+      .terminal-controls {
+        display: flex;
+        gap: 0.5rem;
+
+        .control {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          cursor: pointer;
+          transition: all 0.3s;
+
+          &.minimize {
+            background: #00ff00;
+            color: #000;
+          }
+
+          &.maximize {
+            background: #ffff00;
+            color: #000;
+          }
+
+          &.close {
+            background: #ff0000;
+            color: #fff;
+          }
+
+          &:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px currentColor;
+          }
+        }
+      }
+    }
+
+    .system-info-bar {
+      display: flex;
+      gap: 2rem;
+      padding: 0.5rem 1.5rem;
+      background: #000000;
+      border-top: 1px solid rgba(0, 255, 0, 0.3);
+      font-size: 0.85rem;
+
+      .info-item {
+        color: rgba(255, 255, 255, 0.7);  // ✅ 흰색
+
+        .highlight {
+          color: #00ff00;  // 강조는 녹색 유지
+          font-weight: bold;
+          text-shadow: 0 0 5px #00ff00;
+        }
+
+        .status-active {
+          color: #00ff00;  // 상태는 녹색 유지
+          animation: blink 1.5s infinite;
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // 시나리오 배너
+  // ============================================
+  .scenario-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(90deg, #0a0a0a 0%, #1a1a1a 100%);
+    border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+
+    .banner-left {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+
+      .incident-badge {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 0, 0, 0.2);
+        border: 2px solid #ff0000;
+        color: #ff0000;
+        font-weight: bold;
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+        text-shadow: 0 0 10px #ff0000;
+        animation: pulse 2s infinite;
+      }
+
+      .scenario-info {
+        .scenario-title {
+          margin: 0;
+          font-size: 1.3rem;
+          color: #ffffff;  // ✅ 흰색
+          text-shadow: none;
+          letter-spacing: 1px;
+        }
+
+        .scenario-date {
+          margin: 0.25rem 0 0 0;
+          color: rgba(255, 255, 255, 0.6);  // ✅ 흰색
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .banner-right {
+      .progress-circle {
+        filter: drop-shadow(0 0 10px #00ff00);
+      }
+    }
+  }
+
+  // ============================================
+  // 메인 그리드
+  // ============================================
+  .forensics-main-grid {
+    display: grid;
+    grid-template-columns: 450px 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    flex: 1;  // ✅ 남은 공간 차지
+    overflow: hidden;  // ✅ 그리드 자체는 스크롤 없음
+    min-height: 0;  // ✅ flex 자식이 축소될 수 있도록
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 400px 1fr;
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // ============================================
+  // 터미널 윈도우 공통 스타일
+  // ============================================
+  .terminal-window {
+    background: #000000;
+    border: 2px solid #00ff00;
+    border-radius: 4px;
+    box-shadow: 
+      0 0 20px rgba(0, 255, 0, 0.3),
+      inset 0 0 50px rgba(0, 255, 0, 0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 90%;
+
+    .terminal-header {
+      background: #0a0a0a;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid #00ff00;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .terminal-title {
+        color: #00ff00;
+        font-weight: bold;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        text-shadow: 0 0 5px #00ff00;
+      }
+
+      .toggle-terminal {
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid #00ff00;
+        color: #00ff00;
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        transition: all 0.3s;
+
+        &:hover {
+          background: rgba(0, 255, 0, 0.2);
+          box-shadow: 0 0 10px #00ff00;
+        }
+      }
+    }
+
+    .terminal-body {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      background: #000000;
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: transparent;  // ✅ 스캔라인 제거
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      > * {
+        position: relative;
+        z-index: 2;
+      }
+    }
+  }
+
+  // ============================================
+  // 증거 파일 터미널
+  // ============================================
+  .evidence-terminal {
+    transition: all 0.3s ease;
+
+    &.closed {
+      grid-column: span 1;
+      max-width: 50px;
+
+      .terminal-body {
+        display: none;
+      }
+    }
+
+    .file-list {
+      margin-bottom: 1rem;
+
+      .list-header {
+        color: rgba(255, 255, 255, 0.7);  // ✅ 흰색
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .file-item {
+        display: grid;
+        grid-template-columns: 100px 60px 30px 1fr auto;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-left: 2px solid transparent;
+        font-size: 0.85rem;
+
+        .file-perms {
+          color: rgba(255, 255, 255, 0.5);  // ✅ 흰색
+        }
+
+        .file-size {
+          color: rgba(255, 255, 255, 0.5);  // ✅ 흰색
+          text-align: right;
+        }
+
+        .file-icon {
+          font-size: 1rem;
+        }
+
+        .file-name {
+          color: #ffffff;  // ✅ 흰색
+        }
+
+        .flag-badge {
+          color: #ffff00;
+          font-size: 0.75rem;
+          padding: 0.1rem 0.3rem;
+          border: 1px solid #ffff00;
+          background: rgba(255, 255, 0, 0.1);
+          animation: blink 1.5s infinite;
+        }
+
+        &.selected {
+          background: rgba(0, 255, 0, 0.1);
+          border-left-color: #00ff00;
+          box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+
+          .file-name {
+            text-shadow: 0 0 5px #00ff00;
+          }
+        }
+
+        &.related {
+          border-left-color: #ffff00;
+        }
+
+        &:hover:not(.selected) {
+          background: rgba(0, 255, 0, 0.05);
+          transform: translateX(5px);
+        }
+      }
+    }
+
+    .file-viewer {
+      margin-top: 1rem;
+      border-top: 1px solid rgba(0, 255, 0, 0.3);
+      padding-top: 1rem;
+
+      .viewer-header {
+        color: rgba(255, 255, 255, 0.7);  // ✅ 흰색
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .viewer-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        background: rgba(0, 255, 0, 0.05);
+        border: 1px solid rgba(0, 255, 0, 0.2);
+
+        .toolbar-label {
+          color: rgba(255, 255, 255, 0.7);  // ✅ 흰색
+          font-size: 0.8rem;
+        }
+
+        .tool-chip {
+          padding: 0.2rem 0.5rem;
+          background: rgba(0, 255, 0, 0.1);
+          border: 1px solid #00ff00;
+          color: #00ff00;
+          font-size: 0.75rem;
+          transition: all 0.3s;
+
+          &:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 5px #00ff00;
+          }
+        }
+      }
+
+      .viewer-content {
+        max-height: 400px;
+        overflow-y: auto;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(0, 255, 0, 0.3);
+        padding: 1rem;
+
+        .file-content {
+          margin: 0;
+          color: #ffffff;  // ✅ 흰색
+          font-size: 0.85rem;
+          line-height: 1.6;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          text-shadow: none;
+        }
+      }
+    }
+
+    .hint-box {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(255, 255, 0, 0.05);
+      border: 1px solid rgba(255, 255, 0, 0.3);
+
+      .hint-header {
+        color: #ffff00;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 5px #ffff00;
+      }
+
+      .hint-content {
+        color: rgba(255, 255, 0, 0.8);
+        font-size: 0.85rem;
+
+        ul {
+          margin: 0.5rem 0 0 0;
+          padding-left: 1.5rem;
+
+          li {
+            margin: 0.25rem 0;
+          }
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // 질문 터미널
+  // ============================================
+  .question-terminal {
+    .question-content {
+      .question-meta {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+
+        .q-number {
+          color: rgba(0, 255, 0, 0.7);
+          font-weight: bold;
+        }
+
+        .difficulty-tag {
+          padding: 0.25rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: bold;
+
+          &.diff-easy {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+          }
+
+          &.diff-medium {
+            background: rgba(255, 255, 0, 0.2);
+            border: 1px solid #ffff00;
+            color: #ffff00;
+          }
+
+          &.diff-hard {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+          }
+        }
+
+        .points-tag {
+          padding: 0.25rem 0.75rem;
+          background: rgba(0, 255, 255, 0.2);
+          border: 1px solid #00ffff;
+          color: #00ffff;
+          font-size: 0.75rem;
+        }
+      }
+
+      .question-text {
+        font-size: 1.1rem;
+        color: #ffffff;  // ✅ 흰색
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+
+        .prompt {
+          color: #00ff00;  // 프롬프트는 녹색 유지
+          margin-right: 0.5rem;
+          font-weight: bold;
+        }
+      }
+
+      .answered-status {
+        padding: 1rem;
+        background: rgba(0, 255, 0, 0.1);
+        border: 2px solid #00ff00;
+
+        .status-message {
+          color: #00ff00;
+          font-weight: bold;
+          margin-bottom: 1rem;
+          text-shadow: 0 0 5px #00ff00;
+        }
+      }
+
+      .answer-terminal {
+        margin-bottom: 1rem;
+
+        .terminal-input-line {
+          display: flex;
+          align-items: center;
+          margin-bottom: 1rem;
+          padding: 0.75rem;
+          background: rgba(0, 255, 0, 0.05);
+          border: 1px solid #00ff00;
+
+          .input-prompt {
+            color: #00ff00;
+            margin-right: 0.5rem;
+            font-weight: bold;
+          }
+
+          .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;  // ✅ 흰색
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            outline: none;
+            caret-color: #00ff00;  // 커서는 녹색 유지
+
+            &::placeholder {
+              color: rgba(255, 255, 255, 0.4);  // ✅ 흰색
+            }
+
+            &:disabled {
+              opacity: 0.5;
+            }
+          }
+        }
+
+        .terminal-actions {
+          display: flex;
+          gap: 1rem;
+        }
+      }
+
+      .terminal-button {
+        padding: 0.75rem 1.5rem;
+        background: rgba(0, 255, 0, 0.1);
+        border: 2px solid #00ff00;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        letter-spacing: 1px;
+
+        &:hover:not(:disabled) {
+          background: rgba(0, 255, 0, 0.2);
+          box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+          transform: translateY(-2px);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        &.submit {
+          flex: 1;
+        }
+
+        &.hint {
+          border-color: #ffff00;
+          color: #ffff00;
+          background: rgba(255, 255, 0, 0.1);
+
+          &:hover:not(:disabled) {
+            background: rgba(255, 255, 0, 0.2);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
+          }
+        }
+
+        &.next {
+          width: 100%;
+          margin-top: 1rem;
+        }
+      }
+
+      .terminal-feedback {
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        .feedback-icon {
+          font-size: 1.2rem;
+        }
+
+        &.success {
+          background: rgba(0, 255, 0, 0.1);
+          border-color: #00ff00;
+          color: #00ff00;
+          animation: flash 0.5s;
+        }
+
+        &.error {
+          background: rgba(255, 0, 0, 0.1);
+          border-color: #ff0000;
+          color: #ff0000;
+        }
+      }
+
+      .hints-terminal {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(255, 255, 0, 0.05);
+        border: 1px solid rgba(255, 255, 0, 0.3);
+
+        .hints-header {
+          color: #ffff00;
+          font-weight: bold;
+          margin-bottom: 0.75rem;
+          text-shadow: 0 0 5px #ffff00;
+        }
+
+        .hints-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+
+          li {
+            color: rgba(255, 255, 255, 0.8);  // ✅ 흰색
+            margin: 0.5rem 0;
+            display: flex;
+            gap: 0.5rem;
+
+            .hint-bullet {
+              color: #ffff00;  // 불릿은 노란색 유지
+            }
+          }
+        }
+      }
+
+      .attempts-display {
+        margin-top: 1rem;
+        padding: 0.5rem;
+        color: rgba(255, 255, 255, 0.6);  // ✅ 흰색
+        font-size: 0.85rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    .questions-nav-terminal {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 2px solid rgba(0, 255, 0, 0.3);
+
+      .nav-header {
+        color: rgba(255, 255, 255, 0.7);  // ✅ 흰색
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+      }
+
+      .questions-grid-terminal {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: 0.5rem;
+
+        .question-chip {
+          padding: 0.75rem;
+          background: rgba(0, 255, 0, 0.05);
+          border: 1px solid rgba(0, 255, 0, 0.3);
+          color: rgba(255, 255, 255, 0.7);  // ✅ 흰색
+          font-family: 'Courier New', monospace;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.3s;
+          text-align: center;
+
+          &.active {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+          }
+
+          &.solved {
+            background: rgba(0, 255, 0, 0.15);
+            border-color: #00ff00;
+            color: #00ff00;
+          }
+
+          &:hover {
+            background: rgba(0, 255, 0, 0.15);
+            transform: scale(1.05);
+          }
+        }
+      }
+    }
+  }
+
+  // ============================================
+  // 완료 화면
+  // ============================================
+  .completion-screen {
+    padding: 2rem;
+
+    .success-message {
+      color: #00ff00;
+      font-size: 0.9rem;
+      line-height: 1.8;
+      text-shadow: 0 0 3px #00ff00;
+    }
+  }
+
+  // ============================================
+  // 로딩 화면
+  // ============================================
+  &.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+
+    .terminal-window {
+      width: 600px;
+      height: auto;
+    }
+
+    .loading-content {
+      text-align: center;
+      padding: 2rem;
+
+      .ascii-art {
+        color: #00ff00;
+        font-size: 0.5rem;
+        line-height: 1.2;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 10px #00ff00;
+      }
+
+      .loading-text {
+        font-size: 1.2rem;
+        color: #ffffff;  // ✅ 흰색
+        margin-bottom: 0.5rem;
+        text-shadow: none;
+
+        .blink {
+          animation: blink 1s infinite;
+          color: #00ff00;  // 깜빡이는 부분만 녹색
+        }
+      }
+
+      .loading-detail {
+        color: rgba(255, 255, 255, 0.6);  // ✅ 흰색
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  // ============================================
+  // 에러 화면
+  // ============================================
+  &.error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+
+    .terminal-window {
+      width: 600px;
+      height: auto;
+    }
+
+    .error-message {
+      color: #ff0000;
+      text-shadow: 0 0 10px #ff0000;
+      padding: 2rem;
+      line-height: 1.8;
+    }
+  }
+
+  // ============================================
+  // 애니메이션
+  // ============================================
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes blink {
+    0%, 49%, 100% { opacity: 1; }
+    50%, 99% { opacity: 0; }
+  }
+
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; transform: scale(1.02); }
+  }
+
+  // ============================================
+  // 스크롤바 스타일
+  // ============================================
+  .terminal-body,
+  .viewer-content {
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 0, 0.5);
+      border-radius: 4px;
+
+      &:hover {
+        background: rgba(0, 255, 0, 0.7);
+      }
+    }
+  }
+
+  // ============================================
+  // 반응형
+  // ============================================
+  @media (max-width: 768px) {
+    .forensics-main-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .evidence-terminal {
+      max-height: 500px;
+
+      &.closed {
+        max-height: 50px;
+      }
+    }
+
+    .scenario-banner {
+      flex-direction: column;
+      gap: 1rem;
+
+      .banner-left {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  }
+}

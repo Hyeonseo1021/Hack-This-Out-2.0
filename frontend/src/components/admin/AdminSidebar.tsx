@@ -32,7 +32,10 @@ const Sidebar: React.FC = () => {
           <FaCogs className="sidebar-icon" />
           Instances
         </NavLink>
-        {/* ✅ 새로 추가: Arena Scenarios */}
+        <NavLink to="/admin/arenas" className={({ isActive }) => (isActive ? 'active' : '')}>
+          <FaGamepad className="sidebar-icon" />
+          Arenas
+        </NavLink>
         <NavLink to="/admin/scenarios" className={({ isActive }) => (isActive ? 'active' : '')}>
           <FaGamepad className="sidebar-icon" />
           Arena Scenarios

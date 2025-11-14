@@ -8,6 +8,7 @@ interface EvidenceFile {
   type: 'log' | 'pcap' | 'memory' | 'filesystem' | 'image';
   path: string;
   description: string;
+  content?: string;  // ✅ 파일의 실제 내용
 }
 
 interface Question {
@@ -58,7 +59,8 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
           name: '',
           type: 'log',
           path: '',
-          description: ''
+          description: '',
+          content: ''  // ✅ 빈 content 초기화
         }
       ]
     });
@@ -272,9 +274,38 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                   required
                 />
               </div>
+
+              {/* ✅ 파일 내용 입력 (새로 추가) */}
+              <div className="input-group">
+                <label>파일 내용 (실제 로그/데이터) *</label>
+                <textarea
+                  rows={10}
+                  className="file-content-input"
+                  placeholder={`예시 (access.log):
+192.168.1.10 - - [13/Nov/2025:02:45:23 +0000] "GET /index.php HTTP/1.1" 200 2326
+203.0.113.45 - - [13/Nov/2025:03:12:45 +0000] "GET /login.php?id=1' UNION SELECT NULL-- HTTP/1.1" 500 156 "-" "sqlmap/1.7"
+...
+
+플레이어가 파일 뷰어에서 볼 수 있는 실제 내용을 입력하세요.`}
+                  value={file.content || ''}
+                  onChange={e => updateEvidenceFile(idx, 'content', e.target.value)}
+                  required
+                />
+                <small>
+                  ⚠️ 중요: 플레이어가 이 내용을 보고 문제를 풀게 됩니다. 
+                  실제 로그 형식으로 작성하고, 답이 포함되어 있어야 합니다.
+                </small>
+              </div>
             </div>
           </div>
         ))}
+
+        {data.evidenceFiles.length === 0 && (
+          <div className="empty-state">
+            <p>증거 파일이 없습니다. "추가" 버튼을 눌러 증거 파일을 추가하세요.</p>
+            <p className="hint">💡 팁: 최소 1개 이상의 증거 파일이 필요합니다.</p>
+          </div>
+        )}
       </div>
 
       {/* 사용 가능한 도구 */}
@@ -386,7 +417,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                     required
                   />
                 )}
-                <small>정확한 정답 (대소문자 구분)</small>
+                <small>정확한 정답 (대소문자 무시, 공백 제거 후 비교됨)</small>
               </div>
 
               <div className="input-group">
@@ -407,11 +438,18 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                   value={q.relatedFiles.join(', ')}
                   onChange={e => updateQuestion(idx, 'relatedFiles', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                 />
-                <small>이 질문과 관련된 증거 파일들</small>
+                <small>이 질문과 관련된 증거 파일들 (파일 뷰어에서 📌 표시됨)</small>
               </div>
             </div>
           </div>
         ))}
+
+        {data.questions.length === 0 && (
+          <div className="empty-state">
+            <p>질문이 없습니다. "추가" 버튼을 눌러 질문을 추가하세요.</p>
+            <p className="hint">💡 팁: 최소 3개 이상의 질문을 만드는 것을 권장합니다.</p>
+          </div>
+        )}
       </div>
 
       {/* 점수 시스템 */}
@@ -463,6 +501,53 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
             <small>빠르게 풀면 추가 점수</small>
           </div>
         </div>
+      </div>
+
+      {/* 요약 정보 */}
+      <div className="form-section summary-section">
+        <h4>📊 시나리오 요약</h4>
+        <div className="summary-grid">
+          <div className="summary-item">
+            <span className="summary-label">증거 파일 개수:</span>
+            <span className="summary-value">{data.evidenceFiles.length}개</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">질문 개수:</span>
+            <span className="summary-value">{data.questions.length}개</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">총 배점:</span>
+            <span className="summary-value">
+              {data.questions.reduce((sum, q) => sum + q.points, 0)}점
+            </span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">완료 상태:</span>
+            <span className={`summary-value ${
+              data.evidenceFiles.length > 0 && 
+              data.questions.length >= 3 &&
+              data.evidenceFiles.every(f => f.content) ? 'complete' : 'incomplete'
+            }`}>
+              {data.evidenceFiles.length > 0 && 
+               data.questions.length >= 3 &&
+               data.evidenceFiles.every(f => f.content) ? '✅ 완성' : '⚠️ 미완성'}
+            </span>
+          </div>
+        </div>
+        
+        {(!data.evidenceFiles.every(f => f.content) || data.questions.length < 3) && (
+          <div className="warning-box">
+            <strong>⚠️ 경고:</strong>
+            <ul>
+              {!data.evidenceFiles.every(f => f.content) && (
+                <li>일부 증거 파일의 내용(content)이 비어있습니다. 모든 증거 파일에 실제 내용을 입력하세요.</li>
+              )}
+              {data.questions.length < 3 && (
+                <li>최소 3개 이상의 질문을 추가하는 것을 권장합니다.</li>
+              )}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

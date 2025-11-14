@@ -326,19 +326,19 @@ const DefenseBattle: React.FC<DefenseBattleProps> = ({
       </div>
 
       {/* 팀 상태 */}
-      {gameState && (
+      {gameState && gameState.attacker && gameState.defender && (
         <div className="teams-status">
           <div className={`team-panel attack ${myTeam === 'ATTACK' ? 'my-team' : ''}`}>
             <div className="team-header">
               <h3>🗡️ Attacker</h3>
               <div className="team-score">
                 <span className="score-label">Score</span>
-                <span className="score-value">{gameState.attacker.score}</span>
+                <span className="score-value">{gameState.attacker.score ?? 0}</span>
               </div>
             </div>
             {renderHealthBar(
-              gameState.attacker.health,
-              gameState.attacker.maxHealth,
+              gameState.attacker.health ?? 100,
+              gameState.attacker.maxHealth ?? 100,
               'Health',
               'attack'
             )}
@@ -353,12 +353,12 @@ const DefenseBattle: React.FC<DefenseBattleProps> = ({
               <h3>🛡️ Defender</h3>
               <div className="team-score">
                 <span className="score-label">Score</span>
-                <span className="score-value">{gameState.defender.score}</span>
+                <span className="score-value">{gameState.defender.score ?? 0}</span>
               </div>
             </div>
             {renderHealthBar(
-              gameState.defender.health,
-              gameState.defender.maxHealth,
+              gameState.defender.health ?? 100,
+              gameState.defender.maxHealth ?? 100,
               'Server Health',
               'defense'
             )}

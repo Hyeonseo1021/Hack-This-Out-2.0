@@ -104,6 +104,7 @@ export interface ForensicsRushData {
     type: 'log' | 'pcap' | 'memory' | 'filesystem' | 'image';
     path: string;
     description: string;
+    content?: string;  // ✅ 파일의 실제 내용 (로그, 텍스트 등)
   }[];
   
   availableTools: string[];  // ['grep', 'wireshark', 'volatility', 'strings', 'tcpdump']

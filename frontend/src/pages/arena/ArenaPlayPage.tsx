@@ -9,6 +9,7 @@ import '../../assets/scss/arena/ArenaPlayPage.scss';
 
 import TerminalRace from '../../components/arena/TerminalRace';
 import DefenseBattle from '../../components/arena/DefenseBattle';
+import ForensicsRush from '../../components/arena/ForensicsRush';
 import ActivityFeed from '../../components/arena/ActivityFeed';
 
 type Participant = {
@@ -52,9 +53,9 @@ const ArenaPlayPage: React.FC = () => {
     const names: Record<string, string> = {
       'TERMINAL_HACKING_RACE': 'Terminal Race',
       'CYBER_DEFENSE_BATTLE': 'Defense Battle',
-      'CAPTURE_THE_SERVER': 'Capture Server',
-      'HACKERS_DECK': "Hacker's Deck",
-      'EXPLOIT_CHAIN_CHALLENGE': 'Exploit Chain'
+      'KING_OF_THE_HILL': 'King of the Hill',              // ✅ 추가
+      'FORENSICS_RUSH': 'Forensics Rush',                   // ✅ 추가
+      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'  // ✅ 추가
     };
     return names[mode] || mode;
   };
@@ -254,6 +255,10 @@ const ArenaPlayPage: React.FC = () => {
       case 'CYBER_DEFENSE_BATTLE':
         console.log('⚔️ Loading Defense Battle component...');
         return <DefenseBattle arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
+
+      case 'FORENSICS_RUSH':
+        console.log('🔍 Loading Forensics Rush component...');
+        return <ForensicsRush arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       
       default:
         console.error('❌ Unknown game mode:', mode);
