@@ -12,11 +12,11 @@ const modes = [
     players: '2-8명'
   },
   { 
-    id: 'CYBER_DEFENSE_BATTLE', 
-    icon: '⚔️', 
-    title: 'Cyber Defense Battle', 
-    desc: '1:1 공격 vs 방어 실시간 대결!',
-    players: '2명 (1v1)'
+    id: 'VULNERABILITY_SCANNER_RACE',  // ✅ 추가
+    icon: '🔍', 
+    title: 'Vulnerability Scanner Race', 
+    desc: '웹 애플리케이션의 취약점을 찾아내라!',
+    players: '2명'
   },
   { 
     id: 'KING_OF_THE_HILL', 
@@ -27,7 +27,7 @@ const modes = [
   },
   { 
     id: 'FORENSICS_RUSH', 
-    icon: '🔍', 
+    icon: '🔎',  // 🔍에서 🔎으로 변경 (구분)
     title: 'Forensics Rush', 
     desc: '증거를 분석하고 범인을 찾아내라!',
     players: '2-8명'
@@ -68,7 +68,7 @@ const AddArenaForm: React.FC = () => {
     setFormData(prev => ({ ...prev, mode }));
     
     // 모드별 참가자 수 자동 설정
-    if (mode === 'CYBER_DEFENSE_BATTLE') {
+    if (mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
       setFormData(prev => ({ ...prev, maxParticipants: 2 }));
     } else if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
       setFormData(prev => ({ ...prev, maxParticipants: Math.min(prev.maxParticipants, 4) }));
@@ -88,9 +88,9 @@ const AddArenaForm: React.FC = () => {
       return;
     }
 
-    // 모드별 참가자 수 검증
-    if (formData.mode === 'CYBER_DEFENSE_BATTLE' && formData.maxParticipants !== 2) {
-      setError('System Error: Defense Battle requires exactly 2 players (1v1).');
+    // ✅ Vulnerability Scanner Race 검증 추가
+    if (formData.mode === 'VULNERABILITY_SCANNER_RACE' && formData.maxParticipants !== 2) {
+      setError('System Error: Vulnerability Scanner Race requires exactly 2 players.');
       return;
     }
 
@@ -115,8 +115,12 @@ const AddArenaForm: React.FC = () => {
 
   // 선택된 모드의 참가자 수 제한 가져오기
   const getMaxParticipantsLimit = () => {
-    if (formData.mode === 'CYBER_DEFENSE_BATTLE') return { min: 2, max: 2 };
-    if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE') return { min: 1, max: 4 };
+    if (formData.mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
+      return { min: 2, max: 2 };
+    }
+    if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
+      return { min: 1, max: 4 };
+    }
     return { min: 2, max: 8 };
   };
 
@@ -155,7 +159,9 @@ const AddArenaForm: React.FC = () => {
                   onChange={handleChange}
                   min={participantsLimit.min}
                   max={participantsLimit.max}
-                  disabled={formData.mode === 'CYBER_DEFENSE_BATTLE'}
+                  disabled={ 
+                    formData.mode === 'VULNERABILITY_SCANNER_RACE'  // ✅ 추가
+                  }
                 />
                 {formData.mode && (
                   <small className="input-hint">

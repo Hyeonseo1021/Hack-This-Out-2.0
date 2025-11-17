@@ -7,9 +7,9 @@ import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaPlayPage.scss';
 
 import TerminalRace from '../../components/arena/TerminalRace';
-import DefenseBattle from '../../components/arena/DefenseBattle';
 import ForensicsRush from '../../components/arena/ForensicsRush';
 import KingOfTheHill from '../../components/arena/KingOfTheHill';
+import VulnerabilityScannerRace from '../../components/arena/VulnerabilityScannerRace';
 import ActivityFeed from '../../components/arena/ActivityFeed';
 
 
@@ -47,16 +47,16 @@ const ArenaPlayPage: React.FC = () => {
 
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
-  const navigatedRef = useRef(false); // ✅ 중복 navigate 방지
+  const navigatedRef = useRef(false);
 
   // Mode 이름 변환 헬퍼
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
       'TERMINAL_HACKING_RACE': 'Terminal Race',
-      'CYBER_DEFENSE_BATTLE': 'Defense Battle',
-      'KING_OF_THE_HILL': 'King of the Hill',              // ✅ 추가
-      'FORENSICS_RUSH': 'Forensics Rush',                   // ✅ 추가
-      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'  // ✅ 추가
+      'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',  // ✅ 추가
+      'KING_OF_THE_HILL': 'King of the Hill',             
+      'FORENSICS_RUSH': 'Forensics Rush',                   
+      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'  
     };
     return names[mode] || mode;
   };
@@ -114,7 +114,6 @@ const ArenaPlayPage: React.FC = () => {
 
   // 타이머 관리
   useEffect(() => {
-    // ✅ 게임이 종료되었거나 endAt이 없으면 타이머 작동 안 함
     if (!endAt || status === 'ended') {
       setRemaining(0);
       if (timerRef.current) {
@@ -130,12 +129,10 @@ const ArenaPlayPage: React.FC = () => {
       const diff = end - now;
       setRemaining(Math.max(0, diff));
       
-      // ✅ 타이머 만료 시 한 번만 처리
       if (diff <= 0 && status !== 'ended' && !navigatedRef.current) {
         clearInterval(timerRef.current!);
         timerRef.current = null;
         socket.emit('arena:end', { arenaId });
-        // navigate는 arena:ended 이벤트 핸들러에서 처리
       }
     };
 
@@ -153,7 +150,6 @@ const ArenaPlayPage: React.FC = () => {
   // 소켓 이벤트
   useEffect(() => {
     const handleUpdate = (payload: ArenaUpdatePayload) => {
-      
       setStatus(payload.status);
       setHostId(payload.host);
       setParticipants(payload.participants || []);
@@ -165,8 +161,6 @@ const ArenaPlayPage: React.FC = () => {
       } else {
         console.error('⚠️ MODE IS MISSING IN PAYLOAD!');
       }
-      
-      // ✅ status === 'ended'일 때 navigate는 handleEnded에서만 처리
     };
 
     const handleStart = (data: { arenaId: string; startTime: string; endTime: string; }) => {
@@ -224,7 +218,6 @@ const ArenaPlayPage: React.FC = () => {
 
 
   const renderGameContent = () => {
-    // ✅ mode가 없으면 로딩 상태 표시
     if (!mode) {
       return (
         <div className="loading-state">
@@ -247,23 +240,23 @@ const ArenaPlayPage: React.FC = () => {
       participants: participants
     };
 
-    // DB에 저장된 실제 Mode 값으로 비교
     switch (mode) {
       case 'TERMINAL_HACKING_RACE':
         console.log('🎮 Loading Terminal Race component...');
         return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
-      
-      case 'CYBER_DEFENSE_BATTLE':
-        console.log('⚔️ Loading Defense Battle component...');
-        return <DefenseBattle arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
+
+      case 'VULNERABILITY_SCANNER_RACE':  // ✅ 추가
+        console.log('🔍 Loading Vulnerability Scanner Race component...');
+        return <VulnerabilityScannerRace arenaId={arenaId!} userId={currentUserId!} />;
 
       case 'FORENSICS_RUSH':
-        console.log('🔍 Loading Forensics Rush component...');
+        console.log('🔎 Loading Forensics Rush component...');
         return <ForensicsRush arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       
       case 'KING_OF_THE_HILL':
         console.log('👑 Loading King of the Hill component...');
         return <KingOfTheHill arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
+      
       default:
         console.error('❌ Unknown game mode:', mode);
         return (
@@ -360,7 +353,7 @@ const ArenaPlayPage: React.FC = () => {
               </div>
 
               {/* Activity Feed - 자신의 활동만 표시 */}
-              {mode === 'TERMINAL_HACKING_RACE' && status === 'started' && (
+              {status === 'started' && (
                 <div className="sidebar-section">
                   <ActivityFeed 
                     socket={socket} 

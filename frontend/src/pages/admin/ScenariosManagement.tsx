@@ -10,7 +10,6 @@ import {
 import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
 import TerminalRaceForm from '../../components/admin/forms/TerminalRaceForm';
-import DefenseBattleForm from '../../components/admin/forms/DefenseBattleForm';
 import KingOfTheHillForm from '../../components/admin/forms/KingOfTheHillForm';
 import ForensicsRushForm from '../../components/admin/forms/ForensicsRushForm';
 import SocialEngineeringForm from '../../components/admin/forms/SocialEngineeringForm';
@@ -43,15 +42,25 @@ const getInitialData = (mode: string) => {
         }]
       };
       
-    case 'CYBER_DEFENSE_BATTLE':
+    case 'VULNERABILITY_SCANNER_RACE':
       return {
-        serverHealth: 100,
-        attackActions: [],
-        defenseActions: [],
-        victoryConditions: {
-          attackTeam: '서버 HP를 0으로 만들기',
-          defenseTeam: '15분 동안 서버 방어'
-        }
+        targetUrl: '',
+        targetName: '',
+        targetDescription: '',
+        features: [],
+        vulnerabilities: [],
+        hints: [],
+        scoring: {
+          firstBloodBonus: 50,
+          speedBonusThresholds: {
+            under3min: 30,
+            under5min: 20,
+            under7min: 10
+          },
+          comboMultiplier: 5,
+          invalidSubmissionPenalty: 5
+        },
+        totalVulnerabilities: 0
       };
 
     case 'KING_OF_THE_HILL':
@@ -232,12 +241,6 @@ const ScenariosManagement: React.FC = () => {
         }
         break;
 
-      case 'CYBER_DEFENSE_BATTLE':
-        if ((form.data.attackActions?.length || 0) === 0 && (form.data.defenseActions?.length || 0) === 0) {
-          alert('At least one attack or defense action is required');
-          return false;
-        }
-        break;
 
       case 'KING_OF_THE_HILL':
         if (!form.data.serverInfo?.name?.trim()) {
@@ -347,7 +350,7 @@ const ScenariosManagement: React.FC = () => {
   const getModeIcon = (mode: string) => {
     const icons: Record<string, string> = {
       TERMINAL_HACKING_RACE: '⚡',
-      CYBER_DEFENSE_BATTLE: '⚔️',
+      VULNERABILITY_SCANNER_RACE: '🔍',
       KING_OF_THE_HILL: '👑',
       FORENSICS_RUSH: '🔍',
       SOCIAL_ENGINEERING_CHALLENGE: '💬'
@@ -358,7 +361,7 @@ const ScenariosManagement: React.FC = () => {
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
       TERMINAL_HACKING_RACE: 'Terminal Race',
-      CYBER_DEFENSE_BATTLE: 'Defense Battle',
+      VULNERABILITY_SCANNER_RACE: 'Vulnerability Scanner Race',
       KING_OF_THE_HILL: 'King of the Hill',
       FORENSICS_RUSH: 'Forensics Rush',
       SOCIAL_ENGINEERING_CHALLENGE: 'Social Engineering'
@@ -372,10 +375,8 @@ const ScenariosManagement: React.FC = () => {
     switch (scenario.mode) {
       case 'TERMINAL_HACKING_RACE':
         return `${scenario.data.stages?.length || 0} stages`;
-      case 'CYBER_DEFENSE_BATTLE':
-        const attacks = scenario.data.attackActions?.length || 0;
-        const defenses = scenario.data.defenseActions?.length || 0;
-        return `${attacks}/${defenses} actions`;
+      case 'VULNERABILITY_SCANNER_RACE':
+        return `${scenario.data.vulnerabilities?.length || 0} vulnerabilities`;
       case 'KING_OF_THE_HILL':
         const kothAttacks = scenario.data.attackActions?.length || 0;
         const kothDefenses = scenario.data.defenseActions?.length || 0;
@@ -413,7 +414,7 @@ const ScenariosManagement: React.FC = () => {
                     required
                   >
                     <option value="TERMINAL_HACKING_RACE">⚡ Terminal Hacking Race</option>
-                    <option value="CYBER_DEFENSE_BATTLE">⚔️ Cyber Defense Battle</option>
+                    <option value="VULNERABILITY_SCANNER_RACE">🔍 Vulnerability Scanner Race</option>
                     <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
                     <option value="FORENSICS_RUSH">🔍 Forensics Rush</option>
                     <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
@@ -494,13 +495,6 @@ const ScenariosManagement: React.FC = () => {
                 />
               )}
 
-              {form.mode === 'CYBER_DEFENSE_BATTLE' && (
-                <DefenseBattleForm
-                  data={form.data}
-                  onChange={(data) => setForm(f => ({ ...f, data }))}
-                />
-              )}
-
               {form.mode === 'KING_OF_THE_HILL' && (
                 <KingOfTheHillForm
                   data={form.data}
@@ -539,7 +533,7 @@ const ScenariosManagement: React.FC = () => {
           <select value={filterMode} onChange={e => setFilterMode(e.target.value)}>
             <option value="ALL">All Modes</option>
             <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
-            <option value="CYBER_DEFENSE_BATTLE">⚔️ Defense Battle</option>
+            <option value="VULNERABILITY_SCANNER_RACE">🔍 Vulnerability Scanner Race</option>
             <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
             <option value="FORENSICS_RUSH">🔍 Forensics Rush</option>
             <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>

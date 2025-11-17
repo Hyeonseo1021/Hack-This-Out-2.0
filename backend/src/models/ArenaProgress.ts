@@ -34,6 +34,18 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: false 
   },
   
+  // ✅ 게임 완료 시각 (정확한 완료 시간 기록)
+  submittedAt: {
+    type: Date,
+    default: null
+  },
+  
+  // ✅ 완료까지 걸린 시간 (초 단위, startTime부터 submittedAt까지)
+  completionTime: {
+    type: Number,
+    default: null
+  },
+  
   timeSpent: { 
     type: Number, 
     default: 0 
@@ -52,64 +64,36 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: 0
   },
 
-  // 🃏 Hacker's Deck 모드용 카드 로그 (기존 유지 - 혹시 나중에 다시 쓸 수도)
-  cardsUsed: [{
-    name: String,
-    cost: Number,       // ✅ 카드 비용 기록
-    usedAt: Date
-  }],
-
-  // 🏰 Capture The Server 모드용 (기존 유지 - 혹시 나중에 다시 쓸 수도)
-  serversCaptured: { 
-    type: Number, 
-    default: 0 
+  // 🔍 Vulnerability Scanner Race 전용 - NEW
+  vulnerabilityScannerRace: {
+    vulnerabilitiesFound: { type: Number, default: 0 },  // 발견한 취약점 개수
+    firstBloods: { type: Number, default: 0 },           // First Blood 개수
+    invalidSubmissions: { type: Number, default: 0 },    // 잘못된 제출 횟수
+    hintsUsed: { type: Number, default: 0 },            // 사용한 힌트 개수
+    speedBonusPoints: { type: Number, default: 0 },     // 속도 보너스 점수
+    comboPoints: { type: Number, default: 0 },          // 콤보 보너스 점수
+    discoveries: [{
+      vulnId: String,              // 취약점 ID
+      vulnType: String,            // 취약점 타입
+      endpoint: String,            // 엔드포인트
+      payload: String,             // 사용한 페이로드
+      discoveredAt: Date,          // 발견 시각
+      isFirstBlood: Boolean,       // First Blood 여부
+      basePoints: Number,          // 기본 점수
+      speedBonus: Number,          // 속도 보너스
+      comboBonus: Number,          // 콤보 보너스
+      totalPoints: Number          // 총 획득 점수
+    }],
+    submissions: [{
+      vulnType: String,
+      endpoint: String,
+      parameter: String,
+      payload: String,
+      isCorrect: Boolean,
+      pointsChange: Number,        // +점수 또는 -점수 (페널티)
+      submittedAt: Date
+    }]
   },
-  
-  // ✅ 점령한 서버 목록
-  capturedServers: [{
-    serverId: String,
-    capturedAt: Date,
-    lostAt: { type: Date, default: null }  // null = 여전히 소유 중
-  }],
-
-  // ⚔️ Defense Battle 모드용
-  teamName: { 
-    type: String, 
-    default: null 
-  },
-  
-  // ✅ 팀 관련 추가
-  teamRole: {
-    type: String,
-    enum: ['ATTACKER', 'DEFENDER', null],
-    default: null
-  },
-  
-  // 🔥 NEW: Defense Battle 체력 관리
-  health: {
-    type: Number,
-    default: null  // null = 사용 안 함, Defense Battle에서만 초기화
-  },
-  
-  kills: { 
-    type: Number, 
-    default: 0 
-  },
-  
-  deaths: { 
-    type: Number, 
-    default: 0 
-  },
-  
-  // ✅ 공격/방어 액션 로그
-  actions: [{
-    actionType: String,   // 'attack', 'defend', 'heal', etc.
-    actionName: String,   // 'SQL Injection', 'Enable Firewall', etc.
-    damage: Number,       // 가한 피해
-    heal: Number,         // 회복량
-    shield: Number,       // 🔥 NEW: 쉴드량 추가
-    timestamp: Date
-  }],
 
   // 👑 King of the Hill 전용
   kingOfTheHill: {
@@ -129,7 +113,7 @@ const ArenaProgressSchema = new mongoose.Schema({
     }]
   },
 
-  // 🔍 Forensics Rush 전용
+  // 🔎 Forensics Rush 전용
   forensicsRush: {
     questionsAnswered: { type: Number, default: 0 },
     questionsCorrect: { type: Number, default: 0 },

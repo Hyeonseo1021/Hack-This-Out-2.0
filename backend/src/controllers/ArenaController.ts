@@ -24,20 +24,14 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // ✅ 유효한 모드 목록 (Defense Battle 제거, Vulnerability Scanner Race 추가)
     const validModes = [
-      'TERMINAL_HACKING_RACE',      // 유지
-      'CYBER_DEFENSE_BATTLE',       // 유지
-      'KING_OF_THE_HILL',           // NEW
-      'FORENSICS_RUSH',             // NEW
-      'SOCIAL_ENGINEERING_CHALLENGE' // NEW
+      'TERMINAL_HACKING_RACE',           // ⚡ Terminal Race
+      'VULNERABILITY_SCANNER_RACE',      // 🔍 Vulnerability Scanner Race - NEW
+      'KING_OF_THE_HILL',                // 👑 King of the Hill
+      'FORENSICS_RUSH',                  // 🔎 Forensics Rush
+      'SOCIAL_ENGINEERING_CHALLENGE'     // 💬 Social Engineering
     ];
-
-    // Social Engineering 검증 추가
-    if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
-      if (maxParticipants < 1 || maxParticipants > 4) {
-        return;
-      }
-    }
     
     if (!validModes.includes(mode)) {
       res.status(400).json({ message: 'Invalid game mode' });
@@ -50,19 +44,30 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    if (maxParticipants < 2 || maxParticipants > 8) {
-      res.status(400).json({ message: 'Max participants must be between 2 and 8' });
-      return;
-    }
-
-    // ✅ Defense Battle 전용 검증 (1:1 매치만 허용)
-    if (mode === 'CYBER_DEFENSE_BATTLE') {
+    // ✅ Vulnerability Scanner Race 검증 (2명 고정)
+    if (mode === 'VULNERABILITY_SCANNER_RACE') {
       if (maxParticipants !== 2) {
         res.status(400).json({
-          message: 'Defense Battle은 1:1 매치만 지원합니다. 참가자 수는 정확히 2명이어야 합니다.'
+          message: 'Vulnerability Scanner Race는 정확히 2명의 참가자가 필요합니다.'
         });
         return;
       }
+    }
+
+    // ✅ Social Engineering 검증 (1-4명)
+    if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
+      if (maxParticipants < 1 || maxParticipants > 4) {
+        res.status(400).json({
+          message: 'Social Engineering은 1-4명의 참가자만 지원합니다.'
+        });
+        return;
+      }
+    }
+
+    // 일반적인 참가자 수 검증
+    if (maxParticipants < 1 || maxParticipants > 8) {
+      res.status(400).json({ message: 'Max participants must be between 1 and 8' });
+      return;
     }
 
     const existingArena = await Arena.findOne({
@@ -265,22 +270,21 @@ export const getArenaHistory = async (req: Request, res: Response): Promise<void
             username: (p.user as any)?.username || 'Unknown',
             score: p.score || 0,
             rank: index + 1,
-            completed: p.completed || false,
-            // ✅ Defense Battle용 추가 정보
-            team: p.teamName || null,
-            kills: p.kills || 0
-          }))
+            completed: p.completed || false
+          })),
+          myRank,
+          myScore: progress.score || 0,
+          myCompleted: progress.completed || false
         };
       })
     );
 
     const filteredHistory = history.filter(h => h !== null);
 
-    console.log('Filtered history count:', filteredHistory.length);
-    res.status(200).json({ arenaHistory: filteredHistory });
+    res.status(200).json({ history: filteredHistory });
   } catch (err) {
-    console.error("Failed to fetch arena history:", err);
-    res.status(500).json({ message: "Failed to fetch arena history." });
+    console.error('getArenaHistory error:', err);
+    res.status(500).json({ message: 'Failed to fetch arena history' });
   }
 };
 
@@ -288,9 +292,11 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
   try {
     const { arenaId } = req.params;
 
+    console.log(`📊 [getArenaResult] Fetching result for arena: ${arenaId}`);
+
+    // 1. Arena 기본 정보 조회
     const arena = await Arena.findById(arenaId)
       .populate('host', 'username')
-      .populate('participants.user', 'username')
       .populate('winner', 'username')
       .populate('scenarioId')
       .lean();
@@ -300,130 +306,194 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    console.log('Arena status:', arena.status);
-    
-    if (arena.status !== 'ended') {
-      res.status(400).json({ message: 'Arena has not ended yet' });
-      return;
-    }
+    console.log(`✅ [getArenaResult] Arena found:`, {
+      name: arena.name,
+      mode: arena.mode,
+      status: arena.status
+    });
 
+    // 2. 모든 참가자의 진행 상황 조회
     const progressDocs = await ArenaProgress.find({ arena: arenaId })
       .populate('user', 'username')
-      .sort({ score: -1, updatedAt: 1 })
       .lean();
 
-    console.log('Progress docs found:', progressDocs.length);
+    console.log(`📋 [getArenaResult] Found ${progressDocs.length} participants`);
 
-    const participants = await Promise.all(progressDocs.map(async (progress: any, index: number) => {
-      const user = progress.user;
-      
-      if (!user) {
-        console.warn('Missing user in progress doc:', progress._id);
-        return null;
-      }
-
-      return {
-        userId: String(user._id || user),
-        username: (user as any).username || 'Unknown',
-        score: progress.score || 0,
-        rank: index + 1,
+    // 3. 게임 모드별로 참가자 데이터 구성
+    const participants = progressDocs.map((progress: any) => {
+      const baseData = {
+        userId: String(progress.user._id),
+        username: progress.user.username,
+        status: progress.completed ? 'completed' : (progress.score > 0 ? 'vm_connected' : 'waiting'),
+        completionTime: progress.completionTime || null,
+        submittedAt: progress.submittedAt || null,
         isCompleted: progress.completed || false,
-        // ✅ Defense Battle용 추가 정보
-        team: progress.teamName || null,
-        role: progress.teamRole || null,
-        kills: progress.kills || 0,
-        deaths: progress.deaths || 0
+        rank: 0, // 나중에 계산
+        score: progress.score || 0
       };
-    }));
 
-    const filteredParticipants = participants.filter(p => p !== null);
+      // ✅ 게임 모드별 추가 데이터
+      switch (arena.mode) {
+        case 'TERMINAL_HACKING_RACE':
+          return {
+            ...baseData,
+            stage: progress.stage || 0,
+            flags: progress.flags || []
+          };
 
-    console.log('Filtered participants:', filteredParticipants.map(p => ({
-      username: p.username,
-      score: p.score,
-      rank: p.rank
-    })));
+        case 'VULNERABILITY_SCANNER_RACE':  // ✅ 추가
+          return {
+            ...baseData,
+            vulnerabilitiesFound: progress.vulnerabilityScannerRace?.vulnerabilitiesFound || 0,
+            firstBloods: progress.vulnerabilityScannerRace?.firstBloods || 0,
+            invalidSubmissions: progress.vulnerabilityScannerRace?.invalidSubmissions || 0
+          };
 
-    const totalParticipants = filteredParticipants.length;
-    const completedCount = filteredParticipants.filter(p => p.isCompleted).length;
+        case 'KING_OF_THE_HILL':
+          return {
+            ...baseData,
+            kingTime: progress.kingOfTheHill?.totalKingTime || 0,
+            timesKing: progress.kingOfTheHill?.timesKing || 0,
+            attacksSucceeded: progress.kingOfTheHill?.attacksSucceeded || 0,
+            attacksFailed: progress.kingOfTheHill?.attacksFailed || 0
+          };
+
+        case 'FORENSICS_RUSH':
+          return {
+            ...baseData,
+            questionsAnswered: progress.forensicsRush?.questionsAnswered || 0,
+            questionsCorrect: progress.forensicsRush?.questionsCorrect || 0,
+            totalAttempts: progress.forensicsRush?.totalAttempts || 0,
+            penalties: progress.forensicsRush?.penalties || 0
+          };
+
+        case 'SOCIAL_ENGINEERING_CHALLENGE':
+          return {
+            ...baseData,
+            objectiveAchieved: progress.socialEngineering?.objectiveAchieved || false,
+            finalSuspicion: progress.socialEngineering?.finalSuspicion || 0,
+            turnsUsed: progress.socialEngineering?.turnsUsed || 0
+          };
+
+        default:
+          return baseData;
+      }
+    });
+
+    // ✅ 4. 순위 계산
+    participants.sort((a, b) => {
+      // 1순위: 완료 여부
+      if (a.isCompleted && !b.isCompleted) return -1;
+      if (!a.isCompleted && b.isCompleted) return 1;
+      
+      // 2순위: 완료한 경우 제출 시간
+      if (a.isCompleted && b.isCompleted) {
+        if (a.submittedAt && b.submittedAt) {
+          const timeA = new Date(a.submittedAt).getTime();
+          const timeB = new Date(b.submittedAt).getTime();
+          if (timeA !== timeB) {
+            return timeA - timeB;
+          }
+        }
+        
+        if (a.completionTime !== null && b.completionTime !== null) {
+          if (a.completionTime !== b.completionTime) {
+            return a.completionTime - b.completionTime;
+          }
+        }
+      }
+      
+      // 3순위: 점수
+      if (a.score !== b.score) return b.score - a.score;
+      
+      return 0;
+    });
+
+    // 순위 부여
+    participants.forEach((p, index) => {
+      p.rank = index + 1;
+    });
+
+    console.log('🏆 Final Rankings:');
+    participants.forEach(p => {
+      console.log(`   ${p.rank}. ${p.username}:`, {
+        score: p.score,
+        completed: p.isCompleted
+      });
+    });
+
+    // 5. 통계 계산
+    const completedCount = participants.filter(p => p.isCompleted).length;
+    const totalParticipants = participants.length;
     const successRate = totalParticipants > 0 
       ? Math.round((completedCount / totalParticipants) * 100) 
       : 0;
 
+    // 6. Duration 계산
+    let duration = 0;
+    if (arena.startTime && arena.endTime) {
+      duration = Math.floor(
+        (new Date(arena.endTime).getTime() - new Date(arena.startTime).getTime()) / 1000
+      );
+    }
+
+    // 7. Winner 정보
     let winner = null;
     if (arena.winner) {
-      const winnerUser = arena.winner as any;
+      const winnerDoc = arena.winner as any;
       winner = {
-        userId: String(winnerUser._id || arena.winner),
-        username: winnerUser.username || 'Unknown',
+        userId: String(winnerDoc._id),
+        username: winnerDoc.username,
         solvedAt: arena.firstSolvedAt || null
       };
     }
 
-    const scenarioInfo = arena.scenarioId ? {
-      title: (arena.scenarioId as any).title,
-      description: (arena.scenarioId as any).description
-    } : null;
+    // 8. 모드 매핑
+    const modeMapping: { [key: string]: string } = {
+      'TERMINAL_HACKING_RACE': 'terminal-race',
+      'VULNERABILITY_SCANNER_RACE': 'vulnerability-scanner-race',  // ✅ 추가
+      'KING_OF_THE_HILL': 'king-of-the-hill',
+      'FORENSICS_RUSH': 'forensics-rush',
+      'SOCIAL_ENGINEERING_CHALLENGE': 'social-engineering'
+    };
 
-    // ✅ Defense Battle용 팀별 통계
-    let teamStats = null;
-    if (arena.mode === 'CYBER_DEFENSE_BATTLE') {
-      const attackTeam = filteredParticipants.filter(p => p.team === 'ATTACK');
-      const defenseTeam = filteredParticipants.filter(p => p.team === 'DEFENSE');
-      
-      teamStats = {
-        attackTeam: {
-          score: attackTeam.reduce((sum, p) => sum + p.score, 0),
-          kills: attackTeam.reduce((sum, p) => sum + (p.kills || 0), 0),
-          members: attackTeam.length
-        },
-        defenseTeam: {
-          score: defenseTeam.reduce((sum, p) => sum + p.score, 0),
-          kills: defenseTeam.reduce((sum, p) => sum + (p.kills || 0), 0),
-          members: defenseTeam.length
-        }
-      };
-    }
-
+    // 9. 응답 데이터
     const result = {
       _id: String(arena._id),
       name: arena.name,
-      host: String((arena.host as any)?._id || arena.host),
-      hostName: (arena.host as any)?.username || 'Unknown',
+      host: String((arena.host as any)._id),
+      hostName: (arena.host as any).username,
       status: arena.status,
-      mode: arena.mode,
-      difficulty: arena.difficulty,
-      scenario: scenarioInfo,
+      mode: modeMapping[arena.mode] || arena.mode.toLowerCase(),
       maxParticipants: arena.maxParticipants,
       startTime: arena.startTime,
       endTime: arena.endTime,
-      timeLimit: arena.timeLimit,
-      participants: filteredParticipants,
+      duration,
+      participants,
       winner,
       firstSolvedAt: arena.firstSolvedAt,
-      arenaExp: 0,
+      arenaExp: arena.arenaExp || 0,
       stats: {
         totalParticipants,
         completedCount,
         successRate
       },
-      teamStats // ✅ Defense Battle용 팀 통계
+      settings: {
+        endOnFirstSolve: arena.settings?.endOnFirstSolve || false,
+        graceMs: arena.settings?.graceMs || 0
+      }
     };
 
-    console.log('Final result:', {
-      name: result.name,
-      mode: result.mode,
-      difficulty: result.difficulty,
-      participantsCount: result.participants.length,
-      winner: result.winner?.username,
-      teamStats: result.teamStats
+    console.log(`✅ [getArenaResult] Sending result with ${participants.length} participants`);
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('❌ [getArenaResult] Error:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch arena result',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
-
-    res.status(200).json(result);
-
-  } catch (err) {
-    console.error('Get arena result error:', err);
-    res.status(500).json({ message: 'Failed to fetch arena results' });
   }
 };
 
@@ -469,11 +539,13 @@ export const checkArenaParticipation = async (req: Request, res: Response): Prom
   }
 };
 
+// ===== 시나리오 관리 =====
+
 export const getAllScenarios = async (req: Request, res: Response): Promise<void> => {
   try {
     const scenarios = await ArenaScenario.find()
       .select('-data')
-      .sort({ createdAt: -1 });
+      .sort({ mode: 1, difficulty: 1, createdAt: -1 });
     
     res.status(200).json({ scenarios });
   } catch (err) {
@@ -503,7 +575,7 @@ export const createScenario = async (req: Request, res: Response): Promise<void>
   try {
     const { mode, difficulty, title, description, timeLimit, data } = req.body;
     
-    if (!mode || !difficulty || !title || !timeLimit || !data) {
+    if (!mode || !difficulty || !title || !data) {
       res.status(400).json({ message: 'Missing required fields' });
       return;
     }
@@ -638,6 +710,7 @@ export const getScenarioStats = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ message: 'Failed to fetch stats' });
   }
 };
+
 // ===== 아레나 방 관리 (관리자 전용) =====
 
 /**
@@ -694,9 +767,6 @@ export const getAllArenas = async (req: Request, res: Response): Promise<void> =
 
 /**
  * 아레나 방 삭제 (관리자 전용)
- * - 데이터베이스에서 방 완전 삭제
- * - 관련 ArenaProgress 데이터도 삭제
- * - Socket.IO로 참가자들에게 알림
  */
 export const deleteArena = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -736,7 +806,7 @@ export const deleteArena = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
- * 활성 아레나 방 조회 (WAITING 또는 IN_PROGRESS)
+ * 활성 아레나 방 조회 (WAITING 또는 STARTED)
  */
 export const getActiveArenas = async (req: Request, res: Response): Promise<void> => {
   try {

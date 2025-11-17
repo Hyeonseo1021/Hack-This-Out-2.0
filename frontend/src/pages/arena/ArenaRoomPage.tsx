@@ -42,10 +42,10 @@ const ArenaRoomPage: React.FC = () => {
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
       'TERMINAL_HACKING_RACE': '⚡ Terminal Race',
-      'CYBER_DEFENSE_BATTLE': '⚔️ Defense Battle',
-      'CAPTURE_THE_SERVER': '🏰 Capture Server',
-      'HACKERS_DECK': "🎲 Hacker's Deck",
-      'EXPLOIT_CHAIN_CHALLENGE': '🎯 Exploit Chain'
+      'VULNERABILITY_SCANNER_RACE': '🔍 Vulnerability Scanner Race',  // ✅ 추가
+      'KING_OF_THE_HILL': '👑 King of the Hill',
+      'FORENSICS_RUSH': '🔎 Forensics Rush',
+      'SOCIAL_ENGINEERING_CHALLENGE': '💬 Social Engineering'
     };
     return names[mode] || mode;
   };

@@ -2,7 +2,7 @@ import { Server, Socket } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { terminalProcessCommand } from '../../services/terminalRace/terminalEngine';
-import { endArenaProcedure } from '../utils/endArenaProcedure';
+import { endArenaProcedure, checkAndEndIfAllCompleted } from '../utils/endArenaProcedure';
 
 export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
   socket.on('terminal:execute', async ({ 
@@ -115,23 +115,34 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
       if (progressDoc.completed && !arena.winner) {
         console.log(`🏆 Winner detected: ${userId} (completed all stages)`);
         
+        // ✅ submittedAt 기록
+        const submittedAt = new Date();
+        await ArenaProgress.updateOne(
+          { _id: progressDoc._id },
+          { $set: { submittedAt } }
+        );
+        
         // Arena 모델에 승자 기록
         arena.winner = userId;
-        arena.firstSolvedAt = new Date();
+        arena.firstSolvedAt = submittedAt;
         await arena.save();
         
-        // 즉시 게임 종료
+        // 유예 시간 시작
         await endArenaProcedure(arenaId, io);
       }
-      // 또는 flagFound로 게임 종료
-      else if (result.flagFound && !arena.winner) {
-        console.log(`🏆 Winner detected: ${userId} (flag found)`);
+      // ✅ 유예 시간 중이고, 지금 완료한 경우 - 모든 참가자 완료 체크
+      else if (progressDoc.completed && arena.winner) {
+        console.log(`✅ Player ${userId} completed during grace period`);
         
-        arena.winner = userId;
-        arena.firstSolvedAt = new Date();
-        await arena.save();
+        // ✅ submittedAt 기록
+        const submittedAt = new Date();
+        await ArenaProgress.updateOne(
+          { _id: progressDoc._id },
+          { $set: { submittedAt } }
+        );
         
-        await endArenaProcedure(arenaId, io);
+        // ✅ 모든 참가자가 완료했는지 확인하고 즉시 종료
+        await checkAndEndIfAllCompleted(arenaId, io);
       }
 
     } catch (e) {

@@ -5,8 +5,6 @@ import User from '../models/User';
 import { endArenaProcedure }  from './utils/endArenaProcedure';
 import { terminalProcessCommand } from '../services/terminalRace/terminalEngine';
 import { registerTerminalRaceHandlers } from './modes/terminalRaceHandler';
-import { registerDefenseBattleHandlers } from './modes/DefenseBattleHandler';
-import { initializeDefenseBattleTeams } from '../services/defenseBattle/defenseBattleEngine';
 
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const endTimers = new Map<string, NodeJS.Timeout>();
@@ -65,7 +63,6 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
   // ✅ 모드별 핸들러 등록
   registerTerminalRaceHandlers(io, socket);
-  registerDefenseBattleHandlers(io, socket);
 
   // 1. 방 참가 (arena:join)
   socket.on('arena:join', async ({ arenaId, userId }) => {
@@ -259,37 +256,6 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       arena.startTime = new Date();
       arena.endTime = new Date(arena.startTime.getTime() + arena.timeLimit * 1000);
       await arena.save();
-
-      // ✅ (2) 모드별 초기화
-      if (arena.mode === 'CYBER_DEFENSE_BATTLE') {
-        console.log('⚔️ Initializing Defense Battle teams...');
-        
-        try {
-          const teams = await initializeDefenseBattleTeams(arenaId);
-          
-          console.log('✅ Teams assigned:', {
-            attack: teams.attackTeam.count,
-            defense: teams.defenseTeam.count
-          });
-
-          // 팀 배정 완료 알림
-          io.to(arenaId).emit('arena:notify', {
-            type: 'system',
-            message: '⚔️ 팀이 랜덤으로 배정되었습니다! Attack vs Defense'
-          });
-
-        } catch (error) {
-          console.error('❌ Failed to initialize teams:', error);
-          // 팀 배정 실패 시 게임 시작 취소
-          arena.status = 'waiting';
-          arena.startTime = undefined;
-          arena.endTime = undefined;
-          await arena.save();
-          return socket.emit('arena:start-failed', { 
-            reason: '팀 배정에 실패했습니다. 다시 시도해주세요.' 
-          });
-        }
-      }
       
       // (3) 종료 스케줄링
       if (arena.endTime) {

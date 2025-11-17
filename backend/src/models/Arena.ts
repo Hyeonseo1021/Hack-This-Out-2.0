@@ -32,11 +32,11 @@ const ArenaSchema = new mongoose.Schema({
   mode: {
     type: String,
     enum: [
-      'TERMINAL_HACKING_RACE',      // ⚡ 명령어 기반 속도 경쟁 (2-8명) - 기존 유지
-      'CYBER_DEFENSE_BATTLE',        // ⚔️ 공격팀 vs 방어팀 - 기존 유지
-      'KING_OF_THE_HILL',            // 👑 점령 전쟁 (2-8명) - NEW
-      'FORENSICS_RUSH',              // 🔍 포렌식 분석 경쟁 (2-8명) - NEW
-      'SOCIAL_ENGINEERING_CHALLENGE' // 💬 사회공학 심리전 (1-4명) - NEW
+      'TERMINAL_HACKING_RACE',           // ⚡ 명령어 기반 속도 경쟁 (2-8명)
+      'VULNERABILITY_SCANNER_RACE',      // 🔍 웹 취약점 스캔 경쟁 (2명) - NEW
+      'KING_OF_THE_HILL',                // 👑 점령 전쟁 (2-8명)
+      'FORENSICS_RUSH',                  // 🔎 포렌식 분석 경쟁 (2-8명)
+      'SOCIAL_ENGINEERING_CHALLENGE'     // 💬 사회공학 심리전 (1-4명)
     ],
     required: true
   },
@@ -59,30 +59,39 @@ const ArenaSchema = new mongoose.Schema({
   },
 
   modeSettings: {
-    // ⚡ Terminal Hacking Race 설정 (기존 유지)
+    // ⚡ Terminal Hacking Race 설정
     terminalRace: {
       commandLimit: { type: Number, default: 50 } // 최대 명령어 수
     },
     
-    // ⚔️ Cyber Defense Battle 설정 (1v1 매치)
-    defenseBattle: {
-      attacker: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-      defender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-      serverHealth: { type: Number, default: 100 },
-      attackerEnergy: { type: Number, default: 100 },
-      defenderEnergy: { type: Number, default: 100 },
-      actionLog: [{
-        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        role: { type: String, enum: ['ATTACKER', 'DEFENDER'] },
-        actionName: String,
-        energyCost: Number,
-        damage: Number,
-        heal: Number,
-        timestamp: Date
+    // 🔍 Vulnerability Scanner Race 설정 - NEW
+    vulnerabilityScannerRace: {
+      totalVulnerabilities: { type: Number, default: 7 },  // 총 취약점 개수
+      vulnerabilities: [{
+        vulnId: String,           // 취약점 고유 ID
+        vulnType: String,         // 'SQLi', 'XSS', 'IDOR', etc.
+        endpoint: String,         // '/api/login', '/search', etc.
+        parameter: String,        // 'username', 'id', etc.
+        basePoints: Number,       // 기본 점수
+        difficulty: String,       // 'EASY', 'MEDIUM', 'HARD'
+        discovered: [{
+          user: mongoose.Schema.Types.ObjectId,
+          discoveredAt: Date,
+          isFirstBlood: Boolean,
+          pointsAwarded: Number
+        }]
+      }],
+      targetUrl: String,          // 타겟 웹 애플리케이션 URL
+      targetDescription: String,  // 타겟 설명
+      hints: [{
+        vulnId: String,
+        hintLevel: Number,        // 1, 2, 3
+        hintText: String,
+        cost: Number              // 힌트 비용 (점수 차감)
       }]
     },
     
-    // 👑 King of the Hill 설정 - NEW
+    // 👑 King of the Hill 설정
     kingOfTheHill: {
       currentKing: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
       kingCrownedAt: { type: Date, default: null },
@@ -99,7 +108,7 @@ const ArenaSchema = new mongoose.Schema({
       }]
     },
     
-    // 🔍 Forensics Rush 설정 - NEW
+    // 🔎 Forensics Rush 설정
     forensicsRush: {
       questions: [{
         questionId: String,
@@ -116,7 +125,7 @@ const ArenaSchema = new mongoose.Schema({
       tools: [String]  // 사용 가능한 도구 목록
     },
     
-    // 💬 Social Engineering Challenge 설정 - NEW
+    // 💬 Social Engineering Challenge 설정
     socialEngineering: {
       scenarioType: { 
         type: String, 
@@ -173,7 +182,7 @@ const ArenaSchema = new mongoose.Schema({
   arenaExp: { type: Number, default: 50 },
 
   settings: {
-    endOnFirstSolve: { type: Boolean, default: true },
+    endOnFirstSolve: { type: Boolean, default: false },  // Scanner Race는 false (모든 취약점 발견 또는 시간 종료)
     graceMs: { type: Number, default: 90_000 },
   }
 

@@ -266,3 +266,62 @@
     }
   }
 }
+// TerminalRace.scss에 추가할 스타일
+
+/* ✅ 유예 시간 표시 스타일 */
+.grace-timer {
+  background: rgba(255, 152, 0, 0.15);
+  border: 2px solid #ff9800;
+  border-radius: 6px;
+  padding: 6px 14px;
+  animation: pulseGrace 1.5s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+  
+  .stat-label {
+    color: #ff9800;
+    font-weight: 600;
+  }
+  
+  .stat-value.warning {
+    color: #ff9800;
+    font-weight: bold;
+    font-size: 1.1em;
+    text-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+  }
+}
+
+@keyframes pulseGrace {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+/* 유예 시간이 10초 이하일 때 더 강하게 깜빡임 */
+.grace-timer[data-urgent="true"] {
+  border-color: #ff3d00;
+  background: rgba(255, 61, 0, 0.2);
+  animation: pulseUrgent 0.8s ease-in-out infinite;
+  
+  .stat-label,
+  .stat-value.warning {
+    color: #ff3d00;
+  }
+}
+
+@keyframes pulseUrgent {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 61, 0, 0.3);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 61, 0, 0.6);
+  }
+}

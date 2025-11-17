@@ -60,6 +60,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const [totalStages, setTotalStages] = useState(0);
   const [currentScore, setCurrentScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [graceTimeRemaining, setGraceTimeRemaining] = useState<number | null>(null); // ✅ 유예 시간
   const logContainerRef = useRef<HTMLDivElement>(null);
   const logCounter = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,7 +68,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
   // 초기 진행 상황 로드
   useEffect(() => {
-    // ✅ 맨 처음에 바로 체크하고 설정
     if (isInitializedRef.current) {
       console.log('⏭️ [TerminalRace] Already initialized, skipping...');
       return;
@@ -76,18 +76,13 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     const loadProgress = async () => {
       try {
-        console.log('🚀 [TerminalRace] Loading progress for arena:', arena._id);
         socket.emit('terminal:get-progress', { arenaId: arena._id });
 
-        // ✅ 초기 문제 프롬프트도 함께 요청
         setTimeout(() => {
-          console.log('📤 [TerminalRace] Requesting initial prompt...');
           socket.emit('terminal:get-prompt', { arenaId: arena._id });
         }, 300);
 
-        // ✅ 5초 후에도 응답이 없으면 강제로 로딩 해제
         setTimeout(() => {
-          console.warn('⚠️ [TerminalRace] Loading timeout - forcing loading to false');
           setIsLoading(false);
         }, 5000);
 
@@ -115,11 +110,10 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       setIsCompleted(completed);
       if (total) setTotalStages(total);
 
-      // ✅ 헤더만 표시하고, Stage/Mission 정보는 prompt-data에서 처리
       const initialLogs: LogEntry[] = [
-        { id: logCounter.current++, text: '╔═══════════════════════════════════════════════════╗', type: 'system' },
+        { id: logCounter.current++, text: '╔═══════════════════════════════════════════════╗', type: 'system' },
         { id: logCounter.current++, text: '║          TERMINAL HACKING RACE - MISSION          ║', type: 'system' },
-        { id: logCounter.current++, text: '╚═══════════════════════════════════════════════════╝', type: 'system' },
+        { id: logCounter.current++, text: '╚═══════════════════════════════════════════════╝', type: 'system' },
         { id: logCounter.current++, text: '', type: 'output' }
       ];
 
@@ -134,72 +128,57 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       setLogs(initialLogs);
       setIsLoading(false);
       
-      // 입력창에 포커스
       setTimeout(() => inputRef.current?.focus(), 100);
     };
 
     // 프롬프트 데이터 핸들러
     const handlePromptData = (data: PromptData) => {
       console.log('📨 [TerminalRace] Received prompt data:', data);
-      
-      const newLogs: LogEntry[] = [];
-      
-      if (data.stage && data.totalStages) {
-        newLogs.push(
-          { id: logCounter.current++, text: '', type: 'output' },
-          { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
-          { id: logCounter.current++, text: `📍 Stage ${data.stage}/${data.totalStages}`, type: 'system' },
-          { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
-          { id: logCounter.current++, text: '', type: 'output' }
+
+      setLogs(prev => {
+        const filtered = prev.filter(
+          log =>
+            !log.text.includes("Stage") &&
+            !log.text.includes("MISSION:") &&
+            !log.text.startsWith("─")
         );
-        
-        // 백엔드는 1-based로 보내므로 -1해서 0-based로 저장
-        setCurrentStage(data.stage - 1);
-        setTotalStages(data.totalStages);
-      }
-      
-      if (data.prompt) {
-        newLogs.push(
-          { id: logCounter.current++, text: `🎯 MISSION: ${data.prompt}`, type: 'output' },
-          { id: logCounter.current++, text: '', type: 'output' }
-        );
-      }
-      
+        return filtered;
+      });
+
+      const newLogs: LogEntry[] = [
+        { id: logCounter.current++, text: '', type: 'output' },
+        { id: logCounter.current++, text: '─'.repeat(50), type: 'system' },
+        { id: logCounter.current++, text: `📍 Stage ${data.stage}/${data.totalStages}`, type: 'system' },
+        { id: logCounter.current++, text: '─'.repeat(50), type: 'system' },
+        { id: logCounter.current++, text: '', type: 'output' },
+        { id: logCounter.current++, text: `🎯 MISSION: ${data.prompt}`, type: 'output' },
+        { id: logCounter.current++, text: '', type: 'output' }
+      ];
+
       setLogs(prev => [...prev, ...newLogs]);
+
+      setCurrentStage(data.stage - 1);
+      setTotalStages(data.totalStages);
     };
 
     // 터미널 결과 핸들러
     const handleTerminalResult = (data: TerminalResultData) => {
       console.log('✅ [TerminalRace] Terminal result received:', data);
       
-      // 내 결과만 수신
       if (data.userId !== currentUserId) {
         return;
       }
 
       const newLogs: LogEntry[] = [];
       
-      // 서버에서 받은 메시지 표시
       if (data.message) {
-        data.message.split('\n').forEach(line => {
-          if (line.trim()) {
-            let logType: LogEntry['type'] = 'output';
-            
-            // 점수 획득 시 성공 표시
-            if (data.scoreGain && data.scoreGain > 0) {
-              logType = 'success';
-            }
-            
-            newLogs.push({ 
-              id: logCounter.current++, 
-              text: line,
-              type: logType
-            });
-          }
+        newLogs.push({
+          id: logCounter.current++,
+          text: data.message,
+          type: data.scoreGain && data.scoreGain > 0 ? 'success' : 'output'
         });
       }
 
-      // 점수 표시
       if (data.scoreGain && data.scoreGain > 0) {
         newLogs.push({ 
           id: logCounter.current++, 
@@ -208,7 +187,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         });
       }
 
-      // 스테이지 진행
       if (data.stageAdvanced) {
         newLogs.push(
           { id: logCounter.current++, text: '', type: 'output' },
@@ -216,19 +194,16 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
           { id: logCounter.current++, text: '', type: 'output' }
         );
         
-        // 상태 업데이트
         if (data.currentStage !== undefined) {
           setCurrentStage(data.currentStage);
         }
         
-        // ✅ 새 스테이지 프롬프트 요청
         setTimeout(() => {
           console.log('📤 [TerminalRace] Requesting new stage prompt...');
           socket.emit('terminal:get-prompt', { arenaId: arena._id });
         }, 500);
       }
 
-      // 미션 완료 (모든 스테이지 완료)
       if (data.completed) {
         newLogs.push(
           { id: logCounter.current++, text: '', type: 'output' },
@@ -241,7 +216,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         setIsCompleted(true);
       }
 
-      // 현재 점수 업데이트
       if (data.totalScore !== undefined) {
         setCurrentScore(data.totalScore);
       }
@@ -249,8 +223,54 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       setLogs(prev => [...prev, ...newLogs]);
       setIsSubmitting(false);
       
-      // 입력창에 다시 포커스
       setTimeout(() => inputRef.current?.focus(), 100);
+    };
+
+    // ✅ 유예 시간 시작 핸들러
+    const handleGracePeriodStarted = (data: { graceMs: number; graceSec: number; message: string }) => {
+      console.log('⏳ [TerminalRace] Grace period started:', data);
+      
+      // 완료하지 않은 경우에만 알림 표시
+      if (!isCompleted) {
+        setLogs(prev => [
+          ...prev,
+          { id: logCounter.current++, text: '', type: 'output' },
+          { id: logCounter.current++, text: '⚠️ '.repeat(25), type: 'system' },
+          { id: logCounter.current++, text: `⏰ ${data.message}`, type: 'system' },
+          { id: logCounter.current++, text: '⚠️ '.repeat(25), type: 'system' },
+          { id: logCounter.current++, text: '', type: 'output' }
+        ]);
+        
+        // 카운트다운 시작
+        setGraceTimeRemaining(data.graceSec);
+        
+        const countdown = setInterval(() => {
+          setGraceTimeRemaining(prev => {
+            if (prev === null || prev <= 1) {
+              clearInterval(countdown);
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    };
+
+    // ✅ 게임 종료 핸들러
+    const handleArenaEnded = (data: { arenaId: string; winner: any; message: string }) => {
+      console.log('🏁 [TerminalRace] Arena ended:', data);
+      
+      setLogs(prev => [
+        ...prev,
+        { id: logCounter.current++, text: '', type: 'output' },
+        { id: logCounter.current++, text: '═'.repeat(50), type: 'system' },
+        { id: logCounter.current++, text: '🏁 GAME OVER 🏁', type: 'system' },
+        { id: logCounter.current++, text: data.message, type: 'system' },
+        { id: logCounter.current++, text: '═'.repeat(50), type: 'system' },
+        { id: logCounter.current++, text: '', type: 'output' }
+      ]);
+      
+      setGraceTimeRemaining(null);
     };
 
     // 에러 핸들러
@@ -269,14 +289,18 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.on('terminal:prompt-data', handlePromptData);
     socket.on('terminal:result', handleTerminalResult);
     socket.on('terminal:error', handleTerminalError);
+    socket.on('arena:grace-period-started', handleGracePeriodStarted); // ✅ 추가
+    socket.on('arena:ended', handleArenaEnded); // ✅ 추가
 
     return () => {
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);
       socket.off('terminal:result', handleTerminalResult);
       socket.off('terminal:error', handleTerminalError);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted); // ✅ 추가
+      socket.off('arena:ended', handleArenaEnded); // ✅ 추가
     };
-  }, [socket, currentUserId, arena._id]);
+  }, [arena._id, socket, currentUserId, isCompleted]); // ✅ dependency 추가
 
   // 자동 스크롤
   useEffect(() => {
@@ -292,7 +316,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     setIsSubmitting(true);
     
-    // 프롬프트 표시
     setLogs(prev => [
       ...prev,
       { 
@@ -302,13 +325,11 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       }
     ]);
 
-    // 서버로 전송
     socket.emit('terminal:execute', { 
       arenaId: arena._id,
       command: command.trim() 
     });
     
-    // 입력창 초기화
     setCommand('');
   };
 
@@ -332,6 +353,14 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         <div className="terminal-header-right">
           {!isLoading && (
             <>
+              {/* ✅ 유예 시간 표시 */}
+              {graceTimeRemaining !== null && !isCompleted && (
+                <div className="terminal-stat grace-timer">
+                  <span className="stat-label">⏰ Time Left:</span>
+                  <span className="stat-value warning">{graceTimeRemaining}s</span>
+                </div>
+              )}
+              
               <div className="terminal-stat">
                 <span className="stat-label">Stage:</span>
                 <span className="stat-value">
@@ -396,7 +425,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
               className="terminal-submit-btn"
               disabled={isSubmitting || !command.trim() || isCompleted}
             >
-              {isSubmitting ? '⏳' : isCompleted ? '✓' : '▶ RUN'}
+              {isSubmitting ? '⏳' : isCompleted ? '✔' : '▶ RUN'}
             </button>
           </form>
         </>

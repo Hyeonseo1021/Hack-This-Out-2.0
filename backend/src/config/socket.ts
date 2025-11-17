@@ -3,9 +3,9 @@ import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { registerArenaSocketHandlers } from '../sockets/arenaHandlers';
 import { registerTerminalRaceHandlers } from '../sockets/modes/terminalRaceHandler'; 
-import { registerDefenseBattleHandlers } from '../sockets/modes/DefenseBattleHandler';
 import { registerForensicsRushHandlers } from '../sockets/modes/ForensicsRushHandler';
 import { registerKingOfTheHillHandlers } from '../sockets/modes/KingOfTheHillHandler';
+import { registerVulnerabilityScannerRaceHandlers } from '../sockets/modes/VulnerablilityScannerHandler';
 // import { registerSocialEngineeringHandlers } from '../sockets/modes/SocialEngineeringHandler';
 
 export const initializeSocket = (server: HTTPServer, app: any) => {
@@ -24,12 +24,11 @@ export const initializeSocket = (server: HTTPServer, app: any) => {
 
     registerTerminalRaceHandlers(io, socket); 
 
-    registerDefenseBattleHandlers(io, socket);
-
     registerForensicsRushHandlers(io, socket);
 
     registerKingOfTheHillHandlers(io, socket);
 
+    registerVulnerabilityScannerRaceHandlers(io, socket);
     // registerSocialEngineeringHandlers(io, socket);
   });
   

@@ -1,6 +1,6 @@
 // types/arenaScenarioData.ts
 
-// ⚡ 1️⃣ Terminal Hacking Race 데이터 구조 (기존 유지)
+// ⚡ 1️⃣ Terminal Hacking Race 데이터 구조
 export interface TerminalHackingRaceData {
   stages: {
     stage: number;
@@ -18,31 +18,82 @@ export interface TerminalHackingRaceData {
   totalStages: number;
 }
 
-// ⚔️ 2️⃣ Cyber Defense Battle 데이터 구조 (기존 유지)
-export interface CyberDefenseBattleData {
-  serverHealth: number;
-  attackActions: {
-    name: string;
-    damage: number;
-    cost: number;
-    cooldown: number;
-    effect?: string;
+// 🔍 2️⃣ Vulnerability Scanner Race 데이터 구조 - NEW
+export interface VulnerabilityScannerRaceData {
+  targetUrl: string;                    // "https://shopvuln.hackthisout.local"
+  targetName: string;                   // "ShopVuln E-commerce"
+  targetDescription: string;            // 애플리케이션 설명
+  
+  features: string[];                   // 제공하는 기능 목록
+  
+  vulnerabilities: {
+    vulnId: string;                     // "vuln_001"
+    vulnType: VulnType;                 // "SQLi", "XSS", etc.
+    vulnName: string;                   // "Login SQL Injection"
+    endpoint: string;                   // "/api/auth/login"
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    parameter: string;                  // "username"
+    
+    validation: {
+      expectedPayload?: string;         // "admin' OR '1'='1--"
+      validationUrl?: string;           // 검증용 URL
+      validationMethod?: 'contains' | 'exact' | 'regex' | 'stored' | 'unauthorized_access' | 'missing_token';
+      validationCriteria?: {
+        responseContains?: string;
+        statusCode?: number;
+        differentUserId?: boolean;
+        accessDenied?: boolean;
+        balanceRevealed?: boolean;
+        checkUrl?: string;
+        pattern?: string;
+        noCSRFToken?: boolean;
+      };
+    };
+    
+    difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+    basePoints: number;                 // 100
+    category: string;                   // "Authentication", "Input Validation", etc.
+    hintIds: string[];                  // ["hint_001_1", "hint_001_2", "hint_001_3"]
   }[];
-  defenseActions: {
-    name: string;
-    heal?: number;
-    shield?: number;
-    cost: number;
-    cooldown: number;
-    effect?: string;
+  
+  hints: {
+    hintId: string;                     // "hint_001_1"
+    vulnId: string;                     // "vuln_001"
+    level: 1 | 2 | 3;                   // 힌트 레벨
+    text: string;                       // "💡 로그인 페이지를 확인하세요"
+    cost: number;                       // 10, 20, 30
   }[];
-  victoryConditions: {
-    attackTeam: string;
-    defenseTeam: string;
+  
+  scoring: {
+    firstBloodBonus: number;            // 50
+    speedBonusThresholds: {
+      under3min: number;                // 30
+      under5min: number;                // 20
+      under7min: number;                // 10
+    };
+    comboMultiplier: number;            // 5 (연속 발견 시 +5pts/combo)
+    invalidSubmissionPenalty: number;   // 5
   };
+  
+  totalVulnerabilities: number;         // 7
 }
 
-// 👑 3️⃣ King of the Hill 데이터 구조 - NEW
+// 취약점 타입 정의
+export type VulnType = 
+  | 'SQLi'                              // SQL Injection
+  | 'XSS'                               // Cross-Site Scripting
+  | 'IDOR'                              // Insecure Direct Object Reference
+  | 'PATH_TRAVERSAL'                    // Path Traversal
+  | 'CSRF'                              // Cross-Site Request Forgery
+  | 'COMMAND_INJECTION'                 // Command Injection
+  | 'FILE_UPLOAD'                       // File Upload Bypass
+  | 'AUTH_BYPASS'                       // Authentication Bypass
+  | 'INFO_DISCLOSURE'                   // Information Disclosure
+  | 'XXE'                               // XML External Entity
+  | 'SSRF'                              // Server-Side Request Forgery
+  | 'DESERIALIZATION';                  // Insecure Deserialization
+
+// 👑 3️⃣ King of the Hill 데이터 구조
 export interface KingOfTheHillData {
   serverInfo: {
     name: string;
@@ -88,7 +139,7 @@ export interface KingOfTheHillData {
   };
 }
 
-// 🔍 4️⃣ Forensics Rush 데이터 구조 - NEW
+// 🔎 4️⃣ Forensics Rush 데이터 구조
 export interface ForensicsRushData {
   scenario: {
     title: string;
@@ -129,7 +180,7 @@ export interface ForensicsRushData {
   totalQuestions: number;
 }
 
-// 💬 5️⃣ Social Engineering Challenge 데이터 구조 - NEW
+// 💬 5️⃣ Social Engineering Challenge 데이터 구조
 export interface SocialEngineeringData {
   scenarioType: 'IT_HELPDESK' | 'FINANCE_SPEARPHISHING' | 'CEO_IMPERSONATION';
   
@@ -195,7 +246,7 @@ export interface SocialEngineeringData {
 // 통합 타입
 export type ArenaScenarioData = 
   | TerminalHackingRaceData 
-  | CyberDefenseBattleData
+  | VulnerabilityScannerRaceData         // ✅ NEW (Defense Battle 대체)
   | KingOfTheHillData
   | ForensicsRushData
   | SocialEngineeringData;
@@ -230,17 +281,17 @@ export const MODE_CONFIGS: Record<string, ModeConfiguration> = {
       HARD: { time: 1200, description: '복잡한 권한 상승, 고급 기술 요구' }
     }
   },
-  CYBER_DEFENSE_BATTLE: {
-    mode: 'CYBER_DEFENSE_BATTLE',
-    displayName: 'Cyber Defense Battle',
-    emoji: '⚔️',
+  VULNERABILITY_SCANNER_RACE: {
+    mode: 'VULNERABILITY_SCANNER_RACE',
+    displayName: 'Vulnerability Scanner Race',
+    emoji: '🔍',
     minPlayers: 2,
     maxPlayers: 2,
-    defaultTime: 900,
+    defaultTime: 600,
     difficulty: {
-      EASY: { time: 600, description: '기본 공격/방어 액션, 느린 페이스' },
-      MEDIUM: { time: 900, description: '다양한 액션, 전략 필요' },
-      HARD: { time: 1500, description: '복잡한 액션 조합, 고급 전략' }
+      EASY: { time: 600, description: '쉬운 취약점 (SQLi, XSS), 명확한 힌트' },
+      MEDIUM: { time: 600, description: '중급 취약점 (IDOR, CSRF), 일부 힌트' },
+      HARD: { time: 600, description: '고급 취약점 (Command Injection, XXE), 최소 힌트' }
     }
   },
   KING_OF_THE_HILL: {
@@ -259,7 +310,7 @@ export const MODE_CONFIGS: Record<string, ModeConfiguration> = {
   FORENSICS_RUSH: {
     mode: 'FORENSICS_RUSH',
     displayName: 'Forensics Rush',
-    emoji: '🔍',
+    emoji: '🔎',
     minPlayers: 2,
     maxPlayers: 8,
     defaultTime: 900,

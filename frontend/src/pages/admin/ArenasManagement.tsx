@@ -132,9 +132,9 @@ const ArenasManagement: React.FC = () => {
   const getModeIcon = (mode: string) => {
     switch (mode) {
       case 'TERMINAL_HACKING_RACE': return '⚡';
-      case 'CYBER_DEFENSE_BATTLE': return '⚔️';
+      case 'VULNERABILITY_SCANNER_RACE': return '🔍';  // ✅ 추가
       case 'KING_OF_THE_HILL': return '👑';
-      case 'FORENSICS_RUSH': return '🔍';
+      case 'FORENSICS_RUSH': return '🔎';
       case 'SOCIAL_ENGINEERING_CHALLENGE': return '💬';
       default: return '🎯';
     }
@@ -143,7 +143,7 @@ const ArenasManagement: React.FC = () => {
   const getModeName = (mode: string) => {
     switch (mode) {
       case 'TERMINAL_HACKING_RACE': return 'Terminal Race';
-      case 'CYBER_DEFENSE_BATTLE': return 'Defense Battle';
+      case 'VULNERABILITY_SCANNER_RACE': return 'Vulnerability Scanner Race';  // ✅ 추가
       case 'KING_OF_THE_HILL': return 'King of the Hill';
       case 'FORENSICS_RUSH': return 'Forensics Rush';
       case 'SOCIAL_ENGINEERING_CHALLENGE': return 'Social Engineering';
@@ -208,9 +208,9 @@ const ArenasManagement: React.FC = () => {
           <select value={filterMode} onChange={e => setFilterMode(e.target.value)}>
             <option value="ALL">All Modes</option>
             <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
-            <option value="CYBER_DEFENSE_BATTLE">⚔️ Defense Battle</option>
+            <option value="VULNERABILITY_SCANNER_RACE">🔍 Vulnerability Scanner Race</option>
             <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
-            <option value="FORENSICS_RUSH">🔍 Forensics Rush</option>
+            <option value="FORENSICS_RUSH">🔎 Forensics Rush</option>
             <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
           </select>
 
@@ -248,15 +248,17 @@ const ArenasManagement: React.FC = () => {
             <tbody>
               {filteredArenas.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="empty-state">
-                    No arenas found.
+                  <td colSpan={9} className="no-data">
+                    {searchQuery.trim() || filterStatus !== 'ALL' || filterMode !== 'ALL'
+                      ? 'No arenas match your filters.'
+                      : 'No arenas found.'}
                   </td>
                 </tr>
               ) : (
                 filteredArenas.map(arena => (
-                  <tr key={arena._id} className={`arena-row ${arena.status.toLowerCase()}`}>
-                    <td>
-                      <code className="arena-code">{arena.name}</code>
+                  <tr key={arena._id}>
+                    <td className="arena-name-cell">
+                      <strong>{arena.name}</strong>
                     </td>
                     <td>
                       <span className="mode-badge">
@@ -265,25 +267,18 @@ const ArenasManagement: React.FC = () => {
                     </td>
                     <td>
                       {arena.scenario ? (
-                        <div>
-                          <strong>{arena.scenario.title}</strong>
-                          <span className={`difficulty-badge ${arena.scenario.difficulty.toLowerCase()}`}>
-                            {arena.scenario.difficulty}
-                          </span>
+                        <div className="scenario-info">
+                          <div className="scenario-title">{arena.scenario.title}</div>
+                          <div className="scenario-difficulty">{arena.scenario.difficulty}</div>
                         </div>
                       ) : (
                         <span className="text-muted">No scenario</span>
                       )}
                     </td>
+                    <td>{arena.host.username}</td>
                     <td>
-                      <div className="host-info">
-                        <FaUsers className="icon" />
-                        {arena.host.username}
-                      </div>
-                    </td>
-                    <td>
-                      <span className="players-count">
-                        {arena.currentPlayers} / {arena.maxPlayers}
+                      <span className="players-badge">
+                        <FaUsers /> {arena.currentPlayers}/{arena.maxPlayers}
                       </span>
                     </td>
                     <td>
@@ -291,30 +286,25 @@ const ArenasManagement: React.FC = () => {
                         {getStatusIcon(arena.status)} {arena.status}
                       </span>
                     </td>
-                    <td>
-                      <small>{formatDate(arena.createdAt)}</small>
+                    <td className="text-muted">
+                      <FaClock /> {formatDate(arena.createdAt)}
                     </td>
-                    <td>
-                      <span className="duration">
-                        <FaClock className="icon" />
-                        {getDuration(arena)}
-                      </span>
-                    </td>
+                    <td>{getDuration(arena)}</td>
                     <td>
                       <div className="action-buttons">
-                        <button 
-                          onClick={() => handleViewDetails(arena._id!)} 
-                          title="View Details"
+                        <button
                           className="btn-view"
+                          onClick={() => handleViewDetails(arena._id!)}
+                          title="View Details"
                         >
-                          <FaEye />
+                          <FaEye /> View
                         </button>
-                        <button 
-                          onClick={() => handleDelete(arena._id!, arena.name)} 
-                          title="Delete Arena"
+                        <button
                           className="btn-delete"
+                          onClick={() => handleDelete(arena._id!, arena.name)}
+                          title="Delete Arena"
                         >
-                          <FaTrash />
+                          <FaTrash /> Delete
                         </button>
                       </div>
                     </td>
@@ -325,131 +315,120 @@ const ArenasManagement: React.FC = () => {
           </table>
         )}
 
-        <div className="arenas-summary">
-          Showing {filteredArenas.length} of {arenas.length} arenas
-          {filterStatus !== 'ALL' && ` | Status: ${filterStatus}`}
-          {filterMode !== 'ALL' && ` | Mode: ${getModeName(filterMode)}`}
-        </div>
-
-        {/* Arena Details Modal */}
+        {/* Details Modal */}
         {showDetailsModal && selectedArena && (
           <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>🏟️ Arena Details</h2>
+                <h2>Arena Details</h2>
                 <button className="close-btn" onClick={() => setShowDetailsModal(false)}>✕</button>
               </div>
-              
               <div className="modal-body">
                 <div className="detail-section">
                   <h3>Basic Information</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <label>Arena Name:</label>
-                      <code>{selectedArena.name}</code>
-                    </div>
-                    <div className="detail-item">
-                      <label>Game Mode:</label>
-                      <span>{getModeIcon(selectedArena.gameMode)} {getModeName(selectedArena.gameMode)}</span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Status:</label>
-                      <span className={`status-badge ${getStatusBadgeClass(selectedArena.status)}`}>
-                        {getStatusIcon(selectedArena.status)} {selectedArena.status}
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <label>Host:</label>
-                      <span>{selectedArena.host.username}</span>
-                    </div>
-                  </div>
+                  <table className="detail-table">
+                    <tbody>
+                      <tr>
+                        <td><strong>Arena Name:</strong></td>
+                        <td>{selectedArena.name}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Game Mode:</strong></td>
+                        <td>{getModeIcon(selectedArena.gameMode)} {getModeName(selectedArena.gameMode)}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Status:</strong></td>
+                        <td>
+                          <span className={`status-badge ${getStatusBadgeClass(selectedArena.status)}`}>
+                            {getStatusIcon(selectedArena.status)} {selectedArena.status}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><strong>Host:</strong></td>
+                        <td>{selectedArena.host.username}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Players:</strong></td>
+                        <td>{selectedArena.currentPlayers}/{selectedArena.maxPlayers}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Created:</strong></td>
+                        <td>{formatDate(selectedArena.createdAt)}</td>
+                      </tr>
+                      {selectedArena.startedAt && (
+                        <tr>
+                          <td><strong>Started:</strong></td>
+                          <td>{formatDate(selectedArena.startedAt)}</td>
+                        </tr>
+                      )}
+                      {selectedArena.completedAt && (
+                        <tr>
+                          <td><strong>Completed:</strong></td>
+                          <td>{formatDate(selectedArena.completedAt)}</td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td><strong>Duration:</strong></td>
+                        <td>{getDuration(selectedArena)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
                 {selectedArena.scenario && (
                   <div className="detail-section">
                     <h3>Scenario</h3>
-                    <div className="detail-grid">
-                      <div className="detail-item">
-                        <label>Title:</label>
-                        <span>{selectedArena.scenario.title}</span>
-                      </div>
-                      <div className="detail-item">
-                        <label>Difficulty:</label>
-                        <span className={`difficulty-badge ${selectedArena.scenario.difficulty.toLowerCase()}`}>
-                          {selectedArena.scenario.difficulty}
-                        </span>
-                      </div>
-                    </div>
+                    <table className="detail-table">
+                      <tbody>
+                        <tr>
+                          <td><strong>Title:</strong></td>
+                          <td>{selectedArena.scenario.title}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Difficulty:</strong></td>
+                          <td>{selectedArena.scenario.difficulty}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 )}
 
                 <div className="detail-section">
+                  <h3>Participants ({selectedArena.participants.length})</h3>
+                  <table className="participants-table">
+                    <thead>
+                      <tr>
+                        <th>Username</th>
+                        <th>Joined At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedArena.participants.map(p => (
+                        <tr key={p.userId}>
+                          <td>{p.username}</td>
+                          <td>{formatDate(p.joinedAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="detail-section">
                   <h3>Settings</h3>
-                  <div className="settings-list">
-                    <div className="setting-item">
-                      <span>{selectedArena.settings.endOnFirstSolve ? '🏁' : '⏱️'}</span>
-                      <span>{selectedArena.settings.endOnFirstSolve ? 'End on First Solve' : 'Continue Until Time Ends'}</span>
-                    </div>
-                    <div className="setting-item">
-                      <span>⏳</span>
-                      <span>Grace Period: {Math.floor(selectedArena.settings.graceMs / 1000)}s</span>
-                    </div>
-                  </div>
+                  <table className="detail-table">
+                    <tbody>
+                      <tr>
+                        <td><strong>End on First Solve:</strong></td>
+                        <td>{selectedArena.settings.endOnFirstSolve ? 'Yes' : 'No'}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Grace Period:</strong></td>
+                        <td>{(selectedArena.settings.graceMs / 1000).toFixed(0)}s</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-
-                <div className="detail-section">
-                  <h3>Participants ({selectedArena.participants.length}/{selectedArena.maxPlayers})</h3>
-                  <div className="participants-list">
-                    {selectedArena.participants.length === 0 ? (
-                      <p className="text-muted">No participants yet</p>
-                    ) : (
-                      selectedArena.participants.map((p, idx) => (
-                        <div key={idx} className="participant-item">
-                          <span className="participant-name">{p.username}</span>
-                          {p.team && <span className="participant-team">{p.team}</span>}
-                          <span className="participant-joined">{formatDate(p.joinedAt)}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="detail-section">
-                  <h3>Timeline</h3>
-                  <div className="timeline">
-                    <div className="timeline-item">
-                      <strong>Created:</strong> {formatDate(selectedArena.createdAt)}
-                    </div>
-                    {selectedArena.startedAt && (
-                      <div className="timeline-item">
-                        <strong>Started:</strong> {formatDate(selectedArena.startedAt)}
-                      </div>
-                    )}
-                    {selectedArena.completedAt && (
-                      <div className="timeline-item">
-                        <strong>Completed:</strong> {formatDate(selectedArena.completedAt)}
-                      </div>
-                    )}
-                    <div className="timeline-item">
-                      <strong>Duration:</strong> {getDuration(selectedArena)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button 
-                  className="btn-danger" 
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    handleDelete(selectedArena._id!, selectedArena.name);
-                  }}
-                >
-                  🗑️ Delete Arena
-                </button>
-                <button className="btn-secondary" onClick={() => setShowDetailsModal(false)}>
-                  Close
-                </button>
               </div>
             </div>
           </div>
