@@ -400,24 +400,19 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
 
               <div className="input-group">
                 <label>정답 *</label>
-                {q.type === 'multiple-choice' ? (
-                  <input
-                    type="text"
-                    placeholder="여러 개인 경우 쉼표로 구분"
-                    value={Array.isArray(q.answer) ? q.answer.join(', ') : q.answer}
-                    onChange={e => updateQuestion(idx, 'answer', e.target.value.split(',').map(s => s.trim()))}
-                    required
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    placeholder="예: 192.168.1.100"
-                    value={Array.isArray(q.answer) ? q.answer[0] : q.answer}
-                    onChange={e => updateQuestion(idx, 'answer', e.target.value)}
-                    required
-                  />
-                )}
-                <small>정확한 정답 (대소문자 무시, 공백 제거 후 비교됨)</small>
+                <input
+                  type="text"
+                  placeholder="정답 (여러 개인 경우 쉼표로 구분)"
+                  value={Array.isArray(q.answer) ? q.answer.join(', ') : q.answer}
+                  onChange={e => {
+                    const value = e.target.value;
+                    // 항상 배열로 저장 (쉼표로 구분)
+                    const answers = value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                    updateQuestion(idx, 'answer', answers);
+                  }}
+                  required
+                />
+                <small>정확한 정답 (대소문자 무시, 공백 제거 후 비교됨). 여러 답변 가능 시 쉼표로 구분</small>
               </div>
 
               <div className="input-group">

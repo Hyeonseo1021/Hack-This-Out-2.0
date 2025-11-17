@@ -5,6 +5,9 @@ import ArenaProgress from '../../models/ArenaProgress';
 import { submitAnswer, getUserProgress } from '../../services/forensicsRush/ForensicsEngine';
 import { endArenaProcedure } from '../utils/endArenaProcedure';
 
+// 유예 시간 타이머 관리
+const gracePeriodTimers: Map<string, NodeJS.Timeout> = new Map();
+
 export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
   
   /**
@@ -89,19 +92,50 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         
         await ArenaProgress.findOneAndUpdate(
           { arena: arenaId, user: userId },
-          { $set: { completed: true } }
+          { $set: { completed: true, completedAt: new Date() } }
         );
 
         // 첫 완료자인지 확인
         if (!arena.winner) {
-          console.log(`🏆 Winner detected: ${userId} (first to complete)`);
+          console.log(`🏆 First completion detected: ${userId}`);
           
           arena.winner = userId;
           arena.firstSolvedAt = new Date();
           await arena.save();
           
-          // 게임 종료 처리
-          await endArenaProcedure(arenaId, io);
+          // 유예 시간 시작 (30초)
+          const GRACE_PERIOD_MS = 30000; // 30초
+          
+          io.to(arenaId).emit('forensics:first-completion', {
+            winner: String(userId),
+            gracePeriodMs: GRACE_PERIOD_MS,
+            message: `${userId} completed all questions! ${GRACE_PERIOD_MS / 1000} seconds remaining...`
+          });
+          
+          console.log(`⏳ Grace period started: ${GRACE_PERIOD_MS}ms`);
+          
+          // 기존 타이머가 있으면 취소
+          if (gracePeriodTimers.has(arenaId)) {
+            clearTimeout(gracePeriodTimers.get(arenaId)!);
+          }
+          
+          // 유예 시간 후 게임 종료
+          const timer = setTimeout(async () => {
+            console.log(`⏰ Grace period ended for arena ${arenaId}`);
+            gracePeriodTimers.delete(arenaId);
+            await endArenaProcedure(arenaId, io);
+          }, GRACE_PERIOD_MS);
+          
+          gracePeriodTimers.set(arenaId, timer);
+          
+        } else {
+          // 2등 이후 완료자
+          console.log(`✅ User ${userId} also completed (not first)`);
+          
+          io.to(arenaId).emit('forensics:user-completed', {
+            userId: String(userId),
+            score: result.totalScore
+          });
         }
       }
 
@@ -323,4 +357,26 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
       socket.emit('forensics:hint-data', { hints: [] });
     }
   });
+
+  /**
+   * 소켓 연결 종료 시 타이머 정리
+   */
+  socket.on('disconnect', () => {
+    const arenaId = (socket as any).arenaId;
+    if (arenaId && gracePeriodTimers.has(arenaId)) {
+      console.log(`🧹 Cleaning up grace period timer for arena ${arenaId}`);
+      // 타이머는 유지 (disconnect가 게임 종료를 의미하지 않음)
+    }
+  });
+};
+
+/**
+ * 유예 시간 타이머 정리 함수 (외부에서 호출 가능)
+ */
+export const clearGracePeriodTimer = (arenaId: string) => {
+  if (gracePeriodTimers.has(arenaId)) {
+    clearTimeout(gracePeriodTimers.get(arenaId)!);
+    gracePeriodTimers.delete(arenaId);
+    console.log(`🧹 Cleared grace period timer for arena ${arenaId}`);
+  }
 };
