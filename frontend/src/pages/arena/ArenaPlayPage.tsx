@@ -9,7 +9,9 @@ import '../../assets/scss/arena/ArenaPlayPage.scss';
 import TerminalRace from '../../components/arena/TerminalRace';
 import DefenseBattle from '../../components/arena/DefenseBattle';
 import ForensicsRush from '../../components/arena/ForensicsRush';
+import KingOfTheHill from '../../components/arena/KingOfTheHill';
 import ActivityFeed from '../../components/arena/ActivityFeed';
+
 
 type Participant = {
   user: { _id: string; username: string } | string;
@@ -259,6 +261,9 @@ const ArenaPlayPage: React.FC = () => {
         console.log('🔍 Loading Forensics Rush component...');
         return <ForensicsRush arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       
+      case 'KING_OF_THE_HILL':
+        console.log('👑 Loading King of the Hill component...');
+        return <KingOfTheHill arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
       default:
         console.error('❌ Unknown game mode:', mode);
         return (

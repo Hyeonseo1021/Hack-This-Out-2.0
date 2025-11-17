@@ -5,6 +5,8 @@ import { registerArenaSocketHandlers } from '../sockets/arenaHandlers';
 import { registerTerminalRaceHandlers } from '../sockets/modes/terminalRaceHandler'; 
 import { registerDefenseBattleHandlers } from '../sockets/modes/DefenseBattleHandler';
 import { registerForensicsRushHandlers } from '../sockets/modes/ForensicsRushHandler';
+import { registerKingOfTheHillHandlers } from '../sockets/modes/KingOfTheHillHandler';
+// import { registerSocialEngineeringHandlers } from '../sockets/modes/SocialEngineeringHandler';
 
 export const initializeSocket = (server: HTTPServer, app: any) => {
   const io = new Server(server, {
@@ -25,6 +27,10 @@ export const initializeSocket = (server: HTTPServer, app: any) => {
     registerDefenseBattleHandlers(io, socket);
 
     registerForensicsRushHandlers(io, socket);
+
+    registerKingOfTheHillHandlers(io, socket);
+
+    // registerSocialEngineeringHandlers(io, socket);
   });
   
   app.set('io', io);

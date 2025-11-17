@@ -19,6 +19,7 @@ interface ActionResult {
 
 /**
  * Defense Battle 액션 처리
+ * 🔥 수정: 체력 계산 로직 제거 (Handler에서 처리)
  */
 export async function processDefenseBattleAction(
   arenaId: string,
@@ -86,8 +87,6 @@ export async function processDefenseBattleAction(
   let shield = 0;
   let scoreGain = 0;
 
-  const opposingTeamName = userTeam === 'ATTACK' ? 'DEFENSE' : 'ATTACK';
-
   if (actionType === 'attack') {
     damage = actionData.damage || 0;
     scoreGain = Math.floor(damage / 10);  // 공격: 10 데미지 = 1점
@@ -97,7 +96,8 @@ export async function processDefenseBattleAction(
     scoreGain = Math.floor((heal + shield) / 10);  // ✅ 방어도 공격과 동일한 비율로 변경
   }
 
-  // 6. 게임 상태 가져오기
+  // 6. 게임 종료 조건 체크
+  // 🔥 수정: 체력은 Handler에서 관리하므로 여기서는 시간/점수만 체크
   const attackTeamProgress = await ArenaProgress.find({ 
     arena: arenaId, 
     teamName: 'ATTACK' 
@@ -129,18 +129,7 @@ export async function processDefenseBattleAction(
     }
   }
 
-  // 8. 게임 상태 반환
-  const gameState = {
-    attackTeam: {
-      score: attackScore,
-      members: attackTeamProgress.length
-    },
-    defenseTeam: {
-      score: defenseScore,
-      members: defenseTeamProgress.length
-    }
-  };
-
+  // 8. 결과 반환 (체력은 Handler에서 계산)
   return {
     success: true,
     message: `${actionName} executed successfully!`,
@@ -149,7 +138,6 @@ export async function processDefenseBattleAction(
     heal,
     shield,
     actionType,
-    gameState,
     gameOver,
     winner,
     winnerUserId
@@ -158,6 +146,7 @@ export async function processDefenseBattleAction(
 
 /**
  * 게임 종료 조건 체크
+ * 🔥 수정: 체력 체크 제거 (Handler에서 처리)
  */
 function checkGameOver(arena: any, attackScore: number, defenseScore: number): boolean {
   // 시간 초과 체크
@@ -175,6 +164,8 @@ function checkGameOver(arena: any, attackScore: number, defenseScore: number): b
     return true;
   }
 
+  // 🔥 체력 0 체크는 Handler에서 처리
+  
   return false;
 }
 
@@ -190,9 +181,10 @@ function determineWinner(attackScore: number, defenseScore: number): string {
 /**
  * 팀 초기화 (게임 시작 시 호출)
  * ✅ 1:1 매치: 정확히 2명만 참가 가능
+ * 🔥 수정: health 필드 초기화 추가
  */
 export async function initializeDefenseBattleTeams(arenaId: string) {
-  const arena = await Arena.findById(arenaId);
+  const arena = await Arena.findById(arenaId).populate('scenarioId');
   if (!arena) {
     throw new Error('Arena not found');
   }
@@ -209,6 +201,10 @@ export async function initializeDefenseBattleTeams(arenaId: string) {
   const attackMember = shuffled[0];
   const defenseMember = shuffled[1];
 
+  // 시나리오 데이터에서 최대 체력 가져오기
+  const scenario = arena.scenarioId as any;
+  const defenderMaxHealth = scenario?.data?.serverHealth || 200;
+
   // Attack 팀 설정 (1명)
   await ArenaProgress.findOneAndUpdate(
     { arena: arenaId, user: attackMember.user },
@@ -218,6 +214,7 @@ export async function initializeDefenseBattleTeams(arenaId: string) {
       score: 0,
       kills: 0,
       deaths: 0,
+      health: 100,  // 🔥 추가: 초기 체력
       actions: []
     },
     { upsert: true, new: true }
@@ -232,6 +229,7 @@ export async function initializeDefenseBattleTeams(arenaId: string) {
       score: 0,
       kills: 0,
       deaths: 0,
+      health: defenderMaxHealth,  // 🔥 추가: 초기 체력 (시나리오 설정값)
       actions: []
     },
     { upsert: true, new: true }

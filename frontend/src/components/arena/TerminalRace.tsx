@@ -67,11 +67,15 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
   // 초기 진행 상황 로드
   useEffect(() => {
-    if (isInitializedRef.current) return;
+    // ✅ 맨 처음에 바로 체크하고 설정
+    if (isInitializedRef.current) {
+      console.log('⏭️ [TerminalRace] Already initialized, skipping...');
+      return;
+    }
+    isInitializedRef.current = true;
 
     const loadProgress = async () => {
       try {
-        isInitializedRef.current = true;
         console.log('🚀 [TerminalRace] Loading progress for arena:', arena._id);
         socket.emit('terminal:get-progress', { arenaId: arena._id });
 
@@ -111,19 +115,16 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       setIsCompleted(completed);
       if (total) setTotalStages(total);
 
+      // ✅ 헤더만 표시하고, Stage/Mission 정보는 prompt-data에서 처리
       const initialLogs: LogEntry[] = [
         { id: logCounter.current++, text: '╔═══════════════════════════════════════════════════╗', type: 'system' },
         { id: logCounter.current++, text: '║          TERMINAL HACKING RACE - MISSION          ║', type: 'system' },
         { id: logCounter.current++, text: '╚═══════════════════════════════════════════════════╝', type: 'system' },
-        { id: logCounter.current++, text: '', type: 'output' },
-        { id: logCounter.current++, text: `📊 Stage: ${stage + 1}/${total || '?'}`, type: 'system' },
-        { id: logCounter.current++, text: `⭐ Current Score: ${score} points`, type: 'system' },
         { id: logCounter.current++, text: '', type: 'output' }
       ];
 
       if (completed) {
         initialLogs.push(
-          { id: logCounter.current++, text: '', type: 'output' },
           { id: logCounter.current++, text: '🎉 MISSION ACCOMPLISHED! 🎉', type: 'success' },
           { id: logCounter.current++, text: `Final Score: ${score} points`, type: 'success' },
           { id: logCounter.current++, text: '', type: 'output' }

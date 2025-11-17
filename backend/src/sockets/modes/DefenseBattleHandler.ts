@@ -6,6 +6,51 @@ import ArenaProgress from '../../models/ArenaProgress';
 import { processDefenseBattleAction } from '../../services/defenseBattle/defenseBattleEngine';
 import { endArenaProcedure } from '../utils/endArenaProcedure';
 
+/**
+ * ✅ 현재 게임 상태 계산 (체력 포함)
+ * 🔥 수정: actions 배열 대신 health 필드 사용
+ */
+async function calculateGameState(arenaId: string, arena: any) {
+  const attackTeamProgress = await ArenaProgress.find({ 
+    arena: arenaId, 
+    teamName: 'ATTACK' 
+  });
+  
+  const defenseTeamProgress = await ArenaProgress.find({ 
+    arena: arenaId, 
+    teamName: 'DEFENSE' 
+  });
+
+  const attackScore = attackTeamProgress.reduce((sum, p) => sum + (p.score || 0), 0);
+  const defenseScore = defenseTeamProgress.reduce((sum, p) => sum + (p.score || 0), 0);
+
+  // 시나리오 데이터
+  const scenario = arena.scenarioId as any;
+  const scenarioData = scenario?.data || {};
+
+  // 🔥 수정: health 필드에서 직접 가져오기 (actions 배열 합산 X)
+  const attackerMaxHealth = 100;
+  const attackerHealth = attackTeamProgress[0]?.health ?? attackerMaxHealth;
+
+  const defenderMaxHealth = scenarioData.serverHealth || 200;
+  const defenderHealth = defenseTeamProgress[0]?.health ?? defenderMaxHealth;
+
+  return {
+    attackTeam: {
+      score: attackScore,
+      members: attackTeamProgress.length,
+      health: attackerHealth,
+      maxHealth: attackerMaxHealth
+    },
+    defenseTeam: {
+      score: defenseScore,
+      members: defenseTeamProgress.length,
+      health: defenderHealth,
+      maxHealth: defenderMaxHealth
+    }
+  };
+}
+
 export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
   
   /**
@@ -47,7 +92,78 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
         return;
       }
 
-      // 3. ArenaProgress 업데이트
+      // 🔥 3. ArenaProgress 업데이트 - 체력 직접 업데이트
+      const userProgress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
+      if (!userProgress) {
+        socket.emit('defenseBattle:error', { message: 'User progress not found' });
+        return;
+      }
+
+      const userTeam = userProgress.teamName;
+      const isAttacker = userTeam === 'ATTACK';
+
+      // 상대팀 찾기
+      const enemyTeam = isAttacker ? 'DEFENSE' : 'ATTACK';
+      const enemyProgress = await ArenaProgress.findOne({ 
+        arena: arenaId, 
+        teamName: enemyTeam 
+      });
+
+      // 시나리오 데이터
+      const scenario = arena.scenarioId as any;
+
+      // 🔥 데미지 처리
+      if (result.damage && result.damage > 0) {
+        if (enemyProgress) {
+          const enemyMaxHealth = isAttacker 
+            ? (scenario?.data?.serverHealth || 200)  // 방어팀 최대 체력
+            : 100;  // 공격팀 최대 체력
+          
+          const currentHealth = enemyProgress.health ?? enemyMaxHealth;
+          const newHealth = Math.max(0, currentHealth - result.damage);
+          
+          await ArenaProgress.updateOne(
+            { _id: enemyProgress._id },
+            { $set: { health: newHealth } }
+          );
+          
+          console.log(`💥 Damage: ${result.damage}, Enemy ${enemyTeam} health: ${currentHealth} → ${newHealth}`);
+        }
+      }
+
+      // 🔥 힐 처리
+      if (result.heal && result.heal > 0) {
+        const maxHealth = isAttacker 
+          ? 100 
+          : (scenario?.data?.serverHealth || 200);
+        const currentHealth = userProgress.health ?? maxHealth;
+        const newHealth = Math.min(maxHealth, currentHealth + result.heal);
+        
+        await ArenaProgress.updateOne(
+          { _id: userProgress._id },
+          { $set: { health: newHealth } }
+        );
+        
+        console.log(`❤️ Heal: ${result.heal}, My ${userTeam} health: ${currentHealth} → ${newHealth}`);
+      }
+
+      // 🔥 쉴드 처리 (힐과 동일하게 체력 회복)
+      if (result.shield && result.shield > 0) {
+        const maxHealth = isAttacker 
+          ? 100 
+          : (scenario?.data?.serverHealth || 200);
+        const currentHealth = userProgress.health ?? maxHealth;
+        const newHealth = Math.min(maxHealth, currentHealth + result.shield);
+        
+        await ArenaProgress.updateOne(
+          { _id: userProgress._id },
+          { $set: { health: newHealth } }
+        );
+        
+        console.log(`🛡️ Shield: ${result.shield}, My ${userTeam} health: ${currentHealth} → ${newHealth}`);
+      }
+
+      // 점수/킬 업데이트
       const updatePayload: any = {
         $inc: { score: result.scoreGain || 0 }
       };
@@ -56,38 +172,36 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
         updatePayload.$inc.kills = 1;
       }
 
-      // 액션 로그 추가
+      // 액션 로그 추가 (통계용)
       updatePayload.$push = {
         actions: {
           actionType: result.actionType,
           actionName: actionName,
           damage: result.damage || 0,
           heal: result.heal || 0,
+          shield: result.shield || 0,  // 🔥 shield도 로그에 추가
           timestamp: new Date()
         }
       };
 
-      console.log('📝 Update Payload:', JSON.stringify(updatePayload, null, 2));
-
       const progressDoc = await ArenaProgress.findOneAndUpdate(
         { arena: arenaId, user: userId },
         updatePayload,
-        { 
-          upsert: true, 
-          new: true, 
-          setDefaultsOnInsert: true
-        }
+        { new: true }
       );
 
       console.log('✅ After Progress:', {
         userId,
         score: progressDoc.score,
         kills: progressDoc.kills,
-        team: progressDoc.teamName
+        health: progressDoc.health
       });
       console.log('---\n');
 
-      // 4. 클라이언트에 결과 전송
+      // ✅ 4. 현재 게임 상태 계산 (체력 포함)
+      const currentGameState = await calculateGameState(arenaId, arena);
+
+      // 5. 클라이언트에 결과 전송
       io.to(arenaId).emit('defenseBattle:result', {
         userId,
         actionName,
@@ -96,11 +210,11 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
         damage: result.damage,
         heal: result.heal,
         shield: result.shield,
-        gameState: result.gameState,
+        gameState: currentGameState,  // ✅ 체력 정보 포함된 게임 상태
         totalScore: progressDoc.score
       });
 
-      // 5. 전체 참가자 진행 상황 브로드캐스트
+      // 6. 전체 참가자 진행 상황 브로드캐스트
       io.to(arenaId).emit('participant:update', {
         userId: String(userId),
         progress: {
@@ -110,7 +224,7 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
         }
       });
 
-      // 6. 게임 종료 처리
+      // 7. 게임 종료 처리
       if (result.gameOver) {
         console.log(`🏆 Game Over: Winner is ${result.winner}`);
         
@@ -139,7 +253,7 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
   socket.on('defenseBattle:get-state', async ({ arenaId }: { arenaId: string }) => {
     const userId = (socket as any).userId;
     
-    console.log('🔍 [defenseBattle:get-state] Request received:', { arenaId, userId });
+    console.log('📊 [defenseBattle:get-state] Request received:', { arenaId, userId });
     
     if (!arenaId || !userId) {
       console.warn('⚠️ [defenseBattle:get-state] Missing arenaId or userId');
@@ -170,42 +284,8 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
       const scenario = arena.scenarioId as any;
       const scenarioData = scenario.data;
 
-      // 게임 상태 계산
-      const attackTeamProgress = await ArenaProgress.find({ 
-        arena: arenaId, 
-        teamName: 'ATTACK' 
-      });
-      
-      const defenseTeamProgress = await ArenaProgress.find({ 
-        arena: arenaId, 
-        teamName: 'DEFENSE' 
-      });
-
-      const attackScore = attackTeamProgress.reduce((sum, p) => sum + (p.score || 0), 0);
-      const defenseScore = defenseTeamProgress.reduce((sum, p) => sum + (p.score || 0), 0);
-
-      // 1v1 체력 계산
-      const totalAttackDamage = attackTeamProgress.reduce((sum, p) => {
-        return sum + (p.actions?.reduce((actionSum: number, action: any) => 
-          actionSum + (action.damage || 0), 0) || 0);
-      }, 0);
-      
-      const totalDefenseHeal = defenseTeamProgress.reduce((sum, p) => {
-        return sum + (p.actions?.reduce((actionSum: number, action: any) => 
-          actionSum + (action.heal || 0), 0) || 0);
-      }, 0);
-
-      const attackerMaxHealth = 100;
-      const attackerDamageTaken = defenseTeamProgress.reduce((sum, p) => {
-        return sum + (p.actions?.reduce((actionSum: number, action: any) => 
-          actionSum + (action.damage || 0), 0) || 0);
-      }, 0);
-      const attackerHealth = Math.max(0, attackerMaxHealth - attackerDamageTaken);
-
-      const defenderMaxHealth = scenarioData.serverHealth || 200;
-      const defenderHealth = Math.max(0, Math.min(defenderMaxHealth, 
-        defenderMaxHealth - totalAttackDamage + totalDefenseHeal
-      ));
+      // ✅ 게임 상태 계산 (체력 포함)
+      const gameState = await calculateGameState(arenaId, arena);
 
       // 응답 데이터
       socket.emit('defenseBattle:state-data', {
@@ -213,16 +293,8 @@ export const registerDefenseBattleHandlers = (io: Server, socket: Socket) => {
         myRole: progressDoc?.teamRole || null,
         myScore: progressDoc?.score || 0,
         myKills: progressDoc?.kills || 0,
-        attacker: {
-          score: attackScore,
-          health: attackerHealth,
-          maxHealth: attackerMaxHealth
-        },
-        defender: {
-          score: defenseScore,
-          health: defenderHealth,
-          maxHealth: defenderMaxHealth
-        },
+        attacker: gameState.attackTeam,
+        defender: gameState.defenseTeam,
         availableActions: progressDoc?.teamRole === 'ATTACKER' 
           ? scenarioData.attackActions 
           : scenarioData.defenseActions

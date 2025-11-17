@@ -72,7 +72,7 @@ const ArenaProgressSchema = new mongoose.Schema({
     lostAt: { type: Date, default: null }  // null = 여전히 소유 중
   }],
 
-  // ⚔️ Defense Battle 모드용 (기존 유지)
+  // ⚔️ Defense Battle 모드용
   teamName: { 
     type: String, 
     default: null 
@@ -83,6 +83,12 @@ const ArenaProgressSchema = new mongoose.Schema({
     type: String,
     enum: ['ATTACKER', 'DEFENDER', null],
     default: null
+  },
+  
+  // 🔥 NEW: Defense Battle 체력 관리
+  health: {
+    type: Number,
+    default: null  // null = 사용 안 함, Defense Battle에서만 초기화
   },
   
   kills: { 
@@ -101,10 +107,11 @@ const ArenaProgressSchema = new mongoose.Schema({
     actionName: String,   // 'SQL Injection', 'Enable Firewall', etc.
     damage: Number,       // 가한 피해
     heal: Number,         // 회복량
+    shield: Number,       // 🔥 NEW: 쉴드량 추가
     timestamp: Date
   }],
 
-  // 👑 King of the Hill 전용 - NEW
+  // 👑 King of the Hill 전용
   kingOfTheHill: {
     totalKingTime: { type: Number, default: 0 },  // 초 단위
     longestKingStreak: { type: Number, default: 0 },  // 초 단위
@@ -122,7 +129,7 @@ const ArenaProgressSchema = new mongoose.Schema({
     }]
   },
 
-  // 🔍 Forensics Rush 전용 - NEW
+  // 🔍 Forensics Rush 전용
   forensicsRush: {
     questionsAnswered: { type: Number, default: 0 },
     questionsCorrect: { type: Number, default: 0 },
@@ -139,7 +146,7 @@ const ArenaProgressSchema = new mongoose.Schema({
     }]
   },
 
-  // 💬 Social Engineering Challenge 전용 - NEW
+  // 💬 Social Engineering Challenge 전용
   socialEngineering: {
     objectiveAchieved: { type: Boolean, default: false },
     finalSuspicion: { type: Number, default: 0 },
