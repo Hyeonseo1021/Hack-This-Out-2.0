@@ -13,6 +13,7 @@ import TerminalRaceForm from '../../components/admin/forms/TerminalRaceForm';
 import KingOfTheHillForm from '../../components/admin/forms/KingOfTheHillForm';
 import ForensicsRushForm from '../../components/admin/forms/ForensicsRushForm';
 import SocialEngineeringForm from '../../components/admin/forms/SocialEngineeringForm';
+import VulnerabilityScannerRaceForm from '../../components/admin/forms/VulnerablilityScannerRaceForm';
 import { FaEdit, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import '../../assets/scss/admin/ScenariosManagement.scss';
 
@@ -231,16 +232,90 @@ const ScenariosManagement: React.FC = () => {
         }
         for (let i = 0; i < (form.data.stages?.length || 0); i++) {
           if (!form.data.stages[i].prompt?.trim()) {
-            alert(`Stage ${i + 1} prompt is required`);
+            alert(`Stage $${i + 1} prompt is required`);
             return false;
           }
           if (form.data.stages[i].commands?.length === 0) {
-            alert(`Stage ${i + 1} must have at least one command`);
+            alert(`Stage $${i + 1} must have at least one command`);
             return false;
           }
         }
         break;
 
+
+      case 'VULNERABILITY_SCANNER_RACE':
+        // 필수 필드 검증
+        if (!form.data.targetUrl?.trim()) {
+          alert('Target URL is required');
+          return false;
+        }
+        
+        if (!form.data.targetName?.trim()) {
+          alert('Target name is required');
+          return false;
+        }
+        
+        // URL 형식 검증
+        try {
+          new URL(form.data.targetUrl);
+        } catch (error) {
+          alert('Target URL must be a valid URL (e.g., https://example.com)');
+          return false;
+        }
+        
+        // Vulnerabilities 배열 검증
+        if (!form.data.vulnerabilities || form.data.vulnerabilities.length === 0) {
+          alert('At least one vulnerability is required');
+          return false;
+        }
+        
+        // 각 취약점 검증
+        for (let i = 0; i < form.data.vulnerabilities.length; i++) {
+          const vuln = form.data.vulnerabilities[i];
+          
+          if (!vuln.name?.trim()) {
+            alert(`Vulnerability ${i + 1}: Name is required`);
+            return false;
+          }
+          
+          if (!vuln.type?.trim()) {
+            alert(`Vulnerability ${i + 1}: Type is required`);
+            return false;
+          }
+          
+          if (!vuln.severity?.trim()) {
+            alert(`Vulnerability ${i + 1}: Severity is required`);
+            return false;
+          }
+          
+          // Severity 값 검증
+          const validSeverities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+          if (!validSeverities.includes(vuln.severity.toUpperCase())) {
+            alert(`Vulnerability ${i + 1}: Severity must be LOW, MEDIUM, HIGH, or CRITICAL`);
+            return false;
+          }
+          
+          if (typeof vuln.points !== 'number' || vuln.points <= 0) {
+            alert(`Vulnerability ${i + 1}: Points must be a positive number`);
+            return false;
+          }
+        }
+        
+        // Scoring 검증
+        if (!form.data.scoring) {
+          alert('Scoring configuration is required');
+          return false;
+        }
+        
+        if (typeof form.data.scoring.firstBloodBonus !== 'number' || form.data.scoring.firstBloodBonus < 0) {
+          alert('First Blood Bonus must be a non-negative number');
+          return false;
+        }
+        
+        // totalVulnerabilities 자동 설정
+        form.data.totalVulnerabilities = form.data.vulnerabilities.length;
+        
+        break;
 
       case 'KING_OF_THE_HILL':
         if (!form.data.serverInfo?.name?.trim()) {

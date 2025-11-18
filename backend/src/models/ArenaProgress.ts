@@ -20,10 +20,6 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: 0 
   },
   
-  // ✅ stage = 완료한 스테이지 개수
-  // stage 0 → Playing Stage 1 (아무것도 완료 안 함)
-  // stage 1 → Playing Stage 2 (Stage 1 완료)
-  // stage 4 → All stages completed
   stage: { 
     type: Number, 
     default: 0 

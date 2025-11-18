@@ -197,7 +197,7 @@ const ArenaPlayPage: React.FC = () => {
     socket.on('arena:start', handleStart);
     socket.on('arena:deleted', handleDeleted);
     socket.on('arena:join-failed', handleJoinFailed);
-    socket.on('arena:ended', handleEnded);
+    
 
     return () => {
       if (currentUserId && arenaId && !navigatedRef.current) {

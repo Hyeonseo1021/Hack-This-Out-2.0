@@ -39,26 +39,41 @@ export const terminalProcessCommand = async (
       return { message: 'Error: Scenario data not found.' };
     }
 
-    const challengeData = scenario.data; // TerminalHackingRaceData 타입
+    const challengeData = scenario.data;
     console.log(`   Loaded scenario: ${scenario.title}`);
+    
+    const availableStages = challengeData.stages.map((s: any) => s.stage);
+    console.log(`   📋 Available stages in scenario:`, availableStages);
 
     // 3. 유저의 현재 스테이지 가져오기
     const progressDoc = await ArenaProgress.findOne({ arena: arenaId, user: userId });
-    const dbStage = progressDoc?.stage || 0;
-    const currentStageNum = dbStage + 1; // 게임 스테이지는 1부터 시작
+    console.log(`   📊 ProgressDoc for user ${userId}:`, {
+      stage: progressDoc?.stage,
+      score: progressDoc?.score,
+      completed: progressDoc?.completed
+    });
     
-    console.log(`   DB Stage: ${dbStage}, Game Stage: ${currentStageNum}/${challengeData.totalStages}`);
+    const completedStages = progressDoc?.stage || 0;
+    const currentStageNum = completedStages + 1;
+    
+    console.log(`   Completed Stages: ${completedStages}, Playing Stage: ${currentStageNum}/${challengeData.totalStages}`);
 
     // 4. 현재 스테이지 데이터 찾기
     const stageData = challengeData.stages.find((s: any) => s.stage === currentStageNum);
+    
     if (!stageData) {
+      console.error(`   ❌ Stage ${currentStageNum} NOT FOUND in scenario!`);
+      console.error(`   Available stages:`, availableStages);
+      
       if (currentStageNum > challengeData.totalStages) {
         return { message: 'You have already completed all stages!' };
       }
-      return { message: `Error: Stage ${currentStageNum} not found.` };
+      return { message: `Error: Stage ${currentStageNum} not found in scenario.` };
     }
 
+    console.log(`   ✅ Stage ${currentStageNum} found`);
     console.log(`   Current prompt: ${stageData.prompt}`);
+    console.log(`   Available commands:`, stageData.commands.map((c: any) => c.command));
 
     // 5. 명령어 파싱
     const parts = userCommand.trim().split(' ');
@@ -67,48 +82,84 @@ export const terminalProcessCommand = async (
 
     console.log(`   Parsed - Command: "${command}", Args:`, args);
 
-    // 6. 명령어 매칭 (개선: 순서 무관)
+    // 6. 명령어 매칭
     const matchedCommand = stageData.commands.find((cmd: any) => {
-      if (cmd.command !== command) return false;
+      // 명령어가 일치하지 않으면 false
+      if (cmd.command !== command) {
+        return false;
+      }
 
-      // args가 정의되어 있으면 일치하는지 확인
+      // 인자가 필요한 경우
       if (cmd.args && cmd.args.length > 0) {
-        // 필수 args가 모두 포함되어 있는지 확인 (순서 무관)
         const requiredArgs = cmd.args;
+        
+        // ✅ 모든 필수 인자가 포함되어야 함
         const hasAllArgs = requiredArgs.every((reqArg: string) =>
           args.some(userArg => userArg === reqArg)
         );
 
-        // 정확한 개수와 내용이 일치하는지 확인
-        if (!hasAllArgs || args.length !== requiredArgs.length) {
+        if (!hasAllArgs) {
+          console.log(`   ⚠️ Missing required args. Required: ${requiredArgs}, Got: ${args}`);
+          return false;
+        }
+
+        // ✅ 인자 개수도 일치해야 함
+        if (args.length !== requiredArgs.length) {
+          console.log(`   ⚠️ Arg count mismatch. Required: ${requiredArgs.length}, Got: ${args.length}`);
           return false;
         }
 
         return true;
       }
-      return true; // args가 없으면 command만 일치하면 OK
+      
+      // 인자가 필요 없는 명령어인데 인자가 주어진 경우
+      if (args.length > 0) {
+        console.log(`   ⚠️ Command "${command}" doesn't take arguments, but got: ${args}`);
+        return false;
+      }
+      
+      return true;
     });
 
     // 7. 결과 반환
     if (matchedCommand) {
-      console.log(`   ✅ Command matched!`);
-      return {
+      console.log(`   ✅ Command matched successfully!`);
+      
+      const result: TerminalResult = {
         message: matchedCommand.message || matchedCommand.response,
         progressDelta: matchedCommand.scoreGain || matchedCommand.progressDelta || 0,
-        advanceStage: matchedCommand.advanceStage !== false,  // ✅ 시나리오 데이터 기준 (기본값: true)
+        advanceStage: matchedCommand.advanceStage !== false,
         flagFound: matchedCommand.flagFound || false
       };
+      
+      console.log(`   📤 Returning result:`, result);
+      return result;
+      
     } else {
-      console.log(`   ⚠️ Using default response`);
+      console.log(`   ⚠️ Command not recognized - using default response`);
+      
+      const defaultMsg = stageData.defaultResponse
+        ?.replace('{command}', command) 
+        || `Command '${command}' not recognized.`;
+      
+      console.log(`   Default response: "${defaultMsg}"`);
+      
+      // ✅ 기본 응답은 점수나 진행 없음
       return {
-        message: stageData.defaultResponse?.replace('{command}', command) || `Command '${command}' not recognized.`
+        message: defaultMsg,
+        progressDelta: 0,
+        advanceStage: false,
+        flagFound: false
       };
     }
 
   } catch (error) {
     console.error(`   ❌ Error in terminalProcessCommand:`, error);
     return { 
-      message: `Internal error processing command: ${(error as Error).message}` 
+      message: `Internal error processing command: ${(error as Error).message}`,
+      progressDelta: 0,
+      advanceStage: false,
+      flagFound: false
     };
   }
 };

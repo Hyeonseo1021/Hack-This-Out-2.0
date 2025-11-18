@@ -152,16 +152,6 @@ export const getArenas = async (req: Request, res: Response): Promise<void> => {
       .sort({ createdAt: -1 })
       .lean();
 
-    if (arenas.length > 0) {
-      console.log('Sample arena:', {
-        _id: arenas[0]._id,
-        name: arenas[0].name,
-        mode: arenas[0].mode,
-        difficulty: arenas[0].difficulty,
-        participantsCount: arenas[0].participants?.length || 0
-      });
-    }
-
     const result = arenas
       .map(arena => {
         const activeCount = (arena.participants || []).filter(
