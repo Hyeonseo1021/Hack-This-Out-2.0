@@ -4,15 +4,13 @@ import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { submitAnswer, getUserProgress } from '../../services/forensicsRush/ForensicsEngine';
 import { endArenaProcedure } from '../utils/endArenaProcedure';
+import { cancelScheduledEnd } from '../arenaHandlers';
 
 // 유예 시간 타이머 관리
 const gracePeriodTimers: Map<string, NodeJS.Timeout> = new Map();
 
 export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
   
-  /**
-   * 답변 제출
-   */
   socket.on('forensics:submit', async ({ 
     questionId, 
     answer 
@@ -37,7 +35,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
     }
 
     try {
-      // 1. Arena 상태 확인
       const arena = await Arena.findById(arenaId).populate('scenarioId');
       if (!arena) {
         socket.emit('forensics:error', { message: 'Arena not found' });
@@ -48,7 +45,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         return;
       }
 
-      // 2. 답변 제출 처리 (forensicsEngine 호출)
       const result = await submitAnswer(arenaId, String(userId), questionId, answer);
       
       console.log('📤 Engine Result:', result);
@@ -61,7 +57,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         return;
       }
 
-      // 3. 클라이언트에 결과 전송
       socket.emit('forensics:result', {
         questionId,
         correct: result.correct,
@@ -76,7 +71,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         allCompleted: result.allCompleted
       });
 
-      // 4. 전체 참가자 진행 상황 브로드캐스트
       io.to(arenaId).emit('participant:update', {
         userId: String(userId),
         progress: {
@@ -86,7 +80,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         }
       });
 
-      // 5. 모든 문제를 풀었으면 완료 처리
       if (result.allCompleted) {
         console.log(`✅ User ${userId} completed all questions`);
         
@@ -95,7 +88,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
           { $set: { completed: true, completedAt: new Date() } }
         );
 
-        // 첫 완료자인지 확인
         if (!arena.winner) {
           console.log(`🏆 First completion detected: ${userId}`);
           
@@ -103,39 +95,38 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
           arena.firstSolvedAt = new Date();
           await arena.save();
           
-          // 유예 시간 시작 (30초)
-          const GRACE_PERIOD_MS = 30000; // 30초
+          const GRACE_PERIOD_MS = 180000;
           
           io.to(arenaId).emit('forensics:first-completion', {
             winner: String(userId),
             gracePeriodMs: GRACE_PERIOD_MS,
-            message: `${userId} completed all questions! ${GRACE_PERIOD_MS / 1000} seconds remaining...`
+            message: `${userId} completed all questions first! ${GRACE_PERIOD_MS / 1000} seconds remaining for others...`
           });
           
-          console.log(`⏳ Grace period started: ${GRACE_PERIOD_MS}ms`);
+          console.log(`⏳ Grace period started: ${GRACE_PERIOD_MS}ms (${GRACE_PERIOD_MS / 1000}s)`);
           
-          // 기존 타이머가 있으면 취소
           if (gracePeriodTimers.has(arenaId)) {
             clearTimeout(gracePeriodTimers.get(arenaId)!);
           }
           
-          // 유예 시간 후 게임 종료
           const timer = setTimeout(async () => {
             console.log(`⏰ Grace period ended for arena ${arenaId}`);
             gracePeriodTimers.delete(arenaId);
+            cancelScheduledEnd(arenaId);
             await endArenaProcedure(arenaId, io);
           }, GRACE_PERIOD_MS);
           
           gracePeriodTimers.set(arenaId, timer);
           
         } else {
-          // 2등 이후 완료자
           console.log(`✅ User ${userId} also completed (not first)`);
           
           io.to(arenaId).emit('forensics:user-completed', {
             userId: String(userId),
             score: result.totalScore
           });
+
+          await checkAllParticipantsCompleted(arenaId, io);
         }
       }
 
@@ -147,9 +138,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
     }
   });
 
-  /**
-   * 진행 상황 조회
-   */
   socket.on('forensics:get-progress', async ({ arenaId }: { arenaId: string }) => {
     const userId = (socket as any).userId;
     
@@ -193,13 +181,10 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
     }
   });
 
-  /**
-   * 질문 목록 조회 (ID와 메타데이터만, 정답은 제외)
-   */
   socket.on('forensics:get-questions', async ({ arenaId }: { arenaId: string }) => {
     const userId = (socket as any).userId;
     
-    console.log('📝 [forensics:get-questions] Request received:', { arenaId, userId });
+    console.log('🔍 [forensics:get-questions] Request received:', { arenaId, userId });
     
     if (!arenaId || !userId) {
       console.warn('⚠️ [forensics:get-questions] Missing arenaId or userId');
@@ -222,7 +207,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
       const scenario = arena.scenarioId as any;
       const scenarioData = scenario.data;
 
-      // 질문 목록 (정답 제외)
       const questions = scenarioData.questions.map((q: any) => ({
         id: q.id,
         question: q.question,
@@ -233,7 +217,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         difficulty: q.difficulty
       }));
 
-      // 유저의 답변 상황
       const progressDoc = await ArenaProgress.findOne({ 
         arena: arenaId, 
         user: userId 
@@ -258,9 +241,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
     }
   });
 
-  /**
-   * 시나리오 정보 조회 (배경, 증거 파일, 도구 등)
-   */
   socket.on('forensics:get-scenario', async ({ arenaId }: { arenaId: string }) => {
     const userId = (socket as any).userId;
     
@@ -306,9 +286,6 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
     }
   });
 
-  /**
-   * 힌트 요청 (선택적 기능)
-   */
   socket.on('forensics:get-hint', async ({ 
     arenaId, 
     questionId 
@@ -358,21 +335,51 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
     }
   });
 
-  /**
-   * 소켓 연결 종료 시 타이머 정리
-   */
   socket.on('disconnect', () => {
     const arenaId = (socket as any).arenaId;
     if (arenaId && gracePeriodTimers.has(arenaId)) {
       console.log(`🧹 Cleaning up grace period timer for arena ${arenaId}`);
-      // 타이머는 유지 (disconnect가 게임 종료를 의미하지 않음)
     }
   });
 };
 
-/**
- * 유예 시간 타이머 정리 함수 (외부에서 호출 가능)
- */
+async function checkAllParticipantsCompleted(arenaId: string, io: Server) {
+  try {
+    const arena = await Arena.findById(arenaId);
+    if (!arena) return;
+
+    const totalParticipants = arena.participants?.length || 0;
+    if (totalParticipants === 0) return;
+
+    const completedCount = await ArenaProgress.countDocuments({
+      arena: arenaId,
+      completed: true
+    });
+
+    console.log(`📊 Completion check: ${completedCount}/${totalParticipants} participants completed`);
+
+    if (completedCount >= totalParticipants) {
+      console.log(`🎯 All participants completed! Ending arena immediately.`);
+      
+      if (gracePeriodTimers.has(arenaId)) {
+        clearTimeout(gracePeriodTimers.get(arenaId)!);
+        gracePeriodTimers.delete(arenaId);
+        console.log(`ℹ️ Grace period timer cancelled`);
+      }
+
+      cancelScheduledEnd(arenaId);
+
+      io.to(arenaId).emit('forensics:all-completed', {
+        message: 'All participants have completed! Ending game now...'
+      });
+
+      await endArenaProcedure(arenaId, io);
+    }
+  } catch (error) {
+    console.error('[checkAllParticipantsCompleted] error:', error);
+  }
+}
+
 export const clearGracePeriodTimer = (arenaId: string) => {
   if (gracePeriodTimers.has(arenaId)) {
     clearTimeout(gracePeriodTimers.get(arenaId)!);

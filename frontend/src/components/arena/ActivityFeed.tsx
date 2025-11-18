@@ -15,7 +15,6 @@ interface ActivityFeedProps {
   participants: Participant[];
 }
 
-// ✅ terminal:result 이벤트 타입
 interface TerminalResultData {
   userId: string;
   command: string;
@@ -27,7 +26,6 @@ interface TerminalResultData {
   totalScore?: number;
 }
 
-// ✅ participant:update 이벤트 타입 추가
 interface ParticipantUpdateData {
   userId: string;
   progress: {

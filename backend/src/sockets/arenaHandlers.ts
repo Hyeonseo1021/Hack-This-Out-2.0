@@ -10,6 +10,14 @@ const dcTimers = new Map<string, NodeJS.Timeout>();
 const endTimers = new Map<string, NodeJS.Timeout>();
 const MAX_PLAYERS = 8;
 
+export const cancelScheduledEnd = (arenaId: string) => {
+  if (endTimers.has(arenaId)) {
+    clearTimeout(endTimers.get(arenaId)!);
+    endTimers.delete(arenaId);
+    console.log(`🧹 Cancelled scheduled end for arena ${arenaId}`);
+  }
+};
+
 const deleteArenaIfEmpty = async (arenaId: string, io: Server) => {
   try {
     const arena = await Arena.findById(arenaId).select('participants');

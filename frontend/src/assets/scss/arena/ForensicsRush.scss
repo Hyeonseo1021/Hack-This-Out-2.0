@@ -192,7 +192,7 @@
     flex-direction: column;
     height: auto;  // ✅ height: 90% → auto
     min-height: 500px;  // ✅ 최소 높이 추가
-    max-height: calc(100vh - 250px);
+    max-height: calc(90vh - 250px);
 
     .terminal-header {
       background: #0a0a0a;
@@ -851,3 +851,140 @@
     }
   }
 }
+
+// 🎯 ForensicsRush.scss 파일 끝에 추가할 타이머 스타일
+
+// ============================================
+// 시스템 정보 바에 타이머 경고 색상
+// ============================================
+.system-info-bar {
+  .highlight.warning {
+    color: #ffa500 !important;
+    text-shadow: 0 0 5px #ffa500 !important;
+    animation: pulse-warning 1s infinite;
+  }
+}
+
+// ============================================
+// 유예시간 배너 스타일 개선
+// ============================================
+.grace-period-banner {
+  background: linear-gradient(90deg, #ff6b35 0%, #ff8c42 100%);
+  border-bottom: 3px solid #ff4500;
+  padding: 15px 30px;
+  animation: pulse-banner 2s ease-in-out infinite;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+
+    .banner-icon {
+      font-size: 28px;
+      animation: rotate-trophy 3s linear infinite;
+    }
+
+    .banner-text {
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .banner-timer {
+      font-size: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+
+      strong {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffe66d;
+        margin-left: 8px;
+        animation: time-blink 1s infinite;
+      }
+    }
+  }
+}
+
+// ============================================
+// 타이머 애니메이션
+// ============================================
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulse-banner {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes rotate-trophy {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes time-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+// ============================================
+// 반응형 타이머
+// ============================================
+@media (max-width: 768px) {
+  .grace-period-banner {
+    padding: 12px 20px;
+
+    .banner-content {
+      flex-direction: column;
+      gap: 12px;
+
+      .banner-icon {
+        font-size: 24px;
+      }
+
+      .banner-text {
+        font-size: 16px;
+        text-align: center;
+      }
+
+      .banner-timer {
+        font-size: 14px;
+
+        strong {
+          font-size: 18px;
+        }
+      }
+    }
+  }
+}
+

@@ -92,7 +92,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         };
         
         await waitForConnection();
-        console.log('✅ [TerminalRace] Socket connected');
         
         socket.emit('terminal:get-progress', { arenaId: arena._id });
         setTimeout(() => socket.emit('terminal:get-prompt', { arenaId: arena._id }), 500);
@@ -110,7 +109,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
   // ✅ 이벤트 핸들러들을 useCallback으로 메모이제이션
   const handleProgressData = useCallback((data: ProgressData) => {
-    console.log('📊 [TerminalRace] Progress data received:', data);
     const { stage, score, completed, totalStages: total } = data;
     
     setCurrentStage(stage);
@@ -121,7 +119,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     const initialLogs: LogEntry[] = [
       { id: logCounter.current++, text: '╔═══════════════════════════════════════════════╗', type: 'system' },
-      { id: logCounter.current++, text: '║     ⚡ TERMINAL HACKING RACE - MISSION ⚡     ║', type: 'system' },
+      { id: logCounter.current++, text: '║         TERMINAL HACKING RACE - MISSION       ║', type: 'system' },
       { id: logCounter.current++, text: '╚═══════════════════════════════════════════════╝', type: 'system' },
       { id: logCounter.current++, text: '', type: 'output' }
     ];
@@ -139,9 +137,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   }, []);
 
   const handlePromptData = useCallback((data: PromptData) => {
-    console.log('📨 [TerminalRace] Received prompt data:', data);
     
-    // ✅ 중복 프롬프트 방지
     if (lastPromptStageRef.current === data.stage) {
       console.log('⏭️ [TerminalRace] Duplicate prompt detected, ignoring');
       return;
@@ -151,10 +147,10 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     const newLogs: LogEntry[] = [
       { id: logCounter.current++, text: '', type: 'output' },
       { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
-      { id: logCounter.current++, text: `📍 STAGE ${data.stage}/${data.totalStages}`, type: 'system' },
+      { id: logCounter.current++, text: `STAGE ${data.stage}/${data.totalStages}`, type: 'system' },
       { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
       { id: logCounter.current++, text: '', type: 'output' },
-      { id: logCounter.current++, text: `🎯 OBJECTIVE: ${data.prompt}`, type: 'prompt' },
+      { id: logCounter.current++, text: `OBJECTIVE: ${data.prompt}`, type: 'prompt' },
       { id: logCounter.current++, text: '', type: 'output' }
     ];
 
@@ -164,10 +160,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   }, []);
 
   const handleTerminalResult = useCallback((data: TerminalResultData) => {
-    console.log('✅ [TerminalRace] Terminal result received:', data);
-    console.log('   Current processing state:', processingRef.current);
-    console.log('   Last processed command:', lastProcessedCommandRef.current);
-    
+
     if (data.userId !== currentUserId) {
       console.log('⏭️ [TerminalRace] Not my result');
       return;
@@ -201,7 +194,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       
       newLogs.push({ 
         id: logCounter.current++, 
-        text: `✨ +${data.scoreGain} points earned!`,
+        text: `+${data.scoreGain} points earned!`,
         type: 'score'
       });
       
@@ -221,7 +214,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         
         // 다음 프롬프트 요청
         setTimeout(() => {
-          console.log('📡 [TerminalRace] Requesting next prompt');
           socket.emit('terminal:get-prompt', { arenaId: arena._id });
         }, 1000);
       }
@@ -304,7 +296,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
   // Socket 이벤트 리스너 등록 (한 번만!)
   useEffect(() => {
-    console.log('🔌 [TerminalRace] Setting up socket listeners...');
     
     // ✅ 완전히 제거
     socket.off('terminal:progress-data');
@@ -324,10 +315,8 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
 
-    console.log('✅ [TerminalRace] Socket listeners registered');
 
     return () => {
-      console.log('🧹 [TerminalRace] Cleaning up...');
       if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
       
       socket.off('terminal:progress-data', handleProgressData);
@@ -373,7 +362,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       <div className="terminal-header">
         <div className="terminal-header-left">
           <div className="terminal-title">
-            <span className="terminal-icon">⚡</span>
             <h2>TERMINAL RACE</h2>
           </div>
           <p className="terminal-subtitle">Execute commands to complete the mission</p>
