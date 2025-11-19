@@ -105,7 +105,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           initialFeeds.push({
             id: feedCounter.current++,
             userId: uid,
-            text: `${username} is at stage ${stage + 1} (${score} pts)`,
+            text: `${username} is at stage ${stage + 1} (${score} points)`,
             type: 'stage',
             timestamp: new Date(),
             isMe
@@ -156,7 +156,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         const entry: FeedEntry = {
           id: feedCounter.current++,
           userId: data.userId,
-          text: `You: ${data.command} (+${data.scoreGain} pts)`,
+          text: `You: ${data.command} (+${data.scoreGain} points)`,
           type: 'command',
           timestamp: new Date(),
           isMe
@@ -250,7 +250,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 <span className="feed-icon">
                   {feed.type === 'flag' && '🚩'}
                   {feed.type === 'stage' && '⬆️'}
-                  {feed.type === 'score' && '✨'}
+                  {feed.type === 'score' && ''}
                   {feed.type === 'command' && '▶'}
                 </span>
                 <span className="feed-text">{feed.text}</span>

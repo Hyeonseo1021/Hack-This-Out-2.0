@@ -1,69 +1,69 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { useNavigate } from 'react-router-dom'; // 리디렉션을 위한 useNavigate 가져오기
 import '../../assets/scss/login/LoginPage.scss';
 import LoginForm from '../../components/login/LoginForm'; 
-import Modal from '../../components/modal/Modal'; // Modal import
-import RegisterForm from '../../components/login/RegisterForm'; // RegisterForm import
-import { AuthUserContext } from '../../contexts/AuthUserContext'; // Import AuthUserContext
+import Modal from '../../components/modal/Modal'; // Modal 가져오기
+import RegisterForm from '../../components/login/RegisterForm'; // RegisterForm 가져오기
+import { AuthUserContext } from '../../contexts/AuthUserContext'; // AuthUserContext 가져오기
 import Main from '../../components/main/Main';
 import Loading from '../../components/public/Loading';
 
 const LoginPage: React.FC = () => {
   const [isClicked, setIsClicked] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state management
-  const navigate = useNavigate(); // Initialize navigate
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal 상태 관리
+  const navigate = useNavigate(); // navigate 초기화
   const [, setIsTransitioning] = useState(false);
   const [, setIsPreGlitch] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Consume AuthUserContext
+  // AuthUserContext 사용
   const authUserContext = useContext(AuthUserContext);
 
   if (!authUserContext) {
-    throw new Error('AuthUserContext must be used within an AuthUserProvider');
+    throw new Error('AuthUserContext는 AuthUserProvider 내에서 사용해야 합니다.');
   }
 
   const { isLoggedIn, isLoading } = authUserContext;
 
-  // Handle redirection if user is already logged in
+  // 이미 로그인 된 상태일 경우 리디렉션 처리
   useEffect(() => {
     if (!isLoading && isLoggedIn) {
-      navigate('/', { state: { fromLogin: true } }); // Pass state to indicate login redirect
+      navigate('/', { state: { fromLogin: true } }); // 로그인 후 홈 화면으로 리디렉션, 상태 전달
     }
   }, [isLoggedIn, isLoading, navigate]);
 
-  // Background click handler
+  // 배경 클릭 핸들러
   const handleBackgroundClick = () => {
-    // Start pre-glitch effect
+    // pre-glitch 효과 시작
     setIsPreGlitch(true);
     
-    // Start main transition after pre-glitch
+    // pre-glitch 후 메인 전환 시작
     setTimeout(() => {
       setIsPreGlitch(false);
       setIsTransitioning(true);
       
-      // Update state after transition starts
+      // 전환이 시작된 후 상태 업데이트
       setTimeout(() => {
         setIsClicked(!isClicked);
         setIsTransitioning(false);
-      }, 500);
-    }, 350);
+      }, 1200);
+    }, 800);
   };
 
-  // Open registration modal
+  // 회원가입 모달 열기
   const openModal = () => {
     setIsModalOpen(true);
   };
 
-  // Close registration modal
+  // 회원가입 모달 닫기
   const closeModal = () => {
     setIsModalOpen(false);
   };
 
-  // While checking authentication status, you might want to show a loader
+  // 인증 상태를 확인하는 동안 로딩 화면을 표시할 수 있음
   if (isLoading) {
     return (
-      <Main title="Login" description="Loading login page.">
+      <Main title="Login" description="로그인 페이지 로딩 중.">
         <div className="login-page loading">
           <Loading />
         </div>
@@ -82,10 +82,10 @@ const LoginPage: React.FC = () => {
         <Loading />
       </div>
       <div className={1 ? "content-wrapper visible" : "content-wrapper"}>
-        <LoginForm openRegisterModal={openModal} /> {/* Pass the modal opening function to LoginForm */}
+        <LoginForm openRegisterModal={openModal} /> {/* LoginForm에 모달 열기 함수 전달 */}
       </div>
 
-      {/* Registration Modal */}
+      {/* 회원가입 Modal */}
       <Modal isOpen={isModalOpen} onClose={closeModal}>
         <RegisterForm closeRegisterModal={closeModal}/>
       </Modal>

@@ -208,6 +208,8 @@ export const submitAnswer = async (
 
     // 10. Perfect Score 체크 (모든 문제를 첫 시도에 맞춤)
     let perfectScore = false;
+    let finalScore = updatedProgress.score;
+    
     if (allCompleted) {
       const allAnswers = updatedProgress.forensicsRush?.answers || [];
       const correctAnswers = allAnswers.filter(a => a.correct);
@@ -216,20 +218,23 @@ export const submitAnswer = async (
       perfectScore = correctAnswers.every(a => a.attempts === 1);
       
       if (perfectScore) {
-        // Perfect Score 보너스 추가
+        // ✅ Perfect Score 보너스 추가
         const bonus = scenarioData.scoring.perfectScoreBonus || 50;
-        await ArenaProgress.findOneAndUpdate(
+        const bonusUpdate = await ArenaProgress.findOneAndUpdate(
           { arena: arenaId, user: userId },
           { 
             $inc: { score: bonus },
             $set: { 'forensicsRush.perfectScore': true }
-          }
+          },
+          { new: true }
         );
-        console.log(`   🎉 Perfect Score! Bonus: +${bonus}`);
+        
+        finalScore = bonusUpdate?.score || (updatedProgress.score + bonus);
+        console.log(`   🎉 Perfect Score! Bonus: +${bonus}, Final Score: ${finalScore}`);
       }
     }
 
-    // 11. 결과 반환
+    // ✅ 11. 결과 반환 (중복 보너스 제거)
     return {
       success: true,
       message: isCorrect 
@@ -239,7 +244,7 @@ export const submitAnswer = async (
       questionId,
       points: isCorrect ? pointsGained : 0,
       penalty: isCorrect ? 0 : penalty,
-      totalScore: updatedProgress.score + (perfectScore ? scenarioData.scoring.perfectScoreBonus : 0),
+      totalScore: finalScore, // ✅ 이미 보너스가 포함된 최종 점수
       attempts: currentAttempt,
       questionsAnswered: updatedProgress.forensicsRush?.questionsAnswered || 0,
       questionsCorrect: updatedProgress.forensicsRush?.questionsCorrect || 0,

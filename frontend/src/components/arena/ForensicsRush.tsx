@@ -1,6 +1,7 @@
 // src/components/arena/ForensicsRush.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
+import { useNavigate } from 'react-router-dom'; // ✅ 추가
 import '../../assets/scss/arena/ForensicsRush.scss';
 
 type Participant = {
@@ -67,6 +68,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   currentUserId,
   participants 
 }) => {
+  const navigate = useNavigate(); // ✅ 추가
   const [isLoading, setIsLoading] = useState(true);
   const [scenario, setScenario] = useState<ScenarioInfo | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -105,7 +107,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
         socket.emit('forensics:get-scenario', { arenaId: arena._id });
         socket.emit('forensics:get-questions', { arenaId: arena._id });
         socket.emit('forensics:get-progress', { arenaId: arena._id });
-        socket.emit('forensics:get-game-state', { arenaId: arena._id }); // 🎯 게임 상태 요청 추가
+        socket.emit('forensics:get-game-state', { arenaId: arena._id });
 
         setTimeout(() => {
           if (isLoading) {
@@ -122,6 +124,71 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
     loadData();
   }, [arena._id, socket, isLoading]);
+
+  // ✅ 유예 시간 시작 핸들러
+  const handleGracePeriodStarted = useCallback((data: { 
+    gracePeriodSeconds: number; 
+    firstWinner: string;
+    message: string;
+  }) => {
+    console.log('⏰ [ForensicsRush] Grace period started:', data);
+    
+    setGracePeriodRemaining(data.gracePeriodSeconds);
+    setFirstWinner(data.firstWinner);
+    
+    // 기존 타이머 정리
+    if (gameTimerIntervalRef.current) {
+      clearInterval(gameTimerIntervalRef.current);
+      gameTimerIntervalRef.current = null;
+    }
+    
+    // 유예 시간 타이머 시작
+    if (gracePeriodIntervalRef.current) {
+      clearInterval(gracePeriodIntervalRef.current);
+    }
+    
+    gracePeriodIntervalRef.current = setInterval(() => {
+      setGracePeriodRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          if (gracePeriodIntervalRef.current) {
+            clearInterval(gracePeriodIntervalRef.current);
+            gracePeriodIntervalRef.current = null;
+          }
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  // ✅ 게임 종료 핸들러
+  const handleArenaEnded = useCallback((data: { message: string }) => {
+    console.log('🏁 [ForensicsRush] Arena ended:', data);
+    
+    // 모든 타이머 정리
+    if (gameTimerIntervalRef.current) {
+      clearInterval(gameTimerIntervalRef.current);
+      gameTimerIntervalRef.current = null;
+    }
+    if (gracePeriodIntervalRef.current) {
+      clearInterval(gracePeriodIntervalRef.current);
+      gracePeriodIntervalRef.current = null;
+    }
+    
+    setGracePeriodRemaining(null);
+    setGameTimeRemaining(null);
+    
+    // 완료 상태로 설정
+    setAllCompleted(true);
+  }, []);
+
+  // ✅ 결과 페이지로 리디렉션 핸들러
+  const handleRedirectToResults = useCallback((data: { redirectUrl: string }) => {
+    console.log('🎯 [ForensicsRush] Redirecting to results:', data.redirectUrl);
+    setTimeout(() => {
+      navigate(data.redirectUrl);
+    }, 500);
+  }, [navigate]);
 
   // 소켓 이벤트 핸들러
   useEffect(() => {
@@ -211,370 +278,210 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
             );
           } else {
             return [...prev, { 
-              questionId: data.questionId, 
-              correct: true, 
-              attempts: data.attempts 
+              questionId: data.questionId,
+              correct: true,
+              attempts: data.attempts
             }];
           }
         });
-        
+
+        // ✅ 모든 문제 완료 체크
         if (data.allCompleted) {
           console.log('🎉 [ForensicsRush] All questions completed!');
           setAllCompleted(true);
-        } else {
-          setTimeout(() => {
-            if (currentQuestionIndex < questions.length - 1) {
-              setCurrentQuestionIndex(prev => prev + 1);
-            }
-            setFeedback(null);
-            setShowHints(false);
-          }, 1500);
         }
+        
+        setTimeout(() => setFeedback(null), 3000);
       } else {
         setFeedback({ 
           type: 'error', 
           message: data.message 
         });
         
+        setAnsweredQuestions(prev => {
+          const exists = prev.find(q => q.questionId === data.questionId);
+          if (exists) {
+            return prev.map(q => 
+              q.questionId === data.questionId 
+                ? { ...q, attempts: data.attempts }
+                : q
+            );
+          } else {
+            return [...prev, { 
+              questionId: data.questionId,
+              correct: false,
+              attempts: data.attempts
+            }];
+          }
+        });
+        
         setTimeout(() => setFeedback(null), 3000);
       }
-    };
-
-    const handleSubmitFailed = (data: { reason: string; questionId: string }) => {
-      console.log('❌ [ForensicsRush] Submit failed:', data);
-      setIsSubmitting(false);
-      setFeedback({ type: 'error', message: data.reason });
-      setTimeout(() => setFeedback(null), 3000);
     };
 
     const handleError = (data: { message: string }) => {
       console.error('❌ [ForensicsRush] Error:', data);
       setIsSubmitting(false);
-      setFeedback({ type: 'error', message: data.message });
+      setFeedback({ 
+        type: 'error', 
+        message: data.message 
+      });
       setTimeout(() => setFeedback(null), 3000);
     };
 
-    // 🎯 게임 타이머 시작
-    const handleGameTimerStarted = (data: { durationMs: number; expiresAt: string }) => {
-      console.log('⏲️ [ForensicsRush] Game timer started:', data);
+    // ✅ 게임 상태 핸들러
+    const handleGameState = (data: {
+      gameTimeRemaining: number | null;
+      gracePeriodRemaining: number | null;
+      firstWinner: string | null;
+      isEnded: boolean;
+    }) => {
+      console.log('🎮 [ForensicsRush] Game state received:', data);
       
-      const expiresAt = new Date(data.expiresAt);
+      setGameTimeRemaining(data.gameTimeRemaining);
+      setGracePeriodRemaining(data.gracePeriodRemaining);
+      setFirstWinner(data.firstWinner);
       
-      if (gameTimerIntervalRef.current) {
-        clearInterval(gameTimerIntervalRef.current);
+      if (data.isEnded) {
+        setAllCompleted(true);
       }
       
-      const updateTimer = () => {
-        const now = new Date();
-        const remaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
-        
-        if (remaining <= 0) {
-          setGameTimeRemaining(0);
-          if (gameTimerIntervalRef.current) {
-            clearInterval(gameTimerIntervalRef.current);
-          }
-        } else {
-          setGameTimeRemaining(remaining);
+      // 게임 타이머 설정
+      if (data.gameTimeRemaining !== null && data.gameTimeRemaining > 0) {
+        if (gameTimerIntervalRef.current) {
+          clearInterval(gameTimerIntervalRef.current);
         }
-      };
-      
-      updateTimer();
-      gameTimerIntervalRef.current = setInterval(updateTimer, 1000);
-    };
-
-    // 🎯 게임 상태 복원 (새로고침 시)
-    const handleGameState = (data: { 
-      gameTimerExpiresAt?: string;
-      gracePeriodExpiresAt?: string;
-      firstWinner?: string;
-    }) => {
-      console.log('🔄 [ForensicsRush] Game state received:', data);
-      
-      // 게임 타이머 복원
-      if (data.gameTimerExpiresAt) {
-        const expiresAt = new Date(data.gameTimerExpiresAt);
-        const now = new Date();
-        const remaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
         
-        if (remaining > 0) {
-          setGameTimeRemaining(remaining);
-          
-          if (gameTimerIntervalRef.current) {
-            clearInterval(gameTimerIntervalRef.current);
-          }
-          
-          gameTimerIntervalRef.current = setInterval(() => {
-            const now = new Date();
-            const remaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
-            
-            if (remaining <= 0) {
-              setGameTimeRemaining(0);
+        gameTimerIntervalRef.current = setInterval(() => {
+          setGameTimeRemaining((prev) => {
+            if (prev === null || prev <= 1) {
               if (gameTimerIntervalRef.current) {
                 clearInterval(gameTimerIntervalRef.current);
+                gameTimerIntervalRef.current = null;
               }
-            } else {
-              setGameTimeRemaining(remaining);
+              return null;
             }
-          }, 1000);
-        }
-      }
-      
-      // 유예시간 복원
-      if (data.gracePeriodExpiresAt && data.firstWinner) {
-        const expiresAt = new Date(data.gracePeriodExpiresAt);
-        const now = new Date();
-        const remaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
-        
-        if (remaining > 0) {
-          // firstWinner userId를 username으로 변환
-          const winnerParticipant = participants.find(p => {
-            const userId = typeof p.user === 'object' ? p.user._id : p.user;
-            return String(userId) === String(data.firstWinner);
+            return prev - 1;
           });
-          
-          const winnerName = winnerParticipant && typeof winnerParticipant.user === 'object' 
-            ? winnerParticipant.user.username 
-            : data.firstWinner;
-          
-          setFirstWinner(winnerName);
-          setGracePeriodRemaining(remaining);
-          
-          if (gracePeriodIntervalRef.current) {
-            clearInterval(gracePeriodIntervalRef.current);
-          }
-          
-          gracePeriodIntervalRef.current = setInterval(() => {
-            setGracePeriodRemaining(prev => {
-              if (prev === null || prev <= 1) {
-                if (gracePeriodIntervalRef.current) {
-                  clearInterval(gracePeriodIntervalRef.current);
-                }
-                
-                // 유예시간 만료 - 백엔드가 이미 처리하지만 혹시 모를 경우 대비
-                console.log('⏰ [ForensicsRush] Grace period expired on client side');
-                
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
+        }, 1000);
+      }
+      
+      // 유예 시간 타이머 설정
+      if (data.gracePeriodRemaining !== null && data.gracePeriodRemaining > 0) {
+        if (gracePeriodIntervalRef.current) {
+          clearInterval(gracePeriodIntervalRef.current);
         }
-      }
-    };
-
-    // 🎯 첫 완료자 알림
-    const handleFirstCompletion = (data: { winner: string; gracePeriodMs: number; message: string }) => {
-      console.log('🏆 [ForensicsRush] First completion:', data);
-      
-      // winner가 userId인 경우 username으로 변환
-      const winnerParticipant = participants.find(p => {
-        const userId = typeof p.user === 'object' ? p.user._id : p.user;
-        return String(userId) === String(data.winner);
-      });
-      
-      const winnerName = winnerParticipant && typeof winnerParticipant.user === 'object' 
-        ? winnerParticipant.user.username 
-        : data.winner;
-      
-      setFirstWinner(winnerName);
-      
-      const gracePeriodSeconds = Math.floor(data.gracePeriodMs / 1000);
-      setGracePeriodRemaining(gracePeriodSeconds);
-      
-      if (gracePeriodIntervalRef.current) {
-        clearInterval(gracePeriodIntervalRef.current);
-      }
-      
-      gracePeriodIntervalRef.current = setInterval(() => {
-        setGracePeriodRemaining(prev => {
-          if (prev === null || prev <= 1) {
-            if (gracePeriodIntervalRef.current) {
-              clearInterval(gracePeriodIntervalRef.current);
+        
+        gracePeriodIntervalRef.current = setInterval(() => {
+          setGracePeriodRemaining((prev) => {
+            if (prev === null || prev <= 1) {
+              if (gracePeriodIntervalRef.current) {
+                clearInterval(gracePeriodIntervalRef.current);
+                gracePeriodIntervalRef.current = null;
+              }
+              return null;
             }
-            
-            // 유예시간 만료 - 백엔드가 이미 처리하지만 혹시 모를 경우 대비
-            console.log('⏰ [ForensicsRush] Grace period expired on client side');
-            
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    };
-
-    const handleUserCompleted = (data: { userId: string; score: number }) => {
-      console.log('✅ [ForensicsRush] User completed:', data);
-    };
-
-    const handleAllCompleted = (data: { message: string }) => {
-      console.log('🎉 [ForensicsRush] All completed:', data);
-      
-      if (gracePeriodIntervalRef.current) {
-        clearInterval(gracePeriodIntervalRef.current);
-      }
-      if (gameTimerIntervalRef.current) {
-        clearInterval(gameTimerIntervalRef.current);
+            return prev - 1;
+          });
+        }, 1000);
       }
     };
 
-    const handleTimeExpired = (data: { message: string }) => {
-      console.log('⏰ [ForensicsRush] Time expired:', data);
-      setGameTimeRemaining(0);
-      
-      if (gameTimerIntervalRef.current) {
-        clearInterval(gameTimerIntervalRef.current);
-      }
-      if (gracePeriodIntervalRef.current) {
-        clearInterval(gracePeriodIntervalRef.current);
-      }
-    };
-
-    const handleArenaEnded = (data: any) => {
-      console.log('🏁 [ForensicsRush] Arena ended, redirecting to results...', data);
-      
-      if (gameTimerIntervalRef.current) {
-        clearInterval(gameTimerIntervalRef.current);
-      }
-      if (gracePeriodIntervalRef.current) {
-        clearInterval(gracePeriodIntervalRef.current);
-      }
-      
-      setTimeout(() => {
-        window.location.href = `/arena/${arena._id}/results`;
-      }, 2000);
-    };
+    // ✅ 이벤트 리스너 등록 (기존 리스너 제거 후 재등록)
+    socket.off('forensics:scenario-data');
+    socket.off('forensics:questions-data');
+    socket.off('forensics:progress-data');
+    socket.off('forensics:result');
+    socket.off('forensics:error');
+    socket.off('forensics:game-state');
+    socket.off('arena:grace-period-started');
+    socket.off('arena:ended');
+    socket.off('arena:redirect-to-results');
 
     socket.on('forensics:scenario-data', handleScenarioData);
     socket.on('forensics:questions-data', handleQuestionsData);
     socket.on('forensics:progress-data', handleProgressData);
     socket.on('forensics:result', handleResult);
-    socket.on('forensics:submit-failed', handleSubmitFailed);
     socket.on('forensics:error', handleError);
-    
-    // 🎯 게임 타이머 및 종료 이벤트
-    socket.on('forensics:game-state', handleGameState); // 🎯 게임 상태 복원
-    socket.on('forensics:game-timer-started', handleGameTimerStarted);
-    socket.on('forensics:first-completion', handleFirstCompletion);
-    socket.on('forensics:user-completed', handleUserCompleted);
-    socket.on('forensics:all-completed', handleAllCompleted);
-    socket.on('forensics:time-expired', handleTimeExpired);
+    socket.on('forensics:game-state', handleGameState);
+    socket.on('arena:grace-period-started', handleGracePeriodStarted);
     socket.on('arena:ended', handleArenaEnded);
+    socket.on('arena:redirect-to-results', handleRedirectToResults);
 
     return () => {
+      // ✅ 타이머 정리
+      if (gameTimerIntervalRef.current) {
+        clearInterval(gameTimerIntervalRef.current);
+        gameTimerIntervalRef.current = null;
+      }
+      if (gracePeriodIntervalRef.current) {
+        clearInterval(gracePeriodIntervalRef.current);
+        gracePeriodIntervalRef.current = null;
+      }
+
+      // ✅ 이벤트 리스너 제거
       socket.off('forensics:scenario-data', handleScenarioData);
       socket.off('forensics:questions-data', handleQuestionsData);
       socket.off('forensics:progress-data', handleProgressData);
       socket.off('forensics:result', handleResult);
-      socket.off('forensics:submit-failed', handleSubmitFailed);
       socket.off('forensics:error', handleError);
-      
-      socket.off('forensics:game-state', handleGameState); // 🎯 게임 상태 복원
-      socket.off('forensics:game-timer-started', handleGameTimerStarted);
-      socket.off('forensics:first-completion', handleFirstCompletion);
-      socket.off('forensics:user-completed', handleUserCompleted);
-      socket.off('forensics:all-completed', handleAllCompleted);
-      socket.off('forensics:time-expired', handleTimeExpired);
+      socket.off('forensics:game-state', handleGameState);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted);
       socket.off('arena:ended', handleArenaEnded);
-      
-      if (gameTimerIntervalRef.current) {
-        clearInterval(gameTimerIntervalRef.current);
-      }
-      if (gracePeriodIntervalRef.current) {
-        clearInterval(gracePeriodIntervalRef.current);
-      }
+      socket.off('arena:redirect-to-results', handleRedirectToResults);
     };
-  }, [socket, currentQuestionIndex, questions.length, arena._id]);
+  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults]);
 
-  const handleSubmitAnswer = (e: React.FormEvent) => {
+  const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!userAnswer.trim() || isSubmitting || allCompleted) return;
-    
-    const currentQuestion = questions[currentQuestionIndex];
-    if (!currentQuestion) return;
+    if (!userAnswer.trim() || isSubmitting || !currentQuestion) return;
 
     setIsSubmitting(true);
-    setFeedback(null);
-
-    console.log('📤 [ForensicsRush] Submitting answer:', {
+    
+    socket.emit('forensics:submit-answer', {
+      arenaId: arena._id,
       questionId: currentQuestion.id,
-      answer: userAnswer
+      answer: userAnswer.trim()
     });
+  };
 
-    socket.emit('forensics:submit', {
-      questionId: currentQuestion.id,
-      answer: userAnswer
-    });
+  const getFileIcon = (type: string) => {
+    switch(type) {
+      case 'log': return '📋';
+      case 'pcap': return '📡';
+      case 'image': return '🖼️';
+      case 'disk': return '💾';
+      case 'memory': return '🧠';
+      case 'network': return '🌐';
+      default: return '📄';
+    }
   };
 
   const getAnsweredQuestion = (questionId: string): AnsweredQuestion | undefined => {
     return answeredQuestions.find(q => q.questionId === questionId);
   };
 
-  const getFileIcon = (type: string): string => {
-    const icons: { [key: string]: string } = {
-      log: '📄',
-      pcap: '📡',
-      image: '🖼️',
-      memory: '💾',
-      registry: '🗂️',
-      text: '📝',
-      binary: '⚙️',
-      database: '🗄️'
-    };
-    return icons[type] || '📄';
-  };
+  const currentQuestion = questions[currentQuestionIndex];
+  const previousAnswer = currentQuestion ? getAnsweredQuestion(currentQuestion.id) : undefined;
+  const isAnswered = previousAnswer?.correct || false;
+  const relatedEvidenceFiles = currentQuestion 
+    ? evidenceFiles.filter(f => currentQuestion.relatedFiles?.includes(f.id))
+    : [];
 
-  // username 가져오기
-  const getCurrentUsername = () => {
-    const participant = participants.find(p => {
-      const userId = typeof p.user === 'object' ? p.user._id : p.user;
-      return String(userId) === String(currentUserId);
-    });
-    
-    if (participant && typeof participant.user === 'object') {
-      return participant.user.username;
-    }
-    return 'INVESTIGATOR';
-  };
-
-  // 🎯 시간 포맷 함수
-  const formatTime = (seconds: number): string => {
+  const formatTime = (seconds: number | null): string => {
+    if (seconds === null) return '--:--';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const isAnswered = currentQuestion ? getAnsweredQuestion(currentQuestion.id)?.correct : false;
-  const previousAnswer = currentQuestion ? getAnsweredQuestion(currentQuestion.id) : undefined;
-  const relatedEvidenceFiles = currentQuestion
-    ? evidenceFiles.filter(file => currentQuestion.relatedFiles?.includes(file.id))
-    : [];
-
   if (isLoading) {
     return (
-      <div className="forensics-rush terminal-theme loading">
-        <div className="terminal-window">
-          <div className="terminal-header">
-            <div className="terminal-title">FORENSICS RUSH - LOADING</div>
-          </div>
-          <div className="terminal-body">
-            <div className="loading-content">
-              <div className="loading-text">
-                $ ./initialize_forensics_suite.sh<span className="blink">_</span>
-              </div>
-              <div className="loading-detail">
-                • Mounting evidence files...
-              </div>
-              <div className="loading-detail">
-                • Initializing forensics tools...
-              </div>
-              <div className="loading-detail">
-                • Loading case scenario...
-              </div>
-            </div>
-          </div>
+      <div className="forensics-rush-container loading">
+        <div className="loading-content">
+          <div className="loading-spinner"></div>
+          <h3>Preparing Forensics Investigation...</h3>
+          <p>Loading case files and evidence...</p>
         </div>
       </div>
     );
@@ -582,15 +489,96 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
   if (!scenario) {
     return (
-      <div className="forensics-rush terminal-theme error">
-        <div className="terminal-window">
+      <div className="forensics-rush-container error">
+        <div className="error-content">
+          <h3>⚠️ Investigation Not Found</h3>
+          <p>Unable to load forensics scenario. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ 모든 문제 완료 시 ASCII 아트 화면
+  if (allCompleted && questionsCorrect === totalQuestions && totalQuestions > 0) {
+    return (
+      <div className="forensics-rush-container completion">
+        <div className="terminal-window completion-terminal">
           <div className="terminal-header">
-            <div className="terminal-title">ERROR</div>
+            <div className="terminal-title">INVESTIGATION COMPLETE</div>
           </div>
           <div className="terminal-body">
-            <div className="error-message">
-              ERROR: Failed to load scenario data<br />
-              Please refresh the page or contact support
+            <div className="ascii-art">
+{`
+ ███████╗ ██████╗ ██████╗ ███████╗███╗   ██╗███████╗██╗ ██████╗███████╗
+ ██╔════╝██╔═══██╗██╔══██╗██╔════╝████╗  ██║██╔════╝██║██╔════╝██╔════╝
+ █████╗  ██║   ██║██████╔╝█████╗  ██╔██╗ ██║███████╗██║██║     ███████╗
+ ██╔══╝  ██║   ██║██╔══██╗██╔══╝  ██║╚██╗██║╚════██║██║██║     ╚════██║
+ ██║     ╚██████╔╝██║  ██║███████╗██║ ╚████║███████║██║╚██████╗███████║
+ ╚═╝      ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝ ╚═════╝╚══════╝
+`}
+            </div>
+            
+            <div className="completion-messages">
+              <div className="message-line">
+                <span className="prompt">$</span> echo "CASE STATUS: SOLVED"
+              </div>
+              <div className="output-line success">
+                CASE STATUS: SOLVED ✓
+              </div>
+              
+              <div className="message-line">
+                <span className="prompt">$</span> cat investigation_summary.txt
+              </div>
+              <div className="output-block">
+                <div className="summary-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+                <div className="summary-line">  INVESTIGATION SUMMARY</div>
+                <div className="summary-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+                <div className="summary-line"></div>
+                <div className="summary-line">  Case: {scenario.title}</div>
+                <div className="summary-line">  Incident Type: {scenario.incidentType}</div>
+                <div className="summary-line">  Date: {scenario.date}</div>
+                <div className="summary-line"></div>
+                <div className="summary-line">  Questions Solved: {questionsCorrect}/{totalQuestions}</div>
+                <div className="summary-line">  Total Score: {score} points</div>
+                <div className="summary-line">  Total Attempts: {answeredQuestions.reduce((sum, q) => sum + q.attempts, 0)}</div>
+                <div className="summary-line"></div>
+                <div className="summary-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+              </div>
+
+              <div className="message-line">
+                <span className="prompt">$</span> forensics --analyze-performance
+              </div>
+              <div className="output-block">
+                {answeredQuestions.filter(q => q.correct).map((q, index) => {
+                  const question = questions.find(qu => qu.id === q.questionId);
+                  return (
+                    <div key={q.questionId} className="performance-line">
+                      {index + 1}. {question?.question.substring(0, 50)}... 
+                      <span className={q.attempts === 1 ? 'perfect' : 'good'}>
+                        {q.attempts === 1 ? ' ⭐ FIRST TRY' : ` ✓ ${q.attempts} attempts`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {gracePeriodRemaining !== null && firstWinner && (
+                <>
+                  <div className="message-line">
+                    <span className="prompt">$</span> status --grace-period
+                  </div>
+                  <div className="output-line warning">
+                    {firstWinner === currentUserId 
+                      ? "🏆 YOU FINISHED FIRST! Waiting for others to complete..."
+                      : `⏰ Grace period active: ${gracePeriodRemaining}s remaining`
+                    }
+                  </div>
+                </>
+              )}
+
+              <div className="message-line">
+                <span className="prompt">$</span> <span className="cursor">▋</span>
+              </div>
             </div>
           </div>
         </div>
@@ -599,99 +587,72 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   }
 
   return (
-    <div className="forensics-rush terminal-theme">
-      {/* 터미널 헤더 */}
-      <div className="terminal-header">
-        <div className="terminal-title-bar">
-          <div>
-            <span className="terminal-icon">🔒</span>
-            <span className="terminal-title">FORENSICS INVESTIGATION TERMINAL</span>
-          </div>
-          <div className="terminal-controls">
-            <div className="control minimize">_</div>
-            <div className="control maximize">□</div>
-            <div className="control close">×</div>
+    <div className="forensics-rush-container">
+      {/* 헤더 */}
+      <div className="forensics-header">
+        <div className="header-left">
+          <h1 className="case-title">🔍 {scenario.title}</h1>
+          <div className="case-meta">
+            <span className="incident-type">{scenario.incidentType}</span>
+            <span className="case-date">{scenario.date}</span>
           </div>
         </div>
-        <div className="system-info-bar">
-          <div className="info-item">
-            USER: <span className="highlight">{getCurrentUsername()}</span>
+        
+        <div className="header-right">
+          <div className="stat-card">
+            <div className="stat-label">Score</div>
+            <div className="stat-value">{score}</div>
           </div>
-          <div className="info-item">
-            STATUS: <span className="status-active">ACTIVE</span>
+          
+          <div className="stat-card">
+            <div className="stat-label">Solved</div>
+            <div className="stat-value">{questionsCorrect}/{totalQuestions}</div>
           </div>
-          <div className="info-item">
-            SCORE: <span className="highlight">{score}</span>
-          </div>
-          <div className="info-item">
-            PROGRESS: <span className="highlight">{questionsCorrect}/{totalQuestions}</span>
-          </div>
-          {/* 🎯 게임 타이머 */}
-          {gameTimeRemaining !== null && (
-            <div className="info-item">
-              TIME: <span className={`highlight ${gameTimeRemaining < 60 ? 'warning' : ''}`}>
-                {formatTime(gameTimeRemaining)}
-              </span>
+
+          {/* ✅ 유예 시간만 표시 (ForensicsRush는 시간 제한 없음) */}
+          {gracePeriodRemaining !== null && (
+            <div className="stat-card grace-card">
+              <div className="stat-label">Grace Period</div>
+              <div className="stat-value warning">{gracePeriodRemaining}s</div>
+            </div>
+          )}
+          
+          {allCompleted && (
+            <div className="completion-badge">
+              ✅ Complete!
             </div>
           )}
         </div>
       </div>
 
-      {/* 시나리오 배너 */}
-      <div className="scenario-banner">
-        <div className="banner-left">
-          <div className="incident-badge">{scenario.incidentType}</div>
-          <div className="scenario-info">
-            <h2 className="scenario-title">{scenario.title}</h2>
-            <p className="scenario-date">{scenario.date}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 🎯 유예시간 배너 */}
-      {gracePeriodRemaining !== null && gracePeriodRemaining > 0 && firstWinner && (
+      {/* ✅ 유예 시간 알림 배너 */}
+      {gracePeriodRemaining !== null && firstWinner && (
         <div className="grace-period-banner">
           <div className="banner-content">
-            <span className="banner-icon">🏆</span>
+            <span className="banner-icon">⏰</span>
             <span className="banner-text">
-              {firstWinner} completed first!
-            </span>
-            <span className="banner-timer">
-              Grace period: <strong>{formatTime(gracePeriodRemaining)}</strong>
+              {firstWinner === currentUserId 
+                ? "You finished first! Others have grace period to complete." 
+                : `Grace period active - ${gracePeriodRemaining}s remaining to complete all questions!`}
             </span>
           </div>
         </div>
       )}
 
-      {allCompleted ? (
-        <div className="completion-screen">
-          <div className="terminal-window">
-            <div className="terminal-header">
-              <div className="terminal-title">INVESTIGATION COMPLETE</div>
-            </div>
-            <div className="terminal-body">
-              <div className="success-message">
-                $ ./generate_final_report.sh<br />
-                <br />
-                ========================================<br />
-                INVESTIGATION STATUS: COMPLETE<br />
-                ========================================<br />
-                <br />
-                Final Score: {score} points<br />
-                Questions Solved: {questionsCorrect}/{totalQuestions}<br />
-                <br />
-                Excellent work, investigator!<br />
-                All evidence has been analyzed successfully.<br />
-                <br />
-                Waiting for other participants...<br />
-                The arena will end when all complete or time expires.
-              </div>
-            </div>
-          </div>
+      {/* 시나리오 설명 */}
+      <div className="scenario-brief">
+        <div className="brief-header">
+          <span className="brief-icon">📋</span>
+          <span className="brief-title">CASE BRIEF</span>
         </div>
-      ) : (
-        <div className="forensics-main-grid">
-          {/* 증거 파일 터미널 */}
+        <p className="brief-description">{scenario.description}</p>
+        <p className="brief-context">{scenario.context}</p>
+      </div>
+
+      {/* 메인 영역 */}
+      {questions.length > 0 && (
+        <div className={`forensics-workspace ${evidenceClosed ? 'evidence-closed' : ''}`}>
+          {/* Evidence 터미널 */}
           <div className={`evidence-terminal terminal-window ${evidenceClosed ? 'closed' : ''}`}>
             <div className="terminal-header">
               <div className="terminal-title">EVIDENCE FILES</div>
@@ -818,7 +779,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                             placeholder="Type your answer..."
                             value={userAnswer}
                             onChange={(e) => setUserAnswer(e.target.value)}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || allCompleted}
                             autoFocus
                           />
                         </div>
@@ -827,15 +788,16 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           <button
                             type="submit"
                             className="terminal-button submit"
-                            disabled={!userAnswer.trim() || isSubmitting}
+                            disabled={!userAnswer.trim() || isSubmitting || allCompleted}
                           >
-                            {isSubmitting ? '[ANALYZING...]' : '[SUBMIT]'}
+                            {isSubmitting ? '[ANALYZING...]' : allCompleted ? '[COMPLETE]' : '[SUBMIT]'}
                           </button>
                           
                           <button
                             type="button"
                             className="terminal-button hint"
                             onClick={() => setShowHints(!showHints)}
+                            disabled={allCompleted}
                           >
                             {showHints ? '[HIDE HINTS]' : '[SHOW HINTS]'}
                           </button>
@@ -891,6 +853,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           setShowHints(false);
                         }}
                         title={q.question}
+                        disabled={allCompleted}
                       >
                         {isCompleted ? '✓' : index + 1}
                       </button>

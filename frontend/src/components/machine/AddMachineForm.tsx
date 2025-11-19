@@ -26,17 +26,21 @@ interface MachineFormData {
 }
 
 interface ValidationErrors {
-    [key: string]: string;
+  [key: string]: string;
 }
 
 const AddMachineForm: React.FC = () => {
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const authUserContext = useContext(AuthUserContext);
+
   if (!authUserContext) {
     throw new Error('AddMachineForm must be used within an AuthUserProvider');
   }
-  const { currentUser } = authUserContext;
-  const availableSkills = ['Web', 'Network', 'Crypto', 'Reversing', 'Pwn', 'Forensics', 'Cloud', 'AI'];
+
+  const availableSkills = [
+    'Web', 'Network', 'Crypto', 'Reversing',
+    'Pwn', 'Forensics', 'Cloud', 'AI'
+  ];
 
   const [formData, setFormData] = useState<MachineFormData>({
     name: '',
@@ -56,71 +60,60 @@ const AddMachineForm: React.FC = () => {
       technicalComplexity: 3
     }
   });
+
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const [registerComplete, setRegisterComplete] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const navigate = useNavigate();
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: name === 'exp' ? Number(value) : value,
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'exp' ? Number(value) : value
     }));
   };
 
   const handleHintChange = (index: number, value: string) => {
-    const newHints = [...formData.hints];
-    newHints[index] = value;
-    setFormData((prevData) => ({
-      ...prevData,
-      hints: newHints,
-    }));
+    const updated = [...formData.hints];
+    updated[index] = value;
+    setFormData(prev => ({ ...prev, hints: updated }));
   };
 
   const handleHintCostChange = (index: number, value: number) => {
-    const newHintCosts = [...formData.hintCosts];
-    newHintCosts[index] = value;
-    setFormData((prevData) => ({
-      ...prevData,
-      hintCosts: newHintCosts,
-    }));
+    const updated = [...formData.hintCosts];
+    updated[index] = value;
+    setFormData(prev => ({ ...prev, hintCosts: updated }));
   };
 
   const addHint = () => {
-    setFormData((prevData) => ({
-      ...prevData,
-      hints: [...prevData.hints, ''],
-      hintCosts: [...prevData.hintCosts, 1],
+    setFormData(prev => ({
+      ...prev,
+      hints: [...prev.hints, ''],
+      hintCosts: [...prev.hintCosts, 1]
     }));
   };
 
   const removeHint = (index: number) => {
     const newHints = [...formData.hints];
-    const newHintCosts = [...formData.hintCosts];
+    const newCosts = [...formData.hintCosts];
     newHints.splice(index, 1);
-    newHintCosts.splice(index, 1);
-    setFormData((prevData) => ({
-      ...prevData,
-      hints: newHints,
-      hintCosts: newHintCosts,
-    }));
+    newCosts.splice(index, 1);
+    setFormData(prev => ({ ...prev, hints: newHints, hintCosts: newCosts }));
   };
 
   const handleSkillToggle = (skill: string) => {
-    setFormData((prevData) => {
-      const skills = prevData.creatorSurvey.requiredSkills;
-      const newSkills = skills.includes(skill)
-        ? skills.filter(s => s !== skill)
-        : [...skills, skill];
-      
+    setFormData(prev => {
+      const skills = prev.creatorSurvey.requiredSkills;
       return {
-        ...prevData,
+        ...prev,
         creatorSurvey: {
-          ...prevData.creatorSurvey,
-          requiredSkills: newSkills
+          ...prev.creatorSurvey,
+          requiredSkills: skills.includes(skill)
+            ? skills.filter(s => s !== skill)
+            : [...skills, skill]
         }
       };
     });
@@ -128,163 +121,229 @@ const AddMachineForm: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
-    
-    if (!formData.name || formData.name.length < 3) {
-        errors.name = 'Name must be at least 3 characters long';
-    }
-    
-    if (!formData.category) {
-        errors.category = 'Category is required';
-    }
-    
-    if (!formData.amiId || !/^ami-[0-9a-fA-F]{8,17}$/.test(formData.amiId)) {
-        errors.amiId = 'Invalid AMI ID format';
-    }
-    
-    if (!formData.flag || formData.flag.length < 5) {
-        errors.flag = 'Flag must be at least 5 characters long';
-    }
-    
-    if (!formData.description || formData.description.length < 4) {
-        errors.description = 'Description must be at least 4 characters long';
-    }
-    
-    if (!formData.exp || formData.exp < 50) {
-        errors.exp = 'Experience points must be at least 50';
-    }
-    
-    if (!formData.hints.length || formData.hints.some(hint => !hint.trim())) {
-        errors.hints = 'At least one valid hint is required';
-    }
 
-    if (!formData.difficulty.creatorLevel) {
-        errors.difficulty = 'Please select difficulty level';
-    }
+    if (!formData.name || formData.name.length < 3)
+      errors.name = 'Name must be at least 3 characters long';
 
-    if (!formData.creatorSurvey.estimatedTime || formData.creatorSurvey.estimatedTime < 1) {
-        errors.estimatedTime = 'Please enter estimated time';
-    }
+    if (!formData.category)
+      errors.category = 'Category is required';
 
-    if (!formData.creatorSurvey.technicalComplexity) {
-        errors.technicalComplexity = 'Please select technical complexity';
-    }
+    if (!formData.amiId || !/^ami-[0-9a-fA-F]{8,17}$/.test(formData.amiId))
+      errors.amiId = 'Invalid AMI ID format';
+
+    if (!formData.flag || formData.flag.length < 5)
+      errors.flag = 'Flag must be at least 5 characters long';
+
+    if (!formData.description || formData.description.length < 4)
+      errors.description = 'Description must be at least 4 characters long';
+
+    if (!formData.exp || formData.exp < 50)
+      errors.exp = 'EXP must be at least 50';
+
+    if (!formData.hints.length || formData.hints.some(h => !h.trim()))
+      errors.hints = 'At least one hint is required';
+
+    if (!formData.difficulty.creatorLevel)
+      errors.difficulty = 'Please select difficulty level';
+
+    if (!formData.creatorSurvey.estimatedTime)
+      errors.estimatedTime = 'Estimated time required';
+
+    if (!formData.creatorSurvey.technicalComplexity)
+      errors.technicalComplexity = 'Select complexity';
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setValidationErrors({});
-
-    if (!validateForm()) {
-        setError('Please fix the validation errors below.');
-        return;
-    }
+    if (!validateForm()) return;
 
     try {
       await createMachine(formData);
       setRegisterComplete(true);
     } catch (err: any) {
       setError(err.message);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const adjustTextareaHeight = () => {
-    if (descriptionRef.current) {
-      descriptionRef.current.style.height = 'auto';
-      descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
     }
   };
 
   useEffect(() => {
-    adjustTextareaHeight();
+    if (descriptionRef.current) {
+      descriptionRef.current.style.height = "auto";
+      descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
+    }
   }, [formData.description]);
 
   return (
-    <form onSubmit={handleSubmit} className='add-machine-form'>
-      <div className='back-button'>
+    <form onSubmit={handleSubmit} className="add-machine-form">
+
+      {/* 상단 헤더 */}
+      <div className="back-button">
         <h2>Add New Machine</h2>
-        <button className="IconButton" type='button' onClick={() => navigate(-1)}>
+        <button
+          className="IconButton"
+          type="button"
+          onClick={() => navigate(-1)}
+        >
           <IoMdArrowRoundBack style={{ color: 'white', fontSize: "34px" }} />
         </button>
       </div>
 
       {error && (
-        <div className='error-message' style={{ 
-          color: 'red',
-          padding: '10px',
-          marginBottom: '20px',
-          backgroundColor: 'rgba(255, 0, 0, 0.1)',
-          borderRadius: '4px'
-        }}>
-          {error}
-        </div>
+        <div className="error-message">{error}</div>
       )}
 
-      <div className='create-container'>
+      {/* === 전체 컨테이너 === */}
+      <div className="create-container">
 
-        {/* 난이도 설문 섹션 - 오른쪽에 고정 */}
-        <div className='difficulty-survey-section'>
+        {/* 🔵 왼쪽 입력 필드 전체 묶음 */}
+        <div className="left-fields">
+
+          <div className="name-container">
+            <label htmlFor="name">Machine Name *</label>
+            <input type="text" id="name" name="name" value={formData.name}
+              onChange={handleChange} className={validationErrors.name ? 'error-input' : ''} />
+            {validationErrors.name && <span className="field-error">{validationErrors.name}</span>}
+          </div>
+
+          <div className="category-container">
+            <label htmlFor="category">Category *</label>
+            <select id="category" name="category" value={formData.category}
+              onChange={handleChange} className={validationErrors.category ? 'error-input' : ''}>
+              <option value="">--Select--</option>
+              <option value="Web">Web</option>
+              <option value="Network">Network</option>
+              <option value="Database">Database</option>
+              <option value="Crypto">Crypto</option>
+              <option value="Cloud">Cloud</option>
+              <option value="AI">AI</option>
+              <option value="OS">OS</option>
+              <option value="Other">Other</option>
+            </select>
+            {validationErrors.category && <span className="field-error">{validationErrors.category}</span>}
+          </div>
+
+          <div className="amiId-container">
+            <label htmlFor="amiId">AMI ID *</label>
+            <input type="text" id="amiId" name="amiId" value={formData.amiId}
+              onChange={handleChange} className={validationErrors.amiId ? 'error-input' : ''} />
+            {validationErrors.amiId && <span className="field-error">{validationErrors.amiId}</span>}
+          </div>
+
+          <div className="flag-container">
+            <label htmlFor="flag">Flag *</label>
+            <input type="text" id="flag" name="flag" value={formData.flag}
+              onChange={handleChange} className={validationErrors.flag ? 'error-input' : ''} />
+            {validationErrors.flag && <span className="field-error">{validationErrors.flag}</span>}
+          </div>
+
+          <div className="Description-container">
+            <label htmlFor="description">Description *</label>
+            <textarea
+              ref={descriptionRef}
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className={validationErrors.description ? 'error-input' : ''}
+            />
+            {validationErrors.description && <span className="field-error">{validationErrors.description}</span>}
+          </div>
+
+          <div className="exp-container">
+            <label htmlFor="exp">Reward (EXP) *</label>
+            <input type="number" id="exp" name="exp" min={50}
+              value={formData.exp} onChange={handleChange}
+              className={validationErrors.exp ? 'error-input' : ''} />
+            {validationErrors.exp && <span className="field-error">{validationErrors.exp}</span>}
+          </div>
+
+          <div className="hint-container">
+            <label>Hints *</label>
+
+            {formData.hints.map((hint, i) => (
+              <div className="key-container" key={i}>
+                <input
+                  type="text"
+                  value={hint}
+                  onChange={e => handleHintChange(i, e.target.value)}
+                  placeholder="Hint"
+                />
+                <input
+                  type="number"
+                  value={formData.hintCosts[i]}
+                  min={1}
+                  onChange={e => handleHintCostChange(i, Number(e.target.value))}
+                />
+                {formData.hints.length > 1 && (
+                  <button type="button" className="remove-hint" onClick={() => removeHint(i)}>
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <button type="button" className="add-hint" onClick={addHint}>
+              Add Hint
+            </button>
+
+            {validationErrors.hints && <span className="field-error">{validationErrors.hints}</span>}
+          </div>
+
+        </div>
+
+        {/* 🔴 오른쪽 난이도 섹션 */}
+        <div className="difficulty-survey-section">
           <h3>Difficulty Survey</h3>
-          
-          {/* 난이도 선택 */}
-          <div className='difficulty-container'>
-            <label htmlFor='difficulty'>Expected Difficulty Level <span style={{ color: 'red' }}>*</span></label>
+
+          <div className="difficulty-container">
+            <label htmlFor="difficulty">Difficulty *</label>
             <select
-              id='difficulty'
+              id="difficulty"
               value={formData.difficulty.creatorLevel}
-              onChange={(e) => setFormData(prev => ({
+              onChange={e => setFormData(prev => ({
                 ...prev,
                 difficulty: { creatorLevel: e.target.value }
               }))}
               className={validationErrors.difficulty ? 'error-input' : ''}
             >
-              <option value="">--Select Difficulty--</option>
-              <option value="very_easy">⭐ Very Easy</option>
-              <option value="easy">⭐⭐ Easy</option>
-              <option value="medium">⭐⭐⭐ Medium</option>
-              <option value="hard">⭐⭐⭐⭐ Hard</option>
-              <option value="very_hard">⭐⭐⭐⭐⭐ Very Hard</option>
+              <option value="">--Select--</option>
+              <option value="very_easy">Very Easy</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+              <option value="very_hard">Very Hard</option>
             </select>
-            {validationErrors.difficulty && (
-              <span className='field-error'>{validationErrors.difficulty}</span>
-            )}
+            {validationErrors.difficulty && <span className="field-error">{validationErrors.difficulty}</span>}
           </div>
 
-          {/* 예상 소요 시간 */}
-          <div className='estimated-time-container'>
-            <label htmlFor='estimatedTime'>Estimated Time to Solve (minutes) <span style={{ color: 'red' }}>*</span></label>
+          <div className="estimated-time-container">
+            <label htmlFor="estimatedTime">Estimated Time *</label>
             <input
-              type='number'
-              id='estimatedTime'
+              type="number"
+              id="estimatedTime"
+              min={1}
               value={formData.creatorSurvey.estimatedTime}
-              onChange={(e) => setFormData(prev => ({
+              onChange={e => setFormData(prev => ({
                 ...prev,
                 creatorSurvey: {
                   ...prev.creatorSurvey,
                   estimatedTime: Number(e.target.value)
                 }
               }))}
-              min={1}
-              placeholder='30'
               className={validationErrors.estimatedTime ? 'error-input' : ''}
             />
-            {validationErrors.estimatedTime && (
-              <span className='field-error'>{validationErrors.estimatedTime}</span>
-            )}
+            {validationErrors.estimatedTime && <span className="field-error">{validationErrors.estimatedTime}</span>}
           </div>
 
-          {/* 필요한 스킬 */}
-          <div className='required-skills-container'>
-            <label>Required Skills (optional)</label>
-            <div className='skills-checkbox-group'>
+          <div className="required-skills-container">
+            <label>Required Skills</label>
+            <div className="skills-checkbox-group">
               {availableSkills.map(skill => (
-                <label key={skill} className={formData.creatorSurvey.requiredSkills.includes(skill) ? 'skill-selected' : ''}>
+                <label key={skill}>
                   <input
-                    type='checkbox'
+                    type="checkbox"
                     checked={formData.creatorSurvey.requiredSkills.includes(skill)}
                     onChange={() => handleSkillToggle(skill)}
                   />
@@ -294,13 +353,12 @@ const AddMachineForm: React.FC = () => {
             </div>
           </div>
 
-          {/* 기술적 복잡도 */}
-          <div className='technical-complexity-container'>
-            <label htmlFor='technicalComplexity'>Technical Complexity <span style={{ color: 'red' }}>*</span></label>
+          <div className="technical-complexity-container">
+            <label htmlFor="technicalComplexity">Complexity *</label>
             <select
-              id='technicalComplexity'
+              id="technicalComplexity"
               value={formData.creatorSurvey.technicalComplexity}
-              onChange={(e) => setFormData(prev => ({
+              onChange={e => setFormData(prev => ({
                 ...prev,
                 creatorSurvey: {
                   ...prev.creatorSurvey,
@@ -309,161 +367,31 @@ const AddMachineForm: React.FC = () => {
               }))}
               className={validationErrors.technicalComplexity ? 'error-input' : ''}
             >
-              <option value={1}>1 - Very Simple</option>
-              <option value={2}>2 - Simple</option>
-              <option value={3}>3 - Moderate</option>
-              <option value={4}>4 - Complex</option>
+              <option value={1}>1 - Simple</option>
+              <option value={2}>2</option>
+              <option value={3}>3 - Medium</option>
+              <option value={4}>4</option>
               <option value={5}>5 - Very Complex</option>
             </select>
             {validationErrors.technicalComplexity && (
-              <span className='field-error'>{validationErrors.technicalComplexity}</span>
+              <span className="field-error">{validationErrors.technicalComplexity}</span>
             )}
           </div>
-        </div>
 
-        <div className='name-container'>
-          <label htmlFor='name'>Machine Name <span style={{ color: 'red' }}>*</span></label>
-          <input
-            type='text'
-            id='name'
-            name='name'
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Enter the machine name"
-            className={validationErrors.name ? 'error-input' : ''}
-          />
-          {validationErrors.name && (
-            <span className='field-error'>{validationErrors.name}</span>
-          )}
-        </div>
-
-        <div className='category-container'>
-          <label htmlFor='category'>Category <span style={{ color: 'red' }}>*</span></label>
-          <select
-            id="category"
-            name="category"
-            value={formData.category}
-            onChange={(e) => handleChange(e as any)}
-            className={validationErrors.category ? 'error-input' : ''}
-          >
-            <option value="">--Select Category--</option>
-            <option value="Web">Web</option>
-            <option value="Network">Network</option>
-            <option value="Database">Database</option>
-            <option value="Crypto">Crypto</option>
-            <option value="Cloud">Cloud</option>
-            <option value="AI">AI</option>
-            <option value="OS">OS</option>
-            <option value="Other">Other</option>
-          </select>
-          {validationErrors.category && (
-            <span className='field-error'>{validationErrors.category}</span>
-          )}
-        </div>
-
-        <div className='amiId-container'>
-          <label htmlFor='amiId'>AMI ID <span style={{ color: 'red' }}>*</span></label>
-          <input
-            type='text'
-            id='amiId'
-            name='amiId'
-            value={formData.amiId}
-            onChange={handleChange}
-            placeholder='AMI-XXXXXX'
-            className={validationErrors.amiId ? 'error-input' : ''}
-          />
-          {validationErrors.amiId && (
-            <span className='field-error'>{validationErrors.amiId}</span>
-          )}
-        </div>
-
-        <div className='flag-container'>
-          <label htmlFor='flag'>Flag <span style={{ color: 'red' }}>*</span></label>
-          <input
-            type='text'
-            id='flag'
-            name='flag'
-            value={formData.flag}
-            onChange={handleChange}
-            placeholder='Flag of the machine here'
-            className={validationErrors.flag ? 'error-input' : ''}
-          />
-          {validationErrors.flag && (
-            <span className='field-error'>{validationErrors.flag}</span>
-          )}
-        </div>
-
-        <div className='Description-container'>
-          <label htmlFor='description'>Description <span style={{ color: 'red' }}>*</span></label>
-          <textarea
-            ref={descriptionRef}
-            id='description'
-            name='description'
-            value={formData.description}
-            placeholder='Description of the machine here'
-            onChange={handleChange}
-            className={validationErrors.description ? 'error-input' : ''}
-          />
-          {validationErrors.description && (
-            <span className='field-error'>{validationErrors.description}</span>
-          )}
-        </div>
-
-        <div className='exp-container'>
-          <label htmlFor='exp'>Reward (EXP) <span style={{ color: 'red' }}>*</span></label>
-          <input
-            type='number'
-            id='exp'
-            name='exp'
-            value={formData.exp}
-            onChange={handleChange}
-            min={50}
-            className={validationErrors.exp ? 'error-input' : ''}
-          />
-          {validationErrors.exp && (
-            <span className='field-error'>{validationErrors.exp}</span>
-          )}
-        </div>
-
-        <div className='hint-container'>
-          <label>Hints <span style={{ color: 'red' }}>*</span></label>
-          {formData.hints.map((hint, index) => (
-            <div className='key-container' key={index}>
-              <input
-                type='text'
-                value={hint}
-                onChange={(e) => handleHintChange(index, e.target.value)}
-                placeholder='Hint'
-              />
-              <input
-                type='number'
-                value={formData.hintCosts[index]}
-                onChange={(e) => handleHintCostChange(index, Number(e.target.value))}
-                placeholder='Cost'
-                min={1}
-                max={100}
-              />
-              {formData.hints.length > 1 && (
-                <button className='remove-hint' type='button' onClick={() => removeHint(index)}>
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          {validationErrors.hints && (
-            <span className='field-error'>{validationErrors.hints}</span>
-          )}
-          <button className='add-hint' type='button' onClick={addHint}>
-            Add Hint
-          </button>
-        </div>
-
-        <div className='add-machine-form-button'>
-          <button type='submit'>Add Machine</button>
         </div>
       </div>
-      
-      {registerComplete && <RegisterCompleteMD onClose={() => {setRegisterComplete(false); navigate('/machine');}} mode='machine' />}
+
+      {/* 등록 완료 모달 */}
+      {registerComplete && (
+        <RegisterCompleteMD
+          onClose={() => {
+            setRegisterComplete(false);
+            navigate('/machine');
+          }}
+          mode="machine"
+        />
+      )}
+
     </form>
   );
 };

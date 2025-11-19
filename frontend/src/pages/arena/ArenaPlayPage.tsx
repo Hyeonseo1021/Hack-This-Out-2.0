@@ -53,7 +53,7 @@ const ArenaPlayPage: React.FC = () => {
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
       'TERMINAL_HACKING_RACE': 'Terminal Race',
-      'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',  // ✅ 추가
+      'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',
       'KING_OF_THE_HILL': 'King of the Hill',             
       'FORENSICS_RUSH': 'Forensics Rush',                   
       'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'  
@@ -150,6 +150,7 @@ const ArenaPlayPage: React.FC = () => {
   // 소켓 이벤트
   useEffect(() => {
     const handleUpdate = (payload: ArenaUpdatePayload) => {
+      console.log('📡 [ArenaPlayPage] arena:update received:', payload);
       setStatus(payload.status);
       setHostId(payload.host);
       setParticipants(payload.participants || []);
@@ -164,11 +165,11 @@ const ArenaPlayPage: React.FC = () => {
     };
 
     const handleStart = (data: { arenaId: string; startTime: string; endTime: string; }) => {
-      console.log('🎬 Arena started!', data);
+      console.log('🎬 [ArenaPlayPage] arena:start received:', data);
     };
 
     const handleDeleted = ({ arenaId: deleted }: { arenaId: string }) => {
-      console.log('🗑️ Arena deleted:', deleted);
+      console.log('🗑️ [ArenaPlayPage] arena:deleted received:', deleted);
       if (deleted === arenaId && !navigatedRef.current) {
         navigatedRef.current = true;
         navigate('/arena', { replace: true });
@@ -176,7 +177,7 @@ const ArenaPlayPage: React.FC = () => {
     };
 
     const handleJoinFailed = ({ reason }: { reason: string }) => {
-      console.error('❌ Join failed:', reason);
+      console.error('❌ [ArenaPlayPage] arena:join-failed received:', reason);
       if (!navigatedRef.current) {
         navigatedRef.current = true;
         alert(reason);
@@ -184,12 +185,23 @@ const ArenaPlayPage: React.FC = () => {
       }
     };
 
-    const handleEnded = (data?: { arenaId?: string }) => {
-      console.log('🏁 Arena ended event received:', data);
+    // ✅ arena:ended 이벤트 핸들러 추가
+    const handleEnded = (data?: { arenaId?: string; message?: string; reason?: string }) => {
+      console.log('🏁 [ArenaPlayPage] arena:ended received:', data);
       if (!navigatedRef.current) {
         navigatedRef.current = true;
-        console.log('🚀 Navigating to result page...');
+        console.log('🚀 [ArenaPlayPage] Navigating to result page...');
         navigate(`/arena/result/${data?.arenaId ?? arenaId}`, { replace: true });
+      }
+    };
+
+    // ✅ arena:redirect-to-results 이벤트 핸들러 추가
+    const handleRedirectToResults = (data: { redirectUrl: string }) => {
+      console.log('🎯 [ArenaPlayPage] arena:redirect-to-results received:', data);
+      if (!navigatedRef.current) {
+        navigatedRef.current = true;
+        console.log('🚀 [ArenaPlayPage] Navigating to:', data.redirectUrl);
+        navigate(data.redirectUrl, { replace: true });
       }
     };
 
@@ -197,18 +209,20 @@ const ArenaPlayPage: React.FC = () => {
     socket.on('arena:start', handleStart);
     socket.on('arena:deleted', handleDeleted);
     socket.on('arena:join-failed', handleJoinFailed);
-    
+    socket.on('arena:ended', handleEnded); // ✅ 추가
+    socket.on('arena:redirect-to-results', handleRedirectToResults); // ✅ 추가
 
     return () => {
       if (currentUserId && arenaId && !navigatedRef.current) {
-        console.log('👋 Emitting arena:leave...');
+        console.log('👋 [ArenaPlayPage] Emitting arena:leave...');
         socket.emit('arena:leave', { arenaId, userId: currentUserId });
       }
       socket.off('arena:update', handleUpdate);
       socket.off('arena:start', handleStart);
       socket.off('arena:deleted', handleDeleted);
       socket.off('arena:join-failed', handleJoinFailed);
-      socket.off('arena:ended', handleEnded);
+      socket.off('arena:ended', handleEnded); // ✅ 추가
+      socket.off('arena:redirect-to-results', handleRedirectToResults); // ✅ 추가
     };
   }, [arenaId, currentUserId, navigate]);
 
@@ -245,7 +259,7 @@ const ArenaPlayPage: React.FC = () => {
         console.log('🎮 Loading Terminal Race component...');
         return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
 
-      case 'VULNERABILITY_SCANNER_RACE':  // ✅ 추가
+      case 'VULNERABILITY_SCANNER_RACE':
         console.log('🔍 Loading Vulnerability Scanner Race component...');
         return <VulnerabilityScannerRace arenaId={arenaId!} userId={currentUserId!} />;
 

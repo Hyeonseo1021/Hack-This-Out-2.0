@@ -7,99 +7,116 @@
     gap: clamp(8px, 1vw, 16px);
     overflow-y: hidden;
     margin: 0 auto;
-
+    font-family: 'Audiowide', 'VT323', monospace;
+    color: #eaffff;
+    background: radial-gradient(circle at 50% 50%, #06121a 0%, #02070d 100%);
+  
     @media (max-width: 768px) {
-        gap: 12px;
-        width: 95%;
-        min-width: unset;
+      gap: 12px;
+      width: 95%;
+      min-width: unset;
     }
-
+  
     .gradient-wrapper {
-        width: 100%;
+      width: 100%;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: clamp(4px, 1vw, 8px);
+  
+      /* 💫 Machine Banner */
+      .machine-banner {
+        width: calc(100% - min(28vh, 300px));
+        height: 100%;
+        border-radius: clamp(16px, 2vw, 24px);
+        background: rgba(8, 20, 28, 0.6);
+        border: 1.5px solid rgba(139, 243, 255, 0.25);
+        box-shadow: 0 0 30px rgba(139, 243, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease-in-out;
+  
+        &:hover {
+          box-shadow: 0 0 40px rgba(139, 243, 255, 0.25);
+          transform: translateY(-1px);
+        }
+  
+        @media (max-width: 1024px) {
+          min-width: 100%;
+          max-width: 100%;
+          height: clamp(250px, 28vh, 400px);
+        }
+      }
+  
+      /* 💠 Register Machine Box */
+      .register-machine {
+        min-width: min(28vh, 300px);
+        max-width: 300px;
+        height: clamp(250px, 28vh, 400px);
+        border-radius: clamp(16px, 2vw, 24px);
+        background: rgba(8, 20, 28, 0.55);
+        border: 1.5px solid rgba(139, 243, 255, 0.3);
         display: flex;
-        align-items: stretch;
-        justify-content: space-between;
-        gap: clamp(4px, 1vw, 8px);
-
-        .machine-banner {
-            width: calc(100% - min(28vh, 300px));
-            height: 100%;
-            border-radius: var(--border-container);
-            background: var(--color-layout);
-            flex-grow: 1;
-
-            @media (max-width: 1024px) {
-                min-width: 100%;
-                max-width: 100%;
-                height: clamp(250px, 28vh, 400px);
-            }
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        cursor: pointer;
+        box-shadow: 0 0 20px rgba(139, 243, 255, 0.1);
+        backdrop-filter: blur(10px);
+        overflow: hidden;
+        transition: all 0.4s ease-in-out;
+  
+        &::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0.03) 0px,
+            rgba(255, 255, 255, 0.015) 1px,
+            transparent 2px
+          );
+          opacity: 0.15;
+          pointer-events: none;
         }
-
-        .register-machine {
-            min-width: min(28vh, 300px);
-            max-width: 300px;
-            height: clamp(250px, 28vh, 400px);
-            border-radius: clamp(16px, 2vw, 24px);
-            border: 1px solid var(--blue-200);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background: var(--color-background-transparent);
-            transition: all 0.3s ease-in-out;
-            cursor: pointer;
-
-
-            @media (max-width: 1024px) {
-                display: none;
-            }
-
-            &:hover {
-                background: var(--blue-400);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-                border: 1px solid transparent;
-
-                .machine,
-                .plus,
-                .register_text {
-                    color: var(--color-white);
-                }
-            }
-
-            .machine {
-                position: relative;
-                left: clamp(8px, 1vw, 16px);
-                color: var(--color-white);
-                font-size: clamp(2rem, 4vw, 3rem);
-                transition: transform 0.3s ease-in-out;
-
-                @media (max-width: 1024px) {
-                    left: 0;
-                    margin-left: -20px;
-                }
-            }
-
-            .plus {
-                position: relative;
-                left: 0px;
-                bottom: clamp(30px, 5vh, 45px);
-                color: var(--color-white);
-                font-size: clamp(1.5rem, 3vw, 2rem);
-                transition: transform 0.3s ease-in-out;
-
-                @media (max-width: 1024px) {
-                    bottom: 0;
-                    margin-left: -20px;
-                }
-            }
-
-            .register_text {
-                font-size: 24px;
-                font-weight: bold;
-                color: var(--color-white);
-            }
+  
+        &:hover {
+          background: rgba(139, 243, 255, 0.08);
+          border-color: var(--mint, #8bf3ff);
+          box-shadow: 0 0 35px rgba(139, 243, 255, 0.35);
+          transform: translateY(-4px);
+          animation: glitchFloat 1.6s infinite ease-in-out;
         }
+  
+        .machine {
+          font-size: clamp(2.5rem, 4vw, 3rem);
+          color: #8bf3ff;
+          text-shadow: 0 0 10px #8bf3ff;
+          margin-bottom: 10px;
+        }
+  
+        .plus {
+          font-size: clamp(1.8rem, 3vw, 2rem);
+          color: #8bf3ff;
+          text-shadow: 0 0 6px #8bf3ff;
+          margin-bottom: 6px;
+        }
+  
+        .register_text {
+          font-size: 1.2rem;
+          font-weight: bold;
+          color: #eaffff;
+          letter-spacing: 1px;
+          text-shadow: 0 0 6px rgba(139, 243, 255, 0.8);
+        }
+      }
+  
+      @keyframes glitchFloat {
+        0%, 100% { transform: translateY(-2px); filter: brightness(1); }
+        45% { transform: translateY(-1px); filter: brightness(1.15); }
+        55% { transform: translateY(-3px); filter: brightness(1.1); }
+      }
     }
-}
+  }
+  
+  
