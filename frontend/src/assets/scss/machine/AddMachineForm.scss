@@ -1,369 +1,285 @@
 @use "../style" as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
 
+:root {
+  --mint: #8BF3FF;
+  --bg-dark: #050912;
+  --white: #EFFFFF;
+}
+
+/* === 전체 폼 === */
 .add-machine-form {
-    @include background_set;
-    position: relative;
-    backdrop-filter: blur(40px);
+  @include background_set;
+  position: relative;
+  backdrop-filter: blur(40px);
+  background: radial-gradient(circle at 50% 50%, rgba(8, 20, 28, 0.85), rgba(2, 10, 20, 0.9));
+  border: 1.5px solid rgba(139, 243, 255, 0.25);
+  box-shadow: 0 0 40px rgba(139, 243, 255, 0.1);
+  font-family: 'VT323', monospace;
+  color: var(--white);
+  overflow: hidden;
+
+  /* CRT Scanline */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 2px
+    );
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  /* === 상단 헤더 === */
+  .back-button {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     display: flex;
-    flex-direction: column;
-    padding: 0 32px 32px 32px;
-    gap: 8px;
-    overflow: scroll;
-    scrollbar-width: none;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 24px;
+    padding: 16px 0;
+    background: rgba(0, 10, 15, 0.85);
+    border-bottom: 1px solid rgba(139, 243, 255, 0.3);
+    backdrop-filter: blur(10px);
 
-    * {
-        &::-webkit-scrollbar {
-            display: none;
-        }
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+    h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--mint);
+      text-shadow: 0 0 12px var(--mint);
+      font-weight: 600;
+      font-size: clamp(1.5rem, 2.5vw, 2rem);
+      letter-spacing: 1px;
     }
 
-    .back-button {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        background-color: var(--color-layout);
-        backdrop-filter: blur(10px);
-        padding: 16px 0px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 24px;
-        flex-direction: row;
-        width: 100%;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    .IconButton {
+      width: 42px;
+      height: 42px;
+      background: transparent;
+      border: 1.5px solid var(--mint);
+      border-radius: 8px;
+      color: var(--mint);
+      transition: all 0.3s ease;
 
-        &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--color-layout);
-            z-index: -1;
-        }
-
-        h2 {
-            margin-bottom: 0;
-            padding-left: 0;
-            color: white;
-            font-weight: bold;
-            font-size: 2rem;
-            order: 2;
-        }
-
-        .IconButton {
-            margin-top: 0;
-            width: 40px;
-            height: 40px;
-            background-color: var(--color-layout);
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            cursor: pointer;
-            order: 1;
-            margin-left: 16px;
-            transition: all 0.3s ease;
-
-            &:hover {
-                background-color: var(--blue-400);
-                transform: translateX(-0.3rem);
-            }
-        }
+      &:hover {
+        background: rgba(139, 243, 255, 0.1);
+        box-shadow: 0 0 15px var(--mint);
+        transform: translateX(-0.3rem);
+      }
     }
+  }
+
+  /* === 입력 필드 구역 === */
+  .create-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 40px;
+    padding: 32px;
+    position: relative;
+    z-index: 1;
 
     label {
-        font-weight: bold;
-        color: rgb(202, 202, 202);
+      color: var(--mint);
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 5px rgba(139, 243, 255, 0.3);
     }
 
     input,
     select,
     textarea {
-        background-color: rgb(58, 58, 58);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(8, 15, 25, 0.8);
+      border: 1.5px solid rgba(139, 243, 255, 0.3);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      color: var(--white);
+      font-family: 'VT323', monospace;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 0 6px rgba(139, 243, 255, 0.05);
 
-        &:focus {
-            border-color: #5b9bd5;
-            box-shadow: 0 0 5px rgba(91, 155, 213, 0.5);
-            outline: none;
-        }
+      &:focus {
+        border-color: var(--mint);
+        box-shadow: 0 0 8px rgba(139, 243, 255, 0.4);
+        outline: none;
+      }
+
+      &:hover {
+        border-color: rgba(139, 243, 255, 0.5);
+      }
     }
 
-    .create-container {
-        padding: 0 32px;
-        margin-left: 24px;
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* === 우측 난이도 섹션 === */
+    .difficulty-survey-section {
+      grid-column: 2;
+      grid-row: 1 / span 20;
+      background: rgba(8, 20, 28, 0.6);
+      border: 1px solid rgba(139, 243, 255, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      position: sticky;
+      top: 100px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 0 20px rgba(139, 243, 255, 0.1);
+      }
+
+      h3 {
+        color: var(--mint);
+        font-family: 'Orbitron', sans-serif;
+        border-bottom: 1.5px solid rgba(139, 243, 255, 0.4);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        text-shadow: 0 0 8px var(--mint);
+      }
+
+      select,
+      input[type="number"] {
+        width: 100%;
+        padding: 0.6rem;
+        border-radius: 8px;
+      }
+
+      .skills-checkbox-group {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        column-gap: 40px;
-        align-items: start;
+        gap: 10px;
 
-        // 왼쪽 컬럼 - 모든 입력 필드
-        > div:not(.difficulty-survey-section) {
-            grid-column: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 16px;
+        label {
+          display: flex;
+          align-items: center;
+          padding: 8px 12px;
+          background: rgba(139, 243, 255, 0.05);
+          border-radius: 6px;
+          border: 1.5px solid rgba(139, 243, 255, 0.2);
+          cursor: pointer;
+          transition: all 0.2s ease;
 
-            label {
-                display: block;
-                margin-bottom: 4px;
-                font-size: 0.95rem;
-            }
+          &:hover {
+            background: rgba(139, 243, 255, 0.15);
+          }
 
-            input,
-            select,
-            textarea {
-                width: 100%;
-                padding: 0.6rem;
-                border-radius: 8px;
-                transition: all 0.3s ease;
-            }
+          &:has(input:checked) {
+            background: rgba(139, 243, 255, 0.2);
+            border-color: var(--mint);
+            box-shadow: 0 0 8px rgba(139, 243, 255, 0.3);
+          }
 
-            textarea {
-                min-height: 80px;
-                resize: vertical;
-            }
+          input[type="checkbox"] {
+            accent-color: var(--mint);
+            margin-right: 8px;
+          }
         }
-
-        .exp-container input {
-            width: 140px;
-        }
-
-        // 오른쪽 컬럼 - 난이도 섹션
-        .difficulty-survey-section {
-            grid-column: 2;
-            grid-row: 1 / span 20;
-            padding: 24px;
-            background-color: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            transition: all 0.3s ease;
-            position: sticky;
-            top: 120px;
-
-            &:hover {
-                background-color: rgba(0, 0, 0, 0.4);
-                border-color: rgba(91, 155, 213, 0.4);
-            }
-
-            h3 {
-                margin: 0 0 20px 0;
-                color: #fff;
-                font-size: 1.3rem;
-                font-weight: bold;
-                border-bottom: 2px solid var(--blue-400);
-                padding-bottom: 10px;
-            }
-
-            > div {
-                margin-bottom: 20px;
-
-                &:last-child {
-                    margin-bottom: 0;
-                }
-
-                label {
-                    display: block;
-                    margin-bottom: 8px;
-                    color: rgb(202, 202, 202);
-                    font-size: 0.9rem;
-                }
-
-                select,
-                input[type="number"] {
-                    width: 100%;
-                    padding: 0.6rem;
-                    border-radius: 8px;
-                    background-color: rgb(58, 58, 58);
-                    color: white;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    transition: all 0.3s ease;
-
-                    &:focus {
-                        border-color: var(--blue-400);
-                        box-shadow: 0 0 8px rgba(91, 155, 213, 0.4);
-                        outline: none;
-                    }
-
-                    &:hover {
-                        border-color: rgba(255, 255, 255, 0.3);
-                    }
-                }
-            }
-
-            .skills-checkbox-group {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-                margin-top: 8px;
-
-                label {
-                    display: flex;
-                    align-items: center;
-                    padding: 8px 12px;
-                    background-color: rgba(255, 255, 255, 0.05);
-                    border-radius: 6px;
-                    border: 2px solid rgba(255, 255, 255, 0.1);
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    margin-bottom: 0;
-
-                    &:hover {
-                        background-color: rgba(100, 150, 255, 0.2);
-                        border-color: var(--blue-400);
-                    }
-
-                    &:has(input:checked) {
-                        background-color: rgba(100, 150, 255, 0.3);
-                        border-color: var(--blue-400);
-                        box-shadow: 0 2px 8px rgba(91, 155, 213, 0.3);
-                    }
-
-                    input[type="checkbox"] {
-                        appearance: none;
-                        width: 16px;
-                        height: 16px;
-                        margin: 0 8px 0 0;
-                        cursor: pointer;
-                        border: 2px solid rgba(255, 255, 255, 0.3);
-                        border-radius: 4px;
-                        background-color: rgb(58, 58, 58);
-                        position: relative;
-                        transition: all 0.2s ease;
-
-                        &:checked {
-                            background-color: var(--blue-400);
-                            border-color: var(--blue-400);
-
-                            &::after {
-                                content: '';
-                                position: absolute;
-                                left: 4px;
-                                top: 1px;
-                                width: 3px;
-                                height: 7px;
-                                border: solid white;
-                                border-width: 0 2px 2px 0;
-                                transform: rotate(45deg);
-                            }
-                        }
-                    }
-
-                    span {
-                        color: rgb(220, 220, 220);
-                        font-size: 0.85rem;
-                        font-weight: 500;
-                    }
-                }
-            }
-        }
-
-        // Hints 컨테이너
-        .hint-container {
-            .key-container {
-                display: flex;
-                gap: 8px;
-                margin-bottom: 8px;
-                align-items: center;
-
-                input[type="text"] {
-                    flex: 1;
-                }
-
-                input[type="number"] {
-                    width: 80px;
-                }
-
-                .remove-hint {
-                    padding: 0.5rem 1rem;
-                    background-color: #c9302c;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    font-weight: bold;
-                    white-space: nowrap;
-
-                    &:hover {
-                        background-color: #a02622;
-                        transform: translateY(-1px);
-                    }
-                }
-            }
-
-            .add-hint {
-                margin-top: 8px;
-                padding: 0.5rem 1rem;
-                background-color: var(--blue-400);
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                font-weight: bold;
-
-                &:hover {
-                    background-color: var(--blue-500);
-                    transform: translateY(-1px);
-                }
-            }
-        }
-
-        // Submit 버튼
-        .add-machine-form-button {
-            position: fixed;
-            bottom: 32px;
-            right: 32px;
-            z-index: 100;
-
-            button[type="submit"] {
-                padding: 0.75rem 1.5rem;
-                font-weight: bold;
-                background-color: var(--blue-400);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-
-                &:hover {
-                    background-color: var(--blue-500);
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 16px rgba(91, 155, 213, 0.4);
-                }
-            }
-        }
+      }
     }
 
-    // 에러 스타일
-    .field-error {
-        color: #ff6b6b;
-        font-size: 0.8rem;
-        margin-top: 4px;
-        display: block;
-    }
+    /* === 힌트 === */
+    .hint-container {
+      .key-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
 
-    .error-input {
-        border-color: #ff6b6b !important;
+        .remove-hint {
+          background: rgba(255, 80, 80, 0.2);
+          border: 1px solid rgba(255, 100, 100, 0.4);
+          color: #ffaaaa;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
 
-        &:focus {
-            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2) !important;
+          &:hover {
+            background: rgba(255, 100, 100, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 0 8px rgba(255, 100, 100, 0.3);
+          }
         }
-    }
+      }
 
-    .error-message {
-        grid-column: 1 / -1;
-        color: #ff6b6b;
-        padding: 12px;
-        margin-bottom: 16px;
-        background-color: rgba(255, 107, 107, 0.1);
+      .add-hint {
+        margin-top: 8px;
+        background: rgba(139, 243, 255, 0.1);
+        border: 1px solid var(--mint);
+        color: var(--mint);
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+
+        &:hover {
+          background: rgba(139, 243, 255, 0.2);
+          box-shadow: 0 0 10px var(--mint);
+        }
+      }
+    }
+/* === 🔵 입력칸 전체 세로 정렬 === */
+.left-fields {
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+
+    /* === 등록 버튼 === */
+    .add-machine-form-button {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 200;
+
+      button[type="submit"] {
+        background: transparent;
+        color: var(--mint);
+        border: 2px solid var(--mint);
+        padding: 0.8rem 1.6rem;
         border-radius: 8px;
-        border: 1px solid rgba(255, 107, 107, 0.3);
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 12px rgba(139, 243, 255, 0.15);
+
+        &:hover {
+          background: rgba(139, 243, 255, 0.15);
+          box-shadow: 0 0 20px var(--mint);
+          transform: translateY(-2px);
+        }
+      }
     }
+  }
+
+  /* === 오류 메시지 === */
+  .field-error {
+    color: #ff7b7b;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  .error-input {
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 10px rgba(255, 80, 80, 0.2);
+  }
+
+  .error-message {
+    background: rgba(255, 60, 60, 0.1);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    color: #ffaaaa;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+  }
 }

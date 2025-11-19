@@ -8,31 +8,36 @@ const modes = [
     id: 'TERMINAL_HACKING_RACE', 
     icon: '⚡', 
     title: 'Terminal Hacking Race', 
-    desc: '터미널 명령어로 가장 빠르게 해킹!' 
+    desc: '터미널 명령어로 가장 빠르게 해킹!',
+    players: '2-8명'
   },
   { 
-    id: 'CYBER_DEFENSE_BATTLE', 
-    icon: '⚔️', 
-    title: 'Cyber Defense Battle', 
-    desc: '2팀으로 나뉘어 실시간 공방전!' 
+    id: 'VULNERABILITY_SCANNER_RACE',  // ✅ 추가
+    icon: '🔍', 
+    title: 'Vulnerability Scanner Race', 
+    desc: '웹 애플리케이션의 취약점을 찾아내라!',
+    players: '2명'
   },
   { 
-    id: 'CAPTURE_THE_SERVER', 
-    icon: '🏰', 
-    title: 'Capture The Server', 
-    desc: '서버를 점령해 영토를 확장하세요.' 
+    id: 'KING_OF_THE_HILL', 
+    icon: '👑', 
+    title: 'King of the Hill', 
+    desc: '서버를 점령하고 왕좌를 지켜라!',
+    players: '2-8명'
   },
   { 
-    id: 'HACKERS_DECK', 
-    icon: '🎲', 
-    title: "Hacker's Deck", 
-    desc: '해킹 카드를 활용한 턴제 전략 대결!' 
+    id: 'FORENSICS_RUSH', 
+    icon: '🔎',  // 🔍에서 🔎으로 변경 (구분)
+    title: 'Forensics Rush', 
+    desc: '증거를 분석하고 범인을 찾아내라!',
+    players: '2-8명'
   },
   { 
-    id: 'EXPLOIT_CHAIN_CHALLENGE', 
-    icon: '🎯', 
-    title: 'Exploit Chain Challenge', 
-    desc: '단계별 취약점 퍼즐을 해결하세요.' 
+    id: 'SOCIAL_ENGINEERING_CHALLENGE', 
+    icon: '💬', 
+    title: 'Social Engineering', 
+    desc: 'AI를 속여 정보를 빼내는 심리전!',
+    players: '1-4명'
   },
 ];
 
@@ -48,7 +53,7 @@ const AddArenaForm: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     mode: '',
-    difficulty: '',  // ✅ 추가
+    difficulty: '',
     maxParticipants: 2,
   });
   const [error, setError] = useState('');
@@ -61,9 +66,15 @@ const AddArenaForm: React.FC = () => {
 
   const handleModeSelect = (mode: string) => {
     setFormData(prev => ({ ...prev, mode }));
+    
+    // 모드별 참가자 수 자동 설정
+    if (mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
+      setFormData(prev => ({ ...prev, maxParticipants: 2 }));
+    } else if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
+      setFormData(prev => ({ ...prev, maxParticipants: Math.min(prev.maxParticipants, 4) }));
+    }
   };
 
-  // ✅ 난이도 선택 핸들러 추가
   const handleDifficultySelect = (difficulty: string) => {
     setFormData(prev => ({ ...prev, difficulty }));
   };
@@ -72,9 +83,19 @@ const AddArenaForm: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    // ✅ 난이도 검증 추가
     if (!formData.name.trim() || !formData.mode || !formData.difficulty) {
       setError('System Error: All fields are required.');
+      return;
+    }
+
+    // ✅ Vulnerability Scanner Race 검증 추가
+    if (formData.mode === 'VULNERABILITY_SCANNER_RACE' && formData.maxParticipants !== 2) {
+      setError('System Error: Vulnerability Scanner Race requires exactly 2 players.');
+      return;
+    }
+
+    if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE' && formData.maxParticipants > 4) {
+      setError('System Error: Social Engineering supports 1-4 players only.');
       return;
     }
 
@@ -82,7 +103,7 @@ const AddArenaForm: React.FC = () => {
       setLoading(true);
       const res = await createArena(formData);
       console.log('✅ Arena created:', res);
-      navigate(`/arena/${res.arena._id}`);  // ✅ res.arena._id로 수정 (서버에서 { arena, scenario } 반환)
+      navigate(`/arena/${res.arena._id}`);
     } catch (err: any) {
       console.error('❌ Create arena error:', err);
       const msg = err?.response?.data?.message || 'Failed to create arena.';
@@ -91,6 +112,19 @@ const AddArenaForm: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // 선택된 모드의 참가자 수 제한 가져오기
+  const getMaxParticipantsLimit = () => {
+    if (formData.mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
+      return { min: 2, max: 2 };
+    }
+    if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
+      return { min: 1, max: 4 };
+    }
+    return { min: 2, max: 8 };
+  };
+
+  const participantsLimit = getMaxParticipantsLimit();
 
   return (
     <div className="arena-create-container">
@@ -123,12 +157,21 @@ const AddArenaForm: React.FC = () => {
                   name="maxParticipants"
                   value={formData.maxParticipants}
                   onChange={handleChange}
-                  min={2}
-                  max={8}
+                  min={participantsLimit.min}
+                  max={participantsLimit.max}
+                  disabled={ 
+                    formData.mode === 'VULNERABILITY_SCANNER_RACE'  // ✅ 추가
+                  }
                 />
+                {formData.mode && (
+                  <small className="input-hint">
+                    {participantsLimit.min === participantsLimit.max 
+                      ? `Fixed: ${participantsLimit.max} players`
+                      : `Range: ${participantsLimit.min}-${participantsLimit.max} players`
+                    }
+                  </small>
+                )}
               </div>
-
-              {/* ✅ duration 제거됨 - 시나리오에서 자동으로 설정 */}
             </div>
           </div>
         </div>
@@ -148,6 +191,7 @@ const AddArenaForm: React.FC = () => {
                   <div className="mode-info">
                     <div className="mode-title">{mode.title}</div>
                     <div className="mode-desc">{mode.desc}</div>
+                    <div className="mode-players">{mode.players}</div>
                   </div>
                 </div>
               ))}
@@ -155,7 +199,7 @@ const AddArenaForm: React.FC = () => {
           </div>
         </div>
 
-        {/* --- 3. 난이도 선택 창 (새로 추가) --- */}
+        {/* --- 3. 난이도 선택 창 --- */}
         <div className="widget-window difficulty-selector">
           <div className="widget-titlebar">DIFFICULTY_SELECT</div>
           <div className="widget-content">

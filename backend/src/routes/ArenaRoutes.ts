@@ -7,6 +7,9 @@ import {
   getArenaHistory,
   getArenaResult,
   checkArenaParticipation,
+  getAllArenas,
+  getActiveArenas,
+  deleteArena,
   
   // Scenario 관련 (관리자 전용)
   getAllScenarios,
@@ -28,6 +31,9 @@ ArenaRoutes.get('/list', getArenas);
 ArenaRoutes.get('/history', verifyToken, getArenaHistory);
 ArenaRoutes.get('/:arenaId/check-participation', verifyToken, checkArenaParticipation);
 ArenaRoutes.get('/result/:arenaId', verifyToken, getArenaResult);
+ArenaRoutes.get('/arenas', getAllArenas);
+ArenaRoutes.get('/active', getActiveArenas);
+ArenaRoutes.delete('/:arenaId', deleteArena);
 
 ArenaRoutes.get('/scenarios/stats', verifyToken, verifyAdmin, getScenarioStats);
 ArenaRoutes.get('/scenarios/mode/:mode', verifyToken, verifyAdmin, getScenariosByMode);
