@@ -122,29 +122,27 @@ const ArenasManagement: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'WAITING': return '⏳';
-      case 'STARTED': return '🎮';
-      case 'ENDED': return '✅';
-      default: return '❓';
+      case 'WAITING': return '';
+      case 'STARTED': return '';
+      case 'ENDED': return '';
+      default: return '';
     }
   };
 
   const getModeIcon = (mode: string) => {
     switch (mode) {
-      case 'TERMINAL_HACKING_RACE': return '⚡';
-      case 'VULNERABILITY_SCANNER_RACE': return '🔍';  // ✅ 추가
-      case 'KING_OF_THE_HILL': return '👑';
-      case 'FORENSICS_RUSH': return '🔎';
-      case 'SOCIAL_ENGINEERING_CHALLENGE': return '💬';
-      default: return '🎯';
+      case 'TERMINAL_HACKING_RACE': return '';
+      case 'VULNERABILITY_SCANNER_RACE': return '';
+      case 'FORENSICS_RUSH': return '';
+      case 'SOCIAL_ENGINEERING_CHALLENGE': return '';
+      default: return '';
     }
   };
 
   const getModeName = (mode: string) => {
     switch (mode) {
       case 'TERMINAL_HACKING_RACE': return 'Terminal Race';
-      case 'VULNERABILITY_SCANNER_RACE': return 'Vulnerability Scanner Race';  // ✅ 추가
-      case 'KING_OF_THE_HILL': return 'King of the Hill';
+      case 'VULNERABILITY_SCANNER_RACE': return 'Vulnerability Scanner Race';
       case 'FORENSICS_RUSH': return 'Forensics Rush';
       case 'SOCIAL_ENGINEERING_CHALLENGE': return 'Social Engineering';
       default: return mode;
@@ -180,16 +178,16 @@ const ArenasManagement: React.FC = () => {
       <Sidebar />
       <div className="admin-content">
         <div className="page-header">
-          <h1>🏟️ Arena Rooms Management</h1>
+          <h1>Arena Rooms Management</h1>
           <div className="header-stats">
             <span className="stat-chip">
               <FaGamepad /> Total: {arenas.length}
             </span>
             <span className="stat-chip waiting">
-              ⏳ Waiting: {arenas.filter(r => r.status === 'WAITING').length}
+              Waiting: {arenas.filter(r => r.status === 'WAITING').length}
             </span>
             <span className="stat-chip progress">
-              🎮 Started: {arenas.filter(r => r.status === 'STARTED').length}
+              Started: {arenas.filter(r => r.status === 'STARTED').length}
             </span>
           </div>
         </div>
@@ -200,30 +198,29 @@ const ArenasManagement: React.FC = () => {
         <div className="filters-section">
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="ALL">All Status</option>
-            <option value="WAITING">⏳ Waiting</option>
-            <option value="STARTED">🎮 Started</option>
-            <option value="ENDED">✅ Ended</option>
+            <option value="WAITING">Waiting</option>
+            <option value="STARTED">Started</option>
+            <option value="ENDED">Ended</option>
           </select>
 
           <select value={filterMode} onChange={e => setFilterMode(e.target.value)}>
             <option value="ALL">All Modes</option>
-            <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
-            <option value="VULNERABILITY_SCANNER_RACE">🔍 Vulnerability Scanner Race</option>
-            <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
-            <option value="FORENSICS_RUSH">🔎 Forensics Rush</option>
-            <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
+            <option value="TERMINAL_HACKING_RACE">Terminal Race</option>
+            <option value="VULNERABILITY_SCANNER_RACE">Vulnerability Scanner Race</option>
+            <option value="FORENSICS_RUSH">Forensics Rush</option>
+            <option value="SOCIAL_ENGINEERING_CHALLENGE">Social Engineering</option>
           </select>
 
           <input
             type="text"
-            placeholder="🔍 Search by arena name, host, or scenario..."
+            placeholder="Search by arena name, host, or scenario..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="search-input"
           />
 
           <button onClick={loadArenas} className="refresh-btn" disabled={loading}>
-            {loading ? '🔄 Loading...' : '🔄 Refresh'}
+            {loading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
 
@@ -321,7 +318,7 @@ const ArenasManagement: React.FC = () => {
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>Arena Details</h2>
-                <button className="close-btn" onClick={() => setShowDetailsModal(false)}>✕</button>
+                <button className="close-btn" onClick={() => setShowDetailsModal(false)}>X</button>
               </div>
               <div className="modal-body">
                 <div className="detail-section">

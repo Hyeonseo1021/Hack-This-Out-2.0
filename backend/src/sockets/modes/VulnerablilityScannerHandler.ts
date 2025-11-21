@@ -8,7 +8,8 @@ import {
   processVulnerabilitySubmission,
   requestHint,
   getGameState
-} from '../../services/vulnerbilityScannerRace/Vulnerabilityscannerengine';
+} from '../../services/vulnerbilityScannerRace/vulnerabilityScannerEngine';
+import { generateVulnerableHTML } from '../../services/vulnerbilityScannerRace/generateVulnerableHTML';
 
 /**
  * 🔍 Vulnerability Scanner Race Socket Handlers
@@ -204,7 +205,7 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
    * 게임 상태 조회
    */
   socket.on('scannerRace:get-state', async () => {
-    
+
     const arenaId = (socket as any).arenaId;
     const userId = (socket as any).userId;
 
@@ -223,7 +224,16 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
         return;
       }
 
-      socket.emit('scannerRace:state-data', gameState);
+      // Arena에서 mode와 vulnerableHTML 가져오기
+      const arena = await Arena.findById(arenaId);
+      const mode = arena?.modeSettings?.vulnerabilityScannerRace?.mode || 'SIMULATED';
+      const vulnerableHTML = arena?.modeSettings?.vulnerabilityScannerRace?.vulnerableHTML || '';
+
+      socket.emit('scannerRace:state-data', {
+        ...gameState,
+        mode,
+        vulnerableHTML
+      });
 
     } catch (error) {
       console.error('[scannerRace:get-state] Error:', error);
@@ -383,7 +393,7 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
  * 🎬 게임 시작 시 초기화
  */
 export async function initializeScannerRace(arenaId: string): Promise<void> {
-  
+
   console.log('🎬 [initializeScannerRace] Initializing...');
 
   try {
@@ -392,6 +402,25 @@ export async function initializeScannerRace(arenaId: string): Promise<void> {
 
     const scenario = arena.scenarioId as any;
     const vulnerabilities = scenario.data?.vulnerabilities || [];
+    const difficulty = scenario.difficulty;
+
+    console.log(`📊 [initializeScannerRace] Difficulty: ${difficulty}`);
+
+    // 난이도에 따라 모드 결정
+    let mode: 'SIMULATED' | 'REAL' = 'SIMULATED';
+    let vulnerableHTML = '';
+
+    if (difficulty === 'EASY' || difficulty === 'MEDIUM') {
+      // EASY/MEDIUM: Claude API로 HTML 생성
+      mode = 'SIMULATED';
+      console.log('🤖 [initializeScannerRace] Generating vulnerable HTML with Claude...');
+      vulnerableHTML = await generateVulnerableHTML(scenario);
+      console.log(`✅ [initializeScannerRace] HTML generated (${vulnerableHTML.length} characters)`);
+    } else {
+      // HARD/EXPERT: 실제 웹 사용
+      mode = 'REAL';
+      console.log(`🌐 [initializeScannerRace] Using real web: ${scenario.data?.targetUrl}`);
+    }
 
     // Arena에 취약점 초기화
     await Arena.updateOne(
@@ -399,6 +428,8 @@ export async function initializeScannerRace(arenaId: string): Promise<void> {
       {
         $set: {
           'modeSettings.vulnerabilityScannerRace': {
+            mode,
+            vulnerableHTML,
             totalVulnerabilities: vulnerabilities.length,
             vulnerabilities: vulnerabilities.map((v: any) => ({
               vulnId: v.vulnId,

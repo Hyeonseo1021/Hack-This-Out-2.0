@@ -85,7 +85,6 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showHints, setShowHints] = useState(false);
   const [allCompleted, setAllCompleted] = useState(false);
-  const [evidenceClosed, setEvidenceClosed] = useState(false);
   const isInitializedRef = useRef(false);
 
   // 🎯 타이머 관련 state
@@ -652,17 +651,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
       {/* 메인 영역 */}
       {questions.length > 0 && (
-        <div className={`forensics-workspace ${evidenceClosed ? 'evidence-closed' : ''}`}>
+        <div className="forensics-workspace">
           {/* Evidence 터미널 */}
-          <div className={`evidence-terminal terminal-window ${evidenceClosed ? 'closed' : ''}`}>
+          <div className="evidence-terminal terminal-window">
             <div className="terminal-header">
               <div className="terminal-title">EVIDENCE FILES</div>
-              <button 
-                className="toggle-terminal"
-                onClick={() => setEvidenceClosed(!evidenceClosed)}
-              >
-                {evidenceClosed ? '▶' : '◀'}
-              </button>
             </div>
             <div className="terminal-body">
               <div className="file-list">

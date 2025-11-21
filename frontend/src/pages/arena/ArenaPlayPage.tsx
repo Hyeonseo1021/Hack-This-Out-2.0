@@ -8,7 +8,6 @@ import '../../assets/scss/arena/ArenaPlayPage.scss';
 
 import TerminalRace from '../../components/arena/TerminalRace';
 import ForensicsRush from '../../components/arena/ForensicsRush';
-import KingOfTheHill from '../../components/arena/KingOfTheHill';
 import VulnerabilityScannerRace from '../../components/arena/VulnerabilityScannerRace';
 import ActivityFeed from '../../components/arena/ActivityFeed';
 
@@ -54,9 +53,8 @@ const ArenaPlayPage: React.FC = () => {
     const names: Record<string, string> = {
       'TERMINAL_HACKING_RACE': 'Terminal Race',
       'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',
-      'KING_OF_THE_HILL': 'King of the Hill',             
-      'FORENSICS_RUSH': 'Forensics Rush',                   
-      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'  
+      'FORENSICS_RUSH': 'Forensics Rush',
+      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'
     };
     return names[mode] || mode;
   };
@@ -266,11 +264,7 @@ const ArenaPlayPage: React.FC = () => {
       case 'FORENSICS_RUSH':
         console.log('🔎 Loading Forensics Rush component...');
         return <ForensicsRush arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
-      
-      case 'KING_OF_THE_HILL':
-        console.log('👑 Loading King of the Hill component...');
-        return <KingOfTheHill arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
-      
+
       default:
         console.error('❌ Unknown game mode:', mode);
         return (

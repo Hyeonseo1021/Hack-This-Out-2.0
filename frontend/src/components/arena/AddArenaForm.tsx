@@ -17,12 +17,6 @@ const modes = [
     players: '2명'
   },
   {
-    id: 'KING_OF_THE_HILL',
-    title: 'King of the Hill',
-    desc: '서버를 점령하고 왕좌를 지켜라',
-    players: '2-8명'
-  },
-  {
     id: 'FORENSICS_RUSH',
     title: 'Forensics Rush',
     desc: '증거를 분석하고 범인을 찾아내라',
@@ -123,16 +117,16 @@ const AddArenaForm: React.FC = () => {
 
   return (
     <div className="arena-create-container">
-      <h1>CREATE ARENA</h1>
+      <h1>Create Arena</h1>
 
       <form className="arena-grid-layout" onSubmit={handleSubmit}>
-        
+
         {/* --- 1. 메인 컨트롤 창 --- */}
-        <div className="widget-window main-controls">
-          <div className="widget-titlebar">MAIN_CONTROL</div>
-          <div className="widget-content">
+        <div className="card main-controls">
+          <h2 className="card-title">Arena Settings</h2>
+          <div className="card-content">
             <div className="form-group">
-              <label>ROOM NAME</label>
+              <label>Room Name</label>
               <input
                 type="text"
                 name="name"
@@ -142,50 +136,52 @@ const AddArenaForm: React.FC = () => {
                 maxLength={30}
               />
             </div>
-            
-            <div className="form-inline">
-              <div className="form-group small">
-                <label>MAX PARTICIPANTS</label>
-                <input
-                  type="number"
-                  name="maxParticipants"
-                  value={formData.maxParticipants}
-                  onChange={handleChange}
-                  min={participantsLimit.min}
-                  max={participantsLimit.max}
-                  disabled={ 
-                    formData.mode === 'VULNERABILITY_SCANNER_RACE'  // ✅ 추가
+
+            <div className="form-group">
+              <label>Max Participants</label>
+              <input
+                type="number"
+                name="maxParticipants"
+                value={formData.maxParticipants}
+                onChange={handleChange}
+                min={participantsLimit.min}
+                max={participantsLimit.max}
+                disabled={
+                  formData.mode === 'VULNERABILITY_SCANNER_RACE'
+                }
+              />
+              {formData.mode && (
+                <small className="input-hint">
+                  {participantsLimit.min === participantsLimit.max
+                    ? `Fixed: ${participantsLimit.max} players`
+                    : `Range: ${participantsLimit.min}-${participantsLimit.max} players`
                   }
-                />
-                {formData.mode && (
-                  <small className="input-hint">
-                    {participantsLimit.min === participantsLimit.max 
-                      ? `Fixed: ${participantsLimit.max} players`
-                      : `Range: ${participantsLimit.min}-${participantsLimit.max} players`
-                    }
-                  </small>
-                )}
-              </div>
+                </small>
+              )}
             </div>
+
+            {error && <div className="error-message">{error}</div>}
+
+            <button type="submit" className="submit-button" disabled={loading}>
+              <span>{loading ? 'Creating...' : 'Create Arena'}</span>
+            </button>
           </div>
         </div>
 
         {/* --- 2. 모드 선택 창 --- */}
-        <div className="widget-window mode-selector">
-          <div className="widget-titlebar">MODE_SELECT</div>
-          <div className="widget-content">
-            <div className="mode-table-layout">
+        <div className="card mode-selector">
+          <h2 className="card-title">Select Game Mode</h2>
+          <div className="card-content">
+            <div className="mode-list">
               {modes.map(mode => (
                 <div
                   key={mode.id}
-                  className={`mode-row ${formData.mode === mode.id ? 'selected' : ''}`}
+                  className={`mode-card ${formData.mode === mode.id ? 'selected' : ''}`}
                   onClick={() => handleModeSelect(mode.id)}
                 >
-                  <div className="mode-info">
-                    <div className="mode-title">{mode.title}</div>
-                    <div className="mode-desc">{mode.desc}</div>
-                    <div className="mode-players">{mode.players}</div>
-                  </div>
+                  <h3 className="mode-title">{mode.title}</h3>
+                  <p className="mode-desc">{mode.desc}</p>
+                  <span className="mode-players">{mode.players}</span>
                 </div>
               ))}
             </div>
@@ -193,45 +189,21 @@ const AddArenaForm: React.FC = () => {
         </div>
 
         {/* --- 3. 난이도 선택 창 --- */}
-        <div className="widget-window difficulty-selector">
-          <div className="widget-titlebar">DIFFICULTY_SELECT</div>
-          <div className="widget-content">
+        <div className="card difficulty-selector">
+          <h2 className="card-title">Select Difficulty</h2>
+          <div className="card-content">
             <div className="difficulty-grid">
               {difficulties.map(diff => (
-                <div
+                <button
                   key={diff.id}
-                  className={`difficulty-card ${formData.difficulty === diff.id ? 'selected' : ''}`}
+                  type="button"
+                  className={`difficulty-btn ${formData.difficulty === diff.id ? 'selected' : ''}`}
                   onClick={() => handleDifficultySelect(diff.id)}
                 >
-                  <div className="difficulty-title">{diff.title}</div>
-                </div>
+                  <span>{diff.title}</span>
+                </button>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* --- 4. 시스템 로그 창 --- */}
-        <div className="widget-window system-log">
-          <div className="widget-titlebar">SYSTEM_LOG</div>
-          <div className="widget-content">
-            <div className="log-area">
-              {!error && !loading && !formData.mode && (
-                <p className="log-entry info">System ready. Awaiting command...</p>
-              )}
-              {!error && !loading && formData.mode && !formData.difficulty && (
-                <p className="log-entry info">Mode selected: {formData.mode}. Select difficulty...</p>
-              )}
-              {!error && !loading && formData.mode && formData.difficulty && (
-                <p className="log-entry success">
-                  Configuration complete: {formData.mode} - {formData.difficulty}
-                </p>
-              )}
-              {loading && <p className="log-entry processing">Connecting to host... Creating arena...</p>}
-              {error && <p className="log-entry error">{error}</p>}
-            </div>
-            <button type="submit" className="neon-button" disabled={loading}>
-              {loading ? 'EXECUTING...' : 'EXECUTE'}
-            </button>
           </div>
         </div>
 

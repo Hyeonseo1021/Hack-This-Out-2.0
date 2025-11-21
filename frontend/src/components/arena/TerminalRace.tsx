@@ -215,6 +215,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         { id: logCounter.current++, text: '', type: 'output' },
         { id: logCounter.current++, text: '[MISSION COMPLETE] All stages accomplished', type: 'success' },
         { id: logCounter.current++, text: `[FINAL SCORE] ${data.totalScore} points`, type: 'success' },
+        { id: logCounter.current++, text: '[INFO] Waiting for other players...', type: 'system' },
         { id: logCounter.current++, text: '', type: 'output' }
       );
 
@@ -259,7 +260,12 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     }
   }, []);
 
+  const arenaEndedRef = useRef(false);
+
   const handleArenaEnded = useCallback((data: { message: string }) => {
+    if (arenaEndedRef.current) return; // 중복 방지
+    arenaEndedRef.current = true;
+
     if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
     setLogs(prev => [
       ...prev,
@@ -302,6 +308,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     return () => {
       if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
+      arenaEndedRef.current = false; // 정리
 
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);

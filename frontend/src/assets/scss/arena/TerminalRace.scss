@@ -1,6 +1,7 @@
 // Terminal Race - Professional Terminal Theme
 // Main: Green (#00ff00) - Classic terminal green
 // Background: Dark (#0a0a0a, #1a1a1a)
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&display=swap');
 
 .terminal-race-container {
   display: flex;
@@ -8,7 +9,7 @@
   height: 100%;
   background: #0a0a0a;
   color: #00ff00;
-  font-family: 'Courier New', 'Consolas', monospace;
+  font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
   position: relative;
   overflow: hidden;
 
@@ -38,6 +39,7 @@
   border-bottom: 2px solid #00ff00;
   position: relative;
   z-index: 10;
+  font-family: 'Orbitron', sans-serif;
 
   .terminal-header-left {
     .terminal-title {
@@ -47,6 +49,7 @@
         font-weight: 700;
         letter-spacing: 3px;
         color: #00ff00;
+        text-transform: uppercase;
       }
     }
 
@@ -76,6 +79,7 @@
   min-width: 130px;
   position: relative;
   transition: all 0.2s ease;
+  font-family: 'Orbitron', sans-serif;
 
   &:hover {
     background: #252525;
@@ -93,6 +97,7 @@
       color: #00ff0060;
       font-weight: 600;
       letter-spacing: 2px;
+      text-transform: uppercase;
     }
 
     .stat-value {
@@ -188,6 +193,7 @@
   height: 100%;
   gap: 2rem;
   position: relative;
+  font-family: 'Orbitron', sans-serif;
 
   .loading-spinner {
     width: 60px;
@@ -202,6 +208,7 @@
     font-size: 1.1rem;
     color: #00ff00;
     letter-spacing: 2px;
+    text-transform: uppercase;
   }
 
   .loading-dots {
@@ -247,6 +254,7 @@
   background: #0a0a0a;
   position: relative;
   z-index: 5;
+  font-family: 'Courier New', 'Consolas', monospace;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -276,16 +284,28 @@
     }
 
     &.system {
+      margin: 1.5rem 0 1rem 0;
+      padding-top: 1rem;
+      border-top: 1px dashed rgba(0, 255, 0, 0.3);
+
+      &:first-child {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+      }
+
       .system-text {
         color: #00ff00;
         font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
       }
     }
 
     &.prompt {
       .prompt-text {
         color: #ffff00;
-        font-weight: 600;
+        font-weight: 700;
       }
     }
 
@@ -293,6 +313,8 @@
       .score-text {
         color: #ffff00;
         font-weight: 700;
+        font-size: 1.05rem;
+        text-shadow: 0 0 8px rgba(255, 255, 0, 0.6);
       }
     }
 
@@ -371,6 +393,7 @@
     border: 1px solid #00ff0040;
     padding: 0.75rem 1rem;
     transition: all 0.2s ease;
+    font-family: 'Courier New', 'Consolas', monospace;
 
     &:focus-within {
       border-color: #00ff00;
@@ -410,6 +433,7 @@
       font-size: 0.95rem;
       font-weight: 500;
       caret-color: #00ff00;
+      font-family: 'Courier New', 'Consolas', monospace;
 
       &::placeholder {
         color: rgba(0, 255, 0, 0.3);
@@ -437,6 +461,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
 
     &:hover:not(:disabled) {
       background: #00cc00;

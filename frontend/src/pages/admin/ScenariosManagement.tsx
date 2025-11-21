@@ -10,7 +10,6 @@ import {
 import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
 import TerminalRaceForm from '../../components/admin/forms/TerminalRaceForm';
-import KingOfTheHillForm from '../../components/admin/forms/KingOfTheHillForm';
 import ForensicsRushForm from '../../components/admin/forms/ForensicsRushForm';
 import SocialEngineeringForm from '../../components/admin/forms/SocialEngineeringForm';
 import VulnerabilityScannerRaceForm from '../../components/admin/forms/VulnerablilityScannerRaceForm';
@@ -62,30 +61,6 @@ const getInitialData = (mode: string) => {
           invalidSubmissionPenalty: 5
         },
         totalVulnerabilities: 0
-      };
-
-    case 'KING_OF_THE_HILL':
-      return {
-        serverInfo: {
-          name: '',
-          description: '',
-          os: '',
-          initialVulnerabilities: []
-        },
-        attackActions: [],
-        defenseActions: [],
-        scoring: {
-          pointsPerSecond: 1,
-          firstCaptureBonus: 20,
-          fiveSecondBonus: 5,
-          oneMinuteBonus: 50,
-          captureBonus: 30
-        },
-        energySettings: {
-          initial: 100,
-          regenRate: 2,
-          maxEnergy: 100
-        }
       };
 
     case 'FORENSICS_RUSH':
@@ -317,21 +292,6 @@ const ScenariosManagement: React.FC = () => {
         
         break;
 
-      case 'KING_OF_THE_HILL':
-        if (!form.data.serverInfo?.name?.trim()) {
-          alert('Server name is required');
-          return false;
-        }
-        if ((form.data.attackActions?.length || 0) === 0) {
-          alert('At least one attack action is required');
-          return false;
-        }
-        if ((form.data.defenseActions?.length || 0) === 0) {
-          alert('At least one defense action is required');
-          return false;
-        }
-        break;
-
       case 'FORENSICS_RUSH':
         if (!form.data.scenario?.title?.trim()) {
           alert('Scenario title is required');
@@ -424,20 +384,18 @@ const ScenariosManagement: React.FC = () => {
 
   const getModeIcon = (mode: string) => {
     const icons: Record<string, string> = {
-      TERMINAL_HACKING_RACE: '⚡',
-      VULNERABILITY_SCANNER_RACE: '🔍',
-      KING_OF_THE_HILL: '👑',
-      FORENSICS_RUSH: '🔍',
-      SOCIAL_ENGINEERING_CHALLENGE: '💬'
+      TERMINAL_HACKING_RACE: '',
+      VULNERABILITY_SCANNER_RACE: '',
+      FORENSICS_RUSH: '',
+      SOCIAL_ENGINEERING_CHALLENGE: ''
     };
-    return icons[mode] || '🎮';
+    return icons[mode] || '';
   };
 
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
       TERMINAL_HACKING_RACE: 'Terminal Race',
       VULNERABILITY_SCANNER_RACE: 'Vulnerability Scanner Race',
-      KING_OF_THE_HILL: 'King of the Hill',
       FORENSICS_RUSH: 'Forensics Rush',
       SOCIAL_ENGINEERING_CHALLENGE: 'Social Engineering'
     };
@@ -452,10 +410,6 @@ const ScenariosManagement: React.FC = () => {
         return `${scenario.data.stages?.length || 0} stages`;
       case 'VULNERABILITY_SCANNER_RACE':
         return `${scenario.data.vulnerabilities?.length || 0} vulnerabilities`;
-      case 'KING_OF_THE_HILL':
-        const kothAttacks = scenario.data.attackActions?.length || 0;
-        const kothDefenses = scenario.data.defenseActions?.length || 0;
-        return `${kothAttacks}/${kothDefenses} actions`;
       case 'FORENSICS_RUSH':
         return `${scenario.data.questions?.length || 0} questions`;
       case 'SOCIAL_ENGINEERING_CHALLENGE':
@@ -469,44 +423,43 @@ const ScenariosManagement: React.FC = () => {
     <div className="admin-layout scenarios-management">
       <Sidebar />
       <div className="admin-content">
-        <h1 className="page-title">🎮 Scenarios Management</h1>
+        <h1 className="page-title">Scenarios Management</h1>
 
         {error && <ErrorMessage message={error} />}
 
         {/* 폼 섹션 */}
         <div className="form-card">
-          <h2>{editingId ? '✏️ Edit Scenario' : '➕ Create New Scenario'}</h2>
+          <h2>{editingId ? 'Edit Scenario' : 'Create New Scenario'}</h2>
           
           <form onSubmit={onSubmit}>
             <div className="basic-info">
               <div className="form-row-3">
                 <div className="form-group">
                   <label>Game Mode *</label>
-                  <select 
-                    value={form.mode} 
+                  <select
+                    value={form.mode}
                     onChange={e => handleModeChange(e.target.value)}
                     disabled={!!editingId}
                     required
                   >
-                    <option value="TERMINAL_HACKING_RACE">⚡ Terminal Hacking Race</option>
-                    <option value="VULNERABILITY_SCANNER_RACE">🔍 Vulnerability Scanner Race</option>
-                    <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
-                    <option value="FORENSICS_RUSH">🔍 Forensics Rush</option>
-                    <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
+                    <option value="TERMINAL_HACKING_RACE">Terminal Hacking Race</option>
+                    <option value="VULNERABILITY_SCANNER_RACE">Vulnerability Scanner Race</option>
+                    <option value="FORENSICS_RUSH">Forensics Rush</option>
+                    <option value="SOCIAL_ENGINEERING_CHALLENGE">Social Engineering</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Difficulty *</label>
-                  <select 
-                    value={form.difficulty} 
+                  <select
+                    value={form.difficulty}
                     onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}
                     required
                   >
-                    <option value="EASY">🟢 Easy</option>
-                    <option value="MEDIUM">🟡 Medium</option>
-                    <option value="HARD">🔴 Hard</option>
-                    <option value="EXPERT">💀 Expert</option>
+                    <option value="EASY">Easy</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HARD">Hard</option>
+                    <option value="EXPERT">Expert</option>
                   </select>
                 </div>
 
@@ -570,15 +523,15 @@ const ScenariosManagement: React.FC = () => {
                 />
               )}
 
-              {form.mode === 'KING_OF_THE_HILL' && (
-                <KingOfTheHillForm
+              {form.mode === 'FORENSICS_RUSH' && (
+                <ForensicsRushForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
                 />
               )}
 
-              {form.mode === 'FORENSICS_RUSH' && (
-                <ForensicsRushForm
+              {form.mode === 'VULNERABILITY_SCANNER_RACE' && (
+                <VulnerabilityScannerRaceForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
                 />
@@ -594,10 +547,10 @@ const ScenariosManagement: React.FC = () => {
 
             <div className="form-actions">
               <button type="submit" disabled={saving}>
-                {saving ? 'Saving...' : (editingId ? '💾 Update' : '✨ Create')}
+                {saving ? 'Saving...' : (editingId ? 'Update' : 'Create')}
               </button>
               <button type="button" onClick={handleCancelEdit} disabled={saving}>
-                {editingId ? '✖️ Cancel' : '🔄 Reset'}
+                {editingId ? 'Cancel' : 'Reset'}
               </button>
             </div>
           </form>
@@ -607,19 +560,18 @@ const ScenariosManagement: React.FC = () => {
         <div className="filters-section">
           <select value={filterMode} onChange={e => setFilterMode(e.target.value)}>
             <option value="ALL">All Modes</option>
-            <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
-            <option value="VULNERABILITY_SCANNER_RACE">🔍 Vulnerability Scanner Race</option>
-            <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
-            <option value="FORENSICS_RUSH">🔍 Forensics Rush</option>
-            <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
+            <option value="TERMINAL_HACKING_RACE">Terminal Race</option>
+            <option value="VULNERABILITY_SCANNER_RACE">Vulnerability Scanner Race</option>
+            <option value="FORENSICS_RUSH">Forensics Rush</option>
+            <option value="SOCIAL_ENGINEERING_CHALLENGE">Social Engineering</option>
           </select>
 
           <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)}>
             <option value="ALL">All Difficulties</option>
-            <option value="EASY">🟢 Easy</option>
-            <option value="MEDIUM">🟡 Medium</option>
-            <option value="HARD">🔴 Hard</option>
-            <option value="EXPERT">💀 Expert</option>
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+            <option value="EXPERT">Expert</option>
           </select>
 
           <input
@@ -679,7 +631,7 @@ const ScenariosManagement: React.FC = () => {
                     <td>{s.usageCount || 0}</td>
                     <td>
                       <span className={`status-badge ${s.isActive ? 'active' : 'inactive'}`}>
-                        {s.isActive ? '✅ Active' : '❌ Inactive'}
+                        {s.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td>

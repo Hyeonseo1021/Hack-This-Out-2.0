@@ -239,14 +239,12 @@
   // Workspace
   .forensics-workspace {
     display: grid;
-    grid-template-columns: 400px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     padding: 0 2rem 2rem 2rem;
     flex: 1;
-
-    &.evidence-closed {
-      grid-template-columns: 50px 1fr;
-    }
+    max-height: calc(100vh - 400px);
+    overflow: hidden;
   }
 
   // Terminal Window
@@ -270,20 +268,6 @@
         font-weight: 700;
         color: #ffffff;
         letter-spacing: 2px;
-      }
-
-      .toggle-terminal {
-        background: transparent;
-        border: none;
-        color: #3498db;
-        font-size: 1rem;
-        cursor: pointer;
-        padding: 0.25rem 0.5rem;
-        transition: all 0.2s;
-
-        &:hover {
-          color: #ffffff;
-        }
       }
     }
 
@@ -312,11 +296,6 @@
       }
     }
 
-    &.closed {
-      .terminal-body {
-        display: none;
-      }
-    }
   }
 
   // Evidence Terminal
@@ -416,13 +395,34 @@
         background: #000000;
         border: 1px solid #2c3e50;
         padding: 1rem;
-        max-height: 300px;
+        max-height: 250px;
         overflow-y: auto;
+        overflow-x: auto;
+
+        &::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #0f1c2e;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #3498db;
+
+          &:hover {
+            background: #5dade2;
+          }
+        }
 
         .file-content {
           color: #00ff00;
           font-size: 0.8rem;
           margin: 0;
+          white-space: pre;
+          overflow-x: auto;
+          display: block;
         }
       }
     }
@@ -818,18 +818,23 @@
 }
 
 // Responsive
+@media (max-width: 1400px) {
+  .forensics-rush-container {
+    .forensics-workspace {
+      max-height: calc(100vh - 380px);
+    }
+  }
+}
+
 @media (max-width: 1024px) {
   .forensics-rush-container {
     .forensics-workspace {
       grid-template-columns: 1fr;
+      max-height: none;
+    }
 
-      &.evidence-closed {
-        grid-template-columns: 1fr;
-      }
-
-      .evidence-terminal.closed {
-        display: none;
-      }
+    .terminal-window .terminal-body {
+      max-height: 400px;
     }
   }
 }

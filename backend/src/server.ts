@@ -47,7 +47,7 @@ app.use('/api/shop', ItemRoutes);
 
 
 // Root Endpoint
-app.get('/', (req, res) => res.send('API is running'));
+app.get('/', (req: any, res: any) => res.send('API is running'));
 
 // Server Port
 const PORT = process.env.PORT || 5000;

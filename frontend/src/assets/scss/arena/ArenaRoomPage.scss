@@ -144,13 +144,13 @@
   padding-top: 10px !important;
   padding-bottom: 10px !important;
   font-size: 0.9rem !important;
-  
-  border-color: #00ffae !important;
-  color: #00ffae !important;
+
+  border-color: #00f6ff !important;
+  color: #00f6ff !important;
 
   &:hover {
-    background: rgba(0, 255, 174, 0.1) !important;
-    box-shadow: 0 0 15px #00ffae !important;
+    background: rgba(0, 246, 255, 0.1) !important;
+    box-shadow: 0 0 15px rgba(0, 246, 255, 0.6) !important;
   }
 }
 
@@ -207,8 +207,9 @@
   word-break: break-all; 
   
   strong {
-    color: #00ffae;
+    color: #00f6ff;
     margin-right: 5px;
+    text-shadow: 0 0 6px rgba(0, 246, 255, 0.4);
   }
 
   &.system-message {
@@ -369,8 +370,14 @@
       opacity: 0.9;
     }
 
-    .host-tag { color: #ff00c1; }
-    .me-tag { color: #00ffae; }
+    .host-tag {
+      color: #00f6ff;
+      text-shadow: 0 0 8px rgba(0, 246, 255, 0.6);
+    }
+    .me-tag {
+      color: #00ff88;
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+    }
     
     .kick-btn {
       background: transparent;
@@ -416,13 +423,13 @@
 
 /* === 상태별 스타일 === */
 .participant-card.is-host {
-  border-color: #ff00c1;
-  box-shadow: 0 0 12px #ff00c1;
+  border-color: #00f6ff;
+  box-shadow: 0 0 12px rgba(0, 246, 255, 0.5);
 }
 
 .participant-card.is-me {
-  border-color: #00ffae;
-  box-shadow: 0 0 12px #00ffae;
+  border-color: #00ff88;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
 }
 
 .participant-card.is-ready {
@@ -483,25 +490,27 @@
   }
 }
 
-/* === READY 버튼 (민트) === */
+/* === READY 버튼 === */
 .cyber-button.is-ready-button {
-  border-color: #00ffae;
-  color: #00ffae;
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
 
   &:hover {
-    background: rgba(0, 255, 174, 0.1);
-    box-shadow: 0 0 15px #00ffae;
+    background: rgba(0, 255, 136, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
   }
 }
 
-/* === START 버튼 (호스트 전용, 핑크) === */
+/* === START 버튼 (호스트 전용) === */
 .cyber-button.start-btn {
-  border-color: #ff00c1;
-  color: #ff00c1;
+  border-color: #00f6ff;
+  color: #00f6ff;
+  box-shadow: 0 0 10px rgba(0, 246, 255, 0.3);
 
   &:hover {
-    background: rgba(255, 0, 193, 0.15);
-    box-shadow: 0 0 20px #ff00c1;
+    background: rgba(0, 246, 255, 0.15);
+    box-shadow: 0 0 25px rgba(0, 246, 255, 0.7);
   }
 }
 
@@ -798,15 +807,16 @@
 
     .participant-count-badge {
       padding: 6px 16px;
-      background: linear-gradient(135deg, rgba(0, 255, 174, 0.2) 0%, rgba(0, 200, 120, 0.2) 100%);
-      border: 2px solid rgba(0, 255, 174, 0.5);
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 200, 120, 0.2) 100%);
+      border: 2px solid rgba(0, 255, 136, 0.5);
       border-radius: 20px;
-      color: #00ffae;
+      color: #00ff88;
       font-size: 14px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1px;
-      box-shadow: 0 0 15px rgba(0, 255, 174, 0.3);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
       animation: pulse-subtle 2s ease-in-out infinite;
       animation-delay: 1s;
     }

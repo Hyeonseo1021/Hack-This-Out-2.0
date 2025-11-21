@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../../assets/scss/admin/forms/VulnerabilityScannerRaceForm.scss';
+import '../../../assets/scss/admin/forms/VulnerabilityScannerRaceForm.scss';
 
 interface VulnerabilityScannerRaceFormProps {
   data: any;
