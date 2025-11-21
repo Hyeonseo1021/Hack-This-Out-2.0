@@ -31,7 +31,7 @@ const ManualPage: React.FC = () => {
   const stepDialogs = [
     { label: t('tutorialLabel'), desc: t('tutorialDescription'), to: "/tutorial" },
     { label: t('startTutorialLabel'), desc: t('startTutorialDescription'), to: "/tutorial/play" },
-    { label: t('learnBasicsLabel'), desc: t('learnBasicsDescription'), to: "/learn" },
+    { label: t('learnBasicsLabel'), desc: t('learnBasicsDescription'), to: "/machinep" },
     { label: t('playLabel'), desc: t('playDescription'), to: "/machine" },
 
   ];
