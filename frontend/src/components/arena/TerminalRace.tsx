@@ -64,20 +64,18 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const [isCompleted, setIsCompleted] = useState(false);
   const [graceTimeRemaining, setGraceTimeRemaining] = useState<number | null>(null);
   const [lastScoreGain, setLastScoreGain] = useState(0);
-  
+
   const logContainerRef = useRef<HTMLDivElement>(null);
   const logCounter = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const isInitializedRef = useRef(false);
   const isCompletedRef = useRef(false);
   const graceIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // ✅ 중복 방지를 위한 ref
+
   const lastProcessedCommandRef = useRef<string>('');
   const lastPromptStageRef = useRef<number>(-1);
   const processingRef = useRef<boolean>(false);
 
-  // 초기 진행 상황 로드
   useEffect(() => {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
@@ -90,16 +88,16 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
             else socket.once('connect', () => resolve());
           });
         };
-        
+
         await waitForConnection();
-        
+
         socket.emit('terminal:get-progress', { arenaId: arena._id });
         setTimeout(() => socket.emit('terminal:get-prompt', { arenaId: arena._id }), 500);
         setTimeout(() => setIsLoading(false), 1500);
 
       } catch (error) {
         console.error('Failed to load progress:', error);
-        setLogs([{ id: logCounter.current++, text: 'Failed to load scenario.', type: 'error' }]);
+        setLogs([{ id: logCounter.current++, text: '[ERROR] Failed to load scenario', type: 'error' }]);
         setIsLoading(false);
       }
     };
@@ -107,10 +105,9 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     loadProgress();
   }, [socket, arena._id]);
 
-  // ✅ 이벤트 핸들러들을 useCallback으로 메모이제이션
   const handleProgressData = useCallback((data: ProgressData) => {
     const { stage, score, completed, totalStages: total } = data;
-    
+
     setCurrentStage(stage);
     setCurrentScore(score);
     setIsCompleted(completed);
@@ -118,16 +115,15 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     if (total) setTotalStages(total);
 
     const initialLogs: LogEntry[] = [
-      { id: logCounter.current++, text: '╔═══════════════════════════════════════════════╗', type: 'system' },
-      { id: logCounter.current++, text: '║         TERMINAL HACKING RACE - MISSION       ║', type: 'system' },
-      { id: logCounter.current++, text: '╚═══════════════════════════════════════════════╝', type: 'system' },
+      { id: logCounter.current++, text: '[SYSTEM] Terminal Hacking Race', type: 'system' },
+      { id: logCounter.current++, text: '[SYSTEM] Mission initialized', type: 'system' },
       { id: logCounter.current++, text: '', type: 'output' }
     ];
 
     if (completed) {
       initialLogs.push(
-        { id: logCounter.current++, text: '🎉 MISSION ACCOMPLISHED!', type: 'success' },
-        { id: logCounter.current++, text: `Final Score: ${score} points`, type: 'success' }
+        { id: logCounter.current++, text: '[SUCCESS] MISSION ACCOMPLISHED', type: 'success' },
+        { id: logCounter.current++, text: `[INFO] Final Score: ${score} points`, type: 'success' }
       );
     }
 
@@ -137,20 +133,17 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   }, []);
 
   const handlePromptData = useCallback((data: PromptData) => {
-    
+
     if (lastPromptStageRef.current === data.stage) {
-      console.log('⏭️ [TerminalRace] Duplicate prompt detected, ignoring');
+      console.log('[DEBUG] Duplicate prompt detected, ignoring');
       return;
     }
     lastPromptStageRef.current = data.stage;
 
     const newLogs: LogEntry[] = [
       { id: logCounter.current++, text: '', type: 'output' },
-      { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
-      { id: logCounter.current++, text: `STAGE ${data.stage}/${data.totalStages}`, type: 'system' },
-      { id: logCounter.current++, text: '━'.repeat(50), type: 'system' },
-      { id: logCounter.current++, text: '', type: 'output' },
-      { id: logCounter.current++, text: `OBJECTIVE: ${data.prompt}`, type: 'prompt' },
+      { id: logCounter.current++, text: `[STAGE ${data.stage}/${data.totalStages}]`, type: 'system' },
+      { id: logCounter.current++, text: `[OBJECTIVE] ${data.prompt}`, type: 'prompt' },
       { id: logCounter.current++, text: '', type: 'output' }
     ];
 
@@ -162,57 +155,55 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const handleTerminalResult = useCallback((data: TerminalResultData) => {
 
     if (data.userId !== currentUserId) {
-      console.log('⏭️ [TerminalRace] Not my result');
-      return;
-    }
-    
-    if (isCompletedRef.current && !data.completed) {
-      console.log('⏭️ [TerminalRace] Already completed');
+      console.log('[DEBUG] Not my result');
       return;
     }
 
-    // ✅ 중복 처리 방지
-    const commandKey = `${data.command}-${data.message}-${data.scoreGain}`;
-    if (processingRef.current || lastProcessedCommandRef.current === commandKey) {
-      console.log('⏭️ [TerminalRace] Duplicate result detected, ignoring');
+    if (isCompletedRef.current && !data.completed) {
+      console.log('[DEBUG] Already completed');
       return;
     }
-    
+
+    const commandKey = `${data.command}-${data.message}-${data.scoreGain}`;
+    if (processingRef.current || lastProcessedCommandRef.current === commandKey) {
+      console.log('[DEBUG] Duplicate result detected, ignoring');
+      return;
+    }
+
     processingRef.current = true;
     lastProcessedCommandRef.current = commandKey;
 
     const newLogs: LogEntry[] = [];
     const isDefaultResponse = !data.scoreGain || data.scoreGain === 0;
-    
+
     if (isDefaultResponse) {
       newLogs.push({ id: logCounter.current++, text: data.message, type: 'output' });
     } else {
-      newLogs.push({ id: logCounter.current++, text: data.message, type: 'success' });
-      
+      newLogs.push({ id: logCounter.current++, text: `[SUCCESS] ${data.message}`, type: 'success' });
+
       setLastScoreGain(data.scoreGain || 0);
       setTimeout(() => setLastScoreGain(0), 1500);
-      
-      newLogs.push({ 
-        id: logCounter.current++, 
-        text: `+${data.scoreGain} points earned!`,
+
+      newLogs.push({
+        id: logCounter.current++,
+        text: `[+${data.scoreGain} POINTS]`,
         type: 'score'
       });
-      
+
       if (data.totalScore !== undefined) {
-        console.log('💰 [TerminalRace] Updating score to:', data.totalScore);
+        console.log('[DEBUG] Updating score to:', data.totalScore);
         setCurrentScore(data.totalScore);
       }
-      
+
       if (data.stageAdvanced && !data.completed) {
-        newLogs.push({ 
-          id: logCounter.current++, 
-          text: `🎯 Stage ${data.currentStage} completed!`,
+        newLogs.push({
+          id: logCounter.current++,
+          text: `[STAGE ${data.currentStage} COMPLETED]`,
           type: 'success'
         });
-        
+
         setCurrentStage(data.currentStage || 0);
-        
-        // 다음 프롬프트 요청
+
         setTimeout(() => {
           socket.emit('terminal:get-prompt', { arenaId: arena._id });
         }, 1000);
@@ -222,12 +213,11 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     if (data.completed && !isCompletedRef.current) {
       newLogs.push(
         { id: logCounter.current++, text: '', type: 'output' },
-        { id: logCounter.current++, text: '═'.repeat(50), type: 'system' },
-        { id: logCounter.current++, text: '🏆 ALL STAGES COMPLETED! 🏆', type: 'success' },
-        { id: logCounter.current++, text: `Final Score: ${data.totalScore} points`, type: 'success' },
-        { id: logCounter.current++, text: '═'.repeat(50), type: 'system' }
+        { id: logCounter.current++, text: '[MISSION COMPLETE] All stages accomplished', type: 'success' },
+        { id: logCounter.current++, text: `[FINAL SCORE] ${data.totalScore} points`, type: 'success' },
+        { id: logCounter.current++, text: '', type: 'output' }
       );
-      
+
       setIsCompleted(true);
       isCompletedRef.current = true;
       if (data.totalScore !== undefined) setCurrentScore(data.totalScore);
@@ -235,8 +225,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     setLogs(prev => [...prev, ...newLogs]);
     setIsSubmitting(false);
-    
-    // ✅ 처리 완료 후 플래그 리셋
+
     setTimeout(() => {
       processingRef.current = false;
       inputRef.current?.focus();
@@ -248,16 +237,15 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       clearInterval(graceIntervalRef.current);
       graceIntervalRef.current = null;
     }
-    
+
     if (!isCompletedRef.current) {
       setLogs(prev => [
         ...prev,
         { id: logCounter.current++, text: '', type: 'output' },
-        { id: logCounter.current++, text: '⚠️ '.repeat(25), type: 'system' },
-        { id: logCounter.current++, text: `⏰ ${data.message}`, type: 'system' },
-        { id: logCounter.current++, text: '⚠️ '.repeat(25), type: 'system' }
+        { id: logCounter.current++, text: `[WARNING] ${data.message}`, type: 'error' },
+        { id: logCounter.current++, text: '', type: 'output' }
       ]);
-      
+
       setGraceTimeRemaining(data.graceSec);
       graceIntervalRef.current = setInterval(() => {
         setGraceTimeRemaining(prev => {
@@ -276,10 +264,9 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     setLogs(prev => [
       ...prev,
       { id: logCounter.current++, text: '', type: 'output' },
-      { id: logCounter.current++, text: '═'.repeat(50), type: 'system' },
-      { id: logCounter.current++, text: '🏁 GAME OVER 🏁', type: 'system' },
-      { id: logCounter.current++, text: data.message, type: 'system' },
-      { id: logCounter.current++, text: '═'.repeat(50), type: 'system' }
+      { id: logCounter.current++, text: '[GAME OVER]', type: 'system' },
+      { id: logCounter.current++, text: `[INFO] ${data.message}`, type: 'system' },
+      { id: logCounter.current++, text: '', type: 'output' }
     ]);
     setGraceTimeRemaining(null);
   }, []);
@@ -289,15 +276,13 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   }, [navigate]);
 
   const handleTerminalError = useCallback((data: { message: string }) => {
-    setLogs(prev => [...prev, { id: logCounter.current++, text: `❌ ${data.message}`, type: 'error' }]);
+    setLogs(prev => [...prev, { id: logCounter.current++, text: `[ERROR] ${data.message}`, type: 'error' }]);
     setIsSubmitting(false);
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
-  // Socket 이벤트 리스너 등록 (한 번만!)
   useEffect(() => {
-    
-    // ✅ 완전히 제거
+
     socket.off('terminal:progress-data');
     socket.off('terminal:prompt-data');
     socket.off('terminal:result');
@@ -306,7 +291,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
 
-    // ✅ 새로 등록
     socket.on('terminal:progress-data', handleProgressData);
     socket.on('terminal:prompt-data', handlePromptData);
     socket.on('terminal:result', handleTerminalResult);
@@ -318,7 +302,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     return () => {
       if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
-      
+
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);
       socket.off('terminal:result', handleTerminalResult);
@@ -327,7 +311,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
     };
-  }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError, 
+  }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError,
       handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults]);
 
   useEffect(() => {
@@ -340,12 +324,12 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     e.preventDefault();
     if (!command.trim() || isSubmitting || isCompleted) return;
 
-    console.log('📤 [TerminalRace] Submitting command:', command);
-    
+    console.log('[SUBMIT] Command:', command);
+
     setIsSubmitting(true);
     setLogs(prev => [
       ...prev,
-      { id: logCounter.current++, text: `root@target:~$ ${command}`, type: 'command' }
+      { id: logCounter.current++, text: `$ ${command}`, type: 'command' }
     ]);
 
     socket.emit('terminal:execute', { arenaId: arena._id, command: command.trim() });
@@ -366,12 +350,11 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
           </div>
           <p className="terminal-subtitle">Execute commands to complete the mission</p>
         </div>
-        
+
         <div className="terminal-header-right">
           {!isLoading && (
             <>
               <div className="stat-card stage-card">
-                <div className="stat-icon">🎯</div>
                 <div className="stat-content">
                   <span className="stat-label">STAGE</span>
                   <span className="stat-value">
@@ -384,7 +367,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
               </div>
 
               <div className={`stat-card score-card ${lastScoreGain > 0 ? 'score-pulse' : ''}`}>
-                <div className="stat-icon">⭐</div>
                 <div className="stat-content">
                   <span className="stat-label">SCORE</span>
                   <span className="stat-value score-value">
@@ -396,7 +378,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
               {graceTimeRemaining !== null && !isCompleted && (
                 <div className="stat-card grace-card">
-                  <div className="stat-icon warning">⏰</div>
                   <div className="stat-content">
                     <span className="stat-label">TIME LEFT</span>
                     <span className="stat-value warning">{graceTimeRemaining}s</span>
@@ -419,12 +400,12 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
           <div className="terminal-output" ref={logContainerRef}>
             {logs.map(log => (
               <div key={log.id} className={`terminal-line ${log.type}`}>
-                {log.type === 'command' && <span className="command-text"><span className="command-icon">▶</span> {log.text}</span>}
+                {log.type === 'command' && <span className="command-text">{log.text}</span>}
                 {log.type === 'system' && <span className="system-text">{log.text}</span>}
-                {log.type === 'prompt' && <span className="prompt-text"><span className="prompt-icon">🎯</span> {log.text}</span>}
-                {log.type === 'score' && <span className="score-text"><span className="score-icon">✨</span> {log.text}</span>}
-                {log.type === 'success' && <span className="success-text"><span className="success-icon">✓</span> {log.text}</span>}
-                {log.type === 'error' && <span className="error-text"><span className="error-icon">✗</span> {log.text}</span>}
+                {log.type === 'prompt' && <span className="prompt-text">{log.text}</span>}
+                {log.type === 'score' && <span className="score-text">{log.text}</span>}
+                {log.type === 'success' && <span className="success-text">{log.text}</span>}
+                {log.type === 'error' && <span className="error-text">{log.text}</span>}
                 {log.type === 'output' && <span>{log.text}</span>}
               </div>
             ))}
@@ -450,7 +431,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
                 ref={inputRef}
                 type="text"
                 className="terminal-input"
-                placeholder={isCompleted ? "Mission complete!" : "Enter command..."}
+                placeholder={isCompleted ? "Mission complete" : "Enter command..."}
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmitCommand(e as any))}
@@ -464,7 +445,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
               className={`terminal-submit-btn ${isSubmitting ? 'submitting' : ''} ${isCompleted ? 'completed' : ''}`}
               disabled={isSubmitting || !command.trim() || isCompleted}
             >
-              {isSubmitting ? <><span className="btn-spinner"></span> RUNNING</> : isCompleted ? <>✔ DONE</> : <>▶ EXECUTE</>}
+              {isSubmitting ? <><span className="btn-spinner"></span> RUNNING</> : isCompleted ? <>DONE</> : <>EXECUTE</>}
             </button>
           </form>
         </>

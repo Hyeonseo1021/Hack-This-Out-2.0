@@ -59,7 +59,8 @@ export const getArenaResult = async (arenaId: string) => {
 
 export const getArenaHistory = async () => {
   const res = await axiosInstance.get("/arena/history", { withCredentials: true });
-  return res.data;
+  // ✅ 백엔드에서 { history: [...] } 형태로 반환
+  return { arenaHistory: res.data.history };
 };
 
 export const checkArenaParticipation = async (arenaId: string) => {

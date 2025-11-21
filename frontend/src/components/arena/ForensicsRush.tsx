@@ -447,13 +447,13 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
   const getFileIcon = (type: string) => {
     switch(type) {
-      case 'log': return '📋';
-      case 'pcap': return '📡';
-      case 'image': return '🖼️';
-      case 'disk': return '💾';
-      case 'memory': return '🧠';
-      case 'network': return '🌐';
-      default: return '📄';
+      case 'log': return '[LOG]';
+      case 'pcap': return '[PCAP]';
+      case 'image': return '[IMG]';
+      case 'disk': return '[DISK]';
+      case 'memory': return '[MEM]';
+      case 'network': return '[NET]';
+      default: return '[FILE]';
     }
   };
 
@@ -591,10 +591,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 헤더 */}
       <div className="forensics-header">
         <div className="header-left">
-          <h1 className="case-title">🔍 {scenario.title}</h1>
+          <div className="agency-badge">DIGITAL FORENSICS LAB</div>
+          <h1 className="case-title">{scenario.title}</h1>
           <div className="case-meta">
-            <span className="incident-type">{scenario.incidentType}</span>
-            <span className="case-date">{scenario.date}</span>
+            <span className="incident-type">[{scenario.incidentType}]</span>
+            <span className="case-date">DATE: {scenario.date}</span>
           </div>
         </div>
         
@@ -619,7 +620,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           
           {allCompleted && (
             <div className="completion-badge">
-              ✅ Complete!
+              [CASE CLOSED]
             </div>
           )}
         </div>
@@ -642,8 +643,8 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 시나리오 설명 */}
       <div className="scenario-brief">
         <div className="brief-header">
-          <span className="brief-icon">📋</span>
           <span className="brief-title">CASE BRIEF</span>
+          <span className="classification">CLASSIFIED</span>
         </div>
         <p className="brief-description">{scenario.description}</p>
         <p className="brief-context">{scenario.context}</p>
@@ -676,11 +677,10 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
                       className={`file-item ${isSelected ? 'selected' : ''} ${isRelated ? 'related' : ''}`}
                       onClick={() => setSelectedEvidenceFile(file)}
                     >
-                      <span className="file-perms">-rw-r--r--</span>
-                      <span className="file-size">{Math.floor(Math.random() * 900 + 100)}K</span>
                       <span className="file-icon">{getFileIcon(file.type)}</span>
                       <span className="file-name">{file.name}</span>
-                      {isRelated && <span className="flag-badge">[!]</span>}
+                      <span className="file-size">{Math.floor(Math.random() * 900 + 100)}KB</span>
+                      {isRelated && <span className="flag-badge">[RELEVANT]</span>}
                     </div>
                   );
                 })}
@@ -715,9 +715,9 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
 
               {relatedEvidenceFiles.length > 0 && (
                 <div className="hint-box">
-                  <div className="hint-header">⚡ ANALYST TIP</div>
+                  <div className="hint-header">[ANALYST NOTE]</div>
                   <div className="hint-content">
-                    Related files for current question:
+                    Related evidence for current investigation:
                     <ul>
                       {relatedEvidenceFiles.map(file => (
                         <li key={file.id}>{file.name}</li>
@@ -752,7 +752,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                   {isAnswered ? (
                     <div className="answered-status">
                       <div className="status-message">
-                        ✓ SOLVED (Attempts: {previousAnswer?.attempts || 1})
+                        [VERIFIED] Evidence confirmed ({previousAnswer?.attempts || 1} attempt{previousAnswer?.attempts !== 1 ? 's' : ''})
                       </div>
                       {currentQuestionIndex < questions.length - 1 && (
                         <button
@@ -806,7 +806,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
 
                       {feedback && (
                         <div className={`terminal-feedback ${feedback.type}`}>
-                          <span className="feedback-icon">{feedback.type === 'success' ? '✓' : '✗'}</span>
+                          <span className="feedback-icon">{feedback.type === 'success' ? '[MATCH]' : '[DENIED]'}</span>
                           {feedback.message}
                         </div>
                       )}
@@ -855,7 +855,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                         title={q.question}
                         disabled={allCompleted}
                       >
-                        {isCompleted ? '✓' : index + 1}
+                        {isCompleted ? 'OK' : `Q${index + 1}`}
                       </button>
                     );
                   })}

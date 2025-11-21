@@ -68,7 +68,8 @@ const Progress = () => {
                 <th className="head-category">Mode</th>
                 <th className="head-time">End Time</th>
                 <th className="head-winner">Winner</th>
-                <th className="head-exp">EXP</th>
+                <th className="head-rank">My Rank</th>
+                <th className="head-exp">EXP Earned</th>
               </tr>
             </thead>
             <tbody>
@@ -87,7 +88,8 @@ const Progress = () => {
                     <td className="body-category">{arena.mode}</td>
                     <td className="body-time">{arena.endTime ? formatDate(arena.endTime) : "-"}</td>
                     <td className="body-winner">{arena.winner?.username || "N/A"}</td>
-                    <td className="body-exp">{arena.arenaExp} EXP</td>
+                    <td className="body-rank">#{arena.myRank || "-"}</td>
+                    <td className="body-exp">+{arena.myExpEarned || 0} EXP</td>
                   </tr>
                 );
               })}

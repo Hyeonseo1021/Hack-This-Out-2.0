@@ -1,346 +1,335 @@
 @use '../style' as *;
 
-// --- 1. 창(Window) 등장 애니메이션 ---
-@keyframes widget-load-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
+@keyframes subtle-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 246, 255, 0.2);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-// --- 2. CRT 스캔라인 애니메이션 ---
-@keyframes scan-line-vertical {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100%);
+  50% {
+    box-shadow: 0 0 20px rgba(0, 246, 255, 0.4);
   }
 }
 
 .arena-create-container {
-  position: relative;
   width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 20% 20%, #02010a, #000);
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a12 0%, #000000 50%, #0a0a18 100%);
   color: #eafaff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 2% 20px 40px;
+  padding: 60px 20px;
   font-family: 'Orbitron', sans-serif;
-  overflow-x: hidden;
+  position: relative;
 
-  @media (max-width: 768px) {
-    padding: 60px 20px;
-    min-height: 100vh;
-    width: 100%;
-  }
-  @media (max-width: 576px) {
-    padding: 40px 15px;
-  }
-
-  // CRT 오버레이
-  .crt-overlay {
+  &::before {
+    content: '';
     position: absolute;
     inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.03) 0px,
-      rgba(255, 255, 255, 0.03) 1px,
-      transparent 2px
-    );
+    background:
+      radial-gradient(circle at 20% 30%, rgba(0, 246, 255, 0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(138, 43, 226, 0.03) 0%, transparent 50%);
     pointer-events: none;
-    opacity: 0.3;
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      height: 100%;
-      background: linear-gradient(
-        0deg,
-        transparent 0%,
-        rgba(0, 246, 255, 0.1) 50%,
-        transparent 100%
-      );
-      animation: scan-line-vertical 10s linear infinite;
-    }
   }
 
-  // 글리치 타이틀
-  .glitch-title {
-    font-size: 3rem;
+  h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
     font-weight: 700;
     color: #00f6ff;
-    position: relative;
-    margin-bottom: 40px;
-    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+    margin-bottom: 30px;
     text-align: center;
-
-    &::before, &::after {
-      content: attr(data-text);
-      position: absolute;
-      left: 0;
-      width: 100%;
-      overflow: hidden;
-      color: #00ff6a;
-      clip: rect(0, 0, 0, 0);
-      animation: glitch 2s infinite;
-    }
-    &::before { left: 2px; text-shadow: -2px 0 #00ff6a; }
-    &::after { left: -2px; text-shadow: 2px 0 #00fff0; }
-
-    @keyframes glitch {
-      0% { clip: rect(42px, 9999px, 44px, 0); }
-      5% { clip: rect(12px, 9999px, 59px, 0); }
-      10% { clip: rect(48px, 9999px, 29px, 0); }
-      100% { clip: rect(0, 9999px, 0, 0); }
-    }
-
-    @media (max-width: 576px) {
-      font-size: 2rem;
-      margin-bottom: 30px;
-    }
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(0, 246, 255, 0.5);
+    position: relative;
+    z-index: 1;
   }
 
-  // ✅ 그리드 레이아웃 (3x2로 수정)
+  // 2x2 그리드 레이아웃
   .arena-grid-layout {
+    width: 100%;
+    max-width: 1200px;
     display: grid;
-    width: 95%;
-    height: 80%;
-    max-width: 1400px;
-    gap: 20px;
-
-    // ✅ 3열 레이아웃: main | mode | difficulty
-    //                  log  | mode | difficulty
-    grid-template-columns: 1.5fr 2fr 1.5fr;
+    grid-template-columns: repeat(2, 1fr);
     grid-template-rows: auto auto;
-    grid-template-areas:
-      'main mode difficulty'
-      'log  mode difficulty';
+    gap: 15px;
+    position: relative;
+    z-index: 1;
 
-    @media (max-width: 1024px) {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto auto;
-      grid-template-areas:
-        'main main'
-        'mode difficulty'
-        'log  log';
-    }
-
-    @media (max-width: 768px) {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: auto;
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+      max-width: 600px;
     }
   }
 
-  // 공통 창 스타일
+  // 공통 카드 스타일
   .widget-window {
-    background: rgba(10, 10, 20, 0.6);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 8px;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.05),
-                0 0 20px rgba(0, 255, 255, 0.1) inset;
+    background: rgba(10, 10, 25, 0.85);
+    border: 1px solid rgba(0, 246, 255, 0.3);
+    border-radius: 10px;
     overflow: hidden;
-    animation: widget-load-in 0.5s ease-out forwards;
-    
-    display: flex;
-    flex-direction: column;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
 
-    &.main-controls { grid-area: main; }
-    &.mode-selector  { grid-area: mode; }
-    &.difficulty-selector { grid-area: difficulty; } // ✅ 추가
-    &.system-log     { grid-area: log; }
+    &:hover {
+      border-color: rgba(0, 246, 255, 0.5);
+      box-shadow: 0 0 20px rgba(0, 246, 255, 0.1);
+    }
 
     .widget-titlebar {
-      background: rgba(0, 246, 255, 0.05);
-      padding: 8px 12px;
-      font-size: 1.5rem;
+      background: linear-gradient(90deg, rgba(0, 246, 255, 0.12) 0%, rgba(0, 246, 255, 0.04) 100%);
+      padding: 10px 16px;
+      font-size: 0.72rem;
       color: #00f6ff;
-      border-bottom: 1px solid rgba(0, 255, 255, 0.15);
-      text-shadow: 0 0 5px #00f6ff;
-      flex-shrink: 0;
+      border-bottom: 1px solid rgba(0, 246, 255, 0.25);
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
     }
 
     .widget-content {
-      padding: 20px;
-      overflow-y: auto; 
-      flex-grow: 1;
+      padding: 16px;
 
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-      &::-webkit-scrollbar-track {
-        background: #00000033;
-      }
-      &::-webkit-scrollbar-thumb {
-        background: #00f6ff55;
-        border-radius: 3px;
+      @media (max-width: 768px) {
+        padding: 14px;
       }
     }
   }
 
   // 폼 그룹
   .form-group {
-    margin-bottom: 20px;
-    
-    label { 
-      display: block; 
-      color: #00f6ff; 
-      font-size: 0.9rem; 
-      margin-bottom: 6px; 
-      letter-spacing: 1px; 
+    margin-bottom: 14px;
+
+    &:last-child {
+      margin-bottom: 0;
     }
-    
-    input { 
-      width: 100%; 
-      padding: 10px; 
-      border: 1px solid #00f6ff55; 
-      border-radius: 4px; 
-      background: #050510; 
-      color: #eafaff; 
-      transition: 0.2s; 
-      font-size: 1rem;
-      
-      &:focus { 
-        outline: none; 
-        box-shadow: 0 0 10px #00f6ff; 
+
+    label {
+      display: block;
+      color: #00f6ff;
+      font-size: 0.7rem;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(0, 246, 255, 0.35);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #eafaff;
+      transition: all 0.25s ease;
+      font-size: 0.9rem;
+      font-family: inherit;
+
+      &::placeholder {
+        color: rgba(234, 250, 255, 0.3);
       }
+
+      &:focus {
+        outline: none;
+        border-color: #00f6ff;
+        background: rgba(0, 0, 0, 0.7);
+        box-shadow: 0 0 15px rgba(0, 246, 255, 0.15);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    .input-hint {
+      display: block;
+      margin-top: 5px;
+      color: #888;
+      font-size: 0.68rem;
+      letter-spacing: 0.5px;
     }
   }
 
   .form-inline {
-    display: flex; 
-    gap: 20px;
-    
-    .form-group.small { 
-      flex: 1; 
-      margin-bottom: 0; 
+    display: flex;
+    gap: 16px;
+
+    .form-group.small {
+      flex: 1;
+      margin-bottom: 0;
     }
-    
-    @media (max-width: 576px) { 
-      flex-direction: column; 
-      gap: 20px; 
-      
-      .form-group.small { 
-        margin-bottom: 0; 
-      } 
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: 14px;
     }
   }
 
-  // 모드 선택 (테이블 레이아웃)
+  // 모드 선택 - 세로 스크롤 리스트
   .mode-table-layout {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 6px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 246, 255, 0.4);
+      border-radius: 2px;
+
+      &:hover {
+        background: rgba(0, 246, 255, 0.6);
+      }
+    }
   }
 
   .mode-row {
-    display: flex;
-    align-items: center;
-    background: rgba(0, 10, 15, 0.7);
-    border: 2px solid #222;
-    padding: 15px;
+    position: relative;
+    background: rgba(0, 10, 20, 0.6);
+    border: 1px solid rgba(0, 246, 255, 0.25);
+    padding: 14px 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     border-radius: 8px;
-    width: 100%;
+    overflow: hidden;
 
-    .mode-icon {
-      font-size: 24px;
-      margin-right: 15px;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 3px;
+      height: 100%;
+      background: #00f6ff;
+      opacity: 0;
+      transition: opacity 0.25s ease;
     }
-    
+
     .mode-info {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
+      position: relative;
+      z-index: 1;
     }
 
     .mode-title {
-      color: #00f6ff;
-      font-weight: bold;
-      font-size: 0.9rem;
-      margin-bottom: 3px;
+      color: #eafaff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 5px;
+      transition: color 0.25s ease;
     }
 
     .mode-desc {
-      color: #ccc;
-      font-size: 0.8rem;
-    }
-    
-    &:hover {
-      border-color: #00f6ff;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 246, 255, 0.1);
-    }
-    
-    &.selected {
-      border-color: #00ff6a;
-      background: rgba(0, 255, 106, 0.1);
-      box-shadow: 0 0 12px #00ff6a55;
-      transform: translateY(-2px);
-    }
-  }
-
-  // ✅ 난이도 선택 (그리드 레이아웃)
-  .difficulty-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .difficulty-card {
-    background: rgba(0, 10, 15, 0.7);
-    border: 2px solid #222;
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 8px;
-    text-align: center;
-
-    .difficulty-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-
-    .difficulty-title {
-      color: #00f6ff;
-      font-weight: bold;
-      font-size: 1rem;
+      color: #999;
+      font-size: 0.75rem;
+      line-height: 1.3;
       margin-bottom: 5px;
     }
 
-    .difficulty-desc {
-      color: #999;
-      font-size: 0.75rem;
+    .mode-players {
+      color: #00f6ff;
+      font-size: 0.7rem;
+      font-weight: 600;
     }
 
     &:hover {
-      border-color: #00f6ff;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 246, 255, 0.1);
+      border-color: rgba(0, 246, 255, 0.5);
+      background: rgba(0, 246, 255, 0.05);
+      transform: translateX(3px);
+
+      &::before {
+        opacity: 1;
+      }
+
+      .mode-title {
+        color: #00f6ff;
+      }
     }
 
     &.selected {
-      border-color: #00ff6a;
-      background: rgba(0, 255, 106, 0.1);
-      box-shadow: 0 0 12px #00ff6a55;
+      border-color: #00f6ff;
+      background: rgba(0, 246, 255, 0.1);
+      animation: subtle-glow 2s ease-in-out infinite;
+
+      &::before {
+        opacity: 1;
+      }
+
+      .mode-title {
+        color: #00f6ff;
+      }
+    }
+  }
+
+  // 난이도 선택 - 2x2 그리드
+  .difficulty-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .difficulty-card {
+    position: relative;
+    background: rgba(0, 10, 20, 0.6);
+    border: 1px solid rgba(0, 246, 255, 0.25);
+    padding: 16px 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border-radius: 8px;
+    text-align: center;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #00f6ff;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .difficulty-title {
+      color: #eafaff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.25s ease;
+    }
+
+    &:hover {
+      border-color: rgba(0, 246, 255, 0.5);
+      background: rgba(0, 246, 255, 0.05);
       transform: translateY(-2px);
 
+      &::after {
+        opacity: 0.6;
+      }
+
       .difficulty-title {
-        color: #00ff6a;
+        color: #00f6ff;
+      }
+    }
+
+    &.selected {
+      border-color: #00f6ff;
+      background: rgba(0, 246, 255, 0.1);
+      animation: subtle-glow 2s ease-in-out infinite;
+
+      &::after {
+        opacity: 1;
+      }
+
+      .difficulty-title {
+        color: #00f6ff;
       }
     }
   }
@@ -350,54 +339,117 @@
     .widget-content {
       display: flex;
       flex-direction: column;
-      height: 90%;
     }
-    
+
     .log-area {
-      flex-grow: 1;
-      background: #00000033;
-      border: 1px solid #00f6ff33;
-      border-radius: 4px;
-      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 246, 255, 0.25);
+      border-radius: 6px;
+      padding: 12px;
       min-height: 80px;
-      margin-bottom: 15px;
-      font-size: 0.9rem;
+      max-height: 120px;
+      margin-bottom: 14px;
+      font-size: 0.8rem;
       overflow-y: auto;
-      
+      font-family: 'Courier New', monospace;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      &::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.3);
+      }
+      &::-webkit-scrollbar-thumb {
+        background: rgba(0, 246, 255, 0.4);
+        border-radius: 3px;
+
+        &:hover {
+          background: rgba(0, 246, 255, 0.6);
+        }
+      }
+
       .log-entry {
-        margin: 0 0 5px;
-        
-        &.info { color: #999; }
-        &.success { color: #00ff6a; } // ✅ 추가
-        &.processing { color: #00f6ff; }
-        &.error { color: #ff0066; }
+        margin: 0 0 8px;
+        line-height: 1.5;
+        padding-left: 10px;
+        border-left: 2px solid transparent;
+
+        &.info {
+          color: #999;
+          border-left-color: #555;
+        }
+        &.success {
+          color: #00ffae;
+          border-left-color: #00ffae;
+        }
+        &.processing {
+          color: #00f6ff;
+          border-left-color: #00f6ff;
+        }
+        &.error {
+          color: #ff4444;
+          border-left-color: #ff4444;
+        }
       }
     }
   }
 
   // 버튼
   .neon-button {
-    display: block; 
-    width: 100%; 
-    padding: 12px; 
-    background: transparent; 
-    border: 2px solid #00f6ff; 
-    color: #00f6ff; 
-    font-size: 1rem; 
-    cursor: pointer; 
-    border-radius: 6px; 
-    transition: all 0.25s ease; 
-    text-transform: uppercase; 
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(0, 246, 255, 0.12) 0%, rgba(0, 246, 255, 0.06) 100%);
+    border: 1px solid #00f6ff;
+    color: #00f6ff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
     letter-spacing: 2px;
-    
-    &:hover { 
-      background: #00f6ff22; 
-      box-shadow: 0 0 15px #00f6ff; 
+    font-weight: 700;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(0, 246, 255, 0.3) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      transition: width 0.5s ease, height 0.5s ease;
+      border-radius: 50%;
     }
-    
-    &:disabled { 
-      opacity: 0.6; 
-      cursor: not-allowed; 
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(0, 246, 255, 0.2) 0%, rgba(0, 246, 255, 0.12) 100%);
+      box-shadow: 0 0 20px rgba(0, 246, 255, 0.4);
+      transform: translateY(-2px);
+
+      &::before {
+        width: 350px;
+        height: 350px;
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: #555;
+      color: #666;
+      background: rgba(20, 20, 30, 0.5);
+
+      &:hover {
+        transform: none;
+        box-shadow: none;
+      }
     }
   }
 }

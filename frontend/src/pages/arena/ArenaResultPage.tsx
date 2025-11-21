@@ -16,6 +16,7 @@ type BaseParticipant = {
   isCompleted: boolean;
   rank: number;
   score: number;
+  expEarned: number;  // ✨ 경험치 추가
 };
 
 // Terminal Race용
@@ -185,24 +186,24 @@ const ArenaResultPage: React.FC = () => {
 
   // ✅ 게임 모드별 추가 정보 렌더링
   const renderParticipantDetails = (participant: Participant, mode: string) => {
-    const baseInfo = `⭐ ${participant.score} pts`;
+    const baseInfo = `⭐ ${participant.score} pts • ✨ +${participant.expEarned} EXP`;
 
     switch (mode) {
       case 'terminal-race':
         const trParticipant = participant as TerminalRaceParticipant;
         return `${baseInfo} • ${participant.isCompleted ? '✅ Completed' : `📊 Stage ${trParticipant.stage + 1}`}`;
-      
+
       case 'king-of-the-hill':
         const kothParticipant = participant as KingOfTheHillParticipant;
         const kingTime = kothParticipant.kingTime || 0;
         return `${baseInfo} • ${participant.isCompleted ? '✅ Completed' : `👑 ${kingTime}s as King`}`;
-      
+
       case 'forensics-rush':
         const frParticipant = participant as ForensicsRushParticipant;
         const correctCount = frParticipant.questionsCorrect || 0;
         const totalAnswered = frParticipant.questionsAnswered || 0;
         return `${baseInfo} • ${participant.isCompleted ? '✅ Perfect Score' : `📝 ${correctCount}/${totalAnswered} correct`}`;
-      
+
       default:
         return `${baseInfo} • ${participant.isCompleted ? '✅ Completed' : '📊 In Progress'}`;
     }

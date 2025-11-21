@@ -1,17 +1,17 @@
-// Terminal Race - Cyber Racing Theme 🏁⚡
-// Main: Cyan/Neon Blue (#00d9ff, #0099ff)
-// Accent: Purple/Magenta (#ff00ff, #b537ff)
+// Terminal Race - Professional Terminal Theme
+// Main: Green (#00ff00) - Classic terminal green
+// Background: Dark (#0a0a0a, #1a1a1a)
 
 .terminal-race-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: linear-gradient(135deg, #0a0620 0%, #1a0f3a 50%, #0d1b2a 100%);
-  color: #00d9ff;
+  background: #0a0a0a;
+  color: #00ff00;
+  font-family: 'Courier New', 'Consolas', monospace;
   position: relative;
   overflow: hidden;
 
-  // 배경 레이싱 그리드
   &::before {
     content: '';
     position: absolute;
@@ -19,109 +19,42 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
-      linear-gradient(rgba(0, 217, 255, 0.05) 2px, transparent 2px),
-      linear-gradient(90deg, rgba(0, 217, 255, 0.05) 2px, transparent 2px);
-    background-size: 60px 60px;
+    background-image:
+      linear-gradient(rgba(0, 255, 0, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 0, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
     pointer-events: none;
-    animation: gridRace 15s linear infinite;
-    transform: perspective(500px) rotateX(60deg);
-    transform-origin: center top;
-  }
-
-  // 스피드 라인 효과
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      linear-gradient(90deg, transparent 0%, rgba(0, 217, 255, 0.1) 50%, transparent 100%),
-      radial-gradient(ellipse at center, transparent 0%, rgba(181, 55, 255, 0.15) 100%);
-    animation: speedPulse 3s ease-in-out infinite;
-    pointer-events: none;
+    opacity: 0.5;
   }
 }
 
-@keyframes gridRace {
-  0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
-  100% { transform: perspective(500px) rotateX(60deg) translateY(60px); }
-}
-
-@keyframes speedPulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.7; }
-}
-
-// ========== 헤더 ==========
+// Header
 .terminal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, rgba(10, 6, 32, 0.95), rgba(26, 15, 58, 0.95));
-  border-bottom: 3px solid;
-  border-image: linear-gradient(90deg, #00d9ff, #b537ff, #ff00ff) 1;
-  box-shadow: 
-    0 4px 30px rgba(0, 217, 255, 0.3),
-    0 0 50px rgba(181, 55, 255, 0.2);
+  padding: 1rem 1.5rem;
+  background: #1a1a1a;
+  border-bottom: 2px solid #00ff00;
   position: relative;
   z-index: 10;
-  overflow: hidden;
-
-  // 레이싱 스트라이프
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 200%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(0, 217, 255, 0.1) 25%,
-      rgba(181, 55, 255, 0.1) 50%,
-      rgba(255, 0, 255, 0.1) 75%,
-      transparent 100%
-    );
-    animation: racingStripe 3s linear infinite;
-  }
 
   .terminal-header-left {
     .terminal-title {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.5rem;
-
-      .terminal-icon {
-        font-size: 1.5rem;
-        animation: electricPulse 1.5s ease-in-out infinite;
-        filter: drop-shadow(0 0 10px #00d9ff) drop-shadow(0 0 20px #b537ff);
-      }
-
       h2 {
         margin: 0;
-        font-size: 1.75rem;
+        font-size: 1.5rem;
         font-weight: 700;
-        letter-spacing: 4px;
-        background: linear-gradient(90deg, #00d9ff, #b537ff, #ff00ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 0 30px rgba(0, 217, 255, 0.5);
-        animation: titleShimmer 3s ease-in-out infinite;
+        letter-spacing: 3px;
+        color: #00ff00;
       }
     }
 
     .terminal-subtitle {
-      margin: 0;
-      font-size: 1rem;
-      color: #00d9ff99;
-      letter-spacing: 1.5px;
+      margin: 0.25rem 0 0 0;
+      font-size: 0.85rem;
+      color: #00ff0080;
+      letter-spacing: 1px;
     }
   }
 
@@ -132,74 +65,21 @@
   }
 }
 
-@keyframes racingStripe {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-@keyframes electricPulse {
-  0%, 100% { 
-    opacity: 1; 
-    transform: scale(1);
-    filter: drop-shadow(0 0 10px #00d9ff) drop-shadow(0 0 20px #b537ff);
-  }
-  50% { 
-    opacity: 0.7; 
-    transform: scale(1.1);
-    filter: drop-shadow(0 0 20px #00d9ff) drop-shadow(0 0 30px #b537ff);
-  }
-}
-
-@keyframes titleShimmer {
-  0%, 100% { filter: brightness(1) hue-rotate(0deg); }
-  50% { filter: brightness(1.3) hue-rotate(10deg); }
-}
-
-// ========== Stat Cards ==========
+// Stat Cards
 .stat-card {
-  background: linear-gradient(135deg, rgba(0, 217, 255, 0.08), rgba(181, 55, 255, 0.08));
-  border: 2px solid rgba(0, 217, 255, 0.4);
-  border-radius: 12px;
-  padding: 0.75rem 1.25rem;
+  background: #1a1a1a;
+  border: 1px solid #00ff00;
+  padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-width: 150px;
+  min-width: 130px;
   position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 217, 255, 0.2);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.2), transparent);
-    transition: left 0.6s ease;
-  }
+  transition: all 0.2s ease;
 
   &:hover {
-    border-color: #00d9ff;
-    box-shadow: 0 6px 25px rgba(0, 217, 255, 0.4);
-    transform: translateY(-2px);
-
-    &::before {
-      left: 100%;
-    }
-  }
-
-  .stat-icon {
-    font-size: 2rem;
-    filter: drop-shadow(0 0 8px currentColor);
-    animation: iconFloat 3s ease-in-out infinite;
-
-    &.warning {
-      color: #ff00ff;
-      animation: warningFlash 1s ease-in-out infinite;
-    }
+    background: #252525;
+    border-color: #00ff00;
   }
 
   .stat-content {
@@ -209,145 +89,97 @@
     flex: 1;
 
     .stat-label {
-      font-size: 0.8rem;
-      color: #00d9ff99;
+      font-size: 0.7rem;
+      color: #00ff0060;
       font-weight: 600;
       letter-spacing: 2px;
     }
 
     .stat-value {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 700;
-      color: #00d9ff;
-      text-shadow: 0 0 10px #00d9ff, 0 0 20px rgba(0, 217, 255, 0.5);
+      color: #00ff00;
       position: relative;
 
       &.warning {
-        color: #ff00ff;
-        text-shadow: 0 0 10px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.5);
+        color: #ff0000;
       }
     }
   }
 
   &.stage-card {
-    border-color: #b537ff66;
-    
     .progress-bar {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: rgba(181, 55, 255, 0.2);
+      height: 3px;
+      background: #1a1a1a;
       overflow: hidden;
 
       .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #00d9ff, #b537ff, #ff00ff);
-        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 
-          0 0 10px #00d9ff,
-          0 0 20px #b537ff;
-        position: relative;
-
-        &::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 20px;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6));
-          animation: progressShine 1.5s ease-in-out infinite;
-        }
+        background: #00ff00;
+        transition: width 0.5s ease;
       }
     }
   }
 
   &.score-card {
-    border-color: #00d9ff66;
-    
     .score-value {
       position: relative;
 
       .score-gain {
         position: absolute;
-        top: -25px;
-        right: -35px;
-        font-size: 1rem;
+        top: -20px;
+        right: -25px;
+        font-size: 0.9rem;
         font-weight: 800;
-        color: #ffeb3b;
-        text-shadow: 0 0 15px #ffeb3b;
-        animation: scoreRocket 1.5s ease-out forwards;
+        color: #ffff00;
+        animation: scoreFloat 1.2s ease-out forwards;
       }
     }
 
     &.score-pulse {
-      animation: scoreBurst 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      border-color: #00d9ff;
-      background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(181, 55, 255, 0.15));
-      box-shadow: 
-        0 0 20px rgba(0, 217, 255, 0.6),
-        0 0 40px rgba(181, 55, 255, 0.4);
+      animation: scorePulse 0.3s ease;
+      border-color: #ffff00;
     }
   }
 
   &.grace-card {
-    border-color: #ff00ff;
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.15), rgba(255, 0, 85, 0.1));
-    animation: graceUrgent 0.8s ease-in-out infinite;
+    border-color: #ff0000;
+    animation: graceFlash 0.8s ease-in-out infinite;
   }
 }
 
-@keyframes iconFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes warningFlash {
-  0%, 100% { 
-    opacity: 1; 
-    filter: drop-shadow(0 0 8px #ff00ff);
+@keyframes scoreFloat {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
   }
-  50% { 
-    opacity: 0.6; 
-    filter: drop-shadow(0 0 15px #ff00ff);
+  100% {
+    opacity: 0;
+    transform: translateY(-30px);
   }
 }
 
-@keyframes progressShine {
-  0% { transform: translateX(-20px); }
-  100% { transform: translateX(100vw); }
-}
-
-@keyframes scoreRocket {
-  0% { 
-    opacity: 1; 
-    transform: translateY(0) scale(1);
-  }
-  100% { 
-    opacity: 0; 
-    transform: translateY(-40px) scale(1.5);
-  }
-}
-
-@keyframes scoreBurst {
+@keyframes scorePulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.05); }
 }
 
-@keyframes graceUrgent {
-  0%, 100% { 
-    box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
-    border-color: #ff00ff;
+@keyframes graceFlash {
+  0%, 100% {
+    border-color: #ff0000;
+    opacity: 1;
   }
-  50% { 
-    box-shadow: 0 0 30px rgba(255, 0, 255, 0.7);
-    border-color: #ff0055;
+  50% {
+    border-color: #ff6600;
+    opacity: 0.8;
   }
 }
 
-// ========== 로딩 화면 ==========
+// Loading Screen
 .terminal-loading-container {
   display: flex;
   flex-direction: column;
@@ -358,53 +190,30 @@
   position: relative;
 
   .loading-spinner {
-    width: 80px;
-    height: 80px;
-    border: 5px solid transparent;
-    border-top: 5px solid #00d9ff;
-    border-right: 5px solid #b537ff;
-    border-bottom: 5px solid #ff00ff;
+    width: 60px;
+    height: 60px;
+    border: 4px solid transparent;
+    border-top: 4px solid #00ff00;
     border-radius: 50%;
-    animation: racingSpin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    box-shadow: 
-      0 0 30px rgba(0, 217, 255, 0.5),
-      inset 0 0 20px rgba(181, 55, 255, 0.3);
-    position: relative;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 50px;
-      height: 50px;
-      border: 3px solid transparent;
-      border-top: 3px solid #ff00ff;
-      border-radius: 50%;
-      animation: racingSpin 0.7s linear infinite reverse;
-    }
+    animation: spin 1s linear infinite;
   }
 
   p {
-    font-size: 1.2rem;
-    color: #00d9ff;
-    letter-spacing: 3px;
-    text-shadow: 0 0 10px #00d9ff;
-    animation: textGlow 2s ease-in-out infinite;
+    font-size: 1.1rem;
+    color: #00ff00;
+    letter-spacing: 2px;
   }
 
   .loading-dots {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
 
     span {
-      width: 12px;
-      height: 12px;
-      background: linear-gradient(135deg, #00d9ff, #b537ff);
+      width: 8px;
+      height: 8px;
+      background: #00ff00;
       border-radius: 50%;
-      animation: dotRace 1.5s ease-in-out infinite;
-      box-shadow: 0 0 15px currentColor;
+      animation: dotBounce 1.4s ease-in-out infinite;
 
       &:nth-child(1) { animation-delay: 0s; }
       &:nth-child(2) { animation-delay: 0.2s; }
@@ -413,177 +222,116 @@
   }
 }
 
-@keyframes racingSpin {
+@keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-@keyframes textGlow {
-  0%, 100% { text-shadow: 0 0 10px #00d9ff; }
-  50% { text-shadow: 0 0 20px #00d9ff, 0 0 30px #b537ff; }
-}
-
-@keyframes dotRace {
-  0%, 80%, 100% { 
-    transform: scale(0.8) translateY(0); 
-    opacity: 0.5; 
+@keyframes dotBounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
   }
-  40% { 
-    transform: scale(1.3) translateY(-10px); 
-    opacity: 1; 
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
   }
 }
 
-// ========== 터미널 출력 ==========
+// Terminal Output
 .terminal-output {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem 2rem;
-  font-size: 1.25rem;
-  line-height: 1.7;
-  background: rgba(0, 0, 0, 0.4);
+  padding: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  background: #0a0a0a;
   position: relative;
   z-index: 5;
 
   &::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(0, 217, 255, 0.05);
-    border-left: 1px solid rgba(0, 217, 255, 0.2);
+    background: #1a1a1a;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #00d9ff, #b537ff);
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+    background: #00ff00;
 
     &:hover {
-      background: linear-gradient(180deg, #00f0ff, #d537ff);
+      background: #00cc00;
     }
   }
 
   .terminal-line {
-    margin-bottom: 0.6rem;
-    animation: lineSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 0.5rem;
+    animation: fadeIn 0.3s ease;
 
     &.command {
       .command-text {
-        color: #00d9ff;
+        color: #ffffff;
         font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        text-shadow: 0 0 5px rgba(0, 217, 255, 0.5);
-
-        .command-icon {
-          color: #b537ff;
-          font-size: 1rem;
-          animation: commandBlink 1.5s ease-in-out infinite;
-        }
       }
     }
 
     &.system {
       .system-text {
-        color: #00d9ff66;
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
+        color: #00ff00;
+        font-size: 0.95rem;
       }
     }
 
     &.prompt {
       .prompt-text {
-        color: #ffeb3b;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        text-shadow: 0 0 10px #ffeb3b;
-        animation: promptPulse 2s ease-in-out infinite;
-
-        .prompt-icon {
-          animation: targetSpin 3s linear infinite;
-          filter: drop-shadow(0 0 5px #ffeb3b);
-        }
+        color: #ffff00;
+        font-weight: 600;
       }
     }
 
     &.score {
       .score-text {
-        color: #ffeb3b;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        animation: scoreZoom 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        text-shadow: 0 0 15px #ffeb3b;
-
-        .score-icon {
-          animation: starBurst 1.2s ease-in-out infinite;
-          filter: drop-shadow(0 0 10px #ffeb3b);
-        }
+        color: #ffff00;
+        font-weight: 700;
       }
     }
 
     &.success {
       .success-text {
-        color: #00ff88;
+        color: #00ff00;
         font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        text-shadow: 0 0 10px #00ff88;
-        animation: successFlash 0.5s ease;
-
-        .success-icon {
-          color: #00ff88;
-          font-weight: 900;
-          animation: checkPop 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
       }
     }
 
     &.error {
       .error-text {
-        color: #ff0055;
+        color: #ff0000;
         font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        text-shadow: 0 0 10px #ff0055;
-        animation: errorShake 0.5s ease;
-
-        .error-icon {
-          color: #ff0055;
-          font-weight: 900;
-        }
       }
     }
 
     &.output {
-      color: #00d9ff99;
+      color: #00ff00;
     }
   }
 
   .loading-indicator {
-    color: #b537ff;
+    color: #00ff00;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
+    gap: 0.5rem;
+    font-weight: 500;
 
     .spinner-dots {
       display: flex;
-      gap: 0.4rem;
+      gap: 0.3rem;
 
       span {
-        width: 8px;
-        height: 8px;
-        background: linear-gradient(135deg, #00d9ff, #b537ff, #ff00ff);
+        width: 6px;
+        height: 6px;
+        background: #00ff00;
         border-radius: 50%;
-        animation: processingDot 1.4s ease-in-out infinite;
-        box-shadow: 0 0 10px currentColor;
+        animation: dotBounce 1.4s ease-in-out infinite;
 
         &:nth-child(1) { animation-delay: 0s; }
         &:nth-child(2) { animation-delay: 0.2s; }
@@ -593,147 +341,63 @@
   }
 }
 
-@keyframes lineSlideIn {
-  from { 
-    opacity: 0; 
-    transform: translateX(-20px);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
   }
-  to { 
-    opacity: 1; 
+  to {
+    opacity: 1;
     transform: translateX(0);
   }
 }
 
-@keyframes commandBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes promptPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
-
-@keyframes targetSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes scoreZoom {
-  0% { transform: scale(0.9); opacity: 0; }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes starBurst {
-  0%, 100% { 
-    transform: scale(1) rotate(0deg); 
-  }
-  50% { 
-    transform: scale(1.3) rotate(180deg); 
-  }
-}
-
-@keyframes successFlash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; transform: scale(1.05); }
-}
-
-@keyframes checkPop {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-@keyframes errorShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-@keyframes processingDot {
-  0%, 80%, 100% { 
-    transform: scale(1) translateY(0); 
-    opacity: 0.4; 
-  }
-  40% { 
-    transform: scale(1.5) translateY(-8px); 
-    opacity: 1; 
-  }
-}
-
-// ========== 입력 영역 ==========
+// Input Area
 .terminal-input-area {
   display: flex;
   gap: 1rem;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, rgba(10, 6, 32, 0.95), rgba(26, 15, 58, 0.95));
-  border-top: 3px solid;
-  border-image: linear-gradient(90deg, #00d9ff, #b537ff, #ff00ff) 1;
+  padding: 1rem 1.5rem;
+  background: #1a1a1a;
+  border-top: 2px solid #00ff00;
   position: relative;
   z-index: 10;
-  box-shadow: 0 -4px 30px rgba(0, 217, 255, 0.2);
 
   .input-wrapper {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    background: rgba(0, 0, 0, 0.6);
-    border: 2px solid rgba(0, 217, 255, 0.3);
-    border-radius: 10px;
-    padding: 0.85rem 1.2rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.1), transparent);
-      transition: left 0.6s ease;
-    }
+    gap: 0.5rem;
+    background: #0a0a0a;
+    border: 1px solid #00ff0040;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
 
     &:focus-within {
-      border-color: #00d9ff;
-      box-shadow: 
-        0 0 20px rgba(0, 217, 255, 0.4),
-        inset 0 0 15px rgba(181, 55, 255, 0.2);
-
-      &::before {
-        left: 100%;
-      }
+      border-color: #00ff00;
     }
 
     .terminal-prompt {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
-      font-weight: 700;
+      gap: 0.2rem;
+      font-weight: 600;
       white-space: nowrap;
-      font-size: 1rem;
+      font-size: 0.95rem;
 
       .prompt-user {
-        color: #00d9ff;
-        text-shadow: 0 0 5px #00d9ff;
+        color: #00ff00;
       }
 
       .prompt-separator {
-        color: #b537ff;
+        color: #00ff00;
       }
 
       .prompt-host {
-        color: #ff00ff;
-        text-shadow: 0 0 5px #ff00ff;
+        color: #00ff00;
       }
 
       .prompt-path {
-        color: #00d9ff;
-        margin-left: 0.25rem;
+        color: #00ff00;
       }
     }
 
@@ -742,14 +406,13 @@
       background: transparent;
       border: none;
       outline: none;
-      color: #00d9ff;
-      font-size: 1rem;
+      color: #ffffff;
+      font-size: 0.95rem;
       font-weight: 500;
-      caret-color: #00d9ff;
-      text-shadow: 0 0 3px rgba(0, 217, 255, 0.5);
+      caret-color: #00ff00;
 
       &::placeholder {
-        color: rgba(0, 217, 255, 0.3);
+        color: rgba(0, 255, 0, 0.3);
         font-style: italic;
       }
 
@@ -761,109 +424,57 @@
   }
 
   .terminal-submit-btn {
-    padding: 0.85rem 2.5rem;
-    background: linear-gradient(135deg, #00d9ff, #b537ff, #ff00ff);
+    padding: 0.75rem 2rem;
+    background: #00ff00;
     border: none;
-    border-radius: 10px;
-    color: #0a0620;
-    font-size: 1rem;
-    font-weight: 800;
+    color: #0a0a0a;
+    font-size: 0.9rem;
+    font-weight: 700;
     letter-spacing: 2px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
-      0 4px 20px rgba(0, 217, 255, 0.4),
-      0 0 30px rgba(181, 55, 255, 0.3);
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
+    gap: 0.5rem;
 
     &:hover:not(:disabled) {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 
-        0 8px 30px rgba(0, 217, 255, 0.6),
-        0 0 50px rgba(181, 55, 255, 0.5);
-
-      &::before {
-        width: 300px;
-        height: 300px;
-      }
+      background: #00cc00;
+      transform: translateY(-2px);
     }
 
     &:active:not(:disabled) {
-      transform: translateY(-1px) scale(1);
+      transform: translateY(0);
     }
 
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      background: linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(181, 55, 255, 0.3));
+      background: #005500;
     }
 
     &.submitting {
-      background: linear-gradient(135deg, #b537ff, #ff00ff);
-      animation: buttonPulse 1.5s ease-in-out infinite;
-      
+      background: #ffff00;
+      color: #0a0a0a;
+
       .btn-spinner {
-        width: 16px;
-        height: 16px;
-        border: 3px solid rgba(10, 6, 32, 0.3);
-        border-top: 3px solid #0a0620;
+        width: 14px;
+        height: 14px;
+        border: 3px solid #0a0a0a;
+        border-top: 3px solid transparent;
         border-radius: 50%;
-        animation: racingSpin 0.7s linear infinite;
+        animation: spin 0.6s linear infinite;
       }
     }
 
     &.completed {
-      background: linear-gradient(135deg, #00ff88, #00d9ff);
-      animation: completePulse 2s ease-in-out infinite;
+      background: #00ff00;
+      color: #0a0a0a;
     }
   }
 }
 
-@keyframes buttonPulse {
-  0%, 100% { 
-    box-shadow: 
-      0 4px 20px rgba(181, 55, 255, 0.4),
-      0 0 30px rgba(255, 0, 255, 0.3);
-  }
-  50% { 
-    box-shadow: 
-      0 6px 30px rgba(181, 55, 255, 0.6),
-      0 0 50px rgba(255, 0, 255, 0.5);
-  }
-}
-
-@keyframes completePulse {
-  0%, 100% { 
-    box-shadow: 
-      0 4px 20px rgba(0, 255, 136, 0.4),
-      0 0 30px rgba(0, 217, 255, 0.3);
-  }
-  50% { 
-    box-shadow: 
-      0 6px 30px rgba(0, 255, 136, 0.6),
-      0 0 50px rgba(0, 217, 255, 0.5);
-  }
-}
-
-// ========== 반응형 ==========
+// Responsive
 @media (max-width: 1024px) {
   .terminal-header {
     flex-direction: column;
@@ -876,50 +487,46 @@
   }
 
   .stat-card {
-    min-width: 120px;
-    padding: 0.6rem 1rem;
+    min-width: 110px;
+    padding: 0.6rem 0.85rem;
   }
 }
 
 @media (max-width: 768px) {
   .terminal-race-container {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .terminal-header {
-    padding: 1rem;
+    padding: 0.85rem 1rem;
 
     .terminal-title h2 {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       letter-spacing: 2px;
     }
   }
 
   .terminal-output {
     padding: 1rem;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .terminal-input-area {
-    padding: 1rem;
+    padding: 0.85rem 1rem;
     flex-direction: column;
 
     .terminal-submit-btn {
       width: 100%;
-      padding: 1rem;
+      padding: 0.85rem;
     }
   }
 
   .stat-card {
-    min-width: 100px;
-    padding: 0.5rem 0.8rem;
-
-    .stat-icon {
-      font-size: 1.4rem;
-    }
+    min-width: 95px;
+    padding: 0.5rem 0.75rem;
 
     .stat-content .stat-value {
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
   }
 }
@@ -933,7 +540,7 @@
   }
 
   .stat-card {
-    min-width: 90px;
-    font-size: 0.8rem;
+    min-width: 85px;
+    font-size: 0.85rem;
   }
 }

@@ -6,12 +6,10 @@ import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaRoomPage.scss';
 
-const MAX_PLAYERS = 8;
-
 type ChatMessage = {
-  type: 'chat' | 'system' | 'notification'; 
+  type: 'chat' | 'system' | 'notification';
   senderId?: string;
-  senderName: string; 
+  senderName: string;
   message: string;
   timestamp: string;
 };
@@ -36,28 +34,29 @@ const ArenaRoomPage: React.FC = () => {
   const chatMessagesEndRef = useRef<null | HTMLDivElement>(null);
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const [maxPlayers, setMaxPlayers] = useState<number>(8);
   const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
 
   // Mode/Difficulty 헬퍼
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
-      'TERMINAL_HACKING_RACE': '⚡ Terminal Race',
-      'VULNERABILITY_SCANNER_RACE': '🔍 Vulnerability Scanner Race',  // ✅ 추가
-      'KING_OF_THE_HILL': '👑 King of the Hill',
-      'FORENSICS_RUSH': '🔎 Forensics Rush',
-      'SOCIAL_ENGINEERING_CHALLENGE': '💬 Social Engineering'
+      'TERMINAL_HACKING_RACE': 'Terminal Race',
+      'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',
+      'KING_OF_THE_HILL': 'King of the Hill',
+      'FORENSICS_RUSH': 'Forensics Rush',
+      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'
     };
     return names[mode] || mode;
   };
 
   const getDifficultyInfo = (diff: string) => {
-    const info: Record<string, { emoji: string; color: string }> = {
-      'EASY': { emoji: '🟢', color: '#4ade80' },
-      'MEDIUM': { emoji: '🟡', color: '#fbbf24' },
-      'HARD': { emoji: '🔴', color: '#f87171' },
-      'EXPERT': { emoji: '💀', color: '#a855f7' }
+    const info: Record<string, { color: string }> = {
+      'EASY': { color: '#4ade80' },
+      'MEDIUM': { color: '#fbbf24' },
+      'HARD': { color: '#f87171' },
+      'EXPERT': { color: '#a855f7' }
     };
-    return info[diff] || { emoji: '⚪', color: '#999' };
+    return info[diff] || { color: '#999' };
   };
 
   // 본인 정보
@@ -66,14 +65,14 @@ const ArenaRoomPage: React.FC = () => {
     [activeParticipants, currentUserId]
   );
   
-  // 8개의 슬롯을 만들고, 활성 참가자로 채워넣는 로직
+  // 슬롯을 만들고, 활성 참가자로 채워넣는 로직
   const displaySlots = useMemo(() => {
-    const slots = new Array(MAX_PLAYERS).fill(null);
-    activeParticipants.slice(0, MAX_PLAYERS).forEach((p, index) => {
+    const slots = new Array(maxPlayers).fill(null);
+    activeParticipants.slice(0, maxPlayers).forEach((p, index) => {
       slots[index] = p;
     });
     return slots;
-  }, [activeParticipants]);
+  }, [activeParticipants, maxPlayers]);
 
   // 호스트 판별
   useEffect(() => {
@@ -151,6 +150,7 @@ const ArenaRoomPage: React.FC = () => {
         setStatus(data?.status || 'waiting');
         setMode(data?.mode || '');
         setDifficulty(data?.difficulty || '');
+        setMaxPlayers(data?.maxParticipants || 8);
         setLoading(false);
       } catch (error) {
         console.error('❌ Error loading arena data:', error);
@@ -176,7 +176,7 @@ const ArenaRoomPage: React.FC = () => {
 
     socket.on('arena:update', payload => {
       if (payload.arenaId !== arenaId) return;
-      
+
       setStatus(payload.status || 'waiting');
       setHostId(payload.host || null);
       setParticipants(payload.participants || []);
@@ -185,6 +185,7 @@ const ArenaRoomPage: React.FC = () => {
       }
       if (payload.mode) setMode(payload.mode);
       if (payload.difficulty) setDifficulty(payload.difficulty);
+      if (payload.maxParticipants) setMaxPlayers(payload.maxParticipants);
     });
 
     socket.on('arena:start', ({ arenaId: startedId }) => {
@@ -292,16 +293,19 @@ const ArenaRoomPage: React.FC = () => {
               <div className="arena-metadata">
                 <span className="mode-badge">{getModeName(mode)}</span>
                 {difficulty && (
-                  <span 
-                    className="difficulty-badge" 
-                    style={{ 
+                  <span
+                    className="difficulty-badge"
+                    style={{
                       color: diffInfo.color,
-                      borderColor: diffInfo.color 
+                      borderColor: diffInfo.color
                     }}
                   >
-                    {diffInfo.emoji} {difficulty}
+                    {difficulty}
                   </span>
                 )}
+                <span className="participant-count-badge">
+                  {activeParticipants.length} / {maxPlayers} PLAYERS
+                </span>
               </div>
             )}
           </div>

@@ -260,11 +260,13 @@ export const getArenaHistory = async (req: Request, res: Response): Promise<void
             username: (p.user as any)?.username || 'Unknown',
             score: p.score || 0,
             rank: index + 1,
-            completed: p.completed || false
+            completed: p.completed || false,
+            expEarned: p.expEarned || 0  // ✨ 경험치 추가
           })),
           myRank,
           myScore: progress.score || 0,
-          myCompleted: progress.completed || false
+          myCompleted: progress.completed || false,
+          myExpEarned: progress.expEarned || 0  // ✨ 내 경험치 추가
         };
       })
     );
@@ -319,7 +321,8 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
         submittedAt: progress.submittedAt || null,
         isCompleted: progress.completed || false,
         rank: 0, // 나중에 계산
-        score: progress.score || 0
+        score: progress.score || 0,
+        expEarned: progress.expEarned || 0  // ✨ 경험치 추가
       };
 
       // ✅ 게임 모드별 추가 데이터

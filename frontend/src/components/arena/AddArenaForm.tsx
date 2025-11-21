@@ -4,48 +4,43 @@ import { createArena } from '../../api/axiosArena';
 import '../../assets/scss/arena/AddArenaForm.scss'; 
 
 const modes = [
-  { 
-    id: 'TERMINAL_HACKING_RACE', 
-    icon: '⚡', 
-    title: 'Terminal Hacking Race', 
-    desc: '터미널 명령어로 가장 빠르게 해킹!',
+  {
+    id: 'TERMINAL_HACKING_RACE',
+    title: 'Terminal Race',
+    desc: '터미널 명령어로 가장 빠르게 해킹',
     players: '2-8명'
   },
-  { 
-    id: 'VULNERABILITY_SCANNER_RACE',  // ✅ 추가
-    icon: '🔍', 
-    title: 'Vulnerability Scanner Race', 
-    desc: '웹 애플리케이션의 취약점을 찾아내라!',
+  {
+    id: 'VULNERABILITY_SCANNER_RACE',
+    title: 'Vulnerability Scanner Race',
+    desc: '웹 애플리케이션의 취약점을 찾아내라',
     players: '2명'
   },
-  { 
-    id: 'KING_OF_THE_HILL', 
-    icon: '👑', 
-    title: 'King of the Hill', 
-    desc: '서버를 점령하고 왕좌를 지켜라!',
+  {
+    id: 'KING_OF_THE_HILL',
+    title: 'King of the Hill',
+    desc: '서버를 점령하고 왕좌를 지켜라',
     players: '2-8명'
   },
-  { 
-    id: 'FORENSICS_RUSH', 
-    icon: '🔎',  // 🔍에서 🔎으로 변경 (구분)
-    title: 'Forensics Rush', 
-    desc: '증거를 분석하고 범인을 찾아내라!',
+  {
+    id: 'FORENSICS_RUSH',
+    title: 'Forensics Rush',
+    desc: '증거를 분석하고 범인을 찾아내라',
     players: '2-8명'
   },
-  { 
-    id: 'SOCIAL_ENGINEERING_CHALLENGE', 
-    icon: '💬', 
-    title: 'Social Engineering', 
-    desc: 'AI를 속여 정보를 빼내는 심리전!',
+  {
+    id: 'SOCIAL_ENGINEERING_CHALLENGE',
+    title: 'Social Engineering',
+    desc: 'AI를 속여 정보를 빼내는 심리전',
     players: '1-4명'
   },
 ];
 
 const difficulties = [
-  { id: 'EASY', icon: '🟢', title: 'Easy' },
-  { id: 'MEDIUM', icon: '🟡', title: 'Medium'},
-  { id: 'HARD', icon: '🔴', title: 'Hard' },
-  { id: 'EXPERT', icon: '💀', title: 'Expert'},
+  { id: 'EASY', title: 'Easy' },
+  { id: 'MEDIUM', title: 'Medium'},
+  { id: 'HARD', title: 'Hard' },
+  { id: 'EXPERT', title: 'Expert'},
 ];
 
 const AddArenaForm: React.FC = () => {
@@ -128,8 +123,7 @@ const AddArenaForm: React.FC = () => {
 
   return (
     <div className="arena-create-container">
-      <div className="crt-overlay"></div>
-      <h1 className="glitch-title" data-text="CREATE ARENA">CREATE ARENA</h1>
+      <h1>CREATE ARENA</h1>
 
       <form className="arena-grid-layout" onSubmit={handleSubmit}>
         
@@ -187,7 +181,6 @@ const AddArenaForm: React.FC = () => {
                   className={`mode-row ${formData.mode === mode.id ? 'selected' : ''}`}
                   onClick={() => handleModeSelect(mode.id)}
                 >
-                  <div className="mode-icon">{mode.icon}</div>
                   <div className="mode-info">
                     <div className="mode-title">{mode.title}</div>
                     <div className="mode-desc">{mode.desc}</div>
@@ -210,7 +203,6 @@ const AddArenaForm: React.FC = () => {
                   className={`difficulty-card ${formData.difficulty === diff.id ? 'selected' : ''}`}
                   onClick={() => handleDifficultySelect(diff.id)}
                 >
-                  <div className="difficulty-icon">{diff.icon}</div>
                   <div className="difficulty-title">{diff.title}</div>
                 </div>
               ))}
