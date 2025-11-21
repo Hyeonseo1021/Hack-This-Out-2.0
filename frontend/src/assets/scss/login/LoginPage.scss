@@ -9,11 +9,32 @@
   background-position: center;
   transition: transform 0.4s ease, filter 0.4s ease;
   z-index: 1;
+  background-color: #000; /* 🔥 검은 배경 고정 */
 
   &.scaled {
     transform: scale(0.85);
     filter: brightness(0.7) contrast(1.2);
   }
+}
+
+/* 🔥 glitch 스타일 */
+.glitch {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: #000000; /* 🔥 완전 블랙 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: normal;
+  filter: contrast(1.3) brightness(0.95);
+  transition:
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.3s ease-in-out;
+  isolation: isolate;
+  z-index: 2; /* 🔥 RGB/노이즈보다 위 */
 }
 
 /* RGB 채널 */
@@ -25,6 +46,7 @@
   pointer-events: none;
   background-size: cover;
   background-position: center;
+  z-index: 3;
 
   &.r { background-color: rgba(255,0,0,0.25); transform: translate(2px,-1px); }
   &.g { background-color: rgba(0,255,0,0.25); transform: translate(-2px,1px); }
@@ -41,6 +63,7 @@
   opacity: 0.03;
   pointer-events: none;
   animation: noise 0.1s steps(10) infinite;
+  z-index: 4;
 }
 
 @keyframes noise {

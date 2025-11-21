@@ -25,7 +25,14 @@ const LoginPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // 🔥 MainPage 루프 그대로
-  const noiseFrames = [screennoise, screennoise1, screennoise2, screennoise3, screennoise4];
+  const noiseFrames = [
+    screennoise,
+    screennoise1,
+    screennoise2,
+    screennoise3,
+    screennoise4
+  ];
+
   const [currentImage, setCurrentImage] = useState(fullscreenBlack);
   const [glitchIntensity, setGlitchIntensity] = useState(0);
   const [isFirstPhase, setIsFirstPhase] = useState(true);
@@ -34,12 +41,28 @@ const LoginPage: React.FC = () => {
     if (!isLoading && isLoggedIn) navigate('/');
   }, [isLoggedIn, isLoading]);
 
+
   useEffect(() => {
+    let noiseInterval: NodeJS.Timeout | null = null;
+    let mainTimer: NodeJS.Timeout | null = null;
     let index = 0;
-    let mainTimer: NodeJS.Timeout;
-    let noiseInterval: NodeJS.Timeout;
+
+    const intervalMs = 150;     // 🔥 지직지직 속도
+    const noiseDuration = 1500; // 🔥 노이즈 유지 시간
 
     const loop = () => {
+
+      // 🔥 loop 시작 시 기존 interval/timeout 완전 정리
+      if (noiseInterval) {
+        clearInterval(noiseInterval);
+        noiseInterval = null;
+      }
+      if (mainTimer) {
+        clearTimeout(mainTimer);
+        mainTimer = null;
+      }
+
+      // 🔥 첫 페이즈 (검정 → fullscreen)
       if (isFirstPhase) {
         setCurrentImage(fullscreenBlack);
 
@@ -47,38 +70,46 @@ const LoginPage: React.FC = () => {
 
         mainTimer = setTimeout(() => {
           setIsFirstPhase(false);
-          loop();
+          loop(); // 재귀 호출
         }, 1000);
 
         return;
       }
 
+      // 🔥 기본 fullscreen 노출
       setCurrentImage(fullscreen);
 
       mainTimer = setTimeout(() => {
+
+        // 🔥 노이즈 프레임 시작
         noiseInterval = setInterval(() => {
           setCurrentImage(noiseFrames[index % noiseFrames.length]);
           setGlitchIntensity(Math.random() * 0.8 + 0.3);
           index++;
-        }, 120);
+        }, intervalMs);
 
+        // 🔥 노이즈 유지 후 다시 fullscreen
         setTimeout(() => {
-          clearInterval(noiseInterval);
+          if (noiseInterval) clearInterval(noiseInterval);
+          noiseInterval = null;
+
           setCurrentImage(fullscreen);
           setGlitchIntensity(0);
 
-          setTimeout(loop, 1200);
-        }, 1200);
+          mainTimer = setTimeout(loop, 1200); // 반복
+        }, noiseDuration);
+
       }, 800);
     };
 
     loop();
 
     return () => {
-      clearInterval(noiseInterval);
-      clearTimeout(mainTimer);
+      if (noiseInterval) clearInterval(noiseInterval);
+      if (mainTimer) clearTimeout(mainTimer);
     };
   }, []);
+
 
   // 🔥 배경 스타일
   const style = {
@@ -96,12 +127,12 @@ const LoginPage: React.FC = () => {
         style={style}
         onClick={() => setShowLoginModal(true)}
       >
-        {/* 🔥 RGB 채널 (넣어달라고 한 부분) */}
+        {/* 🔥 RGB 채널 */}
         <div className="channel r" style={{ opacity: 0.3 + glitchIntensity * 0.5 }} />
         <div className="channel g" style={{ opacity: 0.3 + glitchIntensity * 0.5 }} />
         <div className="channel b" style={{ opacity: 0.3 + glitchIntensity * 0.5 }} />
 
-        {/* 🔥 노이즈 오버레이 */}
+        {/* 🔥 노이즈 */}
         <div className="noise" style={{ opacity: 0.25 + glitchIntensity * 0.5 }} />
       </div>
 
