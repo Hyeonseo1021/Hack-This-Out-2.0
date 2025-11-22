@@ -11,7 +11,6 @@ import AdminLayout from './components/admin/AdminLayout';
 import MachineCompleteModal from './components/modal/MachineCompleteModal';
 import ContestCompleteModal from './components/modal/ContestCompleteMD';
 import { PlayProvider } from './contexts/PlayContext';
-import ScenariosPage from './pages/admin/ScenariosManagement';
 
 // Lazy-loaded components
 const LoginPage = lazy(() => import('./pages/public/LoginPage'));
@@ -33,10 +32,10 @@ const UsersManagement = lazy(() => import('./pages/admin/UsersManagement'));
 const MachinesManagement = lazy(() => import('./pages/admin/MachinesManagement'));
 const ContestsManagement = lazy(() => import('./pages/admin/ContestsManagement'));
 const InstancesManagement = lazy(() => import('./pages/admin/InstancesManagement'));
-const ArenaScenariosManagement = lazy(() => import('./pages/admin/ScenariosManagement'));
 const TutorialPage = lazy(() => import('./pages/TutorialPage'));
 const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const ManualPage = lazy(() => import('./pages/ManualPage'));
+const MachinePracticePage = lazy(() => import('./pages/arena/MachinePracticePage'));
 const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
 const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
@@ -92,6 +91,15 @@ const routes: RouteObject[] = [
           </ProtectedRoute>
         ),
       },
+      {
+        path: 'machinep',
+        element: (
+        <ProtectedRoute>
+            <MachinePracticePage />
+          </ProtectedRoute>
+        ),
+      },
+    
       {
         path: 'Manual',
         element: (
@@ -365,18 +373,6 @@ const routes: RouteObject[] = [
                 <div className="admin-dashboard">
                   <div className="admin-content">
                     <ItemManagement />
-                  </div>
-                </div>
-              </AdminProtectedRoute>
-            ),
-          },
-          {
-            path: 'scenarios',
-            element: (
-              <AdminProtectedRoute>
-                <div className="admin-dashboard">
-                  <div className="admin-content">
-                    <ScenariosPage />
                   </div>
                 </div>
               </AdminProtectedRoute>
