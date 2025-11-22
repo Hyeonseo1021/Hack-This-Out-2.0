@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import '../../assets/scss/login/LoginPage.scss';
 
 import LoginForm from '../../components/login/LoginForm';
+import RegisterForm from '../../components/login/RegisterForm';
 import Modal from '../../components/modal/Modal';
 
 import { AuthUserContext } from '../../contexts/AuthUserContext';

@@ -1,0 +1,232 @@
+/* ================================
+   MACHINE PRACTICE PAGE — ARENA UI
+================================ */
+
+/* 전체 레이아웃 컨테이너 */
+.arena-page-wrapper {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ================================
+   블루프린트 전체 컨테이너 (세로 꽉 채움)
+================================ */
+.blueprint-container {
+  display: flex;
+  flex-direction: row; /* ← 좌측 LIST / 우측 CREATE */
+  height: calc(100vh - 100px);
+  width: 95%;
+  margin: 0 auto;
+  gap: 32px;
+  padding: 32px;
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: 'Orbitron', sans-serif;
+  border-radius: 12px;
+  z-index: 100; /* overlay 아래에 가리지 않도록 */
+
+  /* 배경 그리드 */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 225, 255, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.07) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.06;
+    animation: grid-pan 10s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+/* ================================
+   스캔라인
+================================ */
+.blueprint-container__scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(0, 246, 255, 0.8), transparent);
+  animation: scanline 8s linear infinite;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+/* ================================
+   왼쪽 패널 (ARENA LIST)
+================================ */
+.blueprint-panel--list {
+  flex: 3;
+  background: rgba(0, 5, 15, 0.7);
+  border: 2px solid rgba(0, 246, 255, 0.25);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  z-index: 2;
+}
+
+.blueprint-panel__header {
+  padding: 1rem 1.5rem;
+  border-bottom: 2px solid rgba(0, 246, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.blueprint-panel__title {
+  color: #00f6ff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(0, 246, 255, 0.6);
+}
+
+.blueprint-panel__body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* ================================
+   오른쪽 패널 (CREATE ROOM)
+================================ */
+.blueprint-panel--create {
+  flex: 1;
+  background: rgba(0, 5, 15, 0.7);
+  border: 2px solid rgba(0, 246, 255, 0.25);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  z-index: 2;
+}
+
+.blueprint-panel__subtext {
+  margin-top: 1.4rem;
+  color: rgba(234, 250, 255, 0.7);
+}
+
+/* ================================
+   CREATE ROOM 버튼
+================================ */
+.blueprint-button {
+  margin-top: 0;
+  padding: 1rem 3rem;
+  font-size: 1.3rem;
+  border: 2px solid #00f6ff;
+  background: transparent;
+  color: #00f6ff;
+  text-transform: uppercase;
+  border-radius: 6px;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.blueprint-button:hover {
+  background: rgba(0, 246, 255, 0.15);
+  box-shadow: 0 0 25px rgba(0, 246, 255, 0.6);
+}
+
+/* ================================
+   DIM OVERLAY
+================================ */
+.dim-overlay {
+  position: fixed;
+  inset: 0;
+
+  /* 🔥 두 번째 사진처럼 — 배경이 충분히 보이도록 */
+  background: rgba(0, 0, 0, 0.22); /* ← 완벽한 투명도 */
+  backdrop-filter: blur(8px);      /* 부드러운 흐림 */
+
+  z-index: 50; /* overlay가 UI보다 뒤로 */
+  pointer-events: none;
+}
+
+/* ================================
+   ANNOTATION
+================================ */
+.annotation {
+  position: absolute;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.annotation-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #6bf2ff;
+  color: #000;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(107,242,255,0.9);
+  margin-bottom: 6px;
+}
+
+.annotation__label {
+  background: rgba(0,0,0,0.7);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #eafaff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ================================
+   ARENA LIST ROW
+================================ */
+.arena-list__row {
+  display: grid;
+  grid-template-columns: 0.5fr 2fr 1fr 1fr;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 2px solid rgba(0, 246, 255, 0.15);
+  color: #eafaff;
+  cursor: pointer;
+}
+
+.arena-list__message {
+  text-align: center;
+  margin-top: 5rem;
+  color: rgba(234,250,255,0.7);
+}
+
+/* 상태 뱃지 */
+.status-badge {
+  padding: 0.3em 0.7em;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border: 1px solid;
+}
+
+.status-badge--waiting {
+  background-color: rgba(0, 255, 174, 0.1);
+  color: #00ffae;
+  border-color: rgba(0,255,174,0.4);
+}
+
+.status-badge--started,
+.status-badge--ended {
+  background-color: rgba(255, 138, 128, 0.1);
+  color: #ff8a80;
+  border-color: rgba(255,138,128,0.4);
+}
