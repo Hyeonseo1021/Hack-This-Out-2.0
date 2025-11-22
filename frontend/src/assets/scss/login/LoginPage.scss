@@ -1,3 +1,4 @@
+/* === 로그인 전체 배경 (fullscreen) === */
 .background-image {
   position: fixed;
   inset: 0;
@@ -9,7 +10,7 @@
   background-position: center;
   transition: transform 0.4s ease, filter 0.4s ease;
   z-index: 1;
-  background-color: #000; /* 🔥 검은 배경 고정 */
+  background-color: #000;
 
   &.scaled {
     transform: scale(0.85);
@@ -17,13 +18,13 @@
   }
 }
 
-/* 🔥 glitch 스타일 */
+/* === glitch Container === */
 .glitch {
   position: fixed;
   inset: 0;
   overflow: hidden;
   cursor: pointer;
-  background-color: #000000; /* 🔥 완전 블랙 */
+  background-color: #000000;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -34,18 +35,18 @@
     transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     filter 0.3s ease-in-out;
   isolation: isolate;
-  z-index: 2; /* 🔥 RGB/노이즈보다 위 */
+  z-index: 2;
 }
 
-/* RGB 채널 */
+/* === RGB 분리 채널 === */
 .channel {
   position: absolute;
   inset: -5%;
+  background-size: cover;
+  background-position: center;
   mix-blend-mode: screen;
   opacity: 0;
   pointer-events: none;
-  background-size: cover;
-  background-position: center;
   z-index: 3;
 
   &.r { background-color: rgba(255,0,0,0.25); transform: translate(2px,-1px); }
@@ -53,7 +54,7 @@
   &.b { background-color: rgba(0,0,255,0.25); transform: translate(1px,-2px); }
 }
 
-/* 노이즈 overlay */
+/* === 움직이는 CRT 노이즈 레이어 === */
 .noise {
   position: absolute;
   inset: 0;
@@ -73,4 +74,10 @@
   60% { transform: translate(-6px, -2px); }
   80% { transform: translate(10px, 5px); }
   100% { transform: translate(0, 0); }
+}
+
+/* === 로그인 모달이 화면 위로 올라오게 === */
+.login-root {
+  position: relative;
+  z-index: 10; /* 모달이 glitch 위로 */
 }
