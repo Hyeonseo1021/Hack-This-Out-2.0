@@ -91,26 +91,31 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
       // ✅ 모든 문제 완료 처리
       if (result.allCompleted) {
         console.log(`✅ User ${userId} completed all questions`);
-        
+
         // ✅ completionTime 계산 (게임 시작부터 완료까지의 초 단위 시간)
         const arenaDoc = arena as any;
         const startTime = arenaDoc.startTime ? new Date(arenaDoc.startTime).getTime() : Date.now();
         const completedTime = Date.now();
         const completionTimeSeconds = Math.floor((completedTime - startTime) / 1000);
-        
+
         console.log(`   📊 Completion time: ${completionTimeSeconds} seconds`);
-        
-        // ✅ ArenaProgress 업데이트 (completed, completedAt, completionTime 모두 설정)
-        await ArenaProgress.findOneAndUpdate(
+
+        // ✅ ArenaProgress 업데이트 (completed, completedAt, completionTime, submittedAt 모두 설정)
+        const submittedAt = new Date();
+        const updatedProgress = await ArenaProgress.findOneAndUpdate(
           { arena: arenaId, user: userId },
-          { 
-            $set: { 
-              completed: true, 
-              completedAt: new Date(),
-              completionTime: completionTimeSeconds // ✅ 추가!
-            } 
-          }
+          {
+            $set: {
+              completed: true,
+              completedAt: submittedAt,
+              submittedAt: submittedAt, // ✅ 추가! (경험치 계산에 필요)
+              completionTime: completionTimeSeconds
+            }
+          },
+          { new: true }
         );
+
+        console.log(`   ✅ Progress updated - completed: ${updatedProgress?.completed}`);
 
         // ✅ 첫 번째 완료자 처리
         if (!arena.winner) {
@@ -158,43 +163,21 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
           // ✅ 유예 시간 종료 타이머
           const endTimer = setTimeout(async () => {
             console.log(`⏰ Grace period ended for arena ${arenaId}`);
-            
+
             // 타이머 정리
             gracePeriodTimers.delete(arenaId);
             if (gracePeriodIntervals.has(arenaId)) {
               clearInterval(gracePeriodIntervals.get(arenaId)!);
               gracePeriodIntervals.delete(arenaId);
             }
-            
+
             cancelScheduledEnd(arenaId);
-            
+
             try {
-              // ✅ Arena 강제 종료 처리
-              const arena = await Arena.findById(arenaId);
-              if (arena && arena.status !== 'ended') {
-                arena.status = 'ended';
-                arena.endTime = new Date();
-                await arena.save();
-                console.log('✅ [ForensicsRush] Arena status set to ended');
-              }
-              
-              // ✅ 게임 종료 알림
-              io.to(arenaId).emit('arena:ended', {
-                arenaId,
-                message: 'Grace period has ended. Game over!',
-                reason: 'grace_period_expired'
-              });
-              
-              console.log('📤 [ForensicsRush] Sent arena:ended event');
-              
-              // ✅ 결과 페이지로 리디렉션
-              setTimeout(() => {
-                io.to(arenaId).emit('arena:redirect-to-results', {
-                  redirectUrl: `/arena/result/${arenaId}`
-                });
-                console.log('📤 [ForensicsRush] Sent arena:redirect-to-results event');
-              }, 1000);
-              
+              // ✅ endArenaProcedure 호출하여 경험치 계산 및 게임 종료
+              await endArenaProcedure(arenaId, io);
+              console.log('✅ [ForensicsRush] Arena ended with EXP calculation');
+
             } catch (error) {
               console.error('❌ [ForensicsRush] Error ending arena:', error);
             }
@@ -504,21 +487,38 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
 // ✅ 모든 참가자 완료 체크
 async function checkAllParticipantsCompleted(arenaId: string, io: Server) {
   try {
+    console.log(`\n🔍 [checkAllParticipantsCompleted] Checking arena ${arenaId}`);
+
     const arena = await Arena.findById(arenaId);
-    if (!arena) return;
+    if (!arena) {
+      console.log(`   ❌ Arena not found`);
+      return;
+    }
 
     const totalParticipants = arena.participants?.length || 0;
-    if (totalParticipants === 0) return;
+    if (totalParticipants === 0) {
+      console.log(`   ⚠️ No participants in arena`);
+      return;
+    }
+
+    console.log(`   📋 Total participants: ${totalParticipants}`);
+
+    // 모든 ArenaProgress 문서 조회하여 확인
+    const allProgress = await ArenaProgress.find({ arena: arenaId }).lean();
+    console.log(`   📄 Found ${allProgress.length} progress documents`);
+    allProgress.forEach((p: any) => {
+      console.log(`      - User ${p.user}: completed=${p.completed}, score=${p.score}`);
+    });
 
     const completedCount = await ArenaProgress.countDocuments({
       arena: arenaId,
       completed: true
     });
 
-    console.log(`📊 Completion check: ${completedCount}/${totalParticipants} participants completed`);
+    console.log(`   📊 Completion check: ${completedCount}/${totalParticipants} participants completed`);
 
     if (completedCount >= totalParticipants) {
-      console.log(`🎯 All participants completed! Ending arena immediately.`);
+      console.log(`   🎯 All participants completed! Ending arena immediately.`);
       
       // 타이머 정리
       if (gracePeriodTimers.has(arenaId)) {
@@ -535,36 +535,15 @@ async function checkAllParticipantsCompleted(arenaId: string, io: Server) {
       cancelScheduledEnd(arenaId);
 
       try {
-        // ✅ Arena 강제 종료 처리
-        if (arena.status !== 'ended') {
-          arena.status = 'ended';
-          arena.endTime = new Date();
-          await arena.save();
-          console.log('✅ [ForensicsRush] Arena status set to ended');
-        }
-
         // ✅ 모든 참가자 완료 알림
         io.to(arenaId).emit('forensics:all-completed', {
           message: 'All participants have completed! Ending game now...'
         });
 
-        // ✅ 게임 종료 알림
-        io.to(arenaId).emit('arena:ended', {
-          arenaId,
-          message: 'All participants completed. Game over!',
-          reason: 'all_completed'
-        });
+        // ✅ endArenaProcedure 호출하여 경험치 계산 및 게임 종료
+        await endArenaProcedure(arenaId, io);
+        console.log('✅ [ForensicsRush] Arena ended with EXP calculation (all completed)');
 
-        console.log('📤 [ForensicsRush] Sent arena:ended event');
-
-        // ✅ 결과 페이지로 리디렉션
-        setTimeout(() => {
-          io.to(arenaId).emit('arena:redirect-to-results', {
-            redirectUrl: `/arena/result/${arenaId}`
-          });
-          console.log('📤 [ForensicsRush] Sent arena:redirect-to-results event');
-        }, 1000);
-        
       } catch (error) {
         console.error('❌ [ForensicsRush] Error ending arena:', error);
       }
@@ -584,5 +563,52 @@ export const clearGracePeriodTimer = (arenaId: string) => {
     clearInterval(gracePeriodIntervals.get(arenaId)!);
     gracePeriodIntervals.delete(arenaId);
     console.log(`🧹 Cleared grace period interval for arena ${arenaId}`);
+  }
+};
+
+// ✅ Forensics Rush 초기화 함수
+export const initializeForensicsRush = async (arenaId: string) => {
+  try {
+    console.log(`🎯 [initializeForensicsRush] Initializing arena ${arenaId}`);
+
+    const arena = await Arena.findById(arenaId).populate('participants.user');
+    if (!arena) {
+      console.error(`❌ [initializeForensicsRush] Arena ${arenaId} not found`);
+      return;
+    }
+
+    // 모든 참가자에 대해 ArenaProgress 생성
+    for (const participant of arena.participants) {
+      const userId = String((participant.user as any)?._id ?? participant.user);
+
+      // ArenaProgress가 없으면 생성
+      const existingProgress = await ArenaProgress.findOne({
+        arena: arenaId,
+        user: userId
+      });
+
+      if (!existingProgress) {
+        await ArenaProgress.create({
+          arena: arenaId,
+          user: userId,
+          mode: 'forensics-rush',
+          completed: false,
+          forensicsRush: {
+            score: 0,
+            questionsAnswered: 0,
+            questionsCorrect: 0,
+            totalAttempts: 0,
+            penalties: 0,
+            answers: []
+          }
+        });
+        console.log(`✅ [initializeForensicsRush] Created progress for user ${userId}`);
+      }
+    }
+
+    console.log(`✅ [initializeForensicsRush] Arena ${arenaId} initialized successfully`);
+  } catch (error) {
+    console.error(`❌ [initializeForensicsRush] Error:`, error);
+    throw error;
   }
 };

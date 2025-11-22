@@ -50,7 +50,7 @@ export const sendArenaVpnIp = async (arenaId: string, vpnIp: string) => {
 
 export const getArenaResult = async (arenaId: string) => {
   try {
-    const res = await axiosInstance.get(`/arena//result/${arenaId}`);
+    const res = await axiosInstance.get(`/arena/result/${arenaId}`);
     return res.data;
   } catch (error: any) {
     throw error?.response?.data || new Error('Failed to fetch arena results');

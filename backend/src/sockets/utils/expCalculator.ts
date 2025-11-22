@@ -29,12 +29,14 @@ interface ExpCalculationParams {
     score: number;
     gameMode: GameMode;
     totalPlayers: number;
+    completionTime?: number; // 완료 시간 (초 단위)
 }
 
 interface ExpCalculationResult {
     baseExp: number;
     rankBonus: number;
     scoreBonus: number;
+    timeBonus: number;
     gameModeMultiplier: number;
     totalExp: number;
 }
@@ -50,11 +52,11 @@ const GAME_MODE_MULTIPLIERS: Record<GameMode, number> = {
 
 // Base experience by rank (reduced for balance)
 const RANK_BASE_EXP: Record<number, number> = {
-    1: 50,  // 1등
-    2: 35,  // 2등
-    3: 25,  // 3등
-    4: 18,  // 4등
-    5: 12   // 5등
+    1: 20,  // 1등 (30 → 20)
+    2: 15,  // 2등 (20 → 15)
+    3: 12,  // 3등 (15 → 12)
+    4: 8,   // 4등 (10 → 8)
+    5: 6    // 5등 (8 → 6)
 };
 
 /**
@@ -63,34 +65,60 @@ const RANK_BASE_EXP: Record<number, number> = {
  * @returns Experience calculation result
  */
 export function calculateArenaExp(params: ExpCalculationParams): ExpCalculationResult {
-    const { rank, score, gameMode, totalPlayers } = params;
+    const { rank, score, gameMode, totalPlayers, completionTime } = params;
 
-    // 1. Base experience by rank
-    const baseExp = RANK_BASE_EXP[rank] || (totalPlayers > 5 ? 10 : 8);
-
-    // 2. Rank bonus (1st: +30%, 2nd: +20%, 3rd: +10%)
-    let rankBonus = 0;
-    if (rank === 1) {
-        rankBonus = baseExp * 0.3;
-    } else if (rank === 2) {
-        rankBonus = baseExp * 0.2;
-    } else if (rank === 3) {
-        rankBonus = baseExp * 0.1;
+    // ✅ If score is 0, no EXP is awarded
+    if (score === 0) {
+        return {
+            baseExp: 0,
+            rankBonus: 0,
+            scoreBonus: 0,
+            timeBonus: 0,
+            gameModeMultiplier: GAME_MODE_MULTIPLIERS[gameMode] || 1.0,
+            totalExp: 0
+        };
     }
 
-    // 3. Score bonus (5% of score, reduced from 10%)
-    const scoreBonus = Math.floor(score * 0.05);
+    // 1. Base experience by rank
+    const baseExp = RANK_BASE_EXP[rank] || (totalPlayers > 5 ? 6 : 5);
 
-    // 4. Game mode multiplier
+    // 2. Rank bonus (1st: +25%, 2nd: +15%, 3rd: +8%)
+    let rankBonus = 0;
+    if (rank === 1) {
+        rankBonus = baseExp * 0.25;
+    } else if (rank === 2) {
+        rankBonus = baseExp * 0.15;
+    } else if (rank === 3) {
+        rankBonus = baseExp * 0.08;
+    }
+
+    // 3. Score bonus (1.5% of score, reduced from 2%)
+    const scoreBonus = Math.floor(score * 0.015);
+
+    // 4. Time bonus (빠른 완료 시 보너스, 최대 +10 EXP)
+    let timeBonus = 0;
+    if (completionTime && completionTime > 0) {
+        // 3분(180초) 이내: +10, 5분(300초) 이내: +5, 그 이상: 0
+        if (completionTime <= 180) {
+            timeBonus = 10;
+        } else if (completionTime <= 300) {
+            timeBonus = 5;
+        } else if (completionTime <= 420) {
+            timeBonus = 2;
+        }
+    }
+
+    // 5. Game mode multiplier
     const gameModeMultiplier = GAME_MODE_MULTIPLIERS[gameMode] || 1.0;
 
-    // 5. Calculate total experience
-    const totalExp = Math.floor((baseExp + rankBonus + scoreBonus) * gameModeMultiplier);
+    // 6. Calculate total experience
+    const totalExp = Math.floor((baseExp + rankBonus + scoreBonus + timeBonus) * gameModeMultiplier);
 
     return {
         baseExp,
         rankBonus,
         scoreBonus,
+        timeBonus,
         gameModeMultiplier,
         totalExp
     };
@@ -127,8 +155,12 @@ export async function assignArenaExp(
     // Add experience
     user.exp += expResult.totalExp;
 
-    // Update level
+    // Update level (this may save if level changed)
     await user.updateLevel();
+
+    // ✅ Save user to database if level didn't change (updateLevel() only saves when level changes)
+    // If level changed, updateLevel() already saved, but calling save() again is safe
+    await user.save();
 
     // Check if leveled up
     const leveledUp = user.level > previousLevel;
@@ -144,12 +176,12 @@ export async function assignArenaExp(
 
 /**
  * Assign arena experience to multiple users in batch
- * @param results Array containing rank, score, and user ID for each user
+ * @param results Array containing rank, score, completionTime, and user ID for each user
  * @param gameMode Game mode
  * @returns Update results for each user
  */
 export async function assignBatchArenaExp(
-    results: Array<{ userId: string; rank: number; score: number }>,
+    results: Array<{ userId: string; rank: number; score: number; completionTime?: number }>,
     gameMode: GameMode
 ): Promise<Array<{
     userId: string;
@@ -168,7 +200,8 @@ export async function assignBatchArenaExp(
                 rank: result.rank,
                 score: result.score,
                 gameMode,
-                totalPlayers
+                totalPlayers,
+                completionTime: result.completionTime
             });
 
             updateResults.push({

@@ -317,7 +317,8 @@ async function finalizeArena(arenaId: string, io: Server) {
       const expData = uniqueProgress.map((progress, index) => ({
         userId: progress.user.toString(),
         rank: index + 1,
-        score: progress.score || 0
+        score: progress.score || 0,
+        completionTime: progress.completionTime || undefined
       }));
 
       // GameMode 변환

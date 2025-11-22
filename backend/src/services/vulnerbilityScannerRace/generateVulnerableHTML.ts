@@ -13,6 +13,8 @@ export async function generateVulnerableHTML(scenario: any): Promise<string> {
     return generateFallbackHTML(scenario);
   }
 
+  console.log('✅ ANTHROPIC_API_KEY found:', process.env.ANTHROPIC_API_KEY.substring(0, 20) + '...');
+
   try {
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,

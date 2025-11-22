@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createArena } from '../../api/axiosArena';
-import '../../assets/scss/arena/AddArenaForm.scss'; 
+import '../../assets/scss/arena/AddArenaForm.scss';
 
 const modes = [
   {
@@ -55,9 +55,9 @@ const AddArenaForm: React.FC = () => {
 
   const handleModeSelect = (mode: string) => {
     setFormData(prev => ({ ...prev, mode }));
-    
+
     // 모드별 참가자 수 자동 설정
-    if (mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
+    if (mode === 'VULNERABILITY_SCANNER_RACE') {
       setFormData(prev => ({ ...prev, maxParticipants: 2 }));
     } else if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
       setFormData(prev => ({ ...prev, maxParticipants: Math.min(prev.maxParticipants, 4) }));
@@ -77,7 +77,6 @@ const AddArenaForm: React.FC = () => {
       return;
     }
 
-    // ✅ Vulnerability Scanner Race 검증 추가
     if (formData.mode === 'VULNERABILITY_SCANNER_RACE' && formData.maxParticipants !== 2) {
       setError('System Error: Vulnerability Scanner Race requires exactly 2 players.');
       return;
@@ -102,9 +101,8 @@ const AddArenaForm: React.FC = () => {
     }
   };
 
-  // 선택된 모드의 참가자 수 제한 가져오기
   const getMaxParticipantsLimit = () => {
-    if (formData.mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
+    if (formData.mode === 'VULNERABILITY_SCANNER_RACE') {
       return { min: 2, max: 2 };
     }
     if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
@@ -121,8 +119,8 @@ const AddArenaForm: React.FC = () => {
 
       <form className="arena-grid-layout" onSubmit={handleSubmit}>
 
-        {/* --- 1. 메인 컨트롤 창 --- */}
-        <div className="card main-controls">
+        {/* 왼쪽: 모든 설정 */}
+        <div className="card settings-card">
           <h2 className="card-title">Arena Settings</h2>
           <div className="card-content">
             <div className="form-group">
@@ -146,9 +144,7 @@ const AddArenaForm: React.FC = () => {
                 onChange={handleChange}
                 min={participantsLimit.min}
                 max={participantsLimit.max}
-                disabled={
-                  formData.mode === 'VULNERABILITY_SCANNER_RACE'
-                }
+                disabled={formData.mode === 'VULNERABILITY_SCANNER_RACE'}
               />
               {formData.mode && (
                 <small className="input-hint">
@@ -160,6 +156,22 @@ const AddArenaForm: React.FC = () => {
               )}
             </div>
 
+            <div className="form-group">
+              <label>Difficulty</label>
+              <div className="difficulty-buttons">
+                {difficulties.map(diff => (
+                  <button
+                    key={diff.id}
+                    type="button"
+                    className={`difficulty-btn ${formData.difficulty === diff.id ? 'selected' : ''}`}
+                    onClick={() => handleDifficultySelect(diff.id)}
+                  >
+                    <span>{diff.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {error && <div className="error-message">{error}</div>}
 
             <button type="submit" className="submit-button" disabled={loading}>
@@ -168,7 +180,7 @@ const AddArenaForm: React.FC = () => {
           </div>
         </div>
 
-        {/* --- 2. 모드 선택 창 --- */}
+        {/* 오른쪽: 게임 모드 */}
         <div className="card mode-selector">
           <h2 className="card-title">Select Game Mode</h2>
           <div className="card-content">
@@ -187,26 +199,6 @@ const AddArenaForm: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* --- 3. 난이도 선택 창 --- */}
-        <div className="card difficulty-selector">
-          <h2 className="card-title">Select Difficulty</h2>
-          <div className="card-content">
-            <div className="difficulty-grid">
-              {difficulties.map(diff => (
-                <button
-                  key={diff.id}
-                  type="button"
-                  className={`difficulty-btn ${formData.difficulty === diff.id ? 'selected' : ''}`}
-                  onClick={() => handleDifficultySelect(diff.id)}
-                >
-                  <span>{diff.title}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
       </form>
     </div>
   );

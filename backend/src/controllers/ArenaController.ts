@@ -352,12 +352,15 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
           };
 
         case 'FORENSICS_RUSH':
+          const scenarioData = (arena.scenarioId as any)?.data;
+          const totalQuestions = scenarioData?.totalQuestions || scenarioData?.questions?.length || 0;
           return {
             ...baseData,
             questionsAnswered: progress.forensicsRush?.questionsAnswered || 0,
             questionsCorrect: progress.forensicsRush?.questionsCorrect || 0,
             totalAttempts: progress.forensicsRush?.totalAttempts || 0,
-            penalties: progress.forensicsRush?.penalties || 0
+            penalties: progress.forensicsRush?.penalties || 0,
+            totalQuestions
           };
 
         case 'SOCIAL_ENGINEERING_CHALLENGE':

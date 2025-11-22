@@ -167,6 +167,9 @@ const ArenaRoomPage: React.FC = () => {
       return;
     }
 
+    console.log('🔌 [ArenaRoomPage] Socket connected:', socket.connected);
+    console.log('🔌 [ArenaRoomPage] Setting up event listeners for arenaId:', arenaId);
+
     socket.off('arena:update');
     socket.off('arena:start');
     socket.off('arena:join-failed');
@@ -175,11 +178,16 @@ const ArenaRoomPage: React.FC = () => {
     socket.off('arena:kicked');
 
     socket.on('arena:update', payload => {
-      if (payload.arenaId !== arenaId) return;
+      console.log('🔄 [ArenaRoomPage] arena:update received:', payload);
+      if (payload.arenaId !== arenaId) {
+        console.log('⚠️ [ArenaRoomPage] arenaId mismatch:', payload.arenaId, arenaId);
+        return;
+      }
 
       setStatus(payload.status || 'waiting');
       setHostId(payload.host || null);
       setParticipants(payload.participants || []);
+      console.log('👥 [ArenaRoomPage] Updated participants:', payload.participants);
       if (payload.name) {
         setArenaName(payload.name);
       }
@@ -220,6 +228,7 @@ const ArenaRoomPage: React.FC = () => {
     });
 
     socket.on('arena:notify', (payload: { type: 'system', message: string }) => {
+      console.log('📢 [ArenaRoomPage] arena:notify received:', payload);
       setChatMessages(prev => [...prev, {
         ...payload,
         senderName: 'SYSTEM',
@@ -233,6 +242,7 @@ const ArenaRoomPage: React.FC = () => {
       navigate('/arena');
     });
 
+    console.log('📡 [ArenaRoomPage] Emitting arena:join...', { arenaId, userId: currentUserId });
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {

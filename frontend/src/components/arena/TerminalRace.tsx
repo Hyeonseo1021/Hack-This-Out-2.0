@@ -15,6 +15,11 @@ interface TerminalRaceProps {
   socket: Socket;
   currentUserId: string | null;
   participants: Participant[];
+  scenario?: {
+    title: string;
+    description: string;
+    difficulty: string;
+  } | null;
 }
 
 interface TerminalResultData {
@@ -51,7 +56,8 @@ interface LogEntry {
 const TerminalRace: React.FC<TerminalRaceProps> = ({
   arena,
   socket,
-  currentUserId
+  currentUserId,
+  scenario
 }) => {
   const navigate = useNavigate();
   const [command, setCommand] = useState('');
@@ -143,7 +149,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     const newLogs: LogEntry[] = [
       { id: logCounter.current++, text: '', type: 'output' },
       { id: logCounter.current++, text: `[STAGE ${data.stage}/${data.totalStages}]`, type: 'system' },
-      { id: logCounter.current++, text: `[OBJECTIVE] ${data.prompt}`, type: 'prompt' },
+      { id: logCounter.current++, text: `${data.prompt}`, type: 'prompt' },
       { id: logCounter.current++, text: '', type: 'output' }
     ];
 
@@ -263,7 +269,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const arenaEndedRef = useRef(false);
 
   const handleArenaEnded = useCallback((data: { message: string }) => {
-    if (arenaEndedRef.current) return; // 중복 방지
+    if (arenaEndedRef.current) return;
     arenaEndedRef.current = true;
 
     if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
@@ -308,7 +314,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     return () => {
       if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
-      arenaEndedRef.current = false; // 정리
+      arenaEndedRef.current = false;
 
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);
@@ -336,129 +342,128 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     setIsSubmitting(true);
     setLogs(prev => [
       ...prev,
-      { id: logCounter.current++, text: `$ ${command}`, type: 'command' }
+      { id: logCounter.current++, text: command, type: 'command' }
     ]);
 
     socket.emit('terminal:execute', { arenaId: arena._id, command: command.trim() });
     setCommand('');
   };
 
-  const getProgressPercentage = () => {
-    if (!totalStages) return 0;
-    return ((currentStage + 1) / totalStages) * 100;
-  };
-
   return (
     <div className="terminal-race-container">
-      <div className="terminal-header">
-        <div className="terminal-header-left">
-          <div className="terminal-title">
-            <h2>TERMINAL RACE</h2>
+      {/* Scenario Info Header */}
+      {scenario && (
+        <div className="scenario-info-bar">
+          <div className="scenario-main">
+            <div className="scenario-details">
+              <h3 className="scenario-title">{scenario.title}</h3>
+              <p className="scenario-description">{scenario.description}</p>
+            </div>
           </div>
-          <p className="terminal-subtitle">Execute commands to complete the mission</p>
+          <div className="scenario-meta">
+            <span className={`difficulty-badge difficulty-${scenario.difficulty?.toLowerCase()}`}>
+              {scenario.difficulty}
+            </span>
+          </div>
         </div>
+      )}
 
-        <div className="terminal-header-right">
-          {!isLoading && (
-            <>
-              <div className="stat-card stage-card">
-                <div className="stat-content">
-                  <span className="stat-label">STAGE</span>
-                  <span className="stat-value">
-                    {isCompleted ? totalStages : currentStage + 1}/{totalStages || '?'}
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${getProgressPercentage()}%` }} />
-                </div>
-              </div>
-
-              <div className={`stat-card score-card ${lastScoreGain > 0 ? 'score-pulse' : ''}`}>
-                <div className="stat-content">
-                  <span className="stat-label">SCORE</span>
-                  <span className="stat-value score-value">
-                    {currentScore}
-                    {lastScoreGain > 0 && <span className="score-gain">+{lastScoreGain}</span>}
-                  </span>
-                </div>
-              </div>
-
-              {graceTimeRemaining !== null && !isCompleted && (
-                <div className="stat-card grace-card">
-                  <div className="stat-content">
-                    <span className="stat-label">TIME LEFT</span>
-                    <span className="stat-value warning">{graceTimeRemaining}s</span>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="terminal-loading-container">
-          <div className="loading-spinner"></div>
-          <p>Initializing terminal...</p>
-          <div className="loading-dots"><span></span><span></span><span></span></div>
-        </div>
-      ) : (
-        <>
-          <div className="terminal-output" ref={logContainerRef}>
-            {logs.map(log => (
-              <div key={log.id} className={`terminal-line ${log.type}`}>
-                {log.type === 'command' && <span className="command-text">{log.text}</span>}
-                {log.type === 'system' && <span className="system-text">{log.text}</span>}
-                {log.type === 'prompt' && <span className="prompt-text">{log.text}</span>}
-                {log.type === 'score' && <span className="score-text">{log.text}</span>}
-                {log.type === 'success' && <span className="success-text">{log.text}</span>}
-                {log.type === 'error' && <span className="error-text">{log.text}</span>}
-                {log.type === 'output' && <span>{log.text}</span>}
-              </div>
-            ))}
-            {isSubmitting && (
-              <div className="terminal-line output">
-                <span className="loading-indicator">
-                  <span className="spinner-dots"><span></span><span></span><span></span></span>
-                  Processing...
+      {/* Terminal Window */}
+      <div className="terminal-window">
+        {/* Terminal Title Bar */}
+        <div className="terminal-title-bar">
+          <div className="terminal-controls">
+            <span className="control-btn close"></span>
+            <span className="control-btn minimize"></span>
+            <span className="control-btn maximize"></span>
+          </div>
+          <div className="terminal-title-text">root@hackthisout:~</div>
+          <div className="terminal-stats">
+            {!isLoading && (
+              <>
+                <span className="stat-item">
+                  Stage {isCompleted ? totalStages : currentStage + 1}/{totalStages || '?'}
                 </span>
-              </div>
+                <span className={`stat
+                  -item ${lastScoreGain > 0 ? 'score-pulse' : ''}`}>
+                  {currentScore} points
+                  {lastScoreGain > 0 && <span className="score-popup">+{lastScoreGain}</span>}
+                </span>
+                {graceTimeRemaining !== null && !isCompleted && (
+                  <span className="stat-item warning-stat">
+                    {graceTimeRemaining}s
+                  </span>
+                )}
+              </>
             )}
           </div>
+        </div>
 
-          <form onSubmit={handleSubmitCommand} className="terminal-input-area">
-            <div className="input-wrapper">
-              <span className="terminal-prompt">
-                <span className="prompt-user">root</span>
-                <span className="prompt-separator">@</span>
-                <span className="prompt-host">target</span>
-                <span className="prompt-path">:~$</span>
-              </span>
-              <input
-                ref={inputRef}
-                type="text"
-                className="terminal-input"
-                placeholder={isCompleted ? "Mission complete" : "Enter command..."}
-                value={command}
-                onChange={(e) => setCommand(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmitCommand(e as any))}
-                disabled={isSubmitting || isCompleted}
-                autoFocus
-                autoComplete="off"
-              />
+        {/* Terminal Body */}
+        {isLoading ? (
+          <div className="terminal-loading-container">
+            <div className="loading-spinner"></div>
+            <p>Initializing terminal...</p>
+            <div className="loading-dots"><span></span><span></span><span></span></div>
+          </div>
+        ) : (
+          <>
+            <div className="terminal-output" ref={logContainerRef}>
+              {logs.map(log => (
+                <div key={log.id} className={`terminal-line ${log.type}`}>
+                  {log.type === 'command' && <span className="command-text">{log.text}</span>}
+                  {log.type === 'system' && <span className="system-text">{log.text}</span>}
+                  {log.type === 'prompt' && <span className="prompt-text">{log.text}</span>}
+                  {log.type === 'score' && <span className="score-text">{log.text}</span>}
+                  {log.type === 'success' && <span className="success-text">{log.text}</span>}
+                  {log.type === 'error' && <span className="error-text">{log.text}</span>}
+                  {log.type === 'output' && <span>{log.text}</span>}
+                </div>
+              ))}
+              {isSubmitting && (
+                <div className="terminal-line output">
+                  <span className="loading-indicator">
+                    <span className="spinner-dots"><span></span><span></span><span></span></span>
+                    Processing...
+                  </span>
+                </div>
+              )}
             </div>
-            <button
-              type="submit"
-              className={`terminal-submit-btn ${isSubmitting ? 'submitting' : ''} ${isCompleted ? 'completed' : ''}`}
-              disabled={isSubmitting || !command.trim() || isCompleted}
-            >
-              {isSubmitting ? <><span className="btn-spinner"></span> RUNNING</> : isCompleted ? <>DONE</> : <>EXECUTE</>}
-            </button>
-          </form>
-        </>
-      )}
+
+            <form onSubmit={handleSubmitCommand} className="terminal-input-area">
+              <div className="input-wrapper">
+                <span className="terminal-prompt">
+                  <span className="prompt-user">root</span>
+                  <span className="prompt-separator">@</span>
+                  <span className="prompt-host">hackthisout</span>
+                  <span className="prompt-path">:~$</span>
+                </span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="terminal-input"
+                  placeholder={isCompleted ? "Mission complete" : "Enter command..."}
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmitCommand(e as any))}
+                  disabled={isSubmitting || isCompleted}
+                  autoFocus
+                  autoComplete="off"
+                />
+              </div>
+              <button
+                type="submit"
+                className={`terminal-submit-btn ${isSubmitting ? 'submitting' : ''} ${isCompleted ? 'completed' : ''}`}
+                disabled={isSubmitting || !command.trim() || isCompleted}
+              >
+                {isSubmitting ? <><span className="btn-spinner"></span> RUNNING</> : isCompleted ? <>DONE</> : <>EXECUTE</>}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
     </div>
   );
-}
+};
 
 export default TerminalRace;

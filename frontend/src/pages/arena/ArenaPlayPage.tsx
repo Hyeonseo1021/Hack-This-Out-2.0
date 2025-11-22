@@ -43,6 +43,7 @@ const ArenaPlayPage: React.FC = () => {
   const [remaining, setRemaining] = useState<number>(0);
   const [mode, setMode] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [scenario, setScenario] = useState<any>(null);
 
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
@@ -96,7 +97,8 @@ const ArenaPlayPage: React.FC = () => {
       setHostId(String(arenaData.host));
       setStatus(arenaData.status);
       setMode(arenaData.mode);
-      
+      setScenario(arenaData.scenarioId || null);
+
       if (arenaData.startTime) setStartAt(new Date(arenaData.startTime));
       if (arenaData.endTime) setEndAt(new Date(arenaData.endTime));
       setParticipants(arenaData.participants || []);
@@ -255,7 +257,7 @@ const ArenaPlayPage: React.FC = () => {
     switch (mode) {
       case 'TERMINAL_HACKING_RACE':
         console.log('🎮 Loading Terminal Race component...');
-        return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
+        return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} scenario={scenario} />;
 
       case 'VULNERABILITY_SCANNER_RACE':
         console.log('🔍 Loading Vulnerability Scanner Race component...');
@@ -304,7 +306,7 @@ const ArenaPlayPage: React.FC = () => {
               onClick={() => setShowSidebar(!showSidebar)}
               title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
             >
-              {showSidebar ? '✕' : '☰'}  
+              {showSidebar ? '☰' : '☰'}  
             </button>
           </div>
         </header>
