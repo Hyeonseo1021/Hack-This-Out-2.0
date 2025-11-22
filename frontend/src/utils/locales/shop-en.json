@@ -1,0 +1,79 @@
+{
+  "title": "SHOP TERMINAL",
+  "balance": "CURRENT BALANCE:",
+
+  "tabs": {
+    "shop": "Shop",
+    "inventory": "Inventory",
+    "roulette": "Roulette"
+  },
+
+  "buttons": {
+    "buy": "Buy",
+    "use": "Use"
+  },
+
+  "inventory": {
+    "empty": "📦 You don't have any items."
+  },
+
+  "toast": {
+    "noCoin": "Not enough coins! (Required: {{price}} HTO)",
+    "added": "{{name}} has been added to your inventory.",
+    "used": "You used {{name}}!",
+    "reward": "You received {{name}}!"
+  },
+
+  "items": {
+    "item-hint1": {
+      "name": "1-Time Hint",
+      "desc": "Allows you to view 1 hint for a challenge."
+    },
+    "item-hint3": {
+      "name": "3-Time Hint",
+      "desc": "Allows you to view 3 hints for a challenge."
+    },
+    "item-buff": {
+      "name": "Random Buff Package",
+      "desc": "Grants a random beneficial effect during gameplay."
+    },
+    "item-timestop": {
+      "name": "Time Stop Ticket",
+      "desc": "Stops the Arena timer for 30 seconds."
+    }
+  },
+
+  "npc": {
+    "intro": {
+      "hello": "Hi! I'm Hacker Cat 😺",
+      "ask": "Ask me anything you're curious about!"
+    },
+
+    "buttons": {
+      "close": "Close"
+    },
+
+    "faq": {
+      "shop": {
+        "question": "How do I use the shop?",
+        "answer": "You can buy items using HTO coins! Each item can be useful during gameplay."
+      },
+      "roulette": {
+        "question": "How does the roulette work?",
+        "answer": "A roulette spin costs 10 HTO.\nYou can obtain a random item based on chance!"
+      },
+      "inventory": {
+        "question": "What is the inventory?",
+        "answer": "Your inventory shows all items you own.\nYou can also use items directly from there!"
+      },
+      "coin": {
+        "question": "How do I earn HTO coins?",
+        "answer": "You can earn HTO coins by solving challenges or participating in events.\nMore ways to earn coins will be added in the future!"
+      },
+      "chance": {
+        "question": "What are the roulette probabilities?",
+        "answer": "Here are the current roulette chances:\n\n🎯 1-Time Hint: 40%\n🎯 3-Time Hint: 25%\n🎯 Random Buff Package: 20%\n🎯 Time Stop Ticket: 15%"
+      }
+    }
+  }
+}
