@@ -2,7 +2,6 @@
 /* SHOP PAGE - FULL BLACK BACKGROUND (A안 - HTML 구조 유지) */
 /* ===================================================== */
 
-/* 전체 배경을 검은색 패널로 가득 채움 */
 .shop-layout {
   width: 100%;
   min-height: calc(100vh - 70px);
@@ -57,7 +56,7 @@
 }
 
 /* ============================ */
-/* 🔵 언어 전환 버튼 */
+/* 언어 전환 버튼 */
 /* ============================ */
 
 .shop-lang-toggle {
@@ -129,7 +128,7 @@
 }
 
 /* ============================ */
-/* 상점 카드 */
+/* SHOP CARDS */
 /* ============================ */
 
 .shop-grid {
@@ -139,7 +138,7 @@
   flex-wrap: wrap;
 }
 
-/* 📌 A안 — HTML 구조 그대로 사용하면서 카드 크기 유지 */
+/* 카드 고정 */
 .shop-item-card {
   width: 260px;
   height: 360px;
@@ -171,11 +170,10 @@
   filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.7));
 }
 
-/* ============================ */
-/* 제목 (2줄 제한 + 가격 오른쪽 고정) */
-/* ============================ */
+/* 제목 (2줄 제한 + 가격 우측 고정) */
 .shop-item-card__header {
   min-height: 48px;
+
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -186,7 +184,6 @@
     color: #00eaff;
     font-size: 1rem;
 
-    /* vendorPrefix + 표준 속성 */
     line-clamp: 2;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -201,14 +198,10 @@
     font-size: 0.95rem;
     font-weight: 700;
     white-space: nowrap;
-    margin-left: 4px;
   }
 }
 
-/* ============================ */
 /* 설명 (3줄 제한) */
-/* ============================ */
-
 .shop-item-card__desc {
   margin-top: 6px;
   color: #cfeeff;
@@ -223,7 +216,7 @@
   text-overflow: ellipsis;
 }
 
-/* 버튼 항상 아래 */
+/* 버튼 */
 .shop-item-card__btn {
   margin-top: auto;
   padding: 10px 0;
@@ -238,84 +231,4 @@
     background: rgba(0, 255, 255, 0.18);
     box-shadow: 0 0 14px rgba(0, 255, 255, 0.5);
   }
-}
-
-/* ============================ */
-/* 인벤토리 */
-/* ============================ */
-
-.inventory-grid {
-  display: flex;
-  flex-direction: column !important;
-  align-items: center;
-  gap: 20px;
-}
-
-/* 리스트 카드 */
-.ctype-card {
-  width: 85%;
-  max-width: 700px;
-  padding: 28px;
-
-  background: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(0, 255, 255, 0.35);
-  border-radius: 16px;
-  box-shadow: inset 0 0 18px rgba(0, 255, 255, 0.18);
-
-  transition: 0.25s;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow:
-      0 0 16px rgba(0, 255, 255, 0.35),
-      inset 0 0 26px rgba(0, 255, 255, 0.22);
-  }
-}
-
-.inventory-item-card__header {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-
-  h3 {
-    color: #00eaff;
-  }
-
-  .inventory-count {
-    color: #ff33cc;
-    font-weight: 700;
-  }
-}
-
-.inventory-item-card__desc {
-  margin-top: 8px;
-  color: #d9faff;
-  font-size: 0.95rem;
-}
-
-.inventory-item-card__btn {
-  margin-top: 14px;
-  width: 140px;
-  align-self: flex-end;
-
-  padding: 10px 0;
-  border-radius: 8px;
-  border: 1px solid #ff33cc;
-  background: rgba(0, 0, 0, 0.5);
-  color: #ffa0e6;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover {
-    background: rgba(255, 0, 200, 0.15);
-    box-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
-  }
-}
-
-/* 빈 상태 */
-.placeholder {
-  text-align: center;
-  color: #b7f8ff;
-  font-size: 1.2rem;
-  padding: 40px 0;
 }

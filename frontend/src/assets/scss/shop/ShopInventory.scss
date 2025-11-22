@@ -1,0 +1,87 @@
+/* =============================================== */
+/* INVENTORY — ShopPage에서 독립된 레이아웃 */
+/* =============================================== */
+
+.shop-inventory-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.shop-inventory-list {
+  width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 인벤토리 카드 */
+.shop-inventory-card {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background: rgba(10, 14, 20, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 14px;
+  transition: 0.2s;
+
+  &:hover {
+    background: rgba(0, 255, 255, 0.06);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.25);
+    transform: translateY(-4px);
+  }
+}
+
+.shop-inventory-card__icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(0,255,255,0.6));
+}
+
+.shop-inventory-card__body {
+  flex: 1;
+}
+
+.shop-inventory-card__title {
+  font-size: 1.1rem;
+  color: #00eaff;
+  margin-bottom: 4px;
+}
+
+.shop-inventory-card__count {
+  color: #ff33cc;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.shop-inventory-card__desc {
+  color: #d8faff;
+  font-size: 0.95rem;
+}
+
+.shop-inventory-card__btn {
+  margin-left: auto;
+  align-self: center;
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: rgba(255, 0, 200, 0.15);
+  border: 1px solid #ff33cc;
+  color: #ffb9f5;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover {
+    background: rgba(255, 0, 200, 0.30);
+    box-shadow: 0 0 12px rgba(255, 0, 200, 0.5);
+  }
+}
+
+.shop-inventory-empty {
+  text-align: center;
+  font-size: 1.3rem;
+  padding: 50px 0;
+  color: #98f3ff;
+}

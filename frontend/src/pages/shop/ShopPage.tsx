@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import "../../assets/scss/shop/ShopPage.scss";
+import "../../assets/scss/shop/ShopInventory.scss";
 import "../../assets/scss/shop/NPCButton.scss";
 import "../../assets/scss/shop/NPCHelp.scss";
 
@@ -17,9 +18,6 @@ import timeStopImg from "../../assets/img/shop/timestop.png";
 
 type InventoryItem = {
   itemId: string;
-  name: string;
-  icon: string;
-  description: string;
   count: number;
 };
 
@@ -53,13 +51,15 @@ const ShopPage: React.FC = () => {
     setToast({ msg, icon });
   };
 
+  /* -------------------------------------- */
+  /* 구매 */
+  /* -------------------------------------- */
   const handleBuyItem = (id: string) => {
     const base = LOCAL_ITEMS.find((x) => x._id === id);
     if (!base) return;
 
-    const itemName = t(`items.${id}.name`);
-    const itemDesc = t(`items.${id}.desc`);
     const price = base.price;
+    const itemName = t(`items.${id}.name`);
 
     if (balance < price) {
       showToast(t("toast.noCoin", { price }));
@@ -76,27 +76,19 @@ const ShopPage: React.FC = () => {
         x.itemId === id ? { ...x, count: x.count + 1 } : x
       );
     } else {
-      newInventory = [
-        ...inventory,
-        {
-          itemId: id,
-          name: itemName,
-          icon: base.icon,
-          description: itemDesc,
-          count: 1,
-        },
-      ];
+      newInventory = [...inventory, { itemId: id, count: 1 }];
     }
 
     saveInventory(newInventory);
     showToast(t("toast.added", { name: itemName }), base.icon);
   };
 
+  /* -------------------------------------- */
+  /* 사용 */
+  /* -------------------------------------- */
   const handleUseItem = (itemId: string) => {
     const target = inventory.find((x) => x.itemId === itemId);
     if (!target) return;
-
-    showToast(t("toast.used", { name: target.name }), target.icon);
 
     let newInventory;
     if (target.count > 1) {
@@ -108,43 +100,38 @@ const ShopPage: React.FC = () => {
     }
 
     saveInventory(newInventory);
+
+    const itemName = t(`items.${itemId}.name`);
+    showToast(t("toast.used", { name: itemName }));
   };
 
+  /* -------------------------------------- */
+  /* 룰렛 보상 */
+  /* -------------------------------------- */
   const handleRouletteReward = (rewardId: string) => {
     const base = LOCAL_ITEMS.find((x) => x._id === rewardId);
     if (!base) return;
 
-    const itemName = t(`items.${rewardId}.name`);
-    const itemDesc = t(`items.${rewardId}.desc`);
-
     const exists = inventory.find((x) => x.itemId === rewardId);
-    let newInventory;
 
+    let newInventory;
     if (exists) {
       newInventory = inventory.map((x) =>
         x.itemId === rewardId ? { ...x, count: x.count + 1 } : x
       );
     } else {
-      newInventory = [
-        ...inventory,
-        {
-          itemId: rewardId,
-          name: itemName,
-          icon: base.icon,
-          description: itemDesc,
-          count: 1,
-        },
-      ];
+      newInventory = [...inventory, { itemId: rewardId, count: 1 }];
     }
 
     saveInventory(newInventory);
+
+    const itemName = t(`items.${rewardId}.name`);
     showToast(t("toast.reward", { name: itemName }), base.icon);
   };
 
   return (
     <Main>
       <div className="shop-layout">
-
         {/* 🔵 언어 전환 버튼 */}
         <div className="shop-lang-toggle">
           <button
@@ -169,6 +156,7 @@ const ShopPage: React.FC = () => {
             {t("balance")} <strong>{balance} HTO</strong>
           </p>
 
+          {/* 탭 */}
           <div className="shop-tabs">
             <button className={tab === "shop" ? "active" : ""} onClick={() => setTab("shop")}>
               {t("tabs.shop")}
@@ -193,7 +181,9 @@ const ShopPage: React.FC = () => {
                     <span>{item.price} HTO</span>
                   </div>
 
-                  <p className="shop-item-card__desc">{t(`items.${item._id}.desc`)}</p>
+                  <p className="shop-item-card__desc">
+                    {t(`items.${item._id}.desc`)}
+                  </p>
 
                   <button className="shop-item-card__btn" onClick={() => handleBuyItem(item._id)}>
                     {t("buttons.buy")}
@@ -205,29 +195,37 @@ const ShopPage: React.FC = () => {
 
           {/* INVENTORY */}
           {tab === "inventory" && (
-            <div className="inventory-grid ctype-list">
+            <div className="shop-inventory-wrapper">
               {inventory.length === 0 ? (
-                <div className="placeholder">{t("inventory.empty")}</div>
+                <div className="shop-inventory-empty">{t("inventory.empty")}</div>
               ) : (
-                inventory.map((item) => (
-                  <div className="inventory-item-card ctype-card" key={item.itemId}>
-                    <img src={item.icon} className="inventory-item-card__icon" />
+                <div className="shop-inventory-list">
+                  {inventory.map((item) => (
+                    <div className="shop-inventory-card" key={item.itemId}>
+                      <img
+                        src={LOCAL_ITEMS.find((x) => x._id === item.itemId)?.icon}
+                        className="shop-inventory-card__icon"
+                      />
 
-                    <div className="inventory-item-card__header">
-                      <h3>{item.name}</h3>
-                      <span className="inventory-count">x{item.count}</span>
+                      <div className="shop-inventory-card__body">
+                        <h3 className="shop-inventory-card__title">
+                          {t(`items.${item.itemId}.name`)}
+                        </h3>
+                        <p className="shop-inventory-card__count">x{item.count}</p>
+                        <p className="shop-inventory-card__desc">
+                          {t(`items.${item.itemId}.desc`)}
+                        </p>
+                      </div>
+
+                      <button
+                        className="shop-inventory-card__btn"
+                        onClick={() => handleUseItem(item.itemId)}
+                      >
+                        {t("buttons.use")}
+                      </button>
                     </div>
-
-                    <p className="inventory-item-card__desc">{item.description}</p>
-
-                    <button
-                      className="inventory-item-card__btn"
-                      onClick={() => handleUseItem(item.itemId)}
-                    >
-                      {t("buttons.use")}
-                    </button>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           )}
