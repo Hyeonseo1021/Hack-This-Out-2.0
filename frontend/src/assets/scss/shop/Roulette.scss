@@ -1,40 +1,47 @@
 /* === 전체 컨테이너 === */
 .roulette-container {
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
+  justify-content: center;
 
-  min-height: 420px; /* 흔들림 방지 */
+  width: 100%;
+  padding-top: 20px;
+  padding-bottom: 40px;
+
+  /* ⭐ ShopPage 레이아웃 침범 방지 */
+  position: relative;
 }
 
 /* === 룰렛 + 정보 패널 묶음 === */
 .roulette-main-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 60px;
+
   width: 100%;
   max-width: 900px;
-  position: relative;
-  height: 320px; /* 고정 높이 */
+
+  /* ⭐ 고정 height 제거 → 인벤토리 깨짐 방지 */
 }
 
-/* === 룰렛 중앙 고정 === */
+/* === 룰렛 박스 === */
 .roulette-wheel-box {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   width: 300px;
   height: 300px;
 
   display: flex;
   justify-content: center;
   align-items: center;
+
+  position: relative;
 }
 
 /* 포인터 */
 .roulette-pointer {
   position: absolute;
-  top: -25px;
+  top: -28px;
   font-size: 24px;
   color: #fff;
   z-index: 5;
@@ -64,7 +71,7 @@
   align-items: center;
 }
 
-/* === 룰렛 아이템 이미지 === */
+/* 이미지 */
 .roulette-item-img {
   width: 80px;
   height: 80px;
@@ -72,16 +79,13 @@
   filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.7));
 }
 
-/* === 오른쪽 패널 고정 === */
+/* === 정보 패널 (오른쪽) === */
 .roulette-info {
-  position: absolute;
-  right: 0px; /* 오타 수정 완료 */
-  top: 50%;
-  transform: translateY(-50%);
   width: 260px;
-
   text-align: center;
   color: #fff;
+
+  /* ⭐ absolute 제거 → 인벤토리 레이아웃 정상화 */
 }
 
 /* 제목 */

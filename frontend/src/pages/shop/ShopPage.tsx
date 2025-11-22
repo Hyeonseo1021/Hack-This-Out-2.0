@@ -196,37 +196,39 @@ const ShopPage: React.FC = () => {
           {/* INVENTORY */}
           {tab === "inventory" && (
             <div className="shop-inventory-wrapper">
-              {inventory.length === 0 ? (
-                <div className="shop-inventory-empty">{t("inventory.empty")}</div>
-              ) : (
-                <div className="shop-inventory-list">
-                  {inventory.map((item) => (
-                    <div className="shop-inventory-card" key={item.itemId}>
-                      <img
-                        src={LOCAL_ITEMS.find((x) => x._id === item.itemId)?.icon}
-                        className="shop-inventory-card__icon"
-                      />
+              <div className="shop-inventory-scroll-area">
+                {inventory.length === 0 ? (
+                  <div className="shop-inventory-empty">{t("inventory.empty")}</div>
+                ) : (
+                  <div className="shop-inventory-list">
+                    {inventory.map((item) => (
+                      <div className="shop-inventory-card" key={item.itemId}>
+                        <img
+                          src={LOCAL_ITEMS.find((x) => x._id === item.itemId)?.icon}
+                          className="shop-inventory-card__icon"
+                        />
 
-                      <div className="shop-inventory-card__body">
-                        <h3 className="shop-inventory-card__title">
-                          {t(`items.${item.itemId}.name`)}
-                        </h3>
-                        <p className="shop-inventory-card__count">x{item.count}</p>
-                        <p className="shop-inventory-card__desc">
-                          {t(`items.${item.itemId}.desc`)}
-                        </p>
+                        <div className="shop-inventory-card__body">
+                          <h3 className="shop-inventory-card__title">
+                            {t(`items.${item.itemId}.name`)}
+                          </h3>
+                          <p className="shop-inventory-card__count">x{item.count}</p>
+                          <p className="shop-inventory-card__desc">
+                            {t(`items.${item.itemId}.desc`)}
+                          </p>
+                        </div>
+
+                        <button
+                          className="shop-inventory-card__btn"
+                          onClick={() => handleUseItem(item.itemId)}
+                        >
+                          {t("buttons.use")}
+                        </button>
                       </div>
-
-                      <button
-                        className="shop-inventory-card__btn"
-                        onClick={() => handleUseItem(item.itemId)}
-                      >
-                        {t("buttons.use")}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

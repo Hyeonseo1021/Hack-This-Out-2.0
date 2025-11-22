@@ -16,11 +16,13 @@
 .shop-panel {
   width: 100%;
   max-width: none;
-  min-height: calc(100vh - 70px);
 
-  padding: 60px 60px;
+  /* 🔥 수정된 핵심 부분 */
+  min-height: auto;                 /* 기존 고정된 min-height 제거 */
+  padding: 60px 60px 140px;         /* 하단 공간 확보 */
+  overflow: hidden;                 /* 아래로 튀어나오는 카드 방지 */
+
   border-radius: 0;
-
   background: rgba(0, 0, 0, 0.92);
   border: none;
   box-shadow: inset 0 0 24px rgba(0, 255, 255, 0.12);
