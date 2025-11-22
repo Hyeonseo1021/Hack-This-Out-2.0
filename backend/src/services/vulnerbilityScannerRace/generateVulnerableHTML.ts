@@ -2,12 +2,14 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-/**
- * Claude API를 사용하여 취약한 HTML 웹 애플리케이션 생성
- */
 export async function generateVulnerableHTML(scenario: any): Promise<string> {
 
-  // API 키 확인
+  const useFallback = process.env.USE_FALLBACK_HTML === 'true';
+  if (useFallback) {
+    console.log('⚙️ USE_FALLBACK_HTML=true, using fallback HTML to save costs');
+    return generateFallbackHTML(scenario);
+  }
+
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn('⚠️ ANTHROPIC_API_KEY not found. Returning fallback HTML.');
     return generateFallbackHTML(scenario);
@@ -20,7 +22,6 @@ export async function generateVulnerableHTML(scenario: any): Promise<string> {
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
-    // 취약점 정보 포맷팅
     const vulnsDescription = scenario.data.vulnerabilities
       .map((v: any, index: number) => `
 ${index + 1}. ${v.vulnType} (${v.severity || 'MEDIUM'})
@@ -89,28 +90,29 @@ ${vulnsDescription}
 - **CSRF**: Missing token validation in state-changing operations
 - **Path Traversal**: Check for \`../\` in file paths
 
-**Important:**
-- Return ONLY the HTML code
-- No explanations, no markdown code blocks, just pure HTML
-- Start with \`<!DOCTYPE html>\`
-- Make it look professional, not like a training exercise
+**CRITICAL INSTRUCTIONS:**
+- Your response MUST start with \`<!DOCTYPE html>\` immediately
+- Do NOT include ANY explanations, comments, or text before or after the HTML
+- Do NOT wrap the HTML in markdown code blocks (\`\`\`html)
+- Return ONLY the complete, valid HTML document
+- The HTML must be self-contained (all CSS and JS inline)
+- Make it look professional and realistic
 
-Begin:
+OUTPUT THE HTML NOW (start with <!DOCTYPE html>):
 `;
 
     console.log('🤖 Calling Claude API to generate vulnerable HTML...');
 
     const message = await anthropic.messages.create({
       model: 'claude-3-5-haiku-20241022',
-      max_tokens: 4000,
-      temperature: 0.8, // 약간의 창의성
+      max_tokens: 5000, 
+      temperature: 0.7,
       messages: [{
         role: 'user',
         content: prompt
       }]
     });
 
-    // 응답에서 HTML 추출
     let html = '';
     if (message.content && message.content.length > 0) {
       const textContent = message.content[0];
@@ -119,14 +121,26 @@ Begin:
       }
     }
 
-    // HTML 태그로 시작하는지 확인
-    if (!html.trim().startsWith('<!DOCTYPE') && !html.trim().startsWith('<html')) {
-      console.warn('⚠️ Claude response doesn\'t start with HTML. Using fallback.');
+    const codeBlockMatch = html.match(/```(?:html)?\s*(<!DOCTYPE[\s\S]*?<\/html>)\s*```/i);
+    if (codeBlockMatch) {
+      html = codeBlockMatch[1];
+      console.log('✅ Extracted HTML from markdown code block');
+    }
+
+    const trimmedHtml = html.trim();
+    if (!trimmedHtml.startsWith('<!DOCTYPE') && !trimmedHtml.startsWith('<html')) {
+      console.warn('⚠️ Claude response doesn\'t start with HTML. First 200 chars:', trimmedHtml.substring(0, 200));
+      console.warn('⚠️ Using fallback HTML instead.');
       return generateFallbackHTML(scenario);
     }
 
-    console.log('✅ Vulnerable HTML generated successfully');
-    return html;
+    if (trimmedHtml.length < 500) {
+      console.warn('⚠️ Generated HTML too short:', trimmedHtml.length, 'chars. Using fallback.');
+      return generateFallbackHTML(scenario);
+    }
+
+    console.log('✅ Vulnerable HTML generated successfully (', trimmedHtml.length, 'chars)');
+    return trimmedHtml;
 
   } catch (error: any) {
     console.error('❌ Error generating HTML with Claude:', error.message);
@@ -134,9 +148,6 @@ Begin:
   }
 }
 
-/**
- * Fallback: 간단한 하드코딩된 HTML (API 실패 시 사용)
- */
 function generateFallbackHTML(scenario: any): string {
   const vulns = scenario.data.vulnerabilities || [];
   const targetName = scenario.data.targetName || 'Practice Web App';
@@ -258,7 +269,7 @@ function generateFallbackHTML(scenario: any): string {
 
   <script>
     // Load vulnerability data from server
-    const vulns = ${JSON.stringify(vulns)};
+    const vulns = ${JSON.stringify(vulns, null, 2)};
     const sqliVuln = vulns.find(v => v.vulnType === 'SQLi') || vulns[0];
 
     // Simulated vulnerable login

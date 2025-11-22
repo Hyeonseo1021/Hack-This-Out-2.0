@@ -394,35 +394,42 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
  */
 export async function initializeScannerRace(arenaId: string): Promise<void> {
 
+  const startTime = Date.now();
   console.log('🎬 [initializeScannerRace] Initializing...');
 
   try {
+    const t1 = Date.now();
     const arena = await Arena.findById(arenaId).populate('scenarioId');
     if (!arena) return;
 
     const scenario = arena.scenarioId as any;
     const vulnerabilities = scenario.data?.vulnerabilities || [];
-    const difficulty = scenario.difficulty;
+    const mode = scenario.data?.mode || 'SIMULATED';
 
-    console.log(`📊 [initializeScannerRace] Difficulty: ${difficulty}`);
+    console.log(`📊 [initializeScannerRace] Mode: ${mode}, DB fetch took ${Date.now() - t1}ms`);
 
-    // 난이도에 따라 모드 결정
-    let mode: 'SIMULATED' | 'REAL' = 'SIMULATED';
+    // 시나리오 생성 시 저장된 HTML 사용
     let vulnerableHTML = '';
 
-    if (difficulty === 'EASY' || difficulty === 'MEDIUM') {
-      // EASY/MEDIUM: Claude API로 HTML 생성
-      mode = 'SIMULATED';
-      console.log('🤖 [initializeScannerRace] Generating vulnerable HTML with Claude...');
-      vulnerableHTML = await generateVulnerableHTML(scenario);
-      console.log(`✅ [initializeScannerRace] HTML generated (${vulnerableHTML.length} characters)`);
+    if (mode === 'SIMULATED') {
+      const t2 = Date.now();
+      // 시나리오 생성 시 이미 생성된 HTML 사용
+      vulnerableHTML = scenario.data?.generatedHTML || '';
+
+      if (!vulnerableHTML) {
+        console.warn('⚠️ [initializeScannerRace] No generated HTML found in scenario. Generating fallback...');
+        vulnerableHTML = await generateVulnerableHTML(scenario);
+        console.log(`⏱️ [initializeScannerRace] HTML generation took ${Date.now() - t2}ms`);
+      } else {
+        console.log(`✅ [initializeScannerRace] Using pre-generated HTML (${vulnerableHTML.length} characters), took ${Date.now() - t2}ms`);
+      }
     } else {
-      // HARD/EXPERT: 실제 웹 사용
-      mode = 'REAL';
+      // REAL 모드: 실제 웹 사용
       console.log(`🌐 [initializeScannerRace] Using real web: ${scenario.data?.targetUrl}`);
     }
 
     // Arena에 취약점 초기화
+    const t3 = Date.now();
     await Arena.updateOne(
       { _id: arenaId },
       {
@@ -447,8 +454,10 @@ export async function initializeScannerRace(arenaId: string): Promise<void> {
         }
       }
     );
+    console.log(`⏱️ [initializeScannerRace] Arena update took ${Date.now() - t3}ms`);
 
     // 각 플레이어의 ArenaProgress 초기화
+    const t4 = Date.now();
     const participants = arena.participants.map((p: any) => p.user);
 
     for (const userId of participants) {
@@ -471,8 +480,10 @@ export async function initializeScannerRace(arenaId: string): Promise<void> {
         { upsert: true }
       );
     }
+    console.log(`⏱️ [initializeScannerRace] ArenaProgress updates took ${Date.now() - t4}ms (${participants.length} participants)`);
 
-    console.log('✅ [initializeScannerRace] Initialized successfully');
+
+    console.log(`✅ [initializeScannerRace] Initialized successfully in ${Date.now() - startTime}ms`);
 
   } catch (error) {
     console.error('[initializeScannerRace] Error:', error);

@@ -220,22 +220,25 @@ const ScenariosManagement: React.FC = () => {
 
       case 'VULNERABILITY_SCANNER_RACE':
         // 필수 필드 검증
-        if (!form.data.targetUrl?.trim()) {
-          alert('Target URL is required');
-          return false;
-        }
-        
         if (!form.data.targetName?.trim()) {
           alert('Target name is required');
           return false;
         }
-        
-        // URL 형식 검증
-        try {
-          new URL(form.data.targetUrl);
-        } catch (error) {
-          alert('Target URL must be a valid URL (e.g., https://example.com)');
-          return false;
+
+        // REAL 모드일 때만 URL 검증
+        if (form.data.mode === 'REAL') {
+          if (!form.data.targetUrl?.trim()) {
+            alert('Target URL is required for REAL mode');
+            return false;
+          }
+
+          // URL 형식 검증
+          try {
+            new URL(form.data.targetUrl);
+          } catch (error) {
+            alert('Target URL must be a valid URL (e.g., https://example.com)');
+            return false;
+          }
         }
         
         // Vulnerabilities 배열 검증
@@ -247,29 +250,29 @@ const ScenariosManagement: React.FC = () => {
         // 각 취약점 검증
         for (let i = 0; i < form.data.vulnerabilities.length; i++) {
           const vuln = form.data.vulnerabilities[i];
-          
+
           if (!vuln.name?.trim()) {
             alert(`Vulnerability ${i + 1}: Name is required`);
             return false;
           }
-          
-          if (!vuln.type?.trim()) {
+
+          if (!vuln.vulnType?.trim()) {
             alert(`Vulnerability ${i + 1}: Type is required`);
             return false;
           }
-          
+
           if (!vuln.severity?.trim()) {
             alert(`Vulnerability ${i + 1}: Severity is required`);
             return false;
           }
-          
+
           // Severity 값 검증
           const validSeverities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
           if (!validSeverities.includes(vuln.severity.toUpperCase())) {
             alert(`Vulnerability ${i + 1}: Severity must be LOW, MEDIUM, HIGH, or CRITICAL`);
             return false;
           }
-          
+
           if (typeof vuln.points !== 'number' || vuln.points <= 0) {
             alert(`Vulnerability ${i + 1}: Points must be a positive number`);
             return false;
@@ -320,11 +323,21 @@ const ScenariosManagement: React.FC = () => {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setSaving(true);
     setError(null);
+
+    // VulnerabilityScannerRace SIMULATED 모드일 때 안내 메시지
+    const isVulnScannerSimulated =
+      form.mode === 'VULNERABILITY_SCANNER_RACE' &&
+      (form.data as any)?.mode === 'SIMULATED';
+
+    if (isVulnScannerSimulated && !editingId) {
+      console.log('🤖 Generating vulnerable HTML with Claude AI...');
+    }
+
     try {
       if (editingId) {
         await updateScenario(editingId, form);
@@ -333,7 +346,12 @@ const ScenariosManagement: React.FC = () => {
       } else {
         const created = await createScenario(form);
         setScenarios(prev => [created.scenario, ...prev]);
-        alert('Scenario created successfully!');
+
+        if (isVulnScannerSimulated) {
+          alert('Scenario created successfully!\n\n✅ Vulnerable HTML has been generated with Claude AI and saved to the scenario.');
+        } else {
+          alert('Scenario created successfully!');
+        }
       }
       setForm(initialForm);
       setEditingId(null);
@@ -547,7 +565,11 @@ const ScenariosManagement: React.FC = () => {
 
             <div className="form-actions">
               <button type="submit" disabled={saving}>
-                {saving ? 'Saving...' : (editingId ? 'Update' : 'Create')}
+                {saving
+                  ? form.mode === 'VULNERABILITY_SCANNER_RACE' && (form.data as any)?.mode === 'SIMULATED'
+                    ? 'Generating HTML with AI...'
+                    : 'Saving...'
+                  : (editingId ? 'Update' : 'Create')}
               </button>
               <button type="button" onClick={handleCancelEdit} disabled={saving}>
                 {editingId ? 'Cancel' : 'Reset'}

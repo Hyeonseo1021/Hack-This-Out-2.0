@@ -114,7 +114,7 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
       <div className="form-header">
         <h3>Terminal Hacking Race 시나리오</h3>
         <button type="button" onClick={addStage} className="btn-add">
-          <FaPlus /> 스테이지 추가
+          <FaPlus /> 추가
         </button>
       </div>
 
@@ -122,7 +122,7 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
         {data.stages.map((stage, sIdx) => (
           <div key={sIdx} className="stage-card">
             <div className="stage-header">
-              <strong>🎯 Stage {sIdx + 1}</strong>
+              <strong>Stage {sIdx + 1}</strong>
               {data.stages.length > 1 && (
                 <button type="button" onClick={() => removeStage(sIdx)} className="btn-remove">
                   <FaMinus /> 삭제
@@ -136,12 +136,12 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
                 <label>프롬프트 메시지 *</label>
                 <input
                   type="text"
-                  placeholder="예: Welcome. Start by scanning the target."
+                  placeholder="Welcome. Start by scanning the target."
                   value={stage.prompt}
                   onChange={e => updateStage(sIdx, 'prompt', e.target.value)}
                   required
                 />
-                <small>플레이어가 이 스테이지에서 볼 안내 메시지</small>
+                <small>스테이지 시작 메시지</small>
               </div>
 
               {/* Default Response */}
@@ -149,20 +149,20 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
                 <label>기본 응답 메시지 *</label>
                 <input
                   type="text"
-                  placeholder="예: 유효하지 않은 명령어입니다."
+                  placeholder="유효하지 않은 명령어입니다."
                   value={stage.defaultResponse}
                   onChange={e => updateStage(sIdx, 'defaultResponse', e.target.value)}
                   required
                 />
-                <small>잘못된 명령어 입력 시 표시될 메시지</small>
+                <small>잘못된 명령어 응답</small>
               </div>
 
               {/* Commands */}
               <div className="commands-section">
                 <div className="commands-header">
-                  <label>💻 명령어 목록 ({stage.commands.length})</label>
+                  <label>명령어 목록 ({stage.commands.length})</label>
                   <button type="button" onClick={() => addCommand(sIdx)} className="btn-add-small">
-                    <FaPlus /> 명령어 추가
+                    <FaPlus /> 추가
                   </button>
                 </div>
 
@@ -181,7 +181,7 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
                         <label>명령어 *</label>
                         <input
                           type="text"
-                          placeholder="예: nmap -sV"
+                          placeholder="nmap -sV"
                           value={cmd.command}
                           onChange={e => updateCommand(sIdx, cIdx, 'command', e.target.value)}
                           required
@@ -193,7 +193,7 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
                         <label>추가 인자 (선택, 쉼표로 구분)</label>
                         <input
                           type="text"
-                          placeholder="예: -sV, 192.168.1.1"
+                          placeholder="-sV, 192.168.1.1"
                           value={cmd.args?.join(', ') || ''}
                           onChange={e => {
                             const args = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
@@ -207,7 +207,7 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
                         <label>응답 메시지 *</label>
                         <textarea
                           rows={3}
-                          placeholder="예: Port 80 (HTTP), 22 (SSH) 발견"
+                          placeholder="Port 80 (HTTP), 22 (SSH) 발견"
                           value={cmd.response}
                           onChange={e => updateCommand(sIdx, cIdx, 'response', e.target.value)}
                           required
@@ -243,7 +243,7 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
                             checked={cmd.flagFound || false}
                             onChange={e => updateCommand(sIdx, cIdx, 'flagFound', e.target.checked)}
                           />
-                          <span>🏁 플래그 발견 (게임 종료)</span>
+                          <span>플래그 발견 (게임 종료)</span>
                         </label>
                       </div>
                     </div>

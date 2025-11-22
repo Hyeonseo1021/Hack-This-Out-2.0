@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import '../../assets/scss/admin/AdminSidebar.scss';
-import { FaTachometerAlt, FaUsers, FaHome, FaCogs, FaClipboardList, FaServer, FaShopify, FaGamepad } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaHome, FaCogs, FaClipboardList, FaServer, FaShopify, FaGamepad,FaBook } from 'react-icons/fa';
 
 const Sidebar: React.FC = () => {
   return (
@@ -37,7 +37,7 @@ const Sidebar: React.FC = () => {
           Arenas
         </NavLink>
         <NavLink to="/admin/scenarios" className={({ isActive }) => (isActive ? 'active' : '')}>
-          <FaGamepad className="sidebar-icon" />
+          <FaBook className="sidebar-icon" />
           Arena Scenarios
         </NavLink>
         <NavLink to="/admin/item" className={({ isActive }) => (isActive ? 'active' : '')}>

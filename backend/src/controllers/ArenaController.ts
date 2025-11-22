@@ -3,6 +3,7 @@ import Arena from '../models/Arena';
 import ArenaProgress from '../models/ArenaProgress';
 import ArenaScenario from '../models/ArenaScenario';
 import { ArenaScenarioService } from '../services/ArenaScenarioService';
+import { generateVulnerableHTML } from '../services/vulnerbilityScannerRace/generateVulnerableHTML';
 
 export const createArena = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -24,13 +25,11 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // ✅ 유효한 모드 목록 (Defense Battle 제거, Vulnerability Scanner Race 추가)
     const validModes = [
-      'TERMINAL_HACKING_RACE',           // ⚡ Terminal Race
-      'VULNERABILITY_SCANNER_RACE',      // 🔍 Vulnerability Scanner Race - NEW
-      'KING_OF_THE_HILL',                // 👑 King of the Hill
-      'FORENSICS_RUSH',                  // 🔎 Forensics Rush
-      'SOCIAL_ENGINEERING_CHALLENGE'     // 💬 Social Engineering
+      'TERMINAL_HACKING_RACE',       
+      'VULNERABILITY_SCANNER_RACE',                   
+      'FORENSICS_RUSH',                  
+      'SOCIAL_ENGINEERING_CHALLENGE'     
     ];
     
     if (!validModes.includes(mode)) {
@@ -44,7 +43,6 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // ✅ Vulnerability Scanner Race 검증 (2명 고정)
     if (mode === 'VULNERABILITY_SCANNER_RACE') {
       if (maxParticipants !== 2) {
         res.status(400).json({
@@ -54,7 +52,6 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       }
     }
 
-    // ✅ Social Engineering 검증 (1-4명)
     if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
       if (maxParticipants < 1 || maxParticipants > 4) {
         res.status(400).json({
@@ -64,7 +61,6 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       }
     }
 
-    // 일반적인 참가자 수 검증
     if (maxParticipants < 1 || maxParticipants > 8) {
       res.status(400).json({ message: 'Max participants must be between 1 and 8' });
       return;
@@ -286,7 +282,6 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
 
     console.log(`📊 [getArenaResult] Fetching result for arena: ${arenaId}`);
 
-    // 1. Arena 기본 정보 조회
     const arena = await Arena.findById(arenaId)
       .populate('host', 'username')
       .populate('winner', 'username')
@@ -304,14 +299,12 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       status: arena.status
     });
 
-    // 2. 모든 참가자의 진행 상황 조회
     const progressDocs = await ArenaProgress.find({ arena: arenaId })
       .populate('user', 'username')
       .lean();
 
     console.log(`📋 [getArenaResult] Found ${progressDocs.length} participants`);
 
-    // 3. 게임 모드별로 참가자 데이터 구성
     const participants = progressDocs.map((progress: any) => {
       const baseData = {
         userId: String(progress.user._id),
@@ -320,12 +313,11 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
         completionTime: progress.completionTime || null,
         submittedAt: progress.submittedAt || null,
         isCompleted: progress.completed || false,
-        rank: 0, // 나중에 계산
+        rank: 0, 
         score: progress.score || 0,
-        expEarned: progress.expEarned || 0  // ✨ 경험치 추가
+        expEarned: progress.expEarned || 0  
       };
 
-      // ✅ 게임 모드별 추가 데이터
       switch (arena.mode) {
         case 'TERMINAL_HACKING_RACE':
           return {
@@ -334,21 +326,12 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
             flags: progress.flags || []
           };
 
-        case 'VULNERABILITY_SCANNER_RACE':  // ✅ 추가
+        case 'VULNERABILITY_SCANNER_RACE':  
           return {
             ...baseData,
             vulnerabilitiesFound: progress.vulnerabilityScannerRace?.vulnerabilitiesFound || 0,
             firstBloods: progress.vulnerabilityScannerRace?.firstBloods || 0,
             invalidSubmissions: progress.vulnerabilityScannerRace?.invalidSubmissions || 0
-          };
-
-        case 'KING_OF_THE_HILL':
-          return {
-            ...baseData,
-            kingTime: progress.kingOfTheHill?.totalKingTime || 0,
-            timesKing: progress.kingOfTheHill?.timesKing || 0,
-            attacksSucceeded: progress.kingOfTheHill?.attacksSucceeded || 0,
-            attacksFailed: progress.kingOfTheHill?.attacksFailed || 0
           };
 
         case 'FORENSICS_RUSH':
@@ -376,13 +359,10 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       }
     });
 
-    // ✅ 4. 순위 계산
     participants.sort((a, b) => {
-      // 1순위: 완료 여부
       if (a.isCompleted && !b.isCompleted) return -1;
       if (!a.isCompleted && b.isCompleted) return 1;
       
-      // 2순위: 완료한 경우 제출 시간
       if (a.isCompleted && b.isCompleted) {
         if (a.submittedAt && b.submittedAt) {
           const timeA = new Date(a.submittedAt).getTime();
@@ -399,13 +379,11 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
         }
       }
       
-      // 3순위: 점수
       if (a.score !== b.score) return b.score - a.score;
       
       return 0;
     });
 
-    // 순위 부여
     participants.forEach((p, index) => {
       p.rank = index + 1;
     });
@@ -418,14 +396,12 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       });
     });
 
-    // 5. 통계 계산
     const completedCount = participants.filter(p => p.isCompleted).length;
     const totalParticipants = participants.length;
     const successRate = totalParticipants > 0 
       ? Math.round((completedCount / totalParticipants) * 100) 
       : 0;
 
-    // 6. Duration 계산
     let duration = 0;
     if (arena.startTime && arena.endTime) {
       duration = Math.floor(
@@ -433,7 +409,6 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       );
     }
 
-    // 7. Winner 정보
     let winner = null;
     if (arena.winner) {
       const winnerDoc = arena.winner as any;
@@ -444,16 +419,13 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
       };
     }
 
-    // 8. 모드 매핑
     const modeMapping: { [key: string]: string } = {
       'TERMINAL_HACKING_RACE': 'terminal-race',
-      'VULNERABILITY_SCANNER_RACE': 'vulnerability-scanner-race',  // ✅ 추가
-      'KING_OF_THE_HILL': 'king-of-the-hill',
+      'VULNERABILITY_SCANNER_RACE': 'vulnerability-scanner-race',  
       'FORENSICS_RUSH': 'forensics-rush',
       'SOCIAL_ENGINEERING_CHALLENGE': 'social-engineering'
     };
 
-    // 9. 응답 데이터
     const result = {
       _id: String(arena._id),
       name: arena.name,
@@ -535,8 +507,6 @@ export const checkArenaParticipation = async (req: Request, res: Response): Prom
   }
 };
 
-// ===== 시나리오 관리 =====
-
 export const getAllScenarios = async (req: Request, res: Response): Promise<void> => {
   try {
     const scenarios = await ArenaScenario.find()
@@ -570,26 +540,52 @@ export const getScenarioById = async (req: Request, res: Response): Promise<void
 export const createScenario = async (req: Request, res: Response): Promise<void> => {
   try {
     const { mode, difficulty, title, description, timeLimit, data } = req.body;
-    
+
     if (!mode || !difficulty || !title || !data) {
       res.status(400).json({ message: 'Missing required fields' });
       return;
     }
-    
+
+    // VulnerabilityScannerRace이고 SIMULATED 모드면 HTML 생성
+    let scenarioData = data;
+    if (mode === 'VULNERABILITY_SCANNER_RACE' && data.mode === 'SIMULATED') {
+      console.log('🤖 [createScenario] Generating vulnerable HTML with Claude AI...');
+
+      try {
+        const generatedHTML = await generateVulnerableHTML({
+          title,
+          difficulty,
+          data
+        } as any);
+
+        // data에 generatedHTML 추가
+        scenarioData = {
+          ...data,
+          generatedHTML
+        };
+
+        console.log(`✅ [createScenario] HTML generated (${generatedHTML.length} characters)`);
+      } catch (htmlError) {
+        console.error('❌ [createScenario] Failed to generate HTML:', htmlError);
+        res.status(500).json({ message: 'Failed to generate vulnerable HTML' });
+        return;
+      }
+    }
+
     const scenario = await ArenaScenario.create({
       mode,
       difficulty,
       title,
       description,
       timeLimit,
-      data,
+      data: scenarioData,
       isActive: true,
       usageCount: 0
     });
-    
-    res.status(201).json({ 
+
+    res.status(201).json({
       message: 'Scenario created successfully',
-      scenario 
+      scenario
     });
   } catch (err) {
     console.error('Error creating scenario:', err);
@@ -601,21 +597,50 @@ export const updateScenario = async (req: Request, res: Response): Promise<void>
   try {
     const { id } = req.params;
     const updates = req.body;
-    
+
+    // VulnerabilityScannerRace이고 data가 변경되었으며 SIMULATED 모드면 HTML 재생성
+    let finalUpdates = updates;
+    if (updates.mode === 'VULNERABILITY_SCANNER_RACE' && updates.data?.mode === 'SIMULATED') {
+      console.log('🤖 [updateScenario] Regenerating vulnerable HTML with Claude AI...');
+
+      try {
+        const generatedHTML = await generateVulnerableHTML({
+          title: updates.title,
+          difficulty: updates.difficulty,
+          data: updates.data
+        } as any);
+
+        // data에 generatedHTML 추가
+        finalUpdates = {
+          ...updates,
+          data: {
+            ...updates.data,
+            generatedHTML
+          }
+        };
+
+        console.log(`✅ [updateScenario] HTML regenerated (${generatedHTML.length} characters)`);
+      } catch (htmlError) {
+        console.error('❌ [updateScenario] Failed to regenerate HTML:', htmlError);
+        res.status(500).json({ message: 'Failed to regenerate vulnerable HTML' });
+        return;
+      }
+    }
+
     const scenario = await ArenaScenario.findByIdAndUpdate(
       id,
-      updates,
+      finalUpdates,
       { new: true, runValidators: true }
     );
-    
+
     if (!scenario) {
       res.status(404).json({ message: 'Scenario not found' });
       return;
     }
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       message: 'Scenario updated successfully',
-      scenario 
+      scenario
     });
   } catch (err) {
     console.error('Error updating scenario:', err);
@@ -707,11 +732,6 @@ export const getScenarioStats = async (req: Request, res: Response): Promise<voi
   }
 };
 
-// ===== 아레나 방 관리 (관리자 전용) =====
-
-/**
- * 모든 아레나 방 조회 (관리자용)
- */
 export const getAllArenas = async (req: Request, res: Response): Promise<void> => {
   try {
     const arenas = await Arena.find()
@@ -761,9 +781,6 @@ export const getAllArenas = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-/**
- * 아레나 방 삭제 (관리자 전용)
- */
 export const deleteArena = async (req: Request, res: Response): Promise<void> => {
   try {
     const { arenaId } = req.params;
@@ -801,9 +818,6 @@ export const deleteArena = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-/**
- * 활성 아레나 방 조회 (WAITING 또는 STARTED)
- */
 export const getActiveArenas = async (req: Request, res: Response): Promise<void> => {
   try {
     const arenas = await Arena.find({

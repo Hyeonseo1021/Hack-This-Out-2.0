@@ -90,22 +90,23 @@ export const useInventoryItem = async (req: Request, res: Response): Promise<voi
     const userId = res.locals.jwtData.id;
     const { invId } = req.params;
 
-    const inventoryItem = await Inventory.findOne({ _id: invId, user: userId });
+    const inventoryItem = await Inventory.findOne({ _id: invId, user: userId }).populate('item');
 
     if (!inventoryItem) {
       res.status(404).json({ message: 'ERROR', msg: '아이템을 찾을 수 없습니다.' });
       return;
     }
 
-    if (inventoryItem.isUsed) {
-      res.status(400).json({ message: 'ERROR', msg: '이미 사용한 아이템입니다.' });
+    if (inventoryItem.quantity <= 0) {
+      res.status(400).json({ message: 'ERROR', msg: '아이템 수량이 부족합니다.' });
       return;
     }
 
-    inventoryItem.isUsed = true;
+    inventoryItem.quantity -= 1;
     await inventoryItem.save();
 
-    res.status(200).json({ message: 'OK', msg: `${inventoryItem.itemName}을(를) 사용했습니다.` });
+    const itemName = (inventoryItem.item as any)?.name || '아이템';
+    res.status(200).json({ message: 'OK', msg: `${itemName}을(를) 사용했습니다.` });
   } catch (err) {
     console.error('❌ useInventoryItem error:', err);
     res.status(500).json({ message: 'ERROR', msg: '서버 오류' });

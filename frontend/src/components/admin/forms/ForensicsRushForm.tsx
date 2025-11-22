@@ -122,18 +122,18 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
 
   return (
     <div className="forensics-rush-form">
-      <h3>🔍 Forensics Rush 시나리오</h3>
+      <h3>Forensics Rush 시나리오</h3>
 
       {/* 사고 시나리오 정보 */}
       <div className="form-section">
-        <h4>📋 사고 시나리오</h4>
+        <h4>사고 시나리오</h4>
         
         <div className="form-grid-2">
           <div className="form-field">
             <label>시나리오 제목 *</label>
             <input
               type="text"
-              placeholder="예: 랜섬웨어 감염 사고"
+              placeholder="랜섬웨어 감염 사고"
               value={data.scenario.title}
               onChange={e => onChange({ 
                 ...data, 
@@ -153,11 +153,11 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
               })}
               required
             >
-              <option value="ransomware">🔒 Ransomware</option>
-              <option value="breach">🚨 Data Breach</option>
-              <option value="ddos">💥 DDoS Attack</option>
-              <option value="insider">👤 Insider Threat</option>
-              <option value="phishing">🎣 Phishing Attack</option>
+              <option value="ransomware">Ransomware</option>
+              <option value="breach">Data Breach</option>
+              <option value="ddos">DDoS Attack</option>
+              <option value="insider">Insider Threat</option>
+              <option value="phishing">Phishing Attack</option>
             </select>
           </div>
         </div>
@@ -166,7 +166,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
           <label>사고 발생 날짜/시간 *</label>
           <input
             type="text"
-            placeholder="예: 2025년 11월 13일 오전 2시"
+            placeholder="2025년 11월 13일 오전 2시"
             value={data.scenario.date}
             onChange={e => onChange({ 
               ...data, 
@@ -180,7 +180,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
           <label>시나리오 설명 *</label>
           <textarea
             rows={2}
-            placeholder="예: 회사 파일 서버가 랜섬웨어에 감염되어 모든 파일이 암호화되었습니다."
+            placeholder="회사 파일 서버가 랜섬웨어에 감염되어 모든 파일이 암호화되었습니다."
             value={data.scenario.description}
             onChange={e => onChange({ 
               ...data, 
@@ -194,7 +194,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
           <label>배경 정보 (Context) *</label>
           <textarea
             rows={3}
-            placeholder="예: 보안팀이 발견한 정보, 피해 범위, 조치 상황 등"
+            placeholder="보안팀이 발견한 정보, 피해 범위, 조치 상황 등"
             value={data.scenario.context}
             onChange={e => onChange({ 
               ...data, 
@@ -208,7 +208,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
       {/* 증거 파일 */}
       <div className="form-section">
         <div className="section-header">
-          <h4>📁 증거 파일 ({data.evidenceFiles.length})</h4>
+          <h4>증거 파일 ({data.evidenceFiles.length})</h4>
           <button type="button" onClick={addEvidenceFile} className="btn-add">
             <FaPlus /> 추가
           </button>
@@ -217,7 +217,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
         {data.evidenceFiles.map((file, idx) => (
           <div key={idx} className="evidence-card">
             <div className="evidence-header">
-              <span>📄 Evidence {idx + 1}: {file.name || '(이름 없음)'}</span>
+              <span>#{idx + 1} {file.name || '이름 없음'}</span>
               <button type="button" onClick={() => removeEvidenceFile(idx)}>
                 <FaTrash />
               </button>
@@ -229,7 +229,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                   <label>파일 이름 *</label>
                   <input
                     type="text"
-                    placeholder="예: access.log"
+                    placeholder="access.log"
                     value={file.name}
                     onChange={e => updateEvidenceFile(idx, 'name', e.target.value)}
                     required
@@ -243,11 +243,11 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                     onChange={e => updateEvidenceFile(idx, 'type', e.target.value)}
                     required
                   >
-                    <option value="log">📝 Log File</option>
-                    <option value="pcap">📦 Network Capture (PCAP)</option>
-                    <option value="memory">💾 Memory Dump</option>
-                    <option value="filesystem">📂 Filesystem</option>
-                    <option value="image">🖼️ Disk Image</option>
+                    <option value="log">Log File</option>
+                    <option value="pcap">Network Capture (PCAP)</option>
+                    <option value="memory">Memory Dump</option>
+                    <option value="filesystem">Filesystem</option>
+                    <option value="image">Disk Image</option>
                   </select>
                 </div>
               </div>
@@ -256,19 +256,19 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                 <label>파일 경로 (서버상의 위치) *</label>
                 <input
                   type="text"
-                  placeholder="예: /var/log/apache2/access.log"
+                  placeholder="/var/log/apache2/access.log"
                   value={file.path}
                   onChange={e => updateEvidenceFile(idx, 'path', e.target.value)}
                   required
                 />
-                <small>플레이어가 접근할 실제 파일 경로</small>
+                <small>파일 경로</small>
               </div>
 
               <div className="input-group">
                 <label>설명 *</label>
                 <input
                   type="text"
-                  placeholder="예: 웹 서버 접근 로그, 공격 시도 기록 포함"
+                  placeholder="웹 서버 접근 로그, 공격 시도 기록 포함"
                   value={file.description}
                   onChange={e => updateEvidenceFile(idx, 'description', e.target.value)}
                   required
@@ -281,20 +281,12 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                 <textarea
                   rows={10}
                   className="file-content-input"
-                  placeholder={`예시 (access.log):
-192.168.1.10 - - [13/Nov/2025:02:45:23 +0000] "GET /index.php HTTP/1.1" 200 2326
-203.0.113.45 - - [13/Nov/2025:03:12:45 +0000] "GET /login.php?id=1' UNION SELECT NULL-- HTTP/1.1" 500 156 "-" "sqlmap/1.7"
-...
-
-플레이어가 파일 뷰어에서 볼 수 있는 실제 내용을 입력하세요.`}
+                  placeholder="192.168.1.10 - - [13/Nov/2025:02:45:23 +0000] GET /index.php HTTP/1.1 200 2326"
                   value={file.content || ''}
                   onChange={e => updateEvidenceFile(idx, 'content', e.target.value)}
                   required
                 />
-                <small>
-                  ⚠️ 중요: 플레이어가 이 내용을 보고 문제를 풀게 됩니다. 
-                  실제 로그 형식으로 작성하고, 답이 포함되어 있어야 합니다.
-                </small>
+                <small>실제 로그 형식으로 작성, 답 포함 필수</small>
               </div>
             </div>
           </div>
@@ -302,20 +294,20 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
 
         {data.evidenceFiles.length === 0 && (
           <div className="empty-state">
-            <p>증거 파일이 없습니다. "추가" 버튼을 눌러 증거 파일을 추가하세요.</p>
-            <p className="hint">💡 팁: 최소 1개 이상의 증거 파일이 필요합니다.</p>
+            <p>증거 파일이 없습니다</p>
+            <p className="hint">최소 1개 이상 필요</p>
           </div>
         )}
       </div>
 
       {/* 사용 가능한 도구 */}
       <div className="form-section">
-        <h4>🛠️ 사용 가능한 도구</h4>
+        <h4>사용 가능한 도구</h4>
         <div className="form-field">
           <label>도구 목록 (쉼표로 구분) *</label>
           <input
             type="text"
-            placeholder="예: grep, awk, sed, wireshark, volatility, strings, tcpdump"
+            placeholder="grep, awk, sed, wireshark, volatility, strings, tcpdump"
             value={data.availableTools.join(', ')}
             onChange={e => onChange({
               ...data,
@@ -323,14 +315,14 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
             })}
             required
           />
-          <small>플레이어가 분석에 사용할 수 있는 도구들</small>
+          <small>분석 도구</small>
         </div>
       </div>
 
       {/* 질문 */}
       <div className="form-section">
         <div className="section-header">
-          <h4>❓ 질문 ({data.questions.length})</h4>
+          <h4>질문 ({data.questions.length})</h4>
           <button type="button" onClick={addQuestion} className="btn-add">
             <FaPlus /> 추가
           </button>
@@ -339,7 +331,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
         {data.questions.map((q, idx) => (
           <div key={idx} className="question-card">
             <div className="question-header">
-              <span>Q{idx + 1}: {q.question || '(질문 없음)'}</span>
+              <span>Q{idx + 1} {q.question || '질문 없음'}</span>
               <button type="button" onClick={() => removeQuestion(idx)}>
                 <FaTrash />
               </button>
@@ -350,7 +342,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                 <label>질문 *</label>
                 <input
                   type="text"
-                  placeholder="예: 공격자의 IP 주소는?"
+                  placeholder="공격자의 IP 주소는?"
                   value={q.question}
                   onChange={e => updateQuestion(idx, 'question', e.target.value)}
                   required
@@ -365,10 +357,10 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                     onChange={e => updateQuestion(idx, 'type', e.target.value)}
                     required
                   >
-                    <option value="text">📝 Text</option>
-                    <option value="multiple-choice">☑️ Multiple Choice</option>
-                    <option value="ip-address">🌐 IP Address</option>
-                    <option value="timestamp">⏰ Timestamp</option>
+                    <option value="text">Text</option>
+                    <option value="multiple-choice">Multiple Choice</option>
+                    <option value="ip-address">IP Address</option>
+                    <option value="timestamp">Timestamp</option>
                   </select>
                 </div>
 
@@ -379,9 +371,9 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                     onChange={e => updateQuestion(idx, 'difficulty', e.target.value as any)}
                     required
                   >
-                    <option value="easy">🟢 Easy</option>
-                    <option value="medium">🟡 Medium</option>
-                    <option value="hard">🔴 Hard</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
                   </select>
                 </div>
 
@@ -412,14 +404,14 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                   }}
                   required
                 />
-                <small>정확한 정답 (대소문자 무시, 공백 제거 후 비교됨). 여러 답변 가능 시 쉼표로 구분</small>
+                <small>정답 (대소문자 무시, 여러 개는 쉼표로 구분)</small>
               </div>
 
               <div className="input-group">
                 <label>힌트 (선택, 쉼표로 구분)</label>
                 <input
                   type="text"
-                  placeholder="예: access.log 파일을 확인하세요, grep 명령어를 사용하세요"
+                  placeholder="access.log 파일을 확인하세요, grep 명령어를 사용하세요"
                   value={q.hints?.join(', ') || ''}
                   onChange={e => updateQuestion(idx, 'hints', e.target.value ? e.target.value.split(',').map(s => s.trim()) : [])}
                 />
@@ -429,11 +421,11 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                 <label>관련 증거 파일 (선택, 증거 파일 ID를 쉼표로 구분)</label>
                 <input
                   type="text"
-                  placeholder="예: evidence_1, evidence_2"
+                  placeholder="evidence_1, evidence_2"
                   value={q.relatedFiles.join(', ')}
                   onChange={e => updateQuestion(idx, 'relatedFiles', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                 />
-                <small>이 질문과 관련된 증거 파일들 (파일 뷰어에서 📌 표시됨)</small>
+                <small>관련 증거 파일</small>
               </div>
             </div>
           </div>
@@ -441,15 +433,15 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
 
         {data.questions.length === 0 && (
           <div className="empty-state">
-            <p>질문이 없습니다. "추가" 버튼을 눌러 질문을 추가하세요.</p>
-            <p className="hint">💡 팁: 최소 3개 이상의 질문을 만드는 것을 권장합니다.</p>
+            <p>질문이 없습니다</p>
+            <p className="hint">최소 3개 이상 권장</p>
           </div>
         )}
       </div>
 
       {/* 점수 시스템 */}
       <div className="form-section">
-        <h4>🏆 점수 시스템</h4>
+        <h4>점수 시스템</h4>
         <div className="form-grid-3">
           <div className="form-field">
             <label>오답 페널티 *</label>
@@ -463,7 +455,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
               })}
               required
             />
-            <small>틀릴 때마다 감점</small>
+            <small>오답 시 감점</small>
           </div>
 
           <div className="form-field">
@@ -478,7 +470,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
               })}
               required
             />
-            <small>전부 맞혔을 때 보너스</small>
+            <small>전부 정답 시 보너스</small>
           </div>
 
           <div className="form-field">
@@ -491,7 +483,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                   scoring: { ...data.scoring, speedBonus: e.target.checked }
                 })}
               />
-              <span>⏱️ 속도 보너스 활성화</span>
+              <span>속도 보너스</span>
             </label>
             <small>빠르게 풀면 추가 점수</small>
           </div>
@@ -500,45 +492,45 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
 
       {/* 요약 정보 */}
       <div className="form-section summary-section">
-        <h4>📊 시나리오 요약</h4>
+        <h4>시나리오 요약</h4>
         <div className="summary-grid">
           <div className="summary-item">
-            <span className="summary-label">증거 파일 개수:</span>
+            <span className="summary-label">증거 파일</span>
             <span className="summary-value">{data.evidenceFiles.length}개</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">질문 개수:</span>
+            <span className="summary-label">질문</span>
             <span className="summary-value">{data.questions.length}개</span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">총 배점:</span>
+            <span className="summary-label">총점</span>
             <span className="summary-value">
-              {data.questions.reduce((sum, q) => sum + q.points, 0)}점
+              {data.questions.reduce((sum, q) => sum + q.points, 0)}pt
             </span>
           </div>
           <div className="summary-item">
-            <span className="summary-label">완료 상태:</span>
+            <span className="summary-label">상태</span>
             <span className={`summary-value ${
-              data.evidenceFiles.length > 0 && 
+              data.evidenceFiles.length > 0 &&
               data.questions.length >= 3 &&
               data.evidenceFiles.every(f => f.content) ? 'complete' : 'incomplete'
             }`}>
-              {data.evidenceFiles.length > 0 && 
+              {data.evidenceFiles.length > 0 &&
                data.questions.length >= 3 &&
-               data.evidenceFiles.every(f => f.content) ? '✅ 완성' : '⚠️ 미완성'}
+               data.evidenceFiles.every(f => f.content) ? '완성' : '미완성'}
             </span>
           </div>
         </div>
         
         {(!data.evidenceFiles.every(f => f.content) || data.questions.length < 3) && (
           <div className="warning-box">
-            <strong>⚠️ 경고:</strong>
+            <strong>누락된 항목:</strong>
             <ul>
               {!data.evidenceFiles.every(f => f.content) && (
-                <li>일부 증거 파일의 내용(content)이 비어있습니다. 모든 증거 파일에 실제 내용을 입력하세요.</li>
+                <li>일부 증거 파일 내용 누락</li>
               )}
               {data.questions.length < 3 && (
-                <li>최소 3개 이상의 질문을 추가하는 것을 권장합니다.</li>
+                <li>질문 (최소 3개 권장)</li>
               )}
             </ul>
           </div>
