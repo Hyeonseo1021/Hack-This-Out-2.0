@@ -558,12 +558,12 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
               {gracePeriodRemaining !== null && firstWinner && (
                 <>
                   <div className="message-line">
-                    <span className="prompt">$</span> status --grace-period
+                    <span className="prompt">$</span> ./check_status.sh
                   </div>
                   <div className="output-line warning">
                     {firstWinner === currentUserId
-                      ? "[FIRST PLACE] Waiting for other investigators..."
-                      : `[GRACE PERIOD] ${gracePeriodRemaining}s remaining`
+                      ? "[PRIORITY] Awaiting field reports from remaining agents..."
+                      : `[ALERT] Evidence submission deadline: T-${gracePeriodRemaining}s`
                     }
                   </div>
                 </>
@@ -606,7 +606,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           {/* ✅ 유예 시간만 표시 (ForensicsRush는 시간 제한 없음) */}
           {gracePeriodRemaining !== null && (
             <div className="stat-card grace-card">
-              <div className="stat-label">Grace Period</div>
+              <div className="stat-label">DEADLINE</div>
               <div className="stat-value warning">{gracePeriodRemaining}s</div>
             </div>
           )}
@@ -623,11 +623,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {gracePeriodRemaining !== null && firstWinner && (
         <div className="grace-period-banner">
           <div className="banner-content">
-            <span className="banner-icon">⏰</span>
+            <span className="banner-icon">⚠</span>
             <span className="banner-text">
-              {firstWinner === currentUserId 
-                ? "You finished first! Others have grace period to complete." 
-                : `Grace period active - ${gracePeriodRemaining}s remaining to complete all questions!`}
+              {firstWinner === currentUserId
+                ? "[CASE CLOSED] Investigation complete - awaiting final reports from field agents"
+                : `[URGENT] Evidence collection window expires in ${gracePeriodRemaining}s - submit findings immediately`}
             </span>
           </div>
         </div>

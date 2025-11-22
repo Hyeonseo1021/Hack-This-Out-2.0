@@ -73,11 +73,16 @@
     flex-shrink: 0;
     position: relative;
     z-index: 10;
+    overflow: hidden;
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 0.8rem;
+      gap: 1rem;
+      flex-wrap: nowrap;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
 
       .arena-title {
         font-size: 1.1rem;
@@ -87,15 +92,21 @@
         text-shadow: 0 0 10px #00f6ff, 0 0 20px #00f6ff;
         letter-spacing: 2px;
         animation: neon-flicker 3s infinite alternate;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: 0;
       }
 
       .status-badge {
-        padding: 0.25rem 0.6rem;
+        padding: 0.3rem 0.7rem;
         border-radius: 4px;
-        font-size: 0.7rem;
-        font-weight: 600;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: fit-content;
 
         &.status-waiting {
           background: rgba(255, 149, 0, 0.2);
@@ -121,14 +132,16 @@
       }
 
       .mode-badge {
-        padding: 0.25rem 0.6rem;
+        padding: 0.3rem 0.7rem;
         background: rgba(0, 246, 255, 0.15);
         color: #00f6ff;
         border: 2px solid rgba(0, 246, 255, 0.3);
         border-radius: 4px;
-        font-size: 0.7rem;
-        font-weight: 600;
+        font-size: 0.75rem;
+        font-weight: 700;
         box-shadow: 0 0 10px rgba(0, 246, 255, 0.2);
+        white-space: nowrap;
+        flex-shrink: 0;
       }
     }
 
@@ -145,17 +158,20 @@
 
         .timer-value {
           font-size: 1.3rem;
-          font-weight: 700;
+          font-weight: 900;
           color: #00f6ff;
           font-family: 'Courier New', monospace;
-          letter-spacing: 1px;
+          letter-spacing: 2px;
           text-shadow: 0 0 10px rgba(0, 246, 255, 0.6);
         }
 
         .timer-label {
-          font-size: 0.65rem; // 축소
+          font-size: 0.65rem;
           color: rgba(255, 255, 255, 0.5);
           text-transform: uppercase;
+          font-family: 'Courier New', monospace;
+          font-weight: 700;
+          letter-spacing: 1.5px;
         }
       }
 

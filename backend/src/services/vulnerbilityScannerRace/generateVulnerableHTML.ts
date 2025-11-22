@@ -257,6 +257,10 @@ function generateFallbackHTML(scenario: any): string {
   </div>
 
   <script>
+    // Load vulnerability data from server
+    const vulns = ${JSON.stringify(vulns)};
+    const sqliVuln = vulns.find(v => v.vulnType === 'SQLi') || vulns[0];
+
     // Simulated vulnerable login
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -276,12 +280,17 @@ function generateFallbackHTML(scenario: any): string {
         resultDiv.className = 'result success';
         resultDiv.innerHTML = '✅ <strong>Login Successful!</strong><br>Welcome, Administrator!<br><small>Query: ' + query + '</small>';
 
-        // Notify parent window
+        // Determine which field had the SQLi payload
+        const usedPayload = sqliPayloads.find(p => username.includes(p) || password.includes(p)) || username;
+
+        // Notify parent window with correct vulnerability info
         window.parent.postMessage({
           type: 'vulnerability_found',
-          vulnId: '${vulns[0]?.vulnId || 'vuln_001'}',
-          vulnType: 'SQLi',
-          endpoint: '/login'
+          vulnId: sqliVuln.vulnId,
+          vulnType: sqliVuln.vulnType,
+          endpoint: sqliVuln.endpoint,
+          parameter: sqliVuln.parameter,
+          payload: usedPayload
         }, '*');
       } else {
         resultDiv.className = 'result error';

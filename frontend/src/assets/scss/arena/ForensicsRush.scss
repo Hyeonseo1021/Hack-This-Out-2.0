@@ -99,7 +99,9 @@
     padding: 1.2rem 2rem;
     background: linear-gradient(180deg, #1a2332 0%, #2c3e50 100%);
     border-bottom: 3px solid #3498db;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
     .header-left {
       flex: 1;
@@ -108,11 +110,13 @@
         display: inline-block;
         background: #3498db;
         color: #0f1c2e;
-        padding: 0.25rem 0.75rem;
+        padding: 0.3rem 0.9rem;
         font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-        margin-bottom: 0.5rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        margin-bottom: 0.6rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        font-family: 'Courier New', monospace;
       }
 
       .case-title {
@@ -121,16 +125,19 @@
         color: #ffffff;
         margin: 0 0 0.5rem 0;
         letter-spacing: 0.5px;
+        font-family: 'Courier New', monospace;
+        text-transform: uppercase;
       }
 
       .case-meta {
         display: flex;
         gap: 1.5rem;
         font-size: 0.85rem;
+        font-family: 'Courier New', monospace;
 
         .incident-type {
           color: #3498db;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .case-date {
@@ -145,52 +152,68 @@
       align-items: center;
 
       .stat-card {
-        background: rgba(52, 152, 219, 0.1);
-        border: 1px solid #3498db;
-        padding: 0.6rem 1rem;
-        min-width: 100px;
+        background: rgba(52, 152, 219, 0.15);
+        border: 2px solid #3498db;
+        padding: 0.7rem 1.1rem;
+        min-width: 110px;
         text-align: center;
+        box-shadow:
+          0 2px 8px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
         .stat-label {
           font-size: 0.7rem;
           color: rgba(255, 255, 255, 0.6);
           text-transform: uppercase;
-          letter-spacing: 1px;
-          margin-bottom: 0.25rem;
+          letter-spacing: 1.5px;
+          margin-bottom: 0.3rem;
+          font-weight: 700;
+          font-family: 'Courier New', monospace;
         }
 
         .stat-value {
-          font-size: 1.3rem;
-          font-weight: 700;
+          font-size: 1.4rem;
+          font-weight: 900;
           color: #3498db;
+          font-family: 'Courier New', monospace;
 
           &.warning {
             color: #e74c3c;
+            animation: pulse 1s ease-in-out infinite;
           }
         }
 
         &.grace-card {
           border-color: #e74c3c;
-          animation: pulse 1.5s ease-in-out infinite;
+          background: rgba(231, 76, 60, 0.2);
+          box-shadow:
+            0 0 15px rgba(231, 76, 60, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
       }
 
       .completion-badge {
         background: #27ae60;
         color: #ffffff;
-        padding: 0.6rem 1.2rem;
-        font-weight: 700;
+        padding: 0.7rem 1.3rem;
+        font-weight: 900;
         font-size: 0.9rem;
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
+        font-family: 'Courier New', monospace;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       }
     }
   }
 
   // Grace Period Banner
   .grace-period-banner {
-    background: linear-gradient(90deg, #e74c3c, #c0392b);
-    padding: 0.75rem 2rem;
-    border-bottom: 2px solid #000;
+    background: linear-gradient(90deg, #c0392b, #e74c3c, #c0392b);
+    padding: 0.85rem 2rem;
+    border-bottom: 3px solid #000;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
     .banner-content {
       display: flex;
@@ -199,13 +222,17 @@
       justify-content: center;
 
       .banner-icon {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
+        animation: pulse 2s ease-in-out infinite;
       }
 
       .banner-text {
-        font-weight: 600;
+        font-weight: 700;
         font-size: 0.95rem;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       }
     }
   }
@@ -757,18 +784,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 2rem;
 
     .completion-terminal {
       margin: 0 auto;
-      max-width: 700px;
-      width: 90%;
+      max-width: 850px;
+      width: 95%;
+      max-height: 75vh;
 
       .terminal-body {
+        max-height: calc(75vh - 60px);
+        padding: 1.5rem;
+
         .ascii-art {
           color: #3498db;
-          font-size: 0.55rem;
-          line-height: 1.1;
-          margin-bottom: 1.5rem;
+          font-size: 0.45rem;
+          line-height: 1;
+          margin-bottom: 1.25rem;
           white-space: pre;
           text-align: center;
         }
@@ -776,10 +808,12 @@
         .completion-messages {
           .message-line {
             color: #3498db;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            font-family: 'Courier New', monospace;
 
             .prompt {
               margin-right: 0.5rem;
+              font-weight: 700;
             }
 
             .cursor {
@@ -789,31 +823,37 @@
 
           .output-line {
             color: #ffffff;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
 
             &.success {
               color: #27ae60;
             }
 
             &.warning {
-              color: #e67e22;
+              color: #f39c12;
+              font-weight: 600;
             }
           }
 
           .output-block {
             background: #0a0a0a;
             border: 1px solid #2c3e50;
-            padding: 1rem;
-            margin-bottom: 1rem;
+            padding: 0.85rem;
+            margin-bottom: 0.85rem;
 
             .summary-line {
               color: #3498db;
-              line-height: 1.6;
+              line-height: 1.5;
+              font-size: 0.9rem;
+              font-family: 'Courier New', monospace;
             }
 
             .performance-line {
               color: #ffffff;
-              margin-bottom: 0.4rem;
+              margin-bottom: 0.35rem;
+              font-family: 'Courier New', monospace;
 
               .perfect {
                 color: #27ae60;

@@ -156,11 +156,20 @@ const ArenaPlayPage: React.FC = () => {
       setParticipants(payload.participants || []);
       if (payload.startTime) setStartAt(new Date(payload.startTime));
       if (payload.endTime) setEndAt(new Date(payload.endTime));
-      
+
       if (payload.mode) {
         setMode(payload.mode);
       } else {
         console.error('⚠️ MODE IS MISSING IN PAYLOAD!');
+      }
+
+      // ✅ 상태가 ended로 변경되면 결과 페이지로 이동
+      if (payload.status === 'ended' && !navigatedRef.current) {
+        navigatedRef.current = true;
+        console.log('🏁 [ArenaPlayPage] Status changed to ended, navigating to result...');
+        setTimeout(() => {
+          navigate(`/arena/result/${arenaId}`, { replace: true });
+        }, 2000); // 2초 후 이동
       }
     };
 
