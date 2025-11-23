@@ -20,6 +20,10 @@ const ItemSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    imageUrl: {
+      type: String,
+      default: '',
+    },
     type: {
       type: String,
       required: true,  // enum 없음, 자유롭게 확장 가능

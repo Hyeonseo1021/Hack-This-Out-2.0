@@ -16,14 +16,49 @@ export const getItems = async (req: Request, res: Response): Promise<void> => {
 
 export const createItem = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { name, price, description, isListed } = req.body;
-        const newItem = new Item({ name, price, description, isListed });
+        const { name, price, description, isListed, icon, type, effect, roulette, imageUrl } = req.body;
+
+        const newItem = new Item({
+            name,
+            price,
+            description: description || '설명 없음',
+            isListed: isListed !== undefined ? isListed : true,
+            icon: icon || '',
+            imageUrl: imageUrl || '',
+            type,
+            effect: effect || { hintCount: 0, freezeSeconds: 0 },
+            roulette: roulette || { enabled: false, weight: 1 },
+        });
+
         await newItem.save();
         res.status(201).json(newItem);
     } catch (err) {
+        console.error('❌ createItem error:', err);
         res.status(500).json({ msg: "Failed to create item."})
     }
 }
+
+/** 📤 아이템 이미지 업로드 */
+export const uploadItemImage = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.file) {
+            res.status(400).json({ message: 'ERROR', msg: '파일이 업로드되지 않았습니다.' });
+            return;
+        }
+
+        // 업로드된 파일의 URL 반환
+        const imageUrl = `/uploads/items/${req.file.filename}`;
+
+        res.status(200).json({
+            message: 'OK',
+            imageUrl,
+            filename: req.file.filename,
+        });
+    } catch (err) {
+        console.error('❌ uploadItemImage error:', err);
+        res.status(500).json({ message: 'ERROR', msg: '이미지 업로드 실패' });
+    }
+};
 
 export const buyItem = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
@@ -70,10 +105,31 @@ export const buyItem = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/** 💰 사용자 코인 잔액 조회 */
+export const getBalance = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = res.locals.jwtData.id;
+    const user = await User.findById(userId).select('htoCoin');
+
+    if (!user) {
+      res.status(404).json({ message: 'ERROR', msg: '사용자를 찾을 수 없습니다.' });
+      return;
+    }
+
+    res.status(200).json({ 
+      message: 'OK', 
+      balance: user.htoCoin 
+    });
+  } catch (err) {
+    console.error('❌ getBalance error:', err);
+    res.status(500).json({ message: 'ERROR', msg: '서버 오류' });
+  }
+};
+
 export const getInventory = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = res.locals.jwtData.id;
-    const items = await Inventory.find({ user: userId })
+    const items = await Inventory.find({ user: userId, quantity: { $gt: 0 } }) // 수량 0인 아이템 제외
       .populate('item')
       .sort({ acquiredAt: -1 });
 
@@ -106,7 +162,11 @@ export const useInventoryItem = async (req: Request, res: Response): Promise<voi
     await inventoryItem.save();
 
     const itemName = (inventoryItem.item as any)?.name || '아이템';
-    res.status(200).json({ message: 'OK', msg: `${itemName}을(를) 사용했습니다.` });
+    res.status(200).json({ 
+      message: 'OK', 
+      msg: `${itemName}을(를) 사용했습니다.`,
+      remainingQuantity: inventoryItem.quantity
+    });
   } catch (err) {
     console.error('❌ useInventoryItem error:', err);
     res.status(500).json({ message: 'ERROR', msg: '서버 오류' });
@@ -125,39 +185,45 @@ export const getShopItems = async (req: Request, res: Response): Promise<void> =
 
 /** 🛒 아이템 구매 처리 */
 export const buyShopItem = async (req: Request, res: Response): Promise<void> => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const userId = res.locals.jwtData?.id;
     const { itemId } = req.body;
 
     if (!userId || !itemId) {
+      await session.abortTransaction();
       res.status(400).json({ message: 'ERROR', msg: '요청 정보가 올바르지 않습니다.' });
       return;
     }
 
-    const user = await User.findById(userId);
-    const item = await Item.findById(itemId);
+    const user = await User.findById(userId).session(session);
+    const item = await Item.findById(itemId).session(session);
 
     if (!user || !item) {
+      await session.abortTransaction();
       res.status(404).json({ message: 'ERROR', msg: '유저 또는 아이템을 찾을 수 없습니다.' });
       return;
     }
 
     // 💰 잔액 확인
     if (user.htoCoin < item.price) {
+      await session.abortTransaction();
       res.status(400).json({ message: 'ERROR', msg: '보유 코인이 부족합니다.' });
       return;
     }
 
     // 💸 코인 차감
     user.htoCoin -= item.price;
-    await user.save();
+    await user.save({ session });
 
     // 🎲 랜덤 버프 처리
     let finalItem = item;
     if (item.type === 'random_buff') {
       const rand = Math.random();
       const randomResult = rand < 0.7 ? '힌트권 1회권' : '시간 정지권';
-      const randomItem = await Item.findOne({ name: randomResult });
+      const randomItem = await Item.findOne({ name: randomResult }).session(session);
       if (randomItem) finalItem = randomItem;
     }
 
@@ -165,59 +231,72 @@ export const buyShopItem = async (req: Request, res: Response): Promise<void> =>
     const existing = await Inventory.findOne({
       user: user._id,
       item: finalItem._id,
-    });
+    }).session(session);
 
     if (existing) {
       existing.quantity = (existing.quantity ?? 0) + 1;
-      await existing.save();
+      await existing.save({ session });
     } else {
-      await Inventory.create({
+      await Inventory.create([{
         user: user._id,
         item: finalItem._id,
-        itemName: finalItem.name,
-        isUsed: false,
-        acquiredAt: new Date(),
         quantity: 1,
-      });
+        acquiredAt: new Date(),
+      }], { session });
     }
+
+    await session.commitTransaction();
 
     res.status(200).json({
       message: 'OK',
       msg: `${finalItem.name}을(를) 획득했습니다!`,
-      updatedTokens: user.htoCoin,
+      updatedBalance: user.htoCoin,
+      acquiredItem: {
+        id: finalItem._id,
+        name: finalItem.name,
+      }
     });
   } catch (err) {
+    await session.abortTransaction();
     console.error('❌ buyShopItem error:', err);
     res.status(500).json({ message: 'ERROR', msg: '서버 오류가 발생했습니다.' });
+  } finally {
+    session.endSession();
   }
 };
 
 /** 🎰 룰렛 돌리기 */
 export const spinRoulette = async (req: Request, res: Response): Promise<void> => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const userId = res.locals.jwtData?.id;
     const ROULETTE_COST = 10;
 
     if (!userId) {
+      await session.abortTransaction();
       res.status(400).json({ message: 'ERROR', msg: '로그인이 필요합니다.' });
       return;
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).session(session);
     if (!user) {
+      await session.abortTransaction();
       res.status(404).json({ message: 'ERROR', msg: '유저를 찾을 수 없습니다.' });
       return;
     }
 
     // 💰 잔액 확인
     if (user.htoCoin < ROULETTE_COST) {
+      await session.abortTransaction();
       res.status(400).json({ message: 'ERROR', msg: '코인이 부족합니다! (필요: 10 HTO)' });
       return;
     }
 
     // 💸 코인 차감
     user.htoCoin -= ROULETTE_COST;
-    await user.save();
+    await user.save({ session });
 
     // 🎲 확률 테이블 (프론트엔드와 동일)
     const ROULETTE_ITEMS = [
@@ -243,9 +322,10 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
     }
 
     // 아이템 이름으로 DB에서 찾기
-    const rewardItem = await Item.findOne({ name: selectedItem.name });
+    const rewardItem = await Item.findOne({ name: selectedItem.name }).session(session);
 
     if (!rewardItem) {
+      await session.abortTransaction();
       res.status(404).json({ message: 'ERROR', msg: '보상 아이템을 찾을 수 없습니다.' });
       return;
     }
@@ -254,21 +334,21 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
     const existing = await Inventory.findOne({
       user: user._id,
       item: rewardItem._id,
-    });
+    }).session(session);
 
     if (existing) {
       existing.quantity = (existing.quantity ?? 0) + 1;
-      await existing.save();
+      await existing.save({ session });
     } else {
-      await Inventory.create({
+      await Inventory.create([{
         user: user._id,
         item: rewardItem._id,
-        itemName: rewardItem.name,
-        isUsed: false,
-        acquiredAt: new Date(),
         quantity: 1,
-      });
+        acquiredAt: new Date(),
+      }], { session });
     }
+
+    await session.commitTransaction();
 
     res.status(200).json({
       message: 'OK',
@@ -277,7 +357,10 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
       updatedBalance: user.htoCoin,
     });
   } catch (err) {
+    await session.abortTransaction();
     console.error('❌ spinRoulette error:', err);
     res.status(500).json({ message: 'ERROR', msg: '서버 오류가 발생했습니다.' });
+  } finally {
+    session.endSession();
   }
 };

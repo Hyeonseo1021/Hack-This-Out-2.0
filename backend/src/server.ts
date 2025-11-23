@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import path from 'path';
 import connectDB from './config/db';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -36,6 +37,9 @@ app.use(morgan("dev"));
 // Middleware
 app.use(express.json());
 app.use(mongoSanitize());
+
+// Serve static files (uploaded images)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api/user', userRoutes);
