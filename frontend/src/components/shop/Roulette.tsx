@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../../assets/scss/Shop/Roulette.scss";
+import { spinRoulette } from "../../api/axiosShop";
 
 import hint1Img from "../../assets/img/shop/hint1.png";
 import hint3Img from "../../assets/img/shop/hint3.png";
@@ -33,6 +34,8 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
 
   const slotCenterAngles = [225, 135, 45, 315];
 
+  const handleSpinRoulette = async () => {
+
   const [isRolling, setIsRolling] = useState(false);
   const [resultItemId, setResultItemId] = useState<RouletteItem["id"] | null>(null);
 
@@ -43,43 +46,57 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
       showToast(t("roulette.noCoin"));
       return;
     }
-
     setBalance(prev => prev - 10);
+
     setIsRolling(true);
 
-    const totalWeight = rouletteItems.reduce((sum, item) => sum + item.weight, 0);
-    const rand = Math.random() * totalWeight;
+    try {
+      // 🎰 백엔드 API 호출
+      const result = await spinRoulette();
 
+      // 🔍 백엔드에서 받은 결과로 룰렛 아이템 찾기
+      const selected = rouletteItems.find(item => item.id === result.rewardId);
     let acc = 0;
     let selected: RouletteItem = rouletteItems[0];
 
-    for (const item of rouletteItems) {
-      acc += item.weight;
-      if (rand <= acc) {
-        selected = item;
-        break;
+      if (!selected) {
+        showToast("오류가 발생했습니다.");
+        setIsRolling(false);
+        return;
       }
-    }
 
-    const selectedIndex = rouletteItems.indexOf(selected);
-    const wheel = document.getElementById("roulette-wheel") as HTMLElement;
+      const selectedIndex = rouletteItems.indexOf(selected);
+      const wheel = document.getElementById("roulette-wheel") as HTMLElement;
 
-    if (wheel) {
-      wheel.style.transition = "none";
-      wheel.style.transform = "rotate(0deg)";
-    }
+      // 💸 잔액 업데이트 (백엔드에서 받은 값으로)
+      setBalance(result.updatedBalance);
 
-    setTimeout(() => {
-      if (wheel)
-        wheel.style.transition = "transform 4s cubic-bezier(0.1, 0.95, 0.37, 1)";
-    }, 50);
+      // 🎡 룰렛 애니메이션
+      if (wheel) {
+        wheel.style.transition = "none";
+        wheel.style.transform = "rotate(0deg)";
+      }
 
-    const finalAngle = 360 * 6 + slotCenterAngles[selectedIndex];
+      setTimeout(() => {
+        if (wheel)
+          wheel.style.transition = "transform 4s cubic-bezier(0.1, 0.95, 0.37, 1)";
+      }, 50);
 
-    setTimeout(() => {
-      if (wheel) wheel.style.transform = `rotate(${finalAngle}deg)`;
-    }, 100);
+      const finalAngle = 360 * 6 + slotCenterAngles[selectedIndex];
 
+      setTimeout(() => {
+        if (wheel) wheel.style.transform = `rotate(${finalAngle}deg)`;
+      }, 100);
+
+      setTimeout(() => {
+        setResultItem(selected.label);
+        showToast(`${selected.label} 획득!`);
+        onReward(selected.id);
+        setIsRolling(false);
+      }, 4200);
+    } catch (err: any) {
+      console.error("❌ 룰렛 오류:", err);
+      showToast(err?.response?.data?.msg || "룰렛 실행 중 오류가 발생했습니다.");
     setTimeout(() => {
       setResultItemId(selected.id);
 
@@ -88,7 +105,7 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
 
       onReward(selected.id);
       setIsRolling(false);
-    }, 4200);
+    }
   };
 
   return (
@@ -123,7 +140,12 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
           )}
         </div>
       </div>
-
+      <button
+        className="roulette-button"
+        onClick={handleSpinRoulette}
+        disabled={isRolling}
+      >
+        {isRolling ? "돌리는 중..." : "START"}
       {/* ⭕ START만 고정, 나머지는 i18n 유지 */}
       <button className="roulette-button" onClick={spinRoulette} disabled={isRolling}>
         {isRolling ? t("roulette.rolling") : "START"}

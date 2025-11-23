@@ -1,0 +1,1362 @@
+@use "../style" as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
+
+.battle-cyber-container.room-variant {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
+  color: #eafaff;
+  font-family: 'Orbitron', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  .background-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0, 225, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.1) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.07;
+    animation: grid-pan 10s linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes grid-pan {
+    0% { background-position: 0 0; }
+    100% { background-position: 60px 60px; }
+  }
+}
+
+.cyber-module {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  width: 95%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: auto;
+  max-height: 90vh;
+}
+
+/* === Arena Title === */
+.cyber-title {
+  font-size: 1.8rem;
+  color: #00f6ff;
+  text-transform: uppercase;
+  position: relative;
+  margin-bottom: 0;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px #00f6ff, 0 0 20px #00f6ff;
+  flex-shrink: 0;
+}
+
+/* === Main Content Wrapper (List + Chat) === */
+.room-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+
+/* === Participants List (Center Grid) === */
+.participant-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  flex: 0 0 auto;
+  margin: 0;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(8, 1fr);
+  }
+}
+
+/* === Bottom Section (Chat + Buttons) === */
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* === Settings Module === */
+.settings-module {
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(0, 5, 15, 0.7);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  
+  flex-shrink: 0; // [수정] 설정창은 줄어들지 않음
+  
+  .settings-title {
+    font-size: 1.2rem;
+    color: #00f6ff;
+    text-align: left;
+    margin: 0 0 5px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .setting-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .settings-label {
+    font-size: 0.9rem;
+    color: #ccc;
+    font-weight: 400;
+  }
+}
+
+/* === Save Settings Button === */
+.save-settings-btn {
+  width: 100%;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  font-size: 0.9rem !important;
+
+  border-color: #00f6ff !important;
+  color: #00f6ff !important;
+
+  &:hover {
+    background: rgba(0, 246, 255, 0.1) !important;
+    box-shadow: 0 0 15px rgba(0, 246, 255, 0.6) !important;
+  }
+}
+
+
+/* === Chat Module (Center) === */
+.chat-module {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(0, 5, 15, 0.7);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+  height: 600px;
+
+  @media (max-width: 900px) {
+    height: 150px;
+  }
+}
+
+/* === Chat: Message Area === */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  min-height: 0;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 246, 255, 0.5);
+    border-radius: 3px;
+    &:hover {
+      background: rgba(0, 246, 255, 0.8);
+    }
+  }
+}
+
+/* === Chat: Individual Message === */
+.chat-message {
+  color: #eafaff;
+  word-break: break-all; 
+  
+  strong {
+    color: #00f6ff;
+    margin-right: 5px;
+    text-shadow: 0 0 6px rgba(0, 246, 255, 0.4);
+  }
+
+  &.system-message {
+    color: #ffc400;
+    font-style: italic;
+    opacity: 0.9;
+  }
+}
+
+/* === Chat: Input Area === */
+.chat-input-area {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid rgba(0, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.3);
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* === Cyberpunk Input & Select Fields === */
+.cyber-input {
+  width: 100%; 
+  flex: 1;
+  
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 246, 255, 0.4);
+  border-radius: 4px;
+  color: #eafaff;
+  padding: 8px 12px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  transition: 0.3s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #00f6ff;
+    box-shadow: 0 0 8px rgba(0, 246, 255, 0.7);
+  }
+  
+  &::placeholder {
+    color: #555;
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  &:disabled {
+     background: rgba(0, 0, 0, 0.2);
+     border-color: rgba(0, 246, 255, 0.1);
+     cursor: not-allowed;
+  }
+}
+
+/* === Cyberpunk Select Field === */
+.cyber-select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 246, 255, 0.4);
+  border-radius: 4px;
+  color: #eafaff;
+  padding: 8px 12px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  transition: 0.3s ease;
+  appearance: none;
+
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%2300f6ff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+
+  &:focus {
+    outline: none;
+    border-color: #00f6ff;
+    box-shadow: 0 0 8px rgba(0, 246, 255, 0.7);
+  }
+  
+  option {
+    background: #02010a;
+    color: #eafaff;
+    font-family: 'Orbitron', sans-serif;
+  }
+  
+  option:disabled {
+    color: #555;
+  }
+}
+
+
+/* === Participant Card (슬롯 디자인) === */
+.participant-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 12px 18px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(0, 5, 15, 0.7);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  transition: 0.3s ease all;
+  text-align: left;
+  display: flex;
+  align-items: center;
+
+  .card-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    z-index: 0;
+  }
+
+  .card-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+
+    .player-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-start;
+    }
+
+    .player-slot {
+      font-family: 'VT323', monospace;
+      font-size: 0.85rem;
+      color: #888;
+      letter-spacing: 1px;
+    }
+
+    .username {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #eafaff;
+    }
+
+    .player-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status {
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0.9;
+      color: #ccc;
+    }
+
+    .host-tag,
+    .me-tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    .host-tag {
+      color: #00f6ff;
+      text-shadow: 0 0 8px rgba(0, 246, 255, 0.6);
+    }
+    .me-tag {
+      color: #00ff88;
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+    }
+    
+    .kick-btn {
+      background: transparent;
+      border: 1px solid #ff4444;
+      color: #ff4444;
+      font-family: 'Orbitron', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-left: 10px;
+
+      &:hover {
+        background: rgba(255, 68, 68, 0.1);
+        box-shadow: 0 0 8px #ff4444;
+      }
+    }
+  }
+
+  /* === 빈 슬롯 스타일 === */
+  &.is-empty {
+    background: rgba(0, 5, 15, 0.4);
+    border-color: rgba(0, 255, 255, 0.1);
+    box-shadow: none;
+
+    .username {
+      color: #666;
+      font-size: 0.85rem;
+      font-style: italic;
+      font-weight: 400;
+    }
+  }
+
+  /* === 호버 효과 === */
+  &:hover:not(.is-empty) {
+    transform: translateY(-3px);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  }
+}
+
+/* === 상태별 스타일 === */
+.participant-card.is-host {
+  border-color: #00f6ff;
+  box-shadow: 0 0 12px rgba(0, 246, 255, 0.5);
+}
+
+.participant-card.is-me {
+  border-color: #00ff88;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+}
+
+.participant-card.is-ready {
+  border-color: #00f6ff;
+  box-shadow: 0 0 16px #00f6ff;
+
+  .status {
+    color: #00f6ff;
+    animation: readyBlink 1.6s infinite alternate;
+  }
+}
+
+@keyframes readyBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+
+/* === Action Buttons (Bottom) === */
+.footer-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.cyber-button {
+  background: transparent;
+  border: 1px solid #00f6ff;
+  color: #00f6ff;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 12px 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 6px rgba(0, 246, 255, 0.3);
+
+  &:hover {
+    background: rgba(0, 246, 255, 0.1);
+    box-shadow: 0 0 12px rgba(0, 246, 255, 0.8);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .chat-input-area & {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
+}
+
+/* === READY 버튼 === */
+.cyber-button.is-ready-button {
+  border-color: #00ff88;
+  color: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+
+  &:hover {
+    background: rgba(0, 255, 136, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+  }
+}
+
+/* === START 버튼 (호스트 전용) === */
+.cyber-button.start-btn {
+  border-color: #00f6ff;
+  color: #00f6ff;
+  box-shadow: 0 0 10px rgba(0, 246, 255, 0.3);
+
+  &:hover {
+    background: rgba(0, 246, 255, 0.15);
+    box-shadow: 0 0 25px rgba(0, 246, 255, 0.7);
+  }
+}
+
+/* === LEAVE 버튼 (레드) === */
+.cyber-button.leave-btn {
+  border-color: #ff4444;
+  color: #ff4444;
+
+  &:hover {
+    background: rgba(255, 68, 68, 0.1);
+    box-shadow: 0 0 12px #ff4444;
+  }
+}
+
+/* 게임 시작 오버레이 */
+/* === 게임 시작 오버레이 전체 화면 덮기 === */
+.game-start-overlay {
+  position: fixed; /* ✅ relative → fixed */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 5, 10, 0.95); /* 살짝 어둡게 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 9999; /* ✅ 화면 최상단 */
+  backdrop-filter: blur(6px);
+
+  .start-overlay-content {
+    position: static;
+    transform: none;
+  }
+
+  // 초기화 로딩 스피너
+  &.initializing {
+    .loading-spinner-large {
+      width: 80px;
+      height: 80px;
+      border: 4px solid rgba(0, 246, 255, 0.2);
+      border-top-color: #00f6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 2rem;
+    }
+
+    .start-title {
+      animation: titlePulse 1.5s ease-in-out infinite;
+    }
+  }
+
+
+  .countdown-number {
+    font-size: 6rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 40px #00f6ff;
+    animation: pulse 1s ease infinite;
+  }
+
+  .countdown-go {
+    font-size: 7rem;
+    font-weight: 800;
+    color: #00f6ff;
+    text-shadow: 0 0 40px #00f6ff, 0 0 60px #00f6ff;
+    animation: flash 0.8s ease-in-out infinite alternate;
+  }
+}
+
+/* 간단한 애니메이션 */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.6; }
+}
+
+@keyframes flash {
+  0% { opacity: 0.5; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+/* 게임 시작 텍스트 */
+.start-overlay-content {
+  position: absolute; /* 절대 위치 */
+  top: 50%; /* 화면 중앙 */
+  left: 50%;
+  transform: translate(-50%, -50%); /* 정확히 가운데 정렬 */
+  text-align: center;
+  animation: contentZoomIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 타이틀 애니메이션 */
+.start-title {
+  font-size: 4rem;
+  font-weight: 900;
+  color: #00ffff;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  margin-bottom: 2rem;
+  text-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.8),
+    0 0 40px rgba(0, 255, 255, 0.5),
+    0 0 60px rgba(0, 255, 255, 0.3);
+  animation: titlePulse 1.5s ease-in-out infinite;
+
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+    letter-spacing: 0.2em;
+  }
+}
+
+/* 카운트다운 숫자 */
+.countdown-number {
+  font-size: 15rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 
+    0 0 30px rgba(0, 255, 255, 1),
+    0 0 60px rgba(0, 255, 255, 0.7),
+    0 0 90px rgba(0, 255, 255, 0.5),
+    0 0 120px rgba(0, 255, 255, 0.3);
+  animation: countdownBounce 1s cubic-bezier(0.36, 0, 0.66, -0.56);
+  line-height: 1;
+  margin: 1rem 0;
+
+  @media (max-width: 768px) {
+    font-size: 10rem;
+  }
+}
+
+/* GO 애니메이션 */
+.countdown-go {
+  font-size: 12rem;
+  font-weight: 900;
+  color: #00ff88;
+  text-shadow: 
+    0 0 30px rgba(0, 255, 136, 1),
+    0 0 60px rgba(0, 255, 136, 0.7),
+    0 0 90px rgba(0, 255, 136, 0.5);
+  animation: goExplosion 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  line-height: 1;
+  margin: 1rem 0;
+
+  @media (max-width: 768px) {
+    font-size: 8rem;
+  }
+}
+
+/* 하위 텍스트 */
+.start-subtitle {
+  font-size: 1.5rem;
+  color: rgba(0, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-top: 2rem;
+  animation: subtitleFade 2s ease-in-out infinite;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+}
+
+/* ======================================== */
+/* 애니메이션 정의 */
+/* ======================================== */
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes contentZoomIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes titlePulse {
+  0%, 100% {
+    text-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.8),
+      0 0 40px rgba(0, 255, 255, 0.5),
+      0 0 60px rgba(0, 255, 255, 0.3);
+  }
+  50% {
+    text-shadow: 
+      0 0 30px rgba(0, 255, 255, 1),
+      0 0 60px rgba(0, 255, 255, 0.8),
+      0 0 90px rgba(0, 255, 255, 0.5);
+  }
+}
+
+@keyframes countdownBounce {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes goExplosion {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes subtitleFade {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.6;
+  }
+}
+
+@keyframes gridMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
+
+// ArenaRoomPage.scss에 추가할 스타일
+
+.arena-header-info {
+  text-align: center;
+  margin-bottom: 0;
+  flex-shrink: 0;
+
+  .cyber-title {
+    margin-bottom: 0.5rem;
+  }
+
+  .arena-metadata {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+
+    .mode-badge {
+      padding: 6px 16px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 153, 204, 0.2) 100%);
+      border: 2px solid rgba(0, 212, 255, 0.5);
+      border-radius: 20px;
+      color: #00d4ff;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+      animation: pulse-subtle 2s ease-in-out infinite;
+    }
+
+    .difficulty-badge {
+      padding: 6px 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px currentColor;
+      animation: pulse-subtle 2s ease-in-out infinite;
+      animation-delay: 0.5s;
+    }
+
+    .participant-count-badge {
+      padding: 6px 16px;
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 200, 120, 0.2) 100%);
+      border: 2px solid rgba(0, 255, 136, 0.5);
+      border-radius: 20px;
+      color: #00ff88;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+      text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+      animation: pulse-subtle 2s ease-in-out infinite;
+      animation-delay: 1s;
+    }
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+/* === Mode Description Section === */
+.mode-description-section {
+  margin-top: 30px;
+  padding: 30px;
+  background: linear-gradient(135deg, rgba(0, 5, 15, 0.95) 0%, rgba(0, 8, 20, 0.95) 100%);
+  border: 3px solid #00e5ff;
+  border-radius: 0;
+  box-shadow:
+    0 0 40px rgba(0, 229, 255, 0.4),
+    0 0 60px rgba(0, 229, 255, 0.3),
+    inset 0 0 40px rgba(0, 229, 255, 0.05);
+
+  .mode-desc-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #00e5ff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin: 0 0 25px 0;
+    text-align: center;
+    text-shadow:
+      0 0 15px rgba(0, 229, 255, 0.8),
+      0 0 30px rgba(0, 229, 255, 0.5);
+    border-bottom: 3px solid #00e5ff;
+    padding-bottom: 15px;
+  }
+
+  .mode-desc-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .mode-desc-block {
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(0, 229, 255, 0.3);
+    padding: 20px;
+    border-radius: 0;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #00e5ff;
+      background: rgba(0, 229, 255, 0.08);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.3);
+    }
+
+    h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #00e5ff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 0 0 12px 0;
+      text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+    }
+
+    p {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.85);
+      margin: 0;
+      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        position: relative;
+        padding: 10px 10px 10px 30px;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+        background: linear-gradient(90deg, rgba(0, 229, 255, 0.1) 0%, transparent 100%);
+        border-left: 3px solid rgba(0, 229, 255, 0.5);
+        transition: all 0.2s ease;
+
+        &:before {
+          content: "▸";
+          position: absolute;
+          left: 12px;
+          color: #00e5ff;
+          font-size: 1rem;
+        }
+
+        &:hover {
+          background: linear-gradient(90deg, rgba(0, 229, 255, 0.2) 0%, transparent 100%);
+          border-left-color: #00e5ff;
+          transform: translateX(5px);
+        }
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+
+  .mode-desc-objective {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.15) 0%, rgba(0, 229, 255, 0.08) 100%);
+    border: 3px solid #00e5ff;
+    padding: 24px;
+    text-align: center;
+
+    h4 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #ffffff;
+    }
+
+    p {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #00e5ff;
+      text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+    }
+  }
+}
+
+/* === Arena Create Container (from AddArenaForm) === */
+$neon-mint: #00e5ff;
+$white: #ffffff;
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.arena-create-container {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  background: #000000;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 15px;
+  font-family: 'Orbitron', sans-serif;
+  position: relative;
+  box-sizing: border-box;
+
+  .lang-toggle {
+    background: transparent;
+    border: 1px solid cyan;
+    color: cyan;
+    font-family: "Orbitron", sans-serif;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 0 10px cyan;
+
+    &:hover {
+      background: cyan;
+      color: #000;
+      box-shadow: 0 0 15px cyan, 0 0 25px #00f6ff;
+    }
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    color: $neon-mint;
+    margin-bottom: 30px;
+    text-align: center;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    position: relative;
+    text-shadow:
+      2px 2px 0 rgba(0, 229, 255, 0.3),
+      -2px -2px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .arena-grid-layout {
+    width: 100%;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    gap: 30px;
+    position: relative;
+    z-index: 1;
+    align-items: start;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+      max-width: 700px;
+    }
+  }
+
+  .card {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border: 3px solid $neon-mint;
+    border-radius: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.8s ease-out forwards;
+    height: 100%;
+    box-shadow:
+      0 0 30px rgba(0, 229, 255, 0.4),
+      0 0 60px rgba(0, 229, 255, 0.3),
+      inset 0 0 40px rgba(0, 229, 255, 0.05),
+      inset 0 0 10px rgba(0, 0, 0, 0.8);
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $neon-mint;
+    padding: 1.125rem 1.5rem;
+    border-bottom: 3px solid $neon-mint;
+    background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), rgba(255, 255, 255, 0.05));
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    line-height: 1;
+    position: relative;
+    text-shadow:
+      0 0 10px rgba(0, 229, 255, 0.8),
+      0 0 20px rgba(0, 229, 255, 0.5);
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .settings-card {
+    display: flex;
+    flex-direction: column;
+
+    .card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      justify-content: flex-start;
+      padding-top: 1.25rem;
+    }
+  }
+
+  .submit-button {
+    width: 100%;
+    padding: 18px;
+    background: transparent;
+    border: 3px solid $neon-mint;
+    color: $neon-mint;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow:
+      0 0 30px rgba(0, 229, 255, 0.5),
+      0 0 50px rgba(0, 229, 255, 0.3),
+      inset 0 0 20px rgba(0, 229, 255, 0.1);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background-color: rgba(0, 229, 255, 0.2);
+      transition: width 0.3s ease;
+      z-index: 0;
+    }
+
+    span {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      box-shadow:
+        0 0 40px rgba(0, 229, 255, 0.8),
+        0 0 60px rgba(255, 255, 255, 0.6),
+        0 0 80px rgba(0, 229, 255, 0.4),
+        inset 0 0 30px rgba(0, 229, 255, 0.3);
+
+      &::before {
+        width: 100%;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .mode-selector {
+    animation: fadeIn 0.8s ease-out forwards;
+    animation-delay: 0.2s;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+
+    .card-content {
+      flex: 1;
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+  }
+
+  // 모드 상세 카드 슬라이드인 애니메이션
+  .mode-detail-card {
+    animation: slideInRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+  }
+
+  // Placeholder 카드 (모드 선택 전)
+  .placeholder-card {
+    animation: fadeIn 0.8s ease-out forwards;
+    animation-delay: 0.4s;
+    opacity: 0;
+
+    .card-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+    }
+
+    .placeholder-content {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.5);
+
+      .placeholder-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      h2 {
+        font-size: 1.8rem;
+        color: $neon-mint;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.7;
+      }
+
+      p {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.4);
+        font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+      }
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(60px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  .mode-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .mode-card {
+    padding: 20px 22px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 3px solid rgba(0, 229, 255, 0.3);
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin: 0;
+    position: relative;
+    box-shadow:
+      0 0 20px rgba(0, 229, 255, 0.3),
+      0 0 40px rgba(0, 229, 255, 0.2);
+
+    .mode-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 10px 0;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      transition: all 0.25s ease;
+    }
+
+    .mode-desc {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      margin: 0 0 14px 0;
+      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+    }
+
+    .mode-players {
+      display: inline-block;
+      padding: 8px 14px;
+      background: rgba(0, 229, 255, 0.15);
+      border: 2px solid rgba(0, 229, 255, 0.3);
+      border-radius: 0;
+      color: $neon-mint;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    &:hover {
+      border-color: $neon-mint;
+      background: rgba(0, 229, 255, 0.1);
+      transform: translateX(4px);
+      box-shadow:
+        0 0 30px rgba(0, 229, 255, 0.5),
+        0 0 50px rgba(0, 229, 255, 0.3);
+
+      .mode-title {
+        color: $neon-mint;
+      }
+    }
+
+    &.selected {
+      border-color: $white;
+      background: rgba(0, 229, 255, 0.15);
+      box-shadow:
+        0 0 30px rgba(255, 255, 255, 0.4),
+        0 0 50px rgba(0, 229, 255, 0.3);
+
+      .mode-title {
+        color: $white;
+      }
+
+      .mode-players {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: $white;
+        color: $white;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 24px 16px;
+
+    h1 {
+      margin-bottom: 24px;
+      font-size: 1.8rem;
+    }
+
+    .arena-grid-layout {
+      gap: 20px;
+    }
+
+    .card-title {
+      padding: 1rem 1.25rem;
+      font-size: 1.05rem;
+    }
+
+    .card-content {
+      padding: 1.25rem;
+    }
+
+    .mode-selector .card-content {
+      padding: 1rem;
+    }
+  }
+}
+

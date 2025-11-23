@@ -7,7 +7,7 @@ import logo_light from '../assets/img/icon/HTO Light.png';
 
 
 const TutorialPage: React.FC = () => {
-  const { t, i18n } = useTranslation('manual');
+  const { t, i18n } = useTranslation('tutorial');
   const [step, setStep] = useState(0);
   const [isGlitch, setIsGlitch] = useState(false);
 
@@ -29,13 +29,6 @@ const TutorialPage: React.FC = () => {
   const handleNext = () => {
     if (step < 3) setStep(prev => prev + 1);
   };
-
-  const gamingRulesList = [
-    t('gamingRules.list.0'),
-    t('gamingRules.list.1'),
-    t('gamingRules.list.2'),
-    t('gamingRules.list.3'),
-  ];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -74,7 +67,7 @@ const TutorialPage: React.FC = () => {
           <article className={articleClass(1)}>
             <h2>{t('gamingRules.title', '게임 규칙')}</h2>
             <ol>
-              {gamingRulesList.map((_item: string, index: number) => (
+              {[0, 1, 2, 3].map((index) => (
                 <li key={index}>
                   <Trans
                     i18nKey={`gamingRules.list.${index}`}

@@ -1,14 +1,13 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../assets/scss/login/LoginPage.scss';
+import styles from '../../assets/scss/etc/MainPage.module.scss';
 
 import LoginForm from '../../components/login/LoginForm';
-import RegisterForm from '../../components/login/RegisterForm';
 import Modal from '../../components/modal/Modal';
+import Loading from '../../components/public/Loading';
 
 import { AuthUserContext } from '../../contexts/AuthUserContext';
 
-// 🔥 MainPage 이미지/노이즈 로직
 import fullscreenBlack from '../../assets/img/Fullscreen_black.png';
 import fullscreen from '../../assets/img/Fullscreen.png';
 import screennoise from "../../assets/img/screennoise.png";
@@ -17,99 +16,103 @@ import screennoise2 from "../../assets/img/screennoise2.png";
 import screennoise3 from "../../assets/img/screennoise3.png";
 import screennoise4 from "../../assets/img/screennoise4.png";
 
-const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  intervalMs?: number;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ intervalMs = 40 }) => {
   const navigate = useNavigate();
   const { isLoggedIn, isLoading } = useContext(AuthUserContext)!;
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 🔥 MainPage 루프 그대로
-  const noiseFrames = [screennoise, screennoise1, screennoise2, screennoise3, screennoise4];
+  const noiseFrames = useRef([screennoise, screennoise1, screennoise2, screennoise3, screennoise4]);
   const [currentImage, setCurrentImage] = useState(fullscreenBlack);
   const [glitchIntensity, setGlitchIntensity] = useState(0);
   const [isFirstPhase, setIsFirstPhase] = useState(true);
 
   useEffect(() => {
     if (!isLoading && isLoggedIn) navigate('/');
-  }, [isLoggedIn, isLoading]);
+  }, [isLoggedIn, isLoading, navigate]);
 
   useEffect(() => {
-    let index = 0;
+    let noiseIndex = 0;
     let mainTimer: NodeJS.Timeout;
     let noiseInterval: NodeJS.Timeout;
 
-    const loop = () => {
+    const startLoop = () => {
+      // 첫 화면: fullscreen_black → fullscreen
       if (isFirstPhase) {
         setCurrentImage(fullscreenBlack);
-
         setTimeout(() => setCurrentImage(fullscreen), 400);
-
         mainTimer = setTimeout(() => {
           setIsFirstPhase(false);
-          loop();
+          startLoop();
         }, 1000);
-
         return;
       }
 
+      // 일반 루프
       setCurrentImage(fullscreen);
-
       mainTimer = setTimeout(() => {
         noiseInterval = setInterval(() => {
-          setCurrentImage(noiseFrames[index % noiseFrames.length]);
+          setCurrentImage(noiseFrames.current[noiseIndex % noiseFrames.current.length]);
           setGlitchIntensity(Math.random() * 0.8 + 0.3);
-          index++;
-        }, 40);
+          noiseIndex++;
+        }, intervalMs);
 
+        // 노이즈 끝 → 다시 fullscreen
         setTimeout(() => {
           clearInterval(noiseInterval);
           setCurrentImage(fullscreen);
           setGlitchIntensity(0);
-
-          setTimeout(loop, 1200);
+          setTimeout(startLoop, 1200);
         }, 1200);
       }, 800);
     };
 
-    loop();
-
+    startLoop();
     return () => {
-      clearInterval(noiseInterval);
       clearTimeout(mainTimer);
+      clearInterval(noiseInterval);
     };
-  }, []);
+  }, [intervalMs, isFirstPhase]);
 
-  // 🔥 배경 스타일
   const style = {
     backgroundImage: `url(${currentImage})`,
     filter: `contrast(${1 + glitchIntensity * 0.3}) brightness(${1 + glitchIntensity * 0.2})`,
+    transition: 'background-image 0.1s ease-in-out, filter 0.08s ease-in-out',
   };
 
+  // 로딩 중일 때는 Loading 컴포넌트 표시
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
-    <div className="login-root">
-      
-      {/* 🔥 전체 배경 */}
+    <>
+      {/* MainPage와 동일한 글리치 배경 */}
       <div
         ref={containerRef}
-        className={`background-image ${showLoginModal ? 'scaled' : ''}`}
         style={style}
         onClick={() => setShowLoginModal(true)}
+        className={styles.glitch}
       >
-        {/* 🔥 RGB 채널 (넣어달라고 한 부분) */}
-        <div className="channel r" style={{ opacity: 0.3 + glitchIntensity * 0.5 }} />
-        <div className="channel g" style={{ opacity: 0.3 + glitchIntensity * 0.5 }} />
-        <div className="channel b" style={{ opacity: 0.3 + glitchIntensity * 0.5 }} />
+        {/* RGB 채널 왜곡 */}
+        <div className={`${styles.channel} ${styles.r}`} style={{ opacity: 0.3 + glitchIntensity * 0.5 }}></div>
+        <div className={`${styles.channel} ${styles.g}`} style={{ opacity: 0.3 + glitchIntensity * 0.5 }}></div>
+        <div className={`${styles.channel} ${styles.b}`} style={{ opacity: 0.3 + glitchIntensity * 0.5 }}></div>
 
-        {/* 🔥 노이즈 오버레이 */}
-        <div className="noise" style={{ opacity: 0.25 + glitchIntensity * 0.5 }} />
+        {/* 스크린 노이즈 오버레이 */}
+        <div className={styles.noise} style={{ opacity: 0.25 + glitchIntensity * 0.5 }}></div>
       </div>
 
-      {/* 🔥 로그인 모달 */}
+      {/* 로그인 모달 */}
       <Modal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)}>
         <LoginForm openRegisterModal={() => {}} />
       </Modal>
-    </div>
+    </>
   );
 };
 

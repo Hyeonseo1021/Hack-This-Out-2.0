@@ -1,25 +1,45 @@
-import React, { useState } from "react";
-import { User } from "../../types/User";
-import Main from "../../components/main/Main";
+import React, { useState, useEffect } from 'react';
+import { getLeaderboard, getMyRank } from '../../api/axiosUser';
+import Main from '../../components/main/Main';
+import Loading from '../../components/public/Loading';
+import { User } from '../../types/User';
+import { CurrentUser } from '../../types/CurrentUser';
 import "../../assets/scss/leaderboard/LearderboardPage.scss";
 
 const LeaderBoardPage: React.FC = () => {
   const [language, setLanguage] = useState<"en" | "ko">("en");
+  const [leaderboard, setLeaderboard] = useState<Partial<User>[]>([]);
+  const [myRank, setMyRank] = useState<CurrentUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+
   const toggleLanguage = () => setLanguage((prev) => (prev === "en" ? "ko" : "en"));
 
-  // 🎯 더미 유저 데이터 (보여주기용)
-  const leaderboard: Partial<User>[] = [
-    { username: "Alpha", level: 10, exp: 1250 },
-    { username: "Beta", level: 9, exp: 980 },
-    { username: "Gamma", level: 8, exp: 870 },
-    { username: "Delta", level: 8, exp: 850 },
-    { username: "RockSteel", level: 6, exp: 480 },
-    { username: "Kaiser", level: 6, exp: 420 },
-    { username: "Eve", level: 5, exp: 400 },
-    { username: "Nova", level: 5, exp: 370 },
-    { username: "Orion", level: 4, exp: 320 },
-    { username: "Sigma", level: 3, exp: 260 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [leaderboardData, myRankData] = await Promise.all([
+          getLeaderboard(),
+          getMyRank()
+        ]);
+
+        setLeaderboard(leaderboardData || []);
+        setMyRank(myRankData || null);
+      } catch (err: any) {
+        console.error('❌ Error fetching leaderboard:', err);
+        setError(err?.response?.data?.message || 'Failed to load leaderboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <Main>
@@ -28,17 +48,31 @@ const LeaderBoardPage: React.FC = () => {
         <div className="overlay-noise" />
 
         {/* 헤더 */}
-<header className="cyber-header">
-  <h1 className="title-glitch" data-text="RANKING">
-    <span className="text">RANKING</span>
-  </h1>
-  <div className="header-right">
-    <button className="lang-toggle" onClick={toggleLanguage}>
-      {language === "en" ? "🇺🇸 EN" : "🇰🇷 KR"}
-    </button>
-  </div>
-</header>
+        <header className="cyber-header">
+          <h1 className="title-glitch" data-text="RANKING">
+            <span className="text">RANKING</span>
+          </h1>
+          <div className="header-right">
+            <button className="lang-toggle" onClick={toggleLanguage}>
+              {language === "en" ? "🇺🇸 EN" : "🇰🇷 KR"}
+            </button>
+          </div>
+        </header>
 
+        {/* 에러 메시지 */}
+        {error && (
+          <div className="error-banner" style={{
+            padding: '15px',
+            margin: '20px',
+            background: 'rgba(255, 68, 68, 0.2)',
+            border: '2px solid #ff4444',
+            borderRadius: '8px',
+            color: '#ff8a80',
+            textAlign: 'center'
+          }}>
+            {error}
+          </div>
+        )}
 
         {/* 메인 콘텐츠 */}
         <div className="leaderboard-grid">
@@ -47,16 +81,21 @@ const LeaderBoardPage: React.FC = () => {
             <h2>{language === "en" ? "PLAYER STATUS" : "플레이어 상태"}</h2>
             <div className="hud-info">
               <p>
-                USERNAME: <span>RockSteel</span>
+                USERNAME: <span>{myRank?.myUsername || 'Guest'}</span>
               </p>
               <p>
-                LEVEL: <span>6</span>
+                LEVEL: <span>{myRank?.myLevel || 1}</span>
               </p>
               <p>
-                EXP: <span>480</span>
+                EXP: <span>{myRank?.myExp || 0}</span>
+              </p>
+              <p>
+                RANK: <span>{myRank?.myRank || 'N/A'}</span>
               </p>
               <div className="hud-bar">
-                <div className="fill" style={{ width: "70%" }} />
+                <div className="fill" style={{
+                  width: `${Math.min(((myRank?.myExp || 0) / ((myRank?.myLevel || 1) * 100)) * 100, 100)}%`
+                }} />
               </div>
             </div>
           </aside>
@@ -74,22 +113,30 @@ const LeaderBoardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((user, idx) => (
-                  <tr key={idx} className={user.username === "RockSteel" ? "you" : ""}>
-                    <td>{idx + 1}</td>
-                    <td>{user.username}</td>
-                    <td>{user.level}</td>
-                    <td>{user.exp}</td>
-                    <td>
-                      <div className="exp-bar">
-                        <div
-                          className="fill"
-                          style={{ width: `${Math.min((user.exp || 0) / 15, 100)}%` }}
-                        />
-                      </div>
+                {leaderboard.length > 0 ? (
+                  leaderboard.map((user, idx) => (
+                    <tr key={user._id || idx} className={user.username === myRank?.myUsername ? "you" : ""}>
+                      <td>{idx + 1}</td>
+                      <td>{user.username || 'Unknown'}</td>
+                      <td>{user.level || 1}</td>
+                      <td>{user.exp || 0}</td>
+                      <td>
+                        <div className="exp-bar">
+                          <div
+                            className="fill"
+                            style={{ width: `${Math.min(((user.exp || 0) / ((user.level || 1) * 100)) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                      {language === "en" ? "No leaderboard data available" : "순위 데이터가 없습니다"}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </section>

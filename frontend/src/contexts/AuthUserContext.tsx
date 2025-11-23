@@ -44,10 +44,17 @@ export const AuthUserProvider: React.FC<AuthUserProviderProps> = ({ children }) 
         setIsLoggedIn(false);
       }
     } catch (err: any) {
-      console.error('Failed to fetch user status:', err);
-      setError(err.message || 'Failed to fetch user status');
-      setCurrentUser(null);
-      setIsLoggedIn(false);
+      // 401 Unauthorized는 정상적인 상황 (로그인하지 않은 상태)
+      if (err?.response?.status === 401) {
+        setCurrentUser(null);
+        setIsLoggedIn(false);
+        setError(null); // 에러가 아니므로 null
+      } else {
+        console.error('Failed to fetch user status:', err);
+        setError(err.message || 'Failed to fetch user status');
+        setCurrentUser(null);
+        setIsLoggedIn(false);
+      }
     } finally {
       setIsLoading(false);
     }

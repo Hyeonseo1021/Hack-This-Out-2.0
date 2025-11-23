@@ -231,24 +231,24 @@ export const getActiveMachineDetailsById = async (req: Request, res: Response): 
 export const getActiveMachines = async (req: Request, res: Response): Promise<void> => {
   try {
     const machines = await Machine.find({ isActive: true }).sort({ playerCount: -1 })
-    .select('-hints -flag -__v -reviews -createdAt -updatedAt -isActive -description -exp -amiId');
+    .select('-hints -flag -__v -createdAt -updatedAt -isActive -exp -amiId');
     if (machines.length === 0) {
-      res.status(200).json({ 
-        message: "OK", 
-        msg: 'No active machines found.', 
-        machines: [] 
+      res.status(200).json({
+        message: "OK",
+        msg: 'No active machines found.',
+        machines: []
       });
       return;
-    }      
+    }
     // Update average rating for each machine
     const machineReviews = await Machine.find({ isActive: true }).select('reviews');
     await machineReviews.forEach(async (machine) => {
       await (machine as any).updateRating();
     });
-    res.status(200).json({ 
-      message: "OK", 
-      msg: 'Active machines fetched successfully.', 
-      machines: machines 
+    res.status(200).json({
+      message: "OK",
+      msg: 'Active machines fetched successfully.',
+      machines: machines
     });
   } catch (error: any) {
     console.error('Error fetching active machines:', error);
@@ -1161,10 +1161,10 @@ export const getMostPlayedMachine = async (req: Request, res: Response): Promise
         const mostPlayedMachine = await Machine.findOne({ isActive: true })
         .sort({ playerCount: -1 })
         .select('-__v -updatedAt -description -reviews -hints -amiId -flag');
-        res.status(200).json({ 
-            message: "OK", 
-            msg: 'Most played machine fetched successfully.', 
-            machine: mostPlayedMachine 
+        res.status(200).json({
+            message: "OK",
+            msg: 'Most played machine fetched successfully.',
+            machine: mostPlayedMachine
         });
     } catch (error) {
         console.error('Error fetching most played machine:', error);

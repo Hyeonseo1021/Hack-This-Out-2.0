@@ -11,6 +11,16 @@ import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
 
+interface Review {
+  _id: string;
+  reviewerId: string;
+  reviewerName: string;
+  content: string;
+  rating: number;
+  difficulty: string;
+  createdAt: string;
+}
+
 interface Machine {
   _id: string;
   name: string;
@@ -18,6 +28,7 @@ interface Machine {
   rating: number;
   playerCount: number;
   description?: string;
+  reviews?: Review[];
 }
 
 interface MachinesResponse {
@@ -186,8 +197,16 @@ const MachineList: React.FC = () => {
                             💬 {machine.description || "No description available."}
                           </p>
                           <div className={styles.expand_reviews}>
-                            <p>⭐ “로직이 흥미롭고 실습이 잘 되어있어요!”</p>
-                            <p>⭐ “처음엔 어렵지만 배우는 재미가 있음.”</p>
+                            {machine.reviews && machine.reviews.length > 0 ? (
+                              <>
+                                <p>📊 {machine.reviews.length} review{machine.reviews.length > 1 ? 's' : ''} · Average: {machine.rating.toFixed(1)}/5.0</p>
+                                {machine.reviews.slice(0, 2).map((review) => (
+                                  <p key={review._id}>⭐ "{review.content.substring(0, 50)}{review.content.length > 50 ? '...' : ''}"</p>
+                                ))}
+                              </>
+                            ) : (
+                              <p>No reviews yet. Be the first to review!</p>
+                            )}
                           </div>
                         </div>
                       </td>
