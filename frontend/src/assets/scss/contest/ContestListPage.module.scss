@@ -1,96 +1,143 @@
 @use "../style" as *;
 
+/* 페이지 전체 배경 컨테이너 */
 .contest_container {
-    width: min(var(--container-width), 95%);
-    min-width: min(500px, 95vw);
-    min-height: var(--container-height);
+  width: min(var(--container-width), 95%);
+  min-height: var(--container-height);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: clamp(16px, 2vw, 24px);
+
+  /* Machine Detail 과 동일한 네온 + CRT + 블러 백그라운드 */
+  @include background_set;
+
+  gap: clamp(12px, 1vw, 20px);
+
+  @media (max-width: 768px) {
+    width: 95%;
+    gap: 12px;
+  }
+
+  /* ===== 상단: 배너 + Add Contest ===== */
+  .upper_box {
+    width: 100%;
     display: flex;
-    flex-direction: column;
     gap: clamp(8px, 1vw, 16px);
-    overflow-y: hidden;
-    margin: 0 auto;
 
-    @media (max-width: 768px) {
-        gap: 12px;
-        width: 95%;
-        min-width: unset;
+    /* ⭐ 늘어나도 둘 다 "같은 높이" 유지하는 핵심 설정 */
+    align-items: stretch;
+
+    @media (max-width: 1024px) {
+      flex-direction: column;
     }
 
-    .upper_box {
-        width: 100%;
-        display: flex;
-        align-items: stretch;
-        justify-content: space-between;
-        gap: clamp(4px, 1vw, 8px);
+    /* 🔹 Contest Banner (좌측) — 수정 없음 */
+    .contest_banner {
+      flex-grow: 1;
+      background: rgba(8, 20, 30, 0.38);
+      border: 1.4px solid rgba(139, 243, 255, 0.25);
+      border-radius: clamp(16px, 2vw, 24px);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
 
-        .contest_banner {
-            width: calc(100% - min(28vh, 300px));
-            height: 100%;
-            border-radius: var(--border-container);
-            background: var(--color-layout);
-            flex-grow: 1;
-
-            @media (max-width: 1024px) {
-                width: 100%;
-                max-width: 100%;
-                height: clamp(250px, 28vh, 400px);
-            }
-        }
-
-        .contest_register {
-            min-width: min(28vh, 300px);
-            max-width: 300px;
-            height: clamp(250px, 28vh, 400px);
-            border-radius: clamp(16px, 2vw, 24px);
-            border: 1px solid var(--blue-200);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background: var(--color-background-transparent);
-            transition: all 0.3s ease-in-out;
-            cursor: pointer;
-
-            @media (max-width: 1024px) {
-                display: none;
-            }
-
-            &:hover {
-                background: var(--blue-400);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-                border: 1px solid transparent;
-
-                .machine,
-                .plus,
-                .register_text {
-                    color: var(--color-white);
-                }
-            }
-
-            .machine {
-                position: relative;
-                left: clamp(8px, 1vw, 16px);
-                color: var(--color-white);
-                font-size: clamp(2rem, 4vw, 3rem);
-                transition: transform 0.3s ease-in-out;
-            }
-
-            .plus {
-                position: relative;
-                left: 0;
-                bottom: clamp(30px, 5vh, 45px);
-                color: var(--color-white);
-                font-size: clamp(1.5rem, 3vw, 2rem);
-                transition: transform 0.3s ease-in-out;
-            }
-
-            .register_text {
-                font-size: clamp(18px, 2.5vw, 24px);
-                font-weight: bold;
-                color: var(--color-white);
-            }
-        }
+      /* 배너 높이는 내부 콘텐츠 기준으로 자동 확장 */
+      min-height: clamp(250px, 28vh, 400px);
+      height: auto;
     }
+
+    /* 🔹 Add Contest 버튼 — 배너 높이에 100% 자동 맞춤 */
+    .contest_register {
+      flex-shrink: 0;
+      flex-basis: min(28vh, 300px);
+
+      width: min(28vh, 300px);
+      max-width: 300px;
+
+      /* ⭐ 자동 높이 적용 */
+      height: auto;
+      min-height: clamp(250px, 28vh, 400px);
+
+      border-radius: clamp(16px, 2vw, 24px);
+      background: rgba(8, 20, 30, 0.45);
+      border: 1.5px solid rgba(139, 243, 255, 0.28);
+      box-shadow: 0 0 20px rgba(139, 243, 255, 0.1);
+      backdrop-filter: blur(22px);
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+
+      @media (max-width: 1024px) {
+        display: none;
+      }
+
+      /* CRT 라인 효과 */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          180deg,
+          rgba(255,255,255,0.04) 0px,
+          rgba(255,255,255,0.02) 1px,
+          transparent 2px
+        );
+        opacity: 0.1;
+        pointer-events: none;
+      }
+
+      &:hover {
+        background: rgba(139, 243, 255, 0.12);
+        transform: translateY(-4px);
+        box-shadow: 0 0 16px rgba(139, 243, 255, 0.4);
+        border-color: rgba(139, 243, 255, 0.55);
+      }
+
+      .machine {
+        font-size: clamp(2.6rem, 4vw, 3.2rem);
+        color: #8BF3FF;
+        margin-bottom: clamp(12px, 2vw, 16px);
+        transition: 0.25s ease;
+      }
+
+      .plus {
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        color: #EFFFFF;
+        margin-bottom: clamp(8px, 2vw, 12px);
+        transition: 0.25s ease;
+      }
+
+      .register_text {
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        color: #EFFFFF;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(139,243,255,0.4);
+        transition: 0.25s ease;
+      }
+
+      &:hover .machine,
+      &:hover .plus,
+      &:hover .register_text {
+        color: white !important;
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+.contest_register * {
+  font-family: "Orbitron", monospace !important;
+}
+
+.contest_register .machine,
+.contest_register .plus,
+.contest_register .register_text {
+  font-family: "Orbitron" !important;
 }

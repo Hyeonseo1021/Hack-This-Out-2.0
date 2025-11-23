@@ -59,12 +59,18 @@ const DownloadVPNProfile: React.FC = () => {
       <div className='text-button-container'>
         <div className="upper-text">
           <TbBrandOpenvpn color="white" size={40} />
-          <h2><b>Connect</b></h2>
+          
+          {/* ⭐ 여기에 클래스를 추가 */}
+          <h2 className="vpn-title"><b>Connect</b></h2>
         </div>
-        <h3>Connect using OpenVPN
+
+        {/* ⭐ 여기도 클래스 추가 */}
+        <h3 className="vpn-desc">
+          Connect using OpenVPN
           <br />Download your VPN configuration
           <br />and connect from your own environment.
         </h3>
+
         <div className='download-btn'>
           <label className={getLabelClasses()}>
             <input
