@@ -1,285 +1,448 @@
 @use "../style" as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
 
-:root {
-  --mint: #8BF3FF;
-  --bg-dark: #050912;
-  --white: #EFFFFF;
+/* ===============================================
+   🔵 ADD MACHINE FORM (HTO CYBER / GLASS THEME)
+================================================= */
+.add-machine-form {
+    @include background_set;
+    
+        padding: 0;
+        padding-top: 20px;
+        box-sizing: border-box;
+    margin-top: -30px !important;
+    .add-machine-form {
+    min-height: 100vh !important;
+    height: auto !important;
 }
 
-/* === 전체 폼 === */
-.add-machine-form {
-  @include background_set;
-  position: relative;
-  backdrop-filter: blur(40px);
-  background: radial-gradient(circle at 50% 50%, rgba(8, 20, 28, 0.85), rgba(2, 10, 20, 0.9));
-  border: 1.5px solid rgba(139, 243, 255, 0.25);
-  box-shadow: 0 0 40px rgba(139, 243, 255, 0.1);
-  font-family: 'VT323', monospace;
-  color: var(--white);
-  overflow: hidden;
 
-  /* CRT Scanline */
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.02) 0px,
-      rgba(255, 255, 255, 0.015) 1px,
-      transparent 2px
-    );
-    opacity: 0.15;
-    pointer-events: none;
-  }
 
-  /* === 상단 헤더 === */
-  .back-button {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 24px;
-    padding: 16px 0;
-    background: rgba(0, 10, 15, 0.85);
-    border-bottom: 1px solid rgba(139, 243, 255, 0.3);
-    backdrop-filter: blur(10px);
+    width: 100% !important;
+    margin-left: 0 !important;
 
-    h2 {
-      font-family: 'Orbitron', sans-serif;
-      color: var(--mint);
-      text-shadow: 0 0 12px var(--mint);
-      font-weight: 600;
-      font-size: clamp(1.5rem, 2.5vw, 2rem);
-      letter-spacing: 1px;
-    }
 
-    .IconButton {
-      width: 42px;
-      height: 42px;
-      background: transparent;
-      border: 1.5px solid var(--mint);
-      border-radius: 8px;
-      color: var(--mint);
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: rgba(139, 243, 255, 0.1);
-        box-shadow: 0 0 15px var(--mint);
-        transform: translateX(-0.3rem);
-      }
-    }
-  }
-
-  /* === 입력 필드 구역 === */
-  .create-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 40px;
-    padding: 32px;
     position: relative;
-    z-index: 1;
+    backdrop-filter: blur(35px);
 
-    label {
-      color: var(--mint);
-      font-weight: bold;
-      letter-spacing: 0.5px;
-      text-shadow: 0 0 5px rgba(139, 243, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    overflow: scroll;
+
+    position: relative;
+    backdrop-filter: blur(35px);
+
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+
+    overflow: scroll;
+    scrollbar-width: none;
+
+    background: rgba(10, 20, 30, 0.55);
+    border-radius: 20px;
+    border: 1px solid rgba(137, 234, 255, 0.12);
+
+    box-shadow:
+        0 0 20px rgba(137, 234, 255, 0.06),
+        inset 0 0 15px rgba(137, 234, 255, 0.05);
+
+    * {
+        &::-webkit-scrollbar {
+            display: none;
+        }
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
 
+    /* ===============================================
+       🔹 BACK BUTTON BAR (네온 헤더)
+    ================================================== */
+    .back-button {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+
+        background: rgba(15, 28, 40, 0.85);
+        backdrop-filter: blur(12px);
+
+        padding: 18px 0px;
+        width: 100%;
+
+        border-bottom: 1px solid rgba(137, 234, 255, 0.15);
+
+        box-shadow:
+            0 4px 10px rgba(137, 234, 255, 0.08),
+            inset 0 0 8px rgba(137, 234, 255, 0.04);
+
+        display: flex;
+        align-items: center;
+        gap: 24px;
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 28, 40, 0.85);
+            z-index: -1;
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: #8feaff;
+            font-size: 2rem;
+            font-weight: 600;
+
+            margin-top: 50;
+            margin-bottom: 0;
+            padding-left: 0;
+            margin-left: 16px;
+
+            text-shadow:
+                0 0 6px rgba(143, 234, 255, 0.9),
+                0 0 14px rgba(143, 234, 255, 0.4);
+        }
+
+        .IconButton {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 255, 0.08);
+
+            border-radius: 8px;
+            cursor: pointer;
+
+            border: 1px solid rgba(137, 234, 255, 0.3);
+
+            transition: 0.25s ease;
+
+            &:hover {
+                background: rgba(0, 255, 255, 0.2);
+                transform: translateX(-4px);
+                box-shadow: 0 0 10px rgba(137, 234, 255, 0.5);
+            }
+        }
+    }
+
+    /* ===============================================
+       🔹 FORM LABELS
+    ================================================== */
+    label {
+        font-weight: 600;
+        color: #c9f6ff;
+        text-shadow: 0 0 3px rgba(137, 234, 255, 0.4);
+    }
+
+    /* ===============================================
+       🔹 INPUT / TEXTAREA / SELECT (Glass Inputs)
+    ================================================== */
     input,
     select,
     textarea {
-      background: rgba(8, 15, 25, 0.8);
-      border: 1.5px solid rgba(139, 243, 255, 0.3);
-      border-radius: 8px;
-      padding: 0.6rem 0.8rem;
-      color: var(--white);
-      font-family: 'VT323', monospace;
-      transition: all 0.3s ease;
-      box-shadow: inset 0 0 6px rgba(139, 243, 255, 0.05);
+        background: rgba(20, 35, 55, 0.45);
+        color: #e7faff;
 
-      &:focus {
-        border-color: var(--mint);
-        box-shadow: 0 0 8px rgba(139, 243, 255, 0.4);
-        outline: none;
-      }
+        border: 1px solid rgba(137, 234, 255, 0.25);
+        border-radius: 10px;
 
-      &:hover {
-        border-color: rgba(139, 243, 255, 0.5);
-      }
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-
-    /* === 우측 난이도 섹션 === */
-    .difficulty-survey-section {
-      grid-column: 2;
-      grid-row: 1 / span 20;
-      background: rgba(8, 20, 28, 0.6);
-      border: 1px solid rgba(139, 243, 255, 0.3);
-      border-radius: 12px;
-      padding: 24px;
-      position: sticky;
-      top: 100px;
-      transition: all 0.3s ease;
-
-      &:hover {
-        box-shadow: 0 0 20px rgba(139, 243, 255, 0.1);
-      }
-
-      h3 {
-        color: var(--mint);
-        font-family: 'Orbitron', sans-serif;
-        border-bottom: 1.5px solid rgba(139, 243, 255, 0.4);
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-        text-shadow: 0 0 8px var(--mint);
-      }
-
-      select,
-      input[type="number"] {
-        width: 100%;
         padding: 0.6rem;
-        border-radius: 8px;
-      }
 
-      .skills-checkbox-group {
+        box-shadow: inset 0 0 6px rgba(137, 234, 255, 0.04);
+
+        transition: all 0.25s ease;
+
+        &:focus {
+            border-color: #8feaff;
+            box-shadow:
+                0 0 10px rgba(137, 234, 255, 0.5),
+                inset 0 0 6px rgba(137, 234, 255, 0.2);
+            outline: none;
+        }
+    }
+
+    /* ===============================================
+       🔹 CREATE CONTAINER (2 COLUMN GRID)
+    ================================================== */
+    .create-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+
+        padding: 0;
+        margin-left: 0px;
+
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        grid-template-columns: 1.2fr 0.8fr !important;
+        column-gap: 0px;
 
-        label {
-          display: flex;
-          align-items: center;
-          padding: 8px 12px;
-          background: rgba(139, 243, 255, 0.05);
-          border-radius: 6px;
-          border: 1.5px solid rgba(139, 243, 255, 0.2);
-          cursor: pointer;
-          transition: all 0.2s ease;
+        align-items: start;
 
-          &:hover {
-            background: rgba(139, 243, 255, 0.15);
-          }
+        /* INPUT FIELD GROUP */
+        > div:not(.difficulty-survey-section) {
+            grid-column: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
 
-          &:has(input:checked) {
-            background: rgba(139, 243, 255, 0.2);
-            border-color: var(--mint);
-            box-shadow: 0 0 8px rgba(139, 243, 255, 0.3);
-          }
+            label {
+                font-size: 0.95rem;
+            }
 
-          input[type="checkbox"] {
-            accent-color: var(--mint);
-            margin-right: 8px;
-          }
+            textarea {
+                min-height: 80px;
+            }
         }
-      }
-    }
 
-    /* === 힌트 === */
-    .hint-container {
-      .key-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-
-        .remove-hint {
-          background: rgba(255, 80, 80, 0.2);
-          border: 1px solid rgba(255, 100, 100, 0.4);
-          color: #ffaaaa;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-
-          &:hover {
-            background: rgba(255, 100, 100, 0.3);
-            transform: translateY(-1px);
-            box-shadow: 0 0 8px rgba(255, 100, 100, 0.3);
-          }
+        .exp-container input {
+            width: 140px;
         }
-      }
 
-      .add-hint {
-        margin-top: 8px;
-        background: rgba(139, 243, 255, 0.1);
-        border: 1px solid var(--mint);
-        color: var(--mint);
-        border-radius: 6px;
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: bold;
+        /* RIGHT PANEL */
+        .difficulty-survey-section {
+            font-family: 'Orbitron', sans-serif;
+            color: #8feaff;
+            grid-column: 2;
+            grid-row: 1 / span 20;
 
-        &:hover {
-          background: rgba(139, 243, 255, 0.2);
-          box-shadow: 0 0 10px var(--mint);
-        }
-      }
-    }
-/* === 🔵 입력칸 전체 세로 정렬 === */
-.left-fields {
-  grid-column: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  width: 100%;
+            padding: 28px;
+
+            background: rgba(12, 24, 38, 0.5);
+            border-radius: 16px;
+            border: 1px solid rgba(137, 234, 255, 0.18);
+
+            box-shadow:
+                0 0 20px rgba(137, 234, 255, 0.08),
+                inset 0 0 10px rgba(137, 234, 255, 0.05);
+
+        
+
+            transition: all 0.3s ease;
+
+            &:hover {
+                background: rgba(15, 30, 50, 0.55);
+                box-shadow:
+                    0 0 25px rgba(137, 234, 255, 0.15),
+                    inset 0 0 14px rgba(137, 234, 255, 0.08);
+            }
+
+            h3 {
+                margin: 0 0 20px 0;
+                color: #8feaff;
+                font-family: 'Orbitron', sans-serif;
+                font-size: 1.4rem;
+
+                border-bottom: 2px solid rgba(137, 234, 255, 0.4);
+                padding-bottom: 12px;
+
+                text-shadow:
+                    0 0 6px rgba(143, 234, 255, 0.6),
+                    0 0 14px rgba(143, 234, 255, 0.3);
+            }
+
+            > div {
+                margin-bottom: 20px;
+
+                label {
+                    color: #d6f8ff;
+                }
+
+                select,
+                input[type="number"] {
+                    background: rgba(20, 35, 55, 0.45);
+                    border: 1px solid rgba(137, 234, 255, 0.25);
+
+                    &:hover {
+                        border-color: rgba(143, 234, 255, 0.4);
+                    }
+                }
+            }
+
+            /* CHECKBOX GROUP */
+            .skills-checkbox-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 8px;
+
+                label {
+                    background: rgba(255, 255, 255, 0.04);
+                    border: 2px solid rgba(137, 234, 255, 0.15);
+                    border-radius: 6px;
+
+                    &:hover {
+                        background: rgba(143, 234, 255, 0.15);
+                        border-color: rgba(143, 234, 255, 0.6);
+                    }
+
+                    &:has(input:checked) {
+                        background: rgba(143, 234, 255, 0.2);
+                        border-color: rgba(143, 234, 255, 0.7);
+                        box-shadow: 0 0 10px rgba(143, 234, 255, 0.4);
+                    }
+
+                    input[type="checkbox"] {
+                        border-color: rgba(143, 234, 255, 0.4);
+                        background: rgba(20, 35, 55, 0.45);
+
+                        &:checked {
+                            background-color: rgba(143, 234, 255, 0.9);
+                            border-color: rgba(143, 234, 255, 1);
+                        }
+                    }
+                }
+            }
+            .difficulty-container,
+.estimated-time-container,
+.technical-complexity-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
 }
 
-
-    /* === 등록 버튼 === */
-    .add-machine-form-button {
-      position: fixed;
-      bottom: 32px;
-      right: 32px;
-      z-index: 200;
-
-      button[type="submit"] {
-        background: transparent;
-        color: var(--mint);
-        border: 2px solid var(--mint);
-        padding: 0.8rem 1.6rem;
-        border-radius: 8px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.1rem;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 12px rgba(139, 243, 255, 0.15);
-
-        &:hover {
-          background: rgba(139, 243, 255, 0.15);
-          box-shadow: 0 0 20px var(--mint);
-          transform: translateY(-2px);
         }
-      }
+    
+
+        /* ===============================================
+           🔹 Hints Group
+        ================================================== */
+        .hint-container {
+            .key-container {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 8px;
+
+                input[type="text"],
+                input[type="number"] {
+                    background: rgba(24, 40, 60, 0.45);
+                    border: 1px solid rgba(137, 234, 255, 0.25);
+                }
+
+                .remove-hint {
+                    background: #c9302c;
+                    border-radius: 6px;
+
+                    &:hover {
+                        background: #a02622;
+                    }
+                }
+            }
+
+            /* ✅ Add Hint 버튼 — 네온 글라스 테마 적용 */
+            .add-hint {
+                margin-top: 8px;
+                padding: 0.55rem 1.3rem;
+
+                background: rgba(0, 255, 255, 0.12);
+                border: 1px solid rgba(137, 234, 255, 0.35);
+                border-radius: 10px;
+
+                color: #c9f6ff;
+                font-weight: 600;
+                font-family: 'Orbitron', sans-serif;
+
+                cursor: pointer;
+                transition: all 0.25s ease;
+
+                box-shadow:
+                    0 0 10px rgba(137, 234, 255, 0.15),
+                    inset 0 0 8px rgba(137, 234, 255, 0.08);
+
+                &:hover {
+                    background: rgba(0, 255, 255, 0.22);
+                    border-color: rgba(137, 234, 255, 0.6);
+
+                    box-shadow:
+                        0 0 18px rgba(137, 234, 255, 0.55),
+                        inset 0 0 12px rgba(137, 234, 255, 0.12);
+
+                    transform: translateY(-2px);
+                }
+            }
+        }
+
+        /* ===============================================
+           🔹 Submit Button (네온)
+        ================================================== */
+        .add-machine-form-button {
+            position: fixed;
+            bottom: -125px;
+            right: 65px !important;
+
+            margin-top: 30px;
+
+            button[type="submit"] {
+                padding: 0.75rem 1.5rem;
+
+                background: linear-gradient(
+                    90deg,
+                    #8feaff,
+                    #71d9ff
+                );
+
+                color: #0c1a25;
+                font-weight: bold;
+                border-radius: 10px;
+
+                box-shadow:
+                    0 0 14px rgba(143, 234, 255, 0.6),
+                    0 0 24px rgba(143, 234, 255, 0.35);
+
+                transition: all 0.25s ease;
+
+                &:hover {
+                    transform: translateY(-3px);
+                    box-shadow:
+                        0 0 20px rgba(143, 234, 255, 0.85),
+                        0 0 30px rgba(143, 234, 255, 0.45);
+                }
+            }
+        }
     }
-  }
 
-  /* === 오류 메시지 === */
-  .field-error {
-    color: #ff7b7b;
-    font-size: 0.9rem;
-    margin-top: 4px;
-  }
+    /* ===============================================
+       🔸 ERROR STATE
+    ================================================== */
+    .field-error {
+        color: #ff6b6b;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
 
-  .error-input {
-    border-color: #ff6b6b !important;
-    box-shadow: 0 0 10px rgba(255, 80, 80, 0.2);
-  }
+    .error-input {
+        border-color: #ff6b6b !important;
+    }
 
-  .error-message {
-    background: rgba(255, 60, 60, 0.1);
-    border: 1px solid rgba(255, 100, 100, 0.3);
-    color: #ffaaaa;
-    padding: 10px;
+    .error-message {
+        background: rgba(255, 107, 107, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+    /* ===============================================
+   🔹 Standalone Back Button Style (outside .back-button)
+================================================= */
+.IconButton {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 255, 255, 0.08);
     border-radius: 8px;
-    text-align: center;
-  }
+    cursor: pointer;
+
+    border: 1px solid rgba(137, 234, 255, 0.3);
+    transition: 0.25s ease;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        background: rgba(0, 255, 255, 0.2);
+        transform: translateX(-4px);
+        box-shadow: 0 0 10px rgba(137, 234, 255, 0.5);
+    }
+}
+
 }

@@ -11,6 +11,8 @@ import { ArrowForwardIos, ArrowBackIos } from '@mui/icons-material';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
+import whiteCat from '../../assets/img/icon/white_cat.png';
+
 
 const MachineBanner: React.FC = () => {
   const [latestMachine, setLatestMachine] = useState<MachineforBanner | null>(null);
@@ -88,8 +90,18 @@ const MachineBanner: React.FC = () => {
                   sx={{
                     backgroundColor: avatarBgColor
                   }}
+                  
                 >
-                  {machine?.name ? machine.name.charAt(0).toUpperCase() : "?"}
+                    <img
+                      src={whiteCat}
+                      alt="machine-icon"
+                      style={{
+                      width: '70%',
+                      height: '70%',
+                      objectFit: 'contain'
+                  }}
+  />
+
                 </Avatar>
                 <h4>
                   <b>

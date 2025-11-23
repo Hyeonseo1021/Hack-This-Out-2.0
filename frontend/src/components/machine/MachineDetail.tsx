@@ -3,29 +3,24 @@ import { MachineDetail as MachineDetailType } from '../../types/Machine';
 import '../../assets/scss/machine/MachineDetail.scss';
 import Rating from '@mui/material/Rating';
 import Box from '@mui/material/Box';
-// import Avatar from '@mui/material/Avatar';
 import { avatarBackgroundColors, getAvatarColorIndex } from '../../utils/avatars';
 import { Avatar } from '@mui/material';
-/**
- * Props interface for MachineDetail component.
- */
+import { useNavigate } from "react-router-dom";
+
+// 🔥 추가: 고양이 이미지 import
+import whiteCat from '../../assets/img/icon/white_cat.png';
+
 interface MachineDetailProps {
   machineDetail: MachineDetailType;
 }
 
-/**
- * A component to display the details of a machine.
- * 
- * @param {MachineDetailProps} props - The props for the MachineDetail component.
- * @returns {JSX.Element} The rendered MachineDetail component.
- */
 const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
+  const navigate = useNavigate();
   const { _id, name, category, description, exp, rating, difficulty } = machineDetail;
 
   const avatarColorIndex = getAvatarColorIndex(name);
   const avatarBgColor = avatarBackgroundColors[avatarColorIndex];
 
-  // 난이도 색상 매핑
   const getDifficultyColor = (level: string): string => {
     const colors: { [key: string]: string } = {
       'very_easy': '#4ade80',
@@ -37,7 +32,6 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
     return colors[level] || '#94a3b8';
   };
 
-  // 난이도 레이블
   const getDifficultyLabel = (level: string): string => {
     const labels: { [key: string]: string } = {
       'very_easy': 'Very Easy',
@@ -49,12 +43,15 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
     return labels[level] || 'Unknown';
   };
 
-  // 표시할 난이도 결정
   const displayDifficulty = difficulty?.confirmedLevel || difficulty?.creatorLevel;
 
   return (
     <div className="machine-detail-container">
       <div className="machine-detail">
+
+        {/* ==========================================
+             🔥 아바타(네모박스) 영역 — 고양이 이미지 적용
+        ========================================== */}
         <div className="avatar-container">
           <Avatar
             variant="rounded"
@@ -64,16 +61,35 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
               height: 'auto',
               aspectRatio: '1 / 1',
               fontSize: 'clamp(3.5rem, 7vw, 5rem)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'hidden'
             }}
           >
-            {name.charAt(0).toUpperCase()}
+            {/* 🔥 H 글자 대신 고양이 이미지 */}
+            <img
+              src={whiteCat}
+              alt="cat"
+              style={{
+                width: '70%',
+                height: '70%',
+                objectFit: 'contain',
+                pointerEvents: 'none'
+              }}
+            />
           </Avatar>
         </div>
+
+        {/* ========================================== */}
+
         <div className='machine-textbox'>
-          <p className="machine-name"><b>{name.charAt(0).toUpperCase() + name.slice(1)}</b></p>
+          <p className="machine-name">
+            <b>{name.charAt(0).toUpperCase() + name.slice(1)}</b>
+          </p>
+
           <p className='machine-category'><b>Category: </b>{category || 'N/A'}</p>
-          
-          {/* 난이도 표시 추가 */}
+
           {difficulty && displayDifficulty && (
             <div className='machine-difficulty'>
               <b>Difficulty: </b>
@@ -95,16 +111,15 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
               </span>
             </div>
           )}
-          
-          <div className='description'><p>"{description || 'N/A'}"</p></div>
+
+          <div className='description'>
+            <p>"{description || 'N/A'}"</p>
+          </div>
         </div>
+
         <div className='right-part'>
           <div className='rating-box'>
-            <Box
-              sx={{
-                marginTop: '8px',
-              }}
-            >
+            <Box sx={{ marginTop: '8px' }}>
               <Rating
                 name={`read-only-rating-${_id}`}
                 value={Number(rating)}
@@ -112,15 +127,24 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
                 readOnly
               />
             </Box>
-            <span style={{ marginLeft: '32px', color: '#fff' }}>{rating.toFixed(1)} / 5.0</span>
+            <span style={{ marginLeft: '32px', color: '#fff' }}>
+              {rating.toFixed(1)} / 5.0
+            </span>
           </div>
+
           <div className='machine-reward-box'>
             <p className='text'>Reward</p>
             <p className='reward-text'>{exp || 0} EXP</p>
           </div>
-          {/* <p><strong>AMI ID:</strong> {amiId || 'N/A'}</p> */}
-          {/* Add more fields as necessary */}
+
+          <button
+            className="machine-play-btn"
+            onClick={() => navigate(`/machine/${_id}/play`)}
+          >
+            Play
+          </button>
         </div>
+
       </div>
     </div>
   );
