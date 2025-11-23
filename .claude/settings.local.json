@@ -9,7 +9,10 @@
       "Bash(timeout /t 2 /nobreak)",
       "Bash(node create-scenario.js:*)",
       "Bash(node delete-html.js:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(dir:*)",
+      "Bash(node -c:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

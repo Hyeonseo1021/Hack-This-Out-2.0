@@ -1,6 +1,5 @@
 // types/arenaScenarioData.ts
 
-// ⚡ 1️⃣ Terminal Hacking Race 데이터 구조
 export interface TerminalHackingRaceData {
   stages: {
     stage: number;
@@ -18,25 +17,24 @@ export interface TerminalHackingRaceData {
   totalStages: number;
 }
 
-// 🔍 2️⃣ Vulnerability Scanner Race 데이터 구조 - NEW
 export interface VulnerabilityScannerRaceData {
-  targetUrl: string;                    // "https://shopvuln.hackthisout.local"
-  targetName: string;                   // "ShopVuln E-commerce"
-  targetDescription: string;            // 애플리케이션 설명
+  targetUrl: string;                  
+  targetName: string;                  
+  targetDescription: string;        
   
-  features: string[];                   // 제공하는 기능 목록
+  features: string[];                  
   
   vulnerabilities: {
-    vulnId: string;                     // "vuln_001"
-    vulnType: VulnType;                 // "SQLi", "XSS", etc.
-    vulnName: string;                   // "Login SQL Injection"
-    endpoint: string;                   // "/api/auth/login"
+    vulnId: string;                   
+    vulnType: VulnType;               
+    vulnName: string;                  
+    endpoint: string;                  
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-    parameter: string;                  // "username"
+    parameter: string;                
     
     validation: {
-      expectedPayload?: string;         // "admin' OR '1'='1--"
-      validationUrl?: string;           // 검증용 URL
+      expectedPayload?: string;        
+      validationUrl?: string;         
       validationMethod?: 'contains' | 'exact' | 'regex' | 'stored' | 'unauthorized_access' | 'missing_token';
       validationCriteria?: {
         responseContains?: string;
@@ -51,51 +49,49 @@ export interface VulnerabilityScannerRaceData {
     };
     
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-    basePoints: number;                 // 100
-    category: string;                   // "Authentication", "Input Validation", etc.
-    hintIds: string[];                  // ["hint_001_1", "hint_001_2", "hint_001_3"]
+    basePoints: number;                 
+    category: string;                   
+    hintIds: string[];                  
   }[];
   
   hints: {
-    hintId: string;                     // "hint_001_1"
-    vulnId: string;                     // "vuln_001"
-    level: 1 | 2 | 3;                   // 힌트 레벨
-    text: string;                       // "💡 로그인 페이지를 확인하세요"
-    cost: number;                       // 10, 20, 30
+    hintId: string;                
+    vulnId: string;                    
+    level: 1 | 2 | 3;                 
+    text: string;                       
+    cost: number;                     
   }[];
   
   scoring: {
-    firstBloodBonus: number;            // 50
+    firstBloodBonus: number;           
     speedBonusThresholds: {
-      under3min: number;                // 30
-      under5min: number;                // 20
-      under7min: number;                // 10
+      under3min: number;                
+      under5min: number;                
+      under7min: number;                
     };
-    comboMultiplier: number;            // 5 (연속 발견 시 +5pts/combo)
-    invalidSubmissionPenalty: number;   // 5
-    graceTimeSeconds?: number;          // 60 (첫 완주자 이후 유예시간, 초 단위)
+    comboMultiplier: number;           
+    invalidSubmissionPenalty: number;   
+    graceTimeSeconds?: number;          
   };
 
-  totalVulnerabilities: number;         // 7
+  totalVulnerabilities: number;         
 }
 
 // 취약점 타입 정의
 export type VulnType = 
-  | 'SQLi'                              // SQL Injection
-  | 'XSS'                               // Cross-Site Scripting
-  | 'IDOR'                              // Insecure Direct Object Reference
-  | 'PATH_TRAVERSAL'                    // Path Traversal
-  | 'CSRF'                              // Cross-Site Request Forgery
-  | 'COMMAND_INJECTION'                 // Command Injection
-  | 'FILE_UPLOAD'                       // File Upload Bypass
-  | 'AUTH_BYPASS'                       // Authentication Bypass
-  | 'INFO_DISCLOSURE'                   // Information Disclosure
-  | 'XXE'                               // XML External Entity
-  | 'SSRF'                              // Server-Side Request Forgery
-  | 'DESERIALIZATION';                  // Insecure Deserialization
+  | 'SQLi'                             
+  | 'XSS'                               
+  | 'IDOR'                         
+  | 'PATH_TRAVERSAL'                 
+  | 'CSRF'                              
+  | 'COMMAND_INJECTION'                
+  | 'FILE_UPLOAD'                       
+  | 'AUTH_BYPASS'                      
+  | 'INFO_DISCLOSURE'                  
+  | 'XXE'                               
+  | 'SSRF'                             
+  | 'DESERIALIZATION';                  
 
-
-// 🔎 4️⃣ Forensics Rush 데이터 구조
 export interface ForensicsRushData {
   scenario: {
     title: string;
@@ -111,39 +107,38 @@ export interface ForensicsRushData {
     type: 'log' | 'pcap' | 'memory' | 'filesystem' | 'image';
     path: string;
     description: string;
-    content?: string;  // ✅ 파일의 실제 내용 (로그, 텍스트 등)
+    content?: string; 
   }[];
   
-  availableTools: string[];  // ['grep', 'wireshark', 'volatility', 'strings', 'tcpdump']
+  availableTools: string[];  
   
   questions: {
     id: string;
     question: string;
     type: 'text' | 'multiple-choice' | 'ip-address' | 'timestamp';
-    answer: string | string[];  // 정답
+    answer: string | string[]; 
     points: number;
     hints?: string[];
-    relatedFiles: string[];  // 관련 증거 파일 ID
+    relatedFiles: string[];  
     difficulty: 'easy' | 'medium' | 'hard';
   }[];
   
   scoring: {
-    wrongAnswerPenalty: number;  // -5점
-    perfectScoreBonus: number;   // +50점
-    speedBonus: boolean;          // 빠른 해결 시 보너스
+    wrongAnswerPenalty: number;  
+    perfectScoreBonus: number;   
+    speedBonus: boolean;         
   };
   
   totalQuestions: number;
 }
 
-// 💬 5️⃣ Social Engineering Challenge 데이터 구조
 export interface SocialEngineeringData {
   scenarioType: 'IT_HELPDESK' | 'FINANCE_SPEARPHISHING' | 'CEO_IMPERSONATION';
   
   objective: {
     title: string;
     description: string;
-    targetInformation: string[];  // 획득해야 할 정보 목록
+    targetInformation: string[]; 
   };
   
   aiTarget: {
@@ -151,14 +146,14 @@ export interface SocialEngineeringData {
     role: string;
     department: string;
     personality: {
-      helpfulness: number;      // 1-10
-      securityAwareness: number;  // 1-10
-      authorityRespect: number;   // 1-10
-      skepticism: number;         // 1-10
+      helpfulness: number;     
+      securityAwareness: number;  
+      authorityRespect: number;   
+      skepticism: number;         
     };
-    suspicionThreshold: number;  // % (Easy: 70%, Medium: 50%, Hard: 30%)
-    knownInfo: string[];  // AI가 알고 있는 정보
-    secretInfo: string[];  // AI가 절대 공개하면 안 되는 정보
+    suspicionThreshold: number;  
+    knownInfo: string[];  
+    secretInfo: string[];  
   };
   
   availableTechniques: {
@@ -166,28 +161,28 @@ export interface SocialEngineeringData {
     name: string;
     type: 'PRETEXTING' | 'AUTHORITY' | 'URGENCY' | 'RECIPROCITY' | 'LIKING';
     description: string;
-    suspicionImpact: number;  // 의심도 증가량
-    effectiveness: number;     // 효과도 (1-10)
+    suspicionImpact: number;  
+    effectiveness: number;     
   }[];
   
   conversationRules: {
     maxTurns: number;
-    turnTimeLimit?: number;  // 선택적 턴 제한 시간
-    warningThresholds: number[];  // 의심도 경고 레벨 [30, 60, 90]
+    turnTimeLimit?: number;  
+    warningThresholds: number[];  
   };
   
   scoring: {
-    objectiveComplete: number;     // 100점
+    objectiveComplete: number;     
     turnEfficiency: {
-      maxBonus: number;            // +50점
-      optimalTurns: number;        // 최적 턴 수
+      maxBonus: number;            
+      optimalTurns: number;        
     };
     suspicionManagement: {
-      bonus: number;               // +30점
-      threshold: number;           // 30% 이하 유지
+      bonus: number;               
+      threshold: number;           
     };
     naturalnessBonus: {
-      maxPoints: number;           // +20점
+      maxPoints: number;        
       evaluationCriteria: string[];
     };
   };
@@ -202,7 +197,7 @@ export interface SocialEngineeringData {
 // 통합 타입
 export type ArenaScenarioData = 
   | TerminalHackingRaceData 
-  | VulnerabilityScannerRaceData         // ✅ NEW (Defense Battle 대체)
+  | VulnerabilityScannerRaceData         
   | ForensicsRushData
   | SocialEngineeringData;
 
@@ -213,7 +208,7 @@ export interface ModeConfiguration {
   emoji: string;
   minPlayers: number;
   maxPlayers: number;
-  defaultTime: number;  // 초
+  defaultTime: number; 
   difficulty: {
     EASY: { time: number; description: string };
     MEDIUM: { time: number; description: string };

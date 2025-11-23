@@ -61,7 +61,11 @@ ${vulnsDescription}
 
 4. **Vulnerability Implementation**:
    - Each vulnerability should be realistic and exploitable
-   - When successfully exploited, send a postMessage to parent with ALL required fields:
+   - **CRITICAL - NO AUTO-TRIGGER**: Vulnerabilities should ONLY be triggered when the user actively submits a form or performs an action (button click, form submit, link click with malicious parameter, etc.)
+   - **DO NOT** trigger vulnerabilities on page load, on DOMContentLoaded, or automatically
+   - **DO NOT** send postMessage on page initialization
+   - **DO NOT** automatically trigger IDOR vulnerabilities when the page loads - user must click a button, submit a form, or change a URL parameter
+   - When successfully exploited BY USER ACTION, send a postMessage to parent with ALL required fields:
      \`\`\`javascript
      window.parent.postMessage({
        type: 'vulnerability_found',
@@ -75,6 +79,7 @@ ${vulnsDescription}
    - CRITICAL: You must detect which form field (username/password/query/etc.) contained the exploit
    - CRITICAL: Send the ENTIRE value of that field as 'payload', not just a pattern
    - CRITICAL: Send the field name as 'parameter' (e.g., 'username', 'password', 'query')
+   - CRITICAL: Only send postMessage when user ACTIVELY triggers the vulnerability (form submission, button click, changing URL hash, etc.)
    - Include visual feedback (success messages, data displayed, etc.)
 
 5. **Simulated Backend**:

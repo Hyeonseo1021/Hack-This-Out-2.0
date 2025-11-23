@@ -292,20 +292,20 @@ const ScenariosManagement: React.FC = () => {
             return false;
           }
 
-          if (!vuln.severity?.trim()) {
-            alert(`Vulnerability ${i + 1}: Severity is required`);
+          if (!vuln.difficulty?.trim()) {
+            alert(`Vulnerability ${i + 1}: Difficulty is required`);
             return false;
           }
 
-          // Severity 값 검증
-          const validSeverities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-          if (!validSeverities.includes(vuln.severity.toUpperCase())) {
-            alert(`Vulnerability ${i + 1}: Severity must be LOW, MEDIUM, HIGH, or CRITICAL`);
+          // Difficulty 값 검증
+          const validDifficulties = ['EASY', 'MEDIUM', 'HARD'];
+          if (!validDifficulties.includes(vuln.difficulty.toUpperCase())) {
+            alert(`Vulnerability ${i + 1}: Difficulty must be EASY, MEDIUM, or HARD`);
             return false;
           }
 
-          if (typeof vuln.points !== 'number' || vuln.points <= 0) {
-            alert(`Vulnerability ${i + 1}: Points must be a positive number`);
+          if (typeof vuln.basePoints !== 'number' || vuln.basePoints <= 0) {
+            alert(`Vulnerability ${i + 1}: Base Points must be a positive number`);
             return false;
           }
         }

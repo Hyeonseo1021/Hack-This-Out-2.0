@@ -90,8 +90,16 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // 난이도별 유예시간 설정
+    const graceMsByDifficulty: Record<string, number> = {
+      'EASY': 300000,    // 5분
+      'MEDIUM': 240000,  // 4분
+      'HARD': 180000,    // 3분
+      'EXPERT': 120000   // 2분
+    };
+
     const newArena = await Arena.create({
-      name, 
+      name,
       mode,
       difficulty,
       host: userId,
@@ -99,7 +107,11 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       scenarioId: scenario._id,
       timeLimit: scenario.timeLimit,
       participants: [{ user: userId, isReady: false, hasLeft: false }],
-      status: 'waiting'
+      status: 'waiting',
+      settings: {
+        endOnFirstSolve: mode === 'VULNERABILITY_SCANNER_RACE' ? true : false,
+        graceMs: graceMsByDifficulty[difficulty] || 180000  // 난이도별 유예시간, 기본값 3분
+      }
     });
 
     const savedArena = await Arena.findById(newArena._id).lean();

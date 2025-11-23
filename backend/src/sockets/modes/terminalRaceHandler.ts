@@ -338,3 +338,47 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
     }
   });
 };
+
+// ✅ Terminal Race 초기화 함수
+export const initializeTerminalRace = async (arenaId: string) => {
+  try {
+    console.log(`🎯 [initializeTerminalRace] Initializing arena ${arenaId}`);
+
+    const arena = await Arena.findById(arenaId).populate('participants.user');
+    if (!arena) {
+      console.error(`❌ [initializeTerminalRace] Arena ${arenaId} not found`);
+      return;
+    }
+
+    // 모든 참가자에 대해 ArenaProgress 생성
+    for (const participant of arena.participants) {
+      const userId = String((participant.user as any)?._id ?? participant.user);
+
+      // ArenaProgress가 없으면 생성
+      const existingProgress = await ArenaProgress.findOne({
+        arena: arenaId,
+        user: userId
+      });
+
+      if (!existingProgress) {
+        await ArenaProgress.create({
+          arena: arenaId,
+          user: userId,
+          mode: 'terminal-race',
+          completed: false,
+          score: 0,
+          stage: 0
+        });
+
+        console.log(`✅ Created ArenaProgress for user ${userId}`);
+      } else {
+        console.log(`⏭️ ArenaProgress already exists for user ${userId}`);
+      }
+    }
+
+    console.log(`✅ [initializeTerminalRace] Initialized ${arena.participants.length} participants`);
+  } catch (error) {
+    console.error(`❌ [initializeTerminalRace] Error:`, error);
+    throw error;
+  }
+};

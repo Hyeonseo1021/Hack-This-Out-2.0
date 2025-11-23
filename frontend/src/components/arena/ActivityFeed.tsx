@@ -39,7 +39,7 @@ interface FeedEntry {
   id: number;
   userId: string;
   text: string;
-  type: 'flag' | 'stage' | 'score' | 'command';
+  type: 'flag' | 'stage' | 'score' | 'command' | 'vuln_found' | 'first_blood';
   timestamp: Date;
   isMe: boolean;
 }
@@ -218,13 +218,35 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       }
     };
 
+    // ✅ VulnerabilityScannerRace: 취약점 발견
+    const handleVulnDiscovered = (data: any) => {
+      console.log('🔍 [ActivityFeed] Vulnerability discovered:', data);
+
+      const username = getUsernameById(data.userId);
+      const isMe = data.userId === currentUserId;
+
+      const entry: FeedEntry = {
+        id: feedCounter.current++,
+        userId: data.userId,
+        text: `${username} found ${data.vulnName || 'a vulnerability'} (+${data.points} pts)`,
+        type: data.isFirstBlood ? 'first_blood' : 'vuln_found',
+        timestamp: new Date(),
+        isMe
+      };
+
+      console.log('✅ [ActivityFeed] Adding vulnerability entry:', entry);
+      setFeeds(prev => [...prev, entry].slice(-50));
+    };
+
     socket.on('terminal:result', handleTerminalResult);
-    socket.on('participant:update', handleParticipantUpdate); // ✅ 추가
+    socket.on('participant:update', handleParticipantUpdate);
+    socket.on('scannerRace:vulnerability-found', handleVulnDiscovered); // ✅ VulnerabilityScannerRace
 
     return () => {
       console.log('🔧 [ActivityFeed] Cleaning up listeners');
       socket.off('terminal:result', handleTerminalResult);
-      socket.off('participant:update', handleParticipantUpdate); // ✅ 추가
+      socket.off('participant:update', handleParticipantUpdate);
+      socket.off('scannerRace:vulnerability-found', handleVulnDiscovered);
       listenersRegisteredRef.current = false;
     };
   }, [socket, currentUserId]);
@@ -248,10 +270,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 className={`feed-item feed-${feed.type} ${feed.isMe ? 'feed-me' : ''}`}
               >
                 <span className="feed-icon">
-                  {feed.type === 'flag' && ''}
+                  {feed.type === 'flag' && '🏆'}
                   {feed.type === 'stage' && '⬆'}
-                  {feed.type === 'score' && ''}
+                  {feed.type === 'score' && '✨'}
                   {feed.type === 'command' && '▶'}
+                  {feed.type === 'vuln_found' && '🔍'}
+                  {feed.type === 'first_blood' && '🩸'}
                 </span>
                 <span className="feed-text">{feed.text}</span>
               </div>

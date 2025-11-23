@@ -359,7 +359,7 @@ async function finalizeArena(arenaId: string, io: Server) {
     }
 
     // 모든 클라이언트에게 게임 종료 알림
-    io.to(arenaId).emit('arena:ended', {
+    const endedPayload = {
       arenaId,
       winner: arena.winner ? {
         userId: arena.winner.toString(),
@@ -367,9 +367,11 @@ async function finalizeArena(arenaId: string, io: Server) {
       } : null,
       endTime: arena.endTime,
       message: 'Arena has ended'
-    });
+    };
 
-    console.log(`📢 [finalizeArena] Broadcasted arena:ended event`);
+    console.log(`📢 [finalizeArena] Broadcasting arena:ended event to room ${arenaId}:`, endedPayload);
+    io.to(arenaId).emit('arena:ended', endedPayload);
+    console.log(`✅ [finalizeArena] arena:ended event broadcasted`);
 
     // 결과 페이지로 리다이렉션 신호 전송
     setTimeout(() => {
