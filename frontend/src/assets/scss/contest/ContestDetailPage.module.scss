@@ -1,76 +1,106 @@
-@use "../style" as *;
-* {
-    &::-webkit-scrollbar {
-        display: none; // Chrome, Safari, Opera
-    }
-    scrollbar-width: none; // Firefox
-    -ms-overflow-style: none; // IE, Edge
-}
-.contest_detail_container {
-    @include background_set;
+.page_wrapper {
+    width: 100%;
+    padding: 40px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    backdrop-filter: blur(40px);
-    overflow-y: auto;
-    height: 100%;
-    padding: clamp(4px, 1vw, 16px);
-    gap: clamp(2px, 1vw, 16px);
-
-    .contest_detail_page {
-        width: 100%;
-        min-height: 40%;
-        padding: clamp(8px, 2vw, 16px);
-        position: relative;
-
-        .detail {
-            width: 100%;
-            height: 100%;
-        }
-
-        .participate_button {
-            position: absolute;
-            right: clamp(24px, 5vw, 83px);
-            top: clamp(190px, 15vh, 250px);
-            font-weight: 600;
-            width: clamp(100px, 15vw, 140px);
-            height: clamp(36px, 6vh, 48px);
-            box-shadow: 0px 2px 4px rgba(44, 39, 56, 0.08), 0px 4px 8px rgba(44, 39, 56, 0.08);
-            border-radius: 6px;
-            background: var(--color-layout);
-            color: var(--color-white);
-            font-size: clamp(14px, 2vw, 16px);
-            transition: all 0.3s ease-in-out;
-            cursor: pointer;
-            border: 2px solid transparent;
-            @media (max-width: 768px) {
-                position: relative;
-                right: auto;
-                top: auto;
-                margin: 16px auto;
-                display: block;
-            }
-
-            &:hover {
-                background: var(--blue-400);
-                border: 2px solid transparent;
-                transform: translateY(-2px);
-                filter: drop-shadow(0 0 10px var(--blue-500));
-            }
-        }
+  }
+  
+  /* =========================================================
+     TOP BOX (상단 컨테스트 정보 카드)
+     ========================================================= */
+  .top_box {
+    width: 900px;
+    background: rgba(8, 20, 30, 0.65); /* 글로우 강화 */
+    border-radius: 18px;
+    padding: 40px 45px;
+  
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 25px;
+  
+    border: 1px solid rgba(0, 255, 255, 0.35); /* 글로우 강조 */
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.2); /* 글로우 강조 */
+  
+    margin-bottom: 20px; /* 아래 박스와 간격 */
+    color: #ffffff;
+  }
+  
+  .top_box * {
+    color: #ffffff !important;
+  }
+  
+  /* =========================================================
+     박스 사이 네온 라인 (B 스타일)
+     ========================================================= */
+  .box_divider {
+    width: 900px;
+    height: 2px;
+    background: rgba(139, 243, 255, 0.25);
+    margin: 15px 0 25px 0;
+    box-shadow: 0 0 12px rgba(139, 243, 255, 0.35);
+    border-radius: 2px;
+  }
+  
+  /* =========================================================
+     JOIN BUTTON
+     ========================================================= */
+  .join_button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    padding: 12px 38px;
+    border-radius: 12px;
+    border: 2px solid #00eaff;
+    background: rgba(0, 255, 255, 0.1);
+    cursor: pointer;
+  
+    color: #dffaff !important;
+    text-shadow: 0 0 12px #00eaff;
+  
+    transition: 0.2s ease-out;
+    flex-shrink: 0;
+  
+    /* 글로우 강화 (C) */
+    &:hover {
+      background: rgba(0, 255, 255, 0.25);
+      transform: translateY(-3px);
+      box-shadow: 0 0 30px #00eaff, 0 0 50px rgba(0, 255, 255, 0.35);
     }
-
-    .contestLeaderboardTable {
-        width: 100%;
-        height: auto;
-        min-height: 400px;
-        padding: 0 clamp(4px, 1vw, 16px) clamp(4px, 1vw, 16px);
-        backdrop-filter: blur(40px);
-        border-radius: clamp(4px, 1vw, 24px);
-
-        @media (max-width: 768px) {
-            padding: 16px;
-            min-height: auto;
-        }
-    }
-}
+  }
+  
+  /* =========================================================
+     LEADERBOARD BOX
+     ========================================================= */
+  .leaderboard_box {
+    width: 900px;
+    background: rgba(8, 20, 30, 0.55); /* 조금 더 어둡게 */
+    border-radius: 18px;
+    padding: 40px;
+  
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.08); /* 그림자 약간 낮춤 */
+  
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  
+    color: #ffffff;
+  }
+  
+  .leaderboard_box * {
+    color: #ffffff !important;
+    font-family: 'Orbitron', 'VT323', sans-serif;
+  }
+  
+  /* =========================================================
+     ERROR MESSAGE
+     ========================================================= */
+  .error_message {
+    margin-top: 40px;
+    color: #ff6b6b;
+    font-size: 20px;
+    text-align: center;
+    font-family: 'VT323', monospace;
+  }
+  

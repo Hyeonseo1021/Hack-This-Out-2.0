@@ -1,329 +1,243 @@
 /* frontend/src/assets/scss/contest/AddContestForm.scss */
-@use 'sass:color';
+
 @use "../style" as *;
 
 .add-contest-form {
     @include background_set;
-    position: relative;
+    font-family: 'Orbitron', sans-serif;
     backdrop-filter: blur(40px);
     display: flex;
     flex-direction: column;
     padding: 0 32px 32px 32px;
-    gap: 8px;
-    overflow: scroll;
-    scrollbar-width: none;
+    overflow-y: auto;
 
     * {
         &::-webkit-scrollbar {
-            display: none; // Chrome, Safari, Opera
+            display: none;
         }
-        scrollbar-width: none; // Firefox
-        -ms-overflow-style: none; // IE, Edge
     }
+
+    /* ------------------------------- */
+    /* 🔙 Back Button Area */
+    /* ------------------------------- */
 
     .back-button {
         position: sticky;
         top: 0;
-        z-index: 100;
-        background-color: var(--color-layout);
-        backdrop-filter: blur(10px);
-        padding: 16px 0px;
+        z-index: 50;
+        padding: 20px 0;
         display: flex;
         align-items: center;
-        justify-content: flex-start;
-        gap: 24px;
-        flex-direction: row;
-        width: 100%;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        gap: 20px;
 
-        &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--color-layout);
-            z-index: -1;
-        }
+        background: rgba(8, 20, 30, 0.65);
+        border-bottom: 1px solid rgba(139, 243, 255, 0.22);
+        backdrop-filter: blur(12px);
 
         h2 {
-            margin-bottom: 0;
-            padding-left: 0;
-            color: white;
-            font-weight: bold;
-            font-size: 2rem;
-            order: 2;
+            font-size: 2.1rem;
+            color: #e9faff;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 12px rgba(139,243,255,0.75);
         }
 
         .IconButton {
-            margin-top: 0;
-            width: 40px;
-            height: 40px;
-            background-color: var(--color-layout);
-            border-radius: 5px;
-            transition: background-color 0.3s;
-            cursor: pointer;
-            order: 1;
-            margin-left: 16px;
-            transition: all 0.3s ease;
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            background: rgba(10,30,45,0.7);
+            border: 1.4px solid rgba(139,243,255,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.25s ease;
+
             &:hover {
-                background-color: var(--blue-400);
-                transform: translateX(-0.3rem);
+                transform: translateX(-4px) scale(1.06);
+                box-shadow: 0 0 14px rgba(139,243,255,0.55);
             }
         }
     }
 
-    label {
-        font-weight: bold;
-        color: rgb(202, 202, 202);
-
-    }
-
-    input,
-    select,
-    textarea {
-        margin-left: 8px;
-        background-color: rgb(58, 58, 58);
-        color: white;
-
-        &:focus {
-            border-color: #5b9bd5;
-            box-shadow: 0 0 5px rgba(91, 155, 213, 0.5);
-        }
-    }
+    /* ------------------------------- */
+    /* 📦 Main Form Layout */
+    /* ------------------------------- */
 
     .create-container {
-        padding: 0 32px;
+        padding: 24px 32px;
         flex: 1;
         display: grid;
-        grid-template-columns: 2.5fr 1fr;
-        gap: 16px;
-        margin-left: 24px;
-        overflow-y: auto;
-        position: relative;
-        padding-bottom: 80px;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-top: 8px;
 
         label {
-            font-weight: bold;
-            color: rgb(202, 202, 202);
+            color: #cfeaff;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
         }
 
         input,
         select,
         textarea {
-            margin-left: 8px;
-            background-color: rgb(58, 58, 58);
-            color: white;
+            padding: 0.85rem 1rem;
+            font-size: 1rem;
+            width: 100%;
+            border-radius: 12px;
+            background: rgba(20, 30, 45, 0.9);
+            border: 1.4px solid rgba(139,243,255,0.25);
+            color: #eaffff;
+            outline: none;
+            transition: 0.2s ease;
 
             &:focus {
-                border-color: #5b9bd5;
-                box-shadow: 0 0 5px rgba(91, 155, 213, 0.5);
+                border-color: rgba(139, 243, 255, 0.8);
+                box-shadow: 0 0 12px rgba(139,243,255,0.6);
             }
         }
 
         textarea {
-            margin-top: 0.5rem;
             resize: none;
-            min-width: 60%;
-            max-width: 60%;
-            min-height: 100px;
-            max-height: 100px;
-            padding: 0.5rem;
-            border-radius: 10px;
-            outline: none;
-            transition: all 0.3s;
-            display: inline-flex;
+            min-height: 120px;
         }
 
-        .name-container,
-        .description-container,
-        .start-time-container,
-        .end-time-container,
-        .exp-container,
-        .add-machine-container {
-            grid-column-start: 1;
-            width: 100%;
-
-            label {
-                display: block;
-                width: 150px;
-                margin-bottom: 8px;
-            }
-
-            input, 
-            select, 
-            textarea {
-                width: 60%;
-                padding: 0.5rem;
-                border-radius: 10px;
-                outline: none;
-                transition: all 0.3s;
-                margin-left: 0;
-            }
-
-            &.exp-container input {
-                width: 120px;
-            }
+        .description-container {
+            grid-column: 2 span;
         }
 
+        /* Machine field rows */
         .add-machine-container {
-            button {
-                padding: 0.47rem 0.6rem;
-                background-color: var(--color-layout);
-                color: white;
-                border: 2px solid var(--color-white);
-                border-radius: 20px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: background-color 0.3s;
-                display: inline-block; // Add this
-                vertical-align: top; // Add this
-                margin-top: 0; // Add this
-                transition: all 0.3s ease;
-                &:hover {
-                    background-color: var(--blue-400);
-                    border: 2px solid transparent;
-                    filter: drop-shadow(0 0 10px var(--blue-500));
-                    transform: translateY(-2px);
-                }
-
-                &.delete-machine {
-                    &:hover {
-                        background-color: #c9302c;
-                        filter: drop-shadow(0 0 10px var(--danger));
-                        transform: translateY(-2px);
-                    }
-                }
-            }
+            grid-column: 1 / -1;
 
             .machine-field {
-                width: 100%;
-                margin-bottom: 8px;
+                margin-bottom: 12px;
+                position: relative;
 
-                input {
-                    width: 60%;
+                .delete-machine {
+                    background: rgba(255, 80, 80, 0.7);
+                    border-radius: 10px;
+                    padding: 0.45rem 0.9rem;
+                    margin-left: 12px;
+                    border: none;
+                    cursor: pointer;
+                    font-family: Orbitron;
+
+                    &:hover {
+                        background: rgba(255, 110, 110, 0.85);
+                        transform: translateY(-3px) scale(1.05);
+                        margin-bottom: 4px;
+                        box-shadow: 0 0 10px rgba(255,80,80,0.9);
+                    }
                 }
 
                 .suggestions-list {
-                    display: flex;
-                    flex-direction: column;
                     position: absolute;
-                    align-items: center;
-                    justify-content: center;
-                    width: 20vw;
-    
-    
-                    background: var(--blue-400);
-                    border: 1px solid white;
-                    z-index: 10;
-    
+                    top: 48px;
+                    left: 0;
+                    width: 60%;
+                    background: rgba(8, 20, 30, 0.95);
+                    border: 1px solid rgba(139,243,255,0.4);
+                    border-radius: 12px;
+                    z-index: 20;
+                    backdrop-filter: blur(10px);
+
                     li {
-                        width: 100%;
-                        padding: 4px;
-                        color: var(--color-white);
-                        font-size: var(--font-size-small);
+                        padding: 10px;
                         cursor: pointer;
-    
-                        &:hover {
-                            background-color: #1A67d2;
+
+                        &:hover,
+                        &.active {
+                            background: rgba(139,243,255,0.2);
                         }
                     }
                 }
-    
-                .no-suggestions{
-                    position: absolute;
-                    width: 20vw;
-    
-                    background: var(--blue-400);
-                    color: var(--color-white);
-                    font-size: var(--font-size-small);
-                    border: 1px solid white;
-                    z-index: 10;
-                    padding: 4px;
+            }
+
+            .add-machine-button {
+                background: rgba(8, 20, 30, 0.6);
+                border: 1.4px solid rgba(139,243,255,0.4);
+                padding: 0.7rem 1.2rem;
+                color: #eaffff;
+                border-radius: 14px;
+                cursor: pointer;
+                font-family: Orbitron;
+                transition: 0.25s;
+
+                &:hover {
+                    transform: translateY(-3px) scale(1.04);
+                    box-shadow: 0 0 14px rgba(139, 243, 255, 0.7);
+                    margin-bottom: 4px;
                 }
             }
         }
 
+        /* Submit button */
         .add-contest-form-button {
-            position: fixed; // Change from absolute to fixed
+            position: fixed;
             bottom: 32px;
             right: 32px;
-            height: 48px;
-            z-index: 100;
-            background-color: transparent; // Add this
 
-            button[type="submit"] {
-                padding: 0.75rem 1.5rem;
-                font-weight: bold;
-                background-color: var(--color-layout);
-                color: white;
-                border: 2px solid var(--color-white);
-                border-radius: 20px;
+            button {
+                padding: 1rem 2rem;
+                font-size: 1.15rem;
+                border-radius: 16px;
+                background: rgba(8, 20, 30, 0.8);
+                border: 1.6px solid rgba(139,243,255,0.5);
+                color: #eaffff;
                 cursor: pointer;
-                transition: all 0.3s ease;
-    
+                transition: 0.25s ease;
+                font-family: Orbitron;
+
                 &:hover {
-                    background-color: var(--blue-400);
-                    border: 2px solid transparent;
-                    filter: drop-shadow(0 0 10px var(--blue-500));
-                    transform: translateY(-2px);
+                    transform: translateY(-3px) scale(1.05);
+                    box-shadow: 0 0 16px rgba(139,243,255,0.9);
+                    margin-bottom: 4px;
                 }
             }
         }
     }
 
-    .error-message {
-        color: #dc3545;
-        padding: 10px;
-        margin-bottom: 20px;
-        background-color: rgba(220, 53, 69, 0.1);
-        border-radius: 4px;
-        font-size: 0.9rem;
-        text-wrap: balance;
-    }
-
+    /* Errors */
     .field-error {
-        color: #dc3545;
+        color: #ff6f6f;
         font-size: 0.8rem;
         margin-top: 4px;
         display: block;
-        font-weight: bold;
-        text-wrap: balance;
     }
 
     .error-input {
-        border-color: #dc3545 !important;
-        
-        &:focus {
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-        }
-    }
-
-    .required {
-        color: #dc3545;
-        margin-left: 4px;
-    }
-
-    // Improve spacing and layout
-    .create-container {
-        > div {
-            margin-bottom: 0.5rem;
-        }
-    }
-
-    .time-container {
-        display: flex;
-        gap: 1rem;
-
-        > div {
-            flex: 1;
-        }
-    }
-
-    // Add transitions for smooth error display
-    .error-message, .field-error {
-        opacity: 1;
-        transition: opacity 0.3s ease-in-out;
+        border-color: #ff6f6f !important;
+        box-shadow: 0 0 12px rgba(255,100,100,0.4) !important;
     }
 }
+/* === Add Contest 버튼 위치만 수정 === */
+.add-contest-form {
+    .create-container {
+      .add-contest-form-button {
+        position: fixed;
+        bottom: -48px;   /* 기존 32px → 위로 16px 상승 */
+        right: 48px;    /* 기존 32px → 약간 더 안쪽으로 */
+  
+        button {
+          padding: 1rem 2rem;
+          font-size: 1.15rem;
+          border-radius: 16px;
+          background: rgba(8, 20, 30, 0.8);
+          border: 1.6px solid rgba(139,243,255,0.5);
+          color: #eaffff;
+          cursor: pointer;
+          transition: 0.25s ease;
+          font-family: Orbitron;
+  
+          &:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 0 16px rgba(139,243,255,0.9);
+          }
+        }
+      }
+    }
+  }
+  
