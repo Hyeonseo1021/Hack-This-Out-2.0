@@ -7,12 +7,14 @@
     padding: clamp(1.5rem, 3vw, 2.5rem);
     height: auto;
     margin-top: clamp(10vh, 15vh, 20vh);
+    animation: glitch-fade-in 1s steps(2, end) both;
 
     .login-title {
-        color: var(--color-layout);
+        color: #00f6ff;
         font-size: clamp(1.75rem, 5vw, 2.25rem);
         font-weight: 900;
         padding-bottom: clamp(1rem, 2vw, 1.5rem);
+        text-shadow: 0 0 8px #00f6ff, 0 0 16px rgba(0, 246, 255, 0.4);
     }
 
     .input-box {
@@ -108,10 +110,44 @@
 
     p {
         margin: 5px 0;
-        
+
         &:not(:last-child) {
             padding-bottom: 5px;
             border-bottom: 1px solid rgba(255, 62, 62, 0.1);
         }
+    }
+}
+
+/* ===============================
+   글리치 페이드인 애니메이션
+=============================== */
+@keyframes glitch-fade-in {
+    0% {
+        opacity: 0;
+        filter: brightness(0.4);
+        transform: scale(0.9) translateX(0);
+    }
+    10% {
+        opacity: 1;
+        transform: scale(1.03) translateX(-4px);
+        filter: brightness(2);
+    }
+    20% {
+        transform: scale(0.98) translateX(4px);
+    }
+    30% {
+        transform: scale(1.03) translateY(-2px);
+    }
+    50% {
+        clip-path: inset(10% 0 40% 0);
+        opacity: 0.7;
+    }
+    70% {
+        clip-path: inset(30% 0 30% 0);
+    }
+    100% {
+        opacity: 1;
+        clip-path: inset(0 0 0 0);
+        transform: none;
     }
 }
