@@ -7,7 +7,7 @@ import logo_light from '../assets/img/icon/HTO Light.png';
 
 
 const TutorialPage: React.FC = () => {
-  const { t, i18n } = useTranslation('manual');
+  const { t, i18n } = useTranslation('tutorial');
   const [step, setStep] = useState(0);
   const [isGlitch, setIsGlitch] = useState(false);
 

@@ -65,22 +65,30 @@ const modes = [
 const ModeExplain: React.FC = () => {
   const navigate = useNavigate();
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [language, setLanguage] = useState<"en" | "ko">("en");
 
   const handleModeSelect = (modeId: string) => {
     setSelectedMode(modeId);
   };
+
+  const toggleLanguage = () => setLanguage((prev) => (prev === "en" ? "ko" : "en"));
 
   const currentMode = selectedMode ? modes.find(m => m.id === selectedMode) : null;
 
   return (
     <Main>
       <div className="arena-create-container">
-        <h1>Game Mode Explanation</h1>
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px', width: '100%', maxWidth: '1400px' }}>
+          <h1 style={{ textAlign: 'center', margin: 0 }}>{language === "en" ? "Game Mode Explanation" : "게임 모드 설명"}</h1>
+          <button className="lang-toggle" onClick={toggleLanguage} style={{ position: 'absolute', right: '50px' }}>
+            {language === "en" ? "🇺🇸 EN" : "🇰🇷 KR"}
+          </button>
+        </div>
 
         <div className="arena-grid-layout">
           {/* 왼쪽: 모드 선택 */}
           <div className="card mode-selector">
-            <h2 className="card-title">Select Game Mode</h2>
+            <h2 className="card-title">{language === "en" ? "Select Game Mode" : "게임 모드 선택"}</h2>
             <div className="card-content">
               <div className="mode-list">
                 {modes.map(mode => (
@@ -106,17 +114,17 @@ const ModeExplain: React.FC = () => {
                 <div className="mode-description-section" style={{ marginTop: 0, padding: 0, border: 'none', boxShadow: 'none', background: 'transparent' }}>
                   <div className="mode-desc-content" style={{ gap: '20px' }}>
                     <div className="mode-desc-objective" style={{ marginBottom: '20px' }}>
-                      <h4>Mission Objective</h4>
+                      <h4>{language === "en" ? "Mission Objective" : "미션 목표"}</h4>
                       <p>{currentMode.objective}</p>
                     </div>
 
                     <div className="mode-desc-block">
-                      <h4>Description</h4>
+                      <h4>{language === "en" ? "Description" : "설명"}</h4>
                       <p>{currentMode.description}</p>
                     </div>
 
                     <div className="mode-desc-block">
-                      <h4>Rules</h4>
+                      <h4>{language === "en" ? "Rules" : "규칙"}</h4>
                       <ul>
                         {currentMode.rules.map((rule, index) => (
                           <li key={index}>{rule}</li>
@@ -131,7 +139,7 @@ const ModeExplain: React.FC = () => {
                   onClick={() => navigate('/arena')}
                   style={{ marginTop: '30px' }}
                 >
-                  <span>Back to Arena</span>
+                  <span>{language === "en" ? "Back to Arena" : "아레나로 돌아가기"}</span>
                 </button>
               </div>
             </div>
@@ -140,8 +148,8 @@ const ModeExplain: React.FC = () => {
               <div className="card-content">
                 <div className="placeholder-content">
                   <div className="placeholder-icon">ℹ️</div>
-                  <h2>Select a Game Mode</h2>
-                  <p>Click on any game mode to view detailed information</p>
+                  <h2>{language === "en" ? "Select a Game Mode" : "게임 모드를 선택하세요"}</h2>
+                  <p>{language === "en" ? "Click on any game mode to view detailed information" : "게임 모드를 클릭하여 자세한 정보를 확인하세요"}</p>
                 </div>
               </div>
             </div>

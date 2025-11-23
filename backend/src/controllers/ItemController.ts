@@ -191,3 +191,93 @@ export const buyShopItem = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ message: 'ERROR', msg: '서버 오류가 발생했습니다.' });
   }
 };
+
+/** 🎰 룰렛 돌리기 */
+export const spinRoulette = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = res.locals.jwtData?.id;
+    const ROULETTE_COST = 10;
+
+    if (!userId) {
+      res.status(400).json({ message: 'ERROR', msg: '로그인이 필요합니다.' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'ERROR', msg: '유저를 찾을 수 없습니다.' });
+      return;
+    }
+
+    // 💰 잔액 확인
+    if (user.htoCoin < ROULETTE_COST) {
+      res.status(400).json({ message: 'ERROR', msg: '코인이 부족합니다! (필요: 10 HTO)' });
+      return;
+    }
+
+    // 💸 코인 차감
+    user.htoCoin -= ROULETTE_COST;
+    await user.save();
+
+    // 🎲 확률 테이블 (프론트엔드와 동일)
+    const ROULETTE_ITEMS = [
+      { id: 'item-hint1', name: '힌트 1회권', weight: 40 },
+      { id: 'item-hint3', name: '힌트 3회권', weight: 25 },
+      { id: 'item-buff', name: '랜덤 버프 패키지', weight: 20 },
+      { id: 'item-timestop', name: '시간 정지권', weight: 15 }
+    ];
+
+    // 가중치 기반 랜덤 선택
+    const totalWeight = ROULETTE_ITEMS.reduce((sum, item) => sum + item.weight, 0);
+    const rand = Math.random() * totalWeight;
+
+    let acc = 0;
+    let selectedItem = ROULETTE_ITEMS[0];
+
+    for (const item of ROULETTE_ITEMS) {
+      acc += item.weight;
+      if (rand <= acc) {
+        selectedItem = item;
+        break;
+      }
+    }
+
+    // 아이템 이름으로 DB에서 찾기
+    const rewardItem = await Item.findOne({ name: selectedItem.name });
+
+    if (!rewardItem) {
+      res.status(404).json({ message: 'ERROR', msg: '보상 아이템을 찾을 수 없습니다.' });
+      return;
+    }
+
+    // 🎁 인벤토리에 추가
+    const existing = await Inventory.findOne({
+      user: user._id,
+      item: rewardItem._id,
+    });
+
+    if (existing) {
+      existing.quantity = (existing.quantity ?? 0) + 1;
+      await existing.save();
+    } else {
+      await Inventory.create({
+        user: user._id,
+        item: rewardItem._id,
+        itemName: rewardItem.name,
+        isUsed: false,
+        acquiredAt: new Date(),
+        quantity: 1,
+      });
+    }
+
+    res.status(200).json({
+      message: 'OK',
+      rewardId: selectedItem.id,
+      rewardName: selectedItem.name,
+      updatedBalance: user.htoCoin,
+    });
+  } catch (err) {
+    console.error('❌ spinRoulette error:', err);
+    res.status(500).json({ message: 'ERROR', msg: '서버 오류가 발생했습니다.' });
+  }
+};

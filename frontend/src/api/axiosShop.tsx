@@ -34,6 +34,20 @@ export const useInventoryItem = async (
   return { msg: res.data?.msg ?? '아이템을 사용했습니다.' };
 };
 
+/** 🎰 룰렛 돌리기 */
+export const spinRoulette = async (): Promise<{
+  rewardId: string;
+  rewardName: string;
+  updatedBalance: number;
+}> => {
+  const res = await axiosInstance.post('/shop/roulette/spin'); // ✅ POST /api/shop/roulette/spin
+  return {
+    rewardId: res.data?.rewardId ?? '',
+    rewardName: res.data?.rewardName ?? '',
+    updatedBalance: res.data?.updatedBalance ?? 0,
+  };
+};
+
 /** ---------- 🧑‍💼 관리자 전용 ---------- */
 
 /** 상점 아이템 생성 */
