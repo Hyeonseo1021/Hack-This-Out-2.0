@@ -1,25 +1,38 @@
-/* ================================
-   MACHINE PRACTICE PAGE — ARENA UI
-================================ */
+// MachinePracticePage.scss - Cyberpunk Theme
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=VT323&display=swap');
 
-/* 전체 레이아웃 컨테이너 */
-.arena-page-wrapper {
-  width: 100%;
-  height: 100vh;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+// ========================================
+// 애니메이션
+// ========================================
+
+@keyframes grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
 }
 
-/* ================================
-   블루프린트 전체 컨테이너 (세로 꽉 채움)
-================================ */
+@keyframes scanline {
+  0% { transform: translateY(-10%); }
+  100% { transform: translateY(110vh); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 246, 255, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(0, 246, 255, 0.6); }
+}
+
+// ========================================
+// 전체 컨테이너
+// ========================================
+
 .blueprint-container {
   display: flex;
-  flex-direction: row; /* ← 좌측 LIST / 우측 CREATE */
-  height: calc(100vh - 100px);
-  width: 95%;
+  height: 99%;
+  width: 180vh;
   margin: 0 auto;
   gap: 32px;
   padding: 32px;
@@ -28,142 +41,285 @@
   overflow: hidden;
   box-sizing: border-box;
   font-family: 'Orbitron', sans-serif;
-  border-radius: 12px;
-  z-index: 100; /* overlay 아래에 가리지 않도록 */
 
-  /* 배경 그리드 */
+  // 배경 그리드
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(0, 225, 255, 0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 225, 255, 0.07) 1px, transparent 1px);
+      linear-gradient(rgba(0, 225, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.1) 1px, transparent 1px);
     background-size: 60px 60px;
-    opacity: 0.06;
+    opacity: 0.07;
     animation: grid-pan 10s linear infinite;
     pointer-events: none;
     z-index: 0;
   }
+
+  &__scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 246, 255, 0.8), transparent);
+    animation: scanline 8s linear infinite;
+    opacity: 0.5;
+    z-index: 1;
+  }
 }
 
-/* ================================
-   스캔라인
-================================ */
-.blueprint-container__scanline {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 3px;
-  width: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 246, 255, 0.8), transparent);
-  animation: scanline 8s linear infinite;
-  opacity: 0.5;
+// ========================================
+// 공통 패널 스타일
+// ========================================
+
+.blueprint-panel {
+  background: rgba(0, 5, 15, 0.7);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(0, 246, 255, 0.3);
+  border-radius: 5px;
+  box-shadow:
+    0 0 20px rgba(0, 246, 255, 0.15),
+    inset 0 0 30px rgba(0, 246, 255, 0.03);
   z-index: 1;
-}
-
-/* ================================
-   왼쪽 패널 (ARENA LIST)
-================================ */
-.blueprint-panel--list {
-  flex: 3;
-  background: rgba(0, 5, 15, 0.7);
-  border: 2px solid rgba(0, 246, 255, 0.25);
-  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(10px);
-  overflow: hidden;
-  z-index: 2;
+  animation: fadeIn 0.8s ease-out forwards;
+
+  &--list { flex: 3; }
+  &--create { flex: 1; opacity: 0; animation-delay: 0.2s; }
+
+  &__header {
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid rgba(0, 246, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  &__title {
+    color: #00f6ff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(0, 246, 255, 0.5);
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  &__body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex-grow: 1;
+
+    &::-webkit-scrollbar { width: 6px; }
+    &::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 246, 255, 0.5);
+      border-radius: 3px;
+
+      &:hover { background: rgba(0, 246, 255, 0.8); }
+    }
+
+    &--center {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+  &__subtext {
+    margin-top: 1.5rem;
+    color: rgba(234, 250, 255, 0.7);
+    opacity: 0.7;
+    font-size: 0.9rem;
+  }
 }
 
-.blueprint-panel__header {
-  padding: 1rem 1.5rem;
-  border-bottom: 2px solid rgba(0, 246, 255, 0.2);
-  background: rgba(0, 0, 0, 0.3);
+// ========================================
+// 아레나 리스트
+// ========================================
+
+.arena-list {
+  &__row {
+    display: grid;
+    grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    color: #eafaff;
+    border-bottom: 2px solid rgba(0, 246, 255, 0.15);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    cursor: pointer;
+
+    &:hover { background-color: rgba(0, 246, 255, 0.1); color: #fff; }
+
+    &--header {
+      color: #00f6ff;
+      font-weight: bold;
+      cursor: default;
+      &:hover { background-color: transparent; }
+    }
+
+    &--locked {
+      cursor: not-allowed;
+      color: #8892b0;
+      &:hover { background-color: transparent; }
+    }
+  }
+
+  &__col { font-size: 0.95rem; }
+
+  &__message {
+    text-align: center;
+    color: rgba(234, 250, 255, 0.7);
+    font-size: 1.1rem;
+    margin-top: 4rem;
+  }
 }
 
-.blueprint-panel__title {
-  color: #00f6ff;
-  font-size: 1.3rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-shadow: 0 0 12px rgba(0, 246, 255, 0.6);
+// ========================================
+// 상태 뱃지
+// ========================================
+
+.status-badge {
+  padding: 0.3em 0.8em;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  border: 1px solid;
+
+  &--waiting {
+    background-color: rgba(0, 255, 174, 0.1);
+    color: #00ffae;
+    border-color: rgba(0, 255, 174, 0.3);
+  }
+
+  &--started, &--ended {
+    background-color: rgba(255, 138, 128, 0.1);
+    color: #ff8a80;
+    border-color: rgba(255, 138, 128, 0.3);
+  }
 }
 
-.blueprint-panel__body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex-grow: 1;
-}
+// ========================================
+// 생성 버튼
+// ========================================
 
-/* ================================
-   오른쪽 패널 (CREATE ROOM)
-================================ */
-.blueprint-panel--create {
-  flex: 1;
-  background: rgba(0, 5, 15, 0.7);
-  border: 2px solid rgba(0, 246, 255, 0.25);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  backdrop-filter: blur(10px);
-  padding: 20px;
-  z-index: 2;
-}
-
-.blueprint-panel__subtext {
-  margin-top: 1.4rem;
-  color: rgba(234, 250, 255, 0.7);
-}
-
-/* ================================
-   CREATE ROOM 버튼
-================================ */
 .blueprint-button {
-  margin-top: 0;
-  padding: 1rem 3rem;
-  font-size: 1.3rem;
+  background-color: transparent;
   border: 2px solid #00f6ff;
-  background: transparent;
   color: #00f6ff;
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-weight: 600;
   text-transform: uppercase;
-  border-radius: 6px;
-  transition: 0.3s;
+  letter-spacing: 1px;
   cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+  box-shadow: 0 0 15px rgba(0, 246, 255, 0.3);
+
+  &__text {
+    position: relative;
+    z-index: 2;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background-color: rgba(0, 246, 255, 0.2);
+    transition: width 0.3s ease;
+    z-index: 1;
+  }
+
+  &:hover {
+    color: #fff;
+    box-shadow: 0 0 25px rgba(0, 246, 255, 0.6);
+    &::before { width: 100%; }
+  }
 }
 
-.blueprint-button:hover {
-  background: rgba(0, 246, 255, 0.15);
-  box-shadow: 0 0 25px rgba(0, 246, 255, 0.6);
+// ========================================
+// 반응형 디자인
+// ========================================
+
+@media (max-width: 1024px) {
+  .blueprint-container {
+    flex-direction: column;
+    height: auto;
+    padding: 16px;
+    gap: 16px;
+  }
+  .blueprint-panel { min-height: 250px; }
+  .blueprint-panel--create { min-height: 200px; }
 }
 
-/* ================================
-   DIM OVERLAY
-================================ */
+@media (max-width: 768px) {
+  .arena-list__row--header { display: none; }
+
+  .arena-list__row {
+    display: block;
+    padding: 1rem;
+    border: 2px solid rgba(0, 246, 255, 0.3);
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .arena-list__col {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+
+    &:last-child { margin-bottom: 0; }
+
+    &::before {
+      content: attr(data-label);
+      font-weight: bold;
+      color: #00f6ff;
+      margin-right: 1em;
+    }
+  }
+
+  .blueprint-button { padding: 0.8rem 2rem; font-size: 1rem; }
+}
+
+/* =========================================================
+   🔥 튜토리얼 설명 기능 추가
+========================================================= */
+
+/* 클릭 레이어 */
+.tutorial-click-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+/* 블러 오버레이 */
 .dim-overlay {
   position: fixed;
   inset: 0;
-
-  /* 🔥 두 번째 사진처럼 — 배경이 충분히 보이도록 */
-  background: rgba(0, 0, 0, 0.22); /* ← 완벽한 투명도 */
-  backdrop-filter: blur(8px);      /* 부드러운 흐림 */
-
-  z-index: 50; /* overlay가 UI보다 뒤로 */
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(4px);
+  z-index: 20;
   pointer-events: none;
 }
 
-/* ================================
-   ANNOTATION
-================================ */
+/* 말풍선 박스 */
 .annotation {
-  position: absolute;
+  position: fixed;
   z-index: 200;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .annotation-number {
@@ -181,52 +337,11 @@
 }
 
 .annotation__label {
-  background: rgba(0,0,0,0.7);
-  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 7px 12px;
   border-radius: 6px;
   font-size: 14px;
   color: #eafaff;
   font-weight: 600;
   white-space: nowrap;
-}
-
-/* ================================
-   ARENA LIST ROW
-================================ */
-.arena-list__row {
-  display: grid;
-  grid-template-columns: 0.5fr 2fr 1fr 1fr;
-  align-items: center;
-  padding: 1rem 0;
-  border-bottom: 2px solid rgba(0, 246, 255, 0.15);
-  color: #eafaff;
-  cursor: pointer;
-}
-
-.arena-list__message {
-  text-align: center;
-  margin-top: 5rem;
-  color: rgba(234,250,255,0.7);
-}
-
-/* 상태 뱃지 */
-.status-badge {
-  padding: 0.3em 0.7em;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  border: 1px solid;
-}
-
-.status-badge--waiting {
-  background-color: rgba(0, 255, 174, 0.1);
-  color: #00ffae;
-  border-color: rgba(0,255,174,0.4);
-}
-
-.status-badge--started,
-.status-badge--ended {
-  background-color: rgba(255, 138, 128, 0.1);
-  color: #ff8a80;
-  border-color: rgba(255,138,128,0.4);
 }
