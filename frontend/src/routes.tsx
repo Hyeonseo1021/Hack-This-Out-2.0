@@ -36,6 +36,7 @@ const TutorialPage = lazy(() => import('./pages/TutorialPage'));
 const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const ManualPage = lazy(() => import('./pages/ManualPage'));
 const MachinePracticePage = lazy(() => import('./pages/arena/MachinePracticePage'));
+const MachineCreatePage = lazy(() => import('./pages/arena/MachineCreatePage'));
 const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
 const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
@@ -96,6 +97,14 @@ const routes: RouteObject[] = [
         element: (
         <ProtectedRoute>
             <MachinePracticePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'machinep/create',
+        element: (
+        <ProtectedRoute>
+            <MachineCreatePage />
           </ProtectedRoute>
         ),
       },

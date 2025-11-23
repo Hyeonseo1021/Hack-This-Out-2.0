@@ -41,23 +41,30 @@ const MachinePracticePage: React.FC = () => {
   /* -------------------------------------------
       🔥 Arena 데이터 로드
   ------------------------------------------- */
-  useEffect(() => {
-    const fetchArenas = async () => {
-      try {
-        const data = await getArenaList();
-        setArenas(Array.isArray(data) ? data : []);
-      } catch {
-        setArenas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchArenas = async () => {
+    try {
+      const data = await getArenaList();
+      setArenas(Array.isArray(data) ? data : []);
+    } catch {
+      setArenas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // 내부에서 async 호출하는 wrapper 사용
+  const handleConnect = () => {
     fetchArenas();
-    socket.on('connect', fetchArenas);
+  };
 
-    return () => socket.off('connect', fetchArenas);
-  }, []);
+  fetchArenas();
+  socket.on('connect', handleConnect);
+
+  return () => {
+    socket.off('connect', handleConnect);
+  };
+}, []);
 
   /* -------------------------------------------
       🔥 소켓 업데이트
@@ -201,7 +208,7 @@ const MachinePracticePage: React.FC = () => {
             </div>
 
             <div className="blueprint-panel__body blueprint-panel__body--center">
-              <button className="blueprint-button" onClick={() => navigate('/arena/create')}>
+              <button className="blueprint-button" onClick={() => navigate('/machinep/create')}>
                 <span className="blueprint-button__text">CREATE ROOM</span>
               </button>
               <p className="blueprint-panel__subtext">Create a new arena</p>
