@@ -90,8 +90,16 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    // 난이도별 유예시간 설정
+    const graceMsByDifficulty: Record<string, number> = {
+      'EASY': 300000,    // 5분
+      'MEDIUM': 240000,  // 4분
+      'HARD': 180000,    // 3분
+      'EXPERT': 120000   // 2분
+    };
+
     const newArena = await Arena.create({
-      name, 
+      name,
       mode,
       difficulty,
       host: userId,
@@ -99,7 +107,11 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       scenarioId: scenario._id,
       timeLimit: scenario.timeLimit,
       participants: [{ user: userId, isReady: false, hasLeft: false }],
-      status: 'waiting'
+      status: 'waiting',
+      settings: {
+        endOnFirstSolve: mode === 'VULNERABILITY_SCANNER_RACE' ? true : false,
+        graceMs: graceMsByDifficulty[difficulty] || 180000  // 난이도별 유예시간, 기본값 3분
+      }
     });
 
     const savedArena = await Arena.findById(newArena._id).lean();
@@ -550,6 +562,59 @@ export const createScenario = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    // VULNERABILITY_SCANNER_RACE: 난이도 기반 모드 검증
+    if (mode === 'VULNERABILITY_SCANNER_RACE') {
+      const isEasyOrMedium = difficulty === 'EASY' || difficulty === 'MEDIUM';
+      const isHardOrExpert = difficulty === 'HARD' || difficulty === 'EXPERT';
+
+      // EASY/MEDIUM: SIMULATED 모드 강제, features 필수
+      if (isEasyOrMedium) {
+        if (data.mode !== 'SIMULATED') {
+          res.status(400).json({
+            message: 'EASY and MEDIUM difficulties must use SIMULATED mode (AI-generated HTML)'
+          });
+          return;
+        }
+
+        if (!data.features || data.features.length === 0) {
+          res.status(400).json({
+            message: 'Features are required for SIMULATED mode (EASY/MEDIUM difficulty)'
+          });
+          return;
+        }
+
+        // targetUrl 강제 초기화
+        data.targetUrl = '';
+      }
+
+      // HARD/EXPERT: REAL 모드 강제, targetUrl 필수
+      if (isHardOrExpert) {
+        if (data.mode !== 'REAL') {
+          res.status(400).json({
+            message: 'HARD and EXPERT difficulties must use REAL mode (actual URL)'
+          });
+          return;
+        }
+
+        if (!data.targetUrl || !data.targetUrl.trim()) {
+          res.status(400).json({
+            message: 'Target URL is required for REAL mode (HARD/EXPERT difficulty)'
+          });
+          return;
+        }
+
+        // URL 형식 검증
+        try {
+          new URL(data.targetUrl);
+        } catch (error) {
+          res.status(400).json({
+            message: 'Target URL must be a valid URL (e.g., https://example.com)'
+          });
+          return;
+        }
+      }
+    }
+
     // VulnerabilityScannerRace이고 SIMULATED 모드면 HTML 생성
     let scenarioData = data;
     if (mode === 'VULNERABILITY_SCANNER_RACE' && data.mode === 'SIMULATED') {
@@ -601,6 +666,59 @@ export const updateScenario = async (req: Request, res: Response): Promise<void>
   try {
     const { id } = req.params;
     const updates = req.body;
+
+    // VULNERABILITY_SCANNER_RACE: 난이도 기반 모드 검증
+    if (updates.mode === 'VULNERABILITY_SCANNER_RACE' && updates.difficulty && updates.data) {
+      const isEasyOrMedium = updates.difficulty === 'EASY' || updates.difficulty === 'MEDIUM';
+      const isHardOrExpert = updates.difficulty === 'HARD' || updates.difficulty === 'EXPERT';
+
+      // EASY/MEDIUM: SIMULATED 모드 강제, features 필수
+      if (isEasyOrMedium) {
+        if (updates.data.mode !== 'SIMULATED') {
+          res.status(400).json({
+            message: 'EASY and MEDIUM difficulties must use SIMULATED mode (AI-generated HTML)'
+          });
+          return;
+        }
+
+        if (!updates.data.features || updates.data.features.length === 0) {
+          res.status(400).json({
+            message: 'Features are required for SIMULATED mode (EASY/MEDIUM difficulty)'
+          });
+          return;
+        }
+
+        // targetUrl 강제 초기화
+        updates.data.targetUrl = '';
+      }
+
+      // HARD/EXPERT: REAL 모드 강제, targetUrl 필수
+      if (isHardOrExpert) {
+        if (updates.data.mode !== 'REAL') {
+          res.status(400).json({
+            message: 'HARD and EXPERT difficulties must use REAL mode (actual URL)'
+          });
+          return;
+        }
+
+        if (!updates.data.targetUrl || !updates.data.targetUrl.trim()) {
+          res.status(400).json({
+            message: 'Target URL is required for REAL mode (HARD/EXPERT difficulty)'
+          });
+          return;
+        }
+
+        // URL 형식 검증
+        try {
+          new URL(updates.data.targetUrl);
+        } catch (error) {
+          res.status(400).json({
+            message: 'Target URL must be a valid URL (e.g., https://example.com)'
+          });
+          return;
+        }
+      }
+    }
 
     // VulnerabilityScannerRace이고 data가 변경되었으며 SIMULATED 모드면 HTML 재생성
     let finalUpdates = updates;

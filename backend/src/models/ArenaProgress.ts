@@ -91,24 +91,6 @@ const ArenaProgressSchema = new mongoose.Schema({
     }]
   },
 
-  // 👑 King of the Hill 전용
-  kingOfTheHill: {
-    totalKingTime: { type: Number, default: 0 },  // 초 단위
-    longestKingStreak: { type: Number, default: 0 },  // 초 단위
-    timesKing: { type: Number, default: 0 },  // 왕이 된 횟수
-    timesDethroned: { type: Number, default: 0 },  // 왕좌에서 쫓겨난 횟수
-    attacksSucceeded: { type: Number, default: 0 },
-    attacksFailed: { type: Number, default: 0 },
-    defensesSucceeded: { type: Number, default: 0 },
-    defensesFailed: { type: Number, default: 0 },
-    firstBlood: { type: Boolean, default: false },  // 첫 점령 성공
-    kingDurations: [{
-      crownedAt: Date,
-      dethronedAt: Date,
-      duration: Number  // 초 단위
-    }]
-  },
-
   // 🔎 Forensics Rush 전용
   forensicsRush: {
     questionsAnswered: { type: Number, default: 0 },

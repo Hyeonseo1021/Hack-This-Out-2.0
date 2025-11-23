@@ -200,10 +200,14 @@ const ArenaPlayPage: React.FC = () => {
     // ✅ arena:ended 이벤트 핸들러 추가
     const handleEnded = (data?: { arenaId?: string; message?: string; reason?: string }) => {
       console.log('🏁 [ArenaPlayPage] arena:ended received:', data);
+      console.log('🔍 [ArenaPlayPage] navigatedRef.current:', navigatedRef.current);
+      console.log('🔍 [ArenaPlayPage] Target arenaId:', data?.arenaId ?? arenaId);
       if (!navigatedRef.current) {
         navigatedRef.current = true;
-        console.log('🚀 [ArenaPlayPage] Navigating to result page...');
+        console.log('🚀 [ArenaPlayPage] Setting navigatedRef to true and navigating to result page...');
         navigate(`/arena/result/${data?.arenaId ?? arenaId}`, { replace: true });
+      } else {
+        console.warn('⚠️ [ArenaPlayPage] Already navigated, skipping navigation');
       }
     };
 

@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { submitAnswer, getUserProgress } from '../../services/forensicsRush/ForensicsEngine';
-import { endArenaProcedure } from '../utils/endArenaProcedure';
+import { endArenaProcedure, endArenaImmediately } from '../utils/endArenaProcedure';
 import { cancelScheduledEnd } from '../arenaHandlers';
 
 // 유예 시간 타이머 관리
@@ -174,9 +174,9 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
             cancelScheduledEnd(arenaId);
 
             try {
-              // ✅ endArenaProcedure 호출하여 경험치 계산 및 게임 종료
-              await endArenaProcedure(arenaId, io);
-              console.log('✅ [ForensicsRush] Arena ended with EXP calculation');
+              // ✅ 유예 시간 종료 → 즉시 종료 (endArenaImmediately)
+              await endArenaImmediately(arenaId, io);
+              console.log('✅ [ForensicsRush] Arena ended after grace period');
 
             } catch (error) {
               console.error('❌ [ForensicsRush] Error ending arena:', error);
@@ -540,9 +540,9 @@ async function checkAllParticipantsCompleted(arenaId: string, io: Server) {
           message: 'All participants have completed! Ending game now...'
         });
 
-        // ✅ endArenaProcedure 호출하여 경험치 계산 및 게임 종료
-        await endArenaProcedure(arenaId, io);
-        console.log('✅ [ForensicsRush] Arena ended with EXP calculation (all completed)');
+        // ✅ 즉시 종료 (유예 시간 없이)
+        await endArenaImmediately(arenaId, io);
+        console.log('✅ [ForensicsRush] Arena ended immediately (all completed)');
 
       } catch (error) {
         console.error('❌ [ForensicsRush] Error ending arena:', error);

@@ -4,7 +4,6 @@ import mongoose, { Schema, Document } from 'mongoose';
 export type ArenaMode = 
   | 'TERMINAL_HACKING_RACE'           // ⚡ 명령어 기반 속도 경쟁
   | 'VULNERABILITY_SCANNER_RACE'      // 🔍 웹 취약점 스캔 경쟁 - NEW
-  | 'KING_OF_THE_HILL'                // 👑 점령 전쟁
   | 'FORENSICS_RUSH'                  // 🔎 포렌식 분석 경쟁
   | 'SOCIAL_ENGINEERING_CHALLENGE';   // 💬 사회공학 심리전
 
@@ -31,7 +30,6 @@ const ArenaScenarioSchema = new Schema({
     enum: [
       'TERMINAL_HACKING_RACE',           // ⚡ 명령어 기반 속도 경쟁
       'VULNERABILITY_SCANNER_RACE',      // 🔍 웹 취약점 스캔 경쟁 - NEW
-      'KING_OF_THE_HILL',                // 👑 서버 점령 전략전
       'FORENSICS_RUSH',                  // 🔎 포렌식 분석 경쟁
       'SOCIAL_ENGINEERING_CHALLENGE'     // 💬 사회공학 심리전
     ],

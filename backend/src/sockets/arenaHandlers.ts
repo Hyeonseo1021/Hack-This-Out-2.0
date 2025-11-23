@@ -4,7 +4,7 @@ import ArenaProgress from '../models/ArenaProgress';
 import User from '../models/User';
 import { endArenaProcedure }  from './utils/endArenaProcedure';
 import { terminalProcessCommand } from '../services/terminalRace/terminalEngine';
-import { registerTerminalRaceHandlers } from './modes/terminalRaceHandler';
+import { registerTerminalRaceHandlers, initializeTerminalRace } from './modes/terminalRaceHandler';
 import { initializeScannerRace } from './modes/VulnerablilityScannerHandler';
 import { initializeForensicsRush } from './modes/ForensicsRushHandler';
 
@@ -294,8 +294,9 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
         }
       } else if (mode === 'FORENSICS_RUSH') {
         await initializeForensicsRush(arenaIdStr);
+      } else if (mode === 'TERMINAL_HACKING_RACE') {
+        await initializeTerminalRace(arenaIdStr);
       }
-      // TERMINAL_HACKING_RACE는 별도 초기화 불필요 (소켓 핸들러에서 처리)
 
       // (3) 종료 스케줄링
       if (arena.endTime) {

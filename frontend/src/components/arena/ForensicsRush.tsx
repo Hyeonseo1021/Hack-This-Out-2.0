@@ -619,19 +619,6 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
         </div>
       </div>
 
-      {/* ✅ 유예 시간 알림 배너 */}
-      {gracePeriodRemaining !== null && firstWinner && (
-        <div className="grace-period-banner">
-          <div className="banner-content">
-            <span className="banner-icon">⚠</span>
-            <span className="banner-text">
-              {firstWinner === currentUserId
-                ? "[CASE CLOSED] Investigation complete - awaiting final reports from field agents"
-                : `[URGENT] Evidence collection window expires in ${gracePeriodRemaining}s - submit findings immediately`}
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* 시나리오 설명 */}
       <div className="scenario-brief">
