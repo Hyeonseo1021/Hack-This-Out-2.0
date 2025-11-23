@@ -545,6 +545,23 @@
     transform: none;
   }
 
+  // 초기화 로딩 스피너
+  &.initializing {
+    .loading-spinner-large {
+      width: 80px;
+      height: 80px;
+      border: 4px solid rgba(0, 246, 255, 0.2);
+      border-top-color: #00f6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 2rem;
+    }
+
+    .start-title {
+      animation: titlePulse 1.5s ease-in-out infinite;
+    }
+  }
+
 
   .countdown-number {
     font-size: 6rem;
@@ -577,6 +594,11 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 

@@ -384,8 +384,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
                 <span className="stat-item">
                   Stage {isCompleted ? totalStages : currentStage + 1}/{totalStages || '?'}
                 </span>
-                <span className={`stat
-                  -item ${lastScoreGain > 0 ? 'score-pulse' : ''}`}>
+                <span className={`stat-item ${lastScoreGain > 0 ? 'score-pulse' : ''}`}>
                   {currentScore} points
                   {lastScoreGain > 0 && <span className="score-popup">+{lastScoreGain}</span>}
                 </span>

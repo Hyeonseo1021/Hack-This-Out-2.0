@@ -303,7 +303,6 @@ $white: #ffffff;          // 하얀색
 // ========================================
 
 .arena-status {
-  font-family: 'Share Tech Mono', monospace;
   font-size: 1rem;
   color: $neon-mint;
   text-transform: uppercase;
@@ -410,7 +409,6 @@ $white: #ffffff;          // 하얀색
     margin-top: 1.5rem;
     color: $white;
     font-size: 0.9rem;
-    font-family: 'Share Tech Mono', monospace;
     text-transform: uppercase;
     letter-spacing: 2px;
     opacity: 0.8;
@@ -423,8 +421,6 @@ $white: #ffffff;          // 하얀색
 // ========================================
 
 .arena-list {
-  font-family: 'Share Tech Mono', monospace;
-
   &__row {
     display: grid;
     grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;

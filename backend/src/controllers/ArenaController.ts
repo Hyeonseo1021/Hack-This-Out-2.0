@@ -185,7 +185,7 @@ export const getArenaById = async (req: Request, res: Response): Promise<void> =
   try {
     const { arenaId } = req.params;
     const arena = await Arena.findById(String(arenaId))
-      .populate('participants.user', 'username')
+      .populate('participants.user', '_id username')
       .populate('scenarioId')
       .lean();
 
@@ -193,7 +193,7 @@ export const getArenaById = async (req: Request, res: Response): Promise<void> =
       res.status(404).json({ message: 'Arena not found' });
       return;
     }
-  
+
     res.json(arena);
   } catch (err) {
     console.error('getArenaById error:', err);
@@ -539,9 +539,13 @@ export const getScenarioById = async (req: Request, res: Response): Promise<void
 
 export const createScenario = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('📥 [createScenario] Request received');
+    console.log('📥 [createScenario] Body:', JSON.stringify(req.body, null, 2));
+
     const { mode, difficulty, title, description, timeLimit, data } = req.body;
 
     if (!mode || !difficulty || !title || !data) {
+      console.warn('⚠️ [createScenario] Missing required fields');
       res.status(400).json({ message: 'Missing required fields' });
       return;
     }

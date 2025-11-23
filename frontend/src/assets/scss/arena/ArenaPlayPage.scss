@@ -78,13 +78,13 @@
     .header-left {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.8rem;
       flex-wrap: nowrap;
       min-width: 0;
       flex: 1;
       overflow: hidden;
 
-      .arena-title {
+      .arena-play-title {
         font-size: 1.1rem;
         font-weight: 700;
         margin: 0;
@@ -93,17 +93,19 @@
         letter-spacing: 2px;
         animation: neon-flicker 3s infinite alternate;
         white-space: nowrap;
-        flex-shrink: 0;
-        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 300px;
+        flex-shrink: 1;
       }
 
       .status-badge {
-        padding: 0.3rem 0.7rem;
+        padding: 0.25rem 0.6rem;
         border-radius: 4px;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
         white-space: nowrap;
         flex-shrink: 0;
         min-width: fit-content;
@@ -132,16 +134,19 @@
       }
 
       .mode-badge {
-        padding: 0.3rem 0.7rem;
+        padding: 0.25rem 0.6rem;
         background: rgba(0, 246, 255, 0.15);
         color: #00f6ff;
         border: 2px solid rgba(0, 246, 255, 0.3);
         border-radius: 4px;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 700;
         box-shadow: 0 0 10px rgba(0, 246, 255, 0.2);
         white-space: nowrap;
         flex-shrink: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
       }
     }
 
@@ -410,7 +415,7 @@
 
     .arena-header {
       .header-left {
-        .arena-title {
+        .arena-play-title {
           font-size: 1rem;
         }
       }
@@ -428,7 +433,7 @@
         flex-wrap: wrap;
         gap: 0.5rem;
 
-        .arena-title {
+        .arena-play-title {
           font-size: 0.95rem;
         }
 

@@ -313,8 +313,20 @@ async function finalizeArena(arenaId: string, io: Server) {
 
       console.log(`📊 [finalizeArena] Total progress: ${rankedProgress.length}, Unique users: ${uniqueProgress.length}`);
 
-      // 순위별로 경험치 계산할 데이터 준비
-      const expData = uniqueProgress.map((progress, index) => ({
+      // 패배 조건 필터링: 점수가 0 이하인 플레이어는 EXP 부여하지 않음
+      const qualifiedProgress = uniqueProgress.filter(progress => {
+        const score = progress.score || 0;
+        if (score <= 0) {
+          console.log(`❌ [finalizeArena] User ${progress.user} excluded from EXP (score: ${score})`);
+          return false;
+        }
+        return true;
+      });
+
+      console.log(`🏆 [finalizeArena] Qualified for EXP: ${qualifiedProgress.length}/${uniqueProgress.length} players`);
+
+      // 순위별로 경험치 계산할 데이터 준비 (점수가 있는 플레이어만)
+      const expData = qualifiedProgress.map((progress, index) => ({
         userId: progress.user.toString(),
         rank: index + 1,
         score: progress.score || 0,

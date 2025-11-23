@@ -10,6 +10,7 @@ import {
   getGameState
 } from '../../services/vulnerbilityScannerRace/vulnerabilityScannerEngine';
 import { generateVulnerableHTML } from '../../services/vulnerbilityScannerRace/generateVulnerableHTML';
+import { endArenaProcedure } from '../utils/endArenaProcedure';
 
 /**
  * 🔍 Vulnerability Scanner Race Socket Handlers
@@ -109,36 +110,9 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       // 6. 게임 종료 체크
       const arena = await Arena.findById(arenaId);
       if (arena?.status === 'ended') {
-        console.log('🏁 [scannerRace:submit] Game ended!');
-        
-        // 최종 순위
-        const finalRanking = await ArenaProgress.find({ arena: arenaId })
-          .sort({ score: -1 })
-          .populate('user', 'username')
-          .lean(); // ✅ lean() 추가
-
-        const winner = finalRanking[0];
-        const winnerUser = winner?.user as any;
-
-        io.to(arenaId).emit('arena:ended', {
-          arenaId,
-          winner: {
-            userId: winnerUser?._id || winnerUser,
-            username: winnerUser?.username || 'Unknown',
-            score: winner?.score || 0
-          },
-          ranking: finalRanking.map((p: any, index: number) => {
-            const pUser = p.user as any;
-            return {
-              rank: index + 1,
-              userId: pUser?._id || pUser,
-              username: pUser?.username || 'Unknown',
-              score: p.score || 0,
-              vulnerabilitiesFound: (p.vulnerabilityScannerRace as any)?.vulnerabilitiesFound || 0,
-              firstBloods: (p.vulnerabilityScannerRace as any)?.firstBloods || 0
-            };
-          })
-        });
+        console.log('🏁 [scannerRace:submit] Game ended! Calling endArenaProcedure...');
+        // ✅ endArenaProcedure 호출하여 경험치 계산 및 게임 종료
+        await endArenaProcedure(arenaId, io);
       }
 
     } catch (error) {

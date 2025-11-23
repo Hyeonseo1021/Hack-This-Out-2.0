@@ -86,13 +86,15 @@ const ArenaPlayPage: React.FC = () => {
       setCurrentUserId(user._id);
 
       const arenaData = await getArenaById(arenaId);
-      
+      console.log('📥 [ArenaPlayPage] Initial arena data:', arenaData);
+      console.log('📥 [ArenaPlayPage] Initial participants:', arenaData.participants);
+
       // ✅ 게임이 이미 종료되었으면 result로 즉시 이동
       if (arenaData.status === 'ended') {
         navigate(`/arena/result/${arenaId}`, { replace: true });
         return;
       }
-      
+
       setArenaName(arenaData.name);
       setHostId(String(arenaData.host));
       setStatus(arenaData.status);
@@ -151,6 +153,7 @@ const ArenaPlayPage: React.FC = () => {
   useEffect(() => {
     const handleUpdate = (payload: ArenaUpdatePayload) => {
       console.log('📡 [ArenaPlayPage] arena:update received:', payload);
+      console.log('📡 [ArenaPlayPage] participants data:', payload.participants);
       setStatus(payload.status);
       setHostId(payload.host);
       setParticipants(payload.participants || []);
@@ -295,7 +298,7 @@ const ArenaPlayPage: React.FC = () => {
       {/* 상단 헤더 */}
         <header className="arena-header">
           <div className="header-left">
-            <h1 className="arena-title">{arenaName}</h1>
+            <h1 className="arena-play-title">{arenaName}</h1>
             <span className={`status-badge status-${status}`}>
               {status.toUpperCase()}
             </span>

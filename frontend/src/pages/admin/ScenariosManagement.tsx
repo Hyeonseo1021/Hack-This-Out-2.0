@@ -44,6 +44,7 @@ const getInitialData = (mode: string) => {
       
     case 'VULNERABILITY_SCANNER_RACE':
       return {
+        mode: 'SIMULATED', // ✅ 추가: SIMULATED 또는 REAL
         targetUrl: '',
         targetName: '',
         targetDescription: '',

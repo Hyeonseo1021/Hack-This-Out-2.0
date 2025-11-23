@@ -35,6 +35,8 @@ const ArenaRoomPage: React.FC = () => {
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [maxPlayers, setMaxPlayers] = useState<number>(8);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initMessage, setInitMessage] = useState('');
   const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
 
   // Mode/Difficulty 헬퍼
@@ -112,6 +114,7 @@ const ArenaRoomPage: React.FC = () => {
   };
 
   const handleLeave = () => {
+    skipLeaveRef.current = true; // cleanup에서 중복 호출 방지
     socket.emit('arena:leave', { arenaId, userId: currentUserId });
     navigate('/arena');
   };
@@ -173,9 +176,11 @@ const ArenaRoomPage: React.FC = () => {
     socket.off('arena:update');
     socket.off('arena:start');
     socket.off('arena:join-failed');
-    socket.off('arena:chatMessage'); 
-    socket.off('arena:notify');      
+    socket.off('arena:chatMessage');
+    socket.off('arena:notify');
     socket.off('arena:kicked');
+    socket.off('arena:initializing');
+    socket.off('arena:initialized');
 
     socket.on('arena:update', payload => {
       console.log('🔄 [ArenaRoomPage] arena:update received:', payload);
@@ -196,12 +201,24 @@ const ArenaRoomPage: React.FC = () => {
       if (payload.maxParticipants) setMaxPlayers(payload.maxParticipants);
     });
 
+    socket.on('arena:initializing', ({ message }: { message: string }) => {
+      console.log('⏳ [ArenaRoomPage] arena:initializing:', message);
+      setIsInitializing(true);
+      setInitMessage(message);
+    });
+
+    socket.on('arena:initialized', () => {
+      console.log('✅ [ArenaRoomPage] arena:initialized');
+      setIsInitializing(false);
+      setInitMessage('');
+    });
+
     socket.on('arena:start', ({ arenaId: startedId }) => {
       if (startedId === arenaId) {
         skipLeaveRef.current = true;
         setShowStartOverlay(true);
         setCountdown(3);
-        
+
         const countdownInterval = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
@@ -211,7 +228,7 @@ const ArenaRoomPage: React.FC = () => {
             return prev - 1;
           });
         }, 1000);
-        
+
         setTimeout(() => {
           navigate(`/arena/play/${arenaId}`);
         }, 3500);
@@ -246,13 +263,17 @@ const ArenaRoomPage: React.FC = () => {
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {
-      socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      if (!skipLeaveRef.current) {
+        socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      }
       socket.off('arena:update');
       socket.off('arena:start');
       socket.off('arena:join-failed');
       socket.off('arena:chatMessage');
-      socket.off('arena:notify');     
+      socket.off('arena:notify');
       socket.off('arena:kicked');
+      socket.off('arena:initializing');
+      socket.off('arena:initialized');
     };
   }, [arenaId, currentUserId, navigate]);
 
@@ -276,20 +297,31 @@ const ArenaRoomPage: React.FC = () => {
 
   return (
     <Main>
-      {/* 게임 시작 오버레이 */}
-        {showStartOverlay && (
-          <div className="game-start-overlay">
-            <div className="start-overlay-content">
-              <div className="start-title">GAME STARTING</div>
-              {countdown > 0 ? (
-                <div className="countdown-number">{countdown}</div>
-              ) : (
-                <div className="countdown-go">GO!</div>
-              )}
-              <div className="start-subtitle">Prepare for battle...</div>
-            </div>
+      {/* 초기화 로딩 오버레이 */}
+      {isInitializing && (
+        <div className="game-start-overlay initializing">
+          <div className="start-overlay-content">
+            <div className="loading-spinner-large"></div>
+            <div className="start-title">INITIALIZING</div>
+            <div className="start-subtitle">{initMessage || '게임 환경을 준비 중입니다...'}</div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* 게임 시작 오버레이 */}
+      {showStartOverlay && (
+        <div className="game-start-overlay">
+          <div className="start-overlay-content">
+            <div className="start-title">GAME STARTING</div>
+            {countdown > 0 ? (
+              <div className="countdown-number">{countdown}</div>
+            ) : (
+              <div className="countdown-go">GO!</div>
+            )}
+            <div className="start-subtitle">Prepare for battle...</div>
+          </div>
+        </div>
+      )}
       <div className="battle-cyber-container room-variant">
         <div className="background-grid"></div>
 

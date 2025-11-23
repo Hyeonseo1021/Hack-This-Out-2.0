@@ -274,7 +274,24 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       console.log(`🎮 Initializing game mode: ${mode} for arena ${arenaIdStr}`);
 
       if (mode === 'VULNERABILITY_SCANNER_RACE') {
-        await initializeScannerRace(arenaIdStr);
+        // HTML이 이미 생성되어 있는지 확인
+        const populatedArena = await Arena.findById(arenaId).populate('scenarioId');
+        const scenario = populatedArena?.scenarioId as any;
+        const hasPreGeneratedHTML = scenario?.data?.generatedHTML && scenario.data.generatedHTML.length > 0;
+
+        if (!hasPreGeneratedHTML && scenario?.data?.mode === 'SIMULATED') {
+          // HTML 생성이 필요한 경우만 로딩 알림
+          console.log('🔄 [arena:start] HTML generation required, showing loading screen');
+          io.to(arenaId).emit('arena:initializing', {
+            message: 'HTML 취약점 환경을 생성 중입니다...'
+          });
+          await initializeScannerRace(arenaIdStr);
+          io.to(arenaId).emit('arena:initialized');
+        } else {
+          // HTML이 이미 존재하거나 REAL 모드인 경우
+          console.log('✅ [arena:start] Using existing HTML or REAL mode, skipping loading screen');
+          await initializeScannerRace(arenaIdStr);
+        }
       } else if (mode === 'FORENSICS_RUSH') {
         await initializeForensicsRush(arenaIdStr);
       }
@@ -323,6 +340,20 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
   // 4. 나가기 (arena:leave)
   socket.on('arena:leave', async ({ arenaId, userId }) => {
     try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) return;
+
+      // (0) 사용자가 실제로 이 방에 있는지 확인
+      const uid = String(userId);
+      const participant = arena.participants.find(
+        (p: any) => String((p.user as any)?._id ?? p.user) === uid
+      );
+
+      if (!participant) {
+        console.warn(`[arena:leave] User ${uid} not found in arena ${arenaId}`);
+        return;
+      }
+
       const user = await User.findById(userId).select('username').lean();
       if (user) {
         io.to(arenaId).emit('arena:notify', {
@@ -331,11 +362,11 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
         });
       }
 
-      const arena = await Arena.findById(arenaId);
-      if (!arena) return;
-
-      const uid = String(userId);
       const wasHost = String(arena.host) === uid;
+
+      // (1.5) 소켓을 방에서 제거
+      socket.leave(arenaId);
+      console.log(`[arena:leave] Socket left room ${arenaId} for user ${uid}`);
 
       if (arena.status === 'waiting') {
         // (1) 대기중: 명단에서 완전 제거

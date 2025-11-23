@@ -98,6 +98,22 @@ ${vulnsDescription}
 - The HTML must be self-contained (all CSS and JS inline)
 - Make it look professional and realistic
 
+**IMPORTANT - Navigation Prevention:**
+- Add this script at the end of the <body> to prevent all link navigation:
+  \`\`\`javascript
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+        });
+      });
+    });
+  </script>
+  \`\`\`
+- All navigation must be handled via JavaScript (showing/hiding sections)
+- NO actual page navigation should occur
+
 OUTPUT THE HTML NOW (start with <!DOCTYPE html>):
 `;
 
@@ -307,6 +323,15 @@ function generateFallbackHTML(scenario: any): string {
         resultDiv.className = 'result error';
         resultDiv.innerHTML = '❌ <strong>Login Failed!</strong><br>Invalid credentials.';
       }
+    });
+
+    // Prevent all link navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+        });
+      });
     });
   </script>
 </body>
