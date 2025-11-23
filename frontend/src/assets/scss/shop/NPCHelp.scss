@@ -1,3 +1,4 @@
+/* NPCHelp.scss */
 .npc-help-box {
   position: fixed;
   bottom: 110px;
@@ -36,7 +37,6 @@
     line-height: 1.45;
   }
 
-  /* === FAQ 버튼 리스트 === */
   .npc-faq-list {
     display: flex;
     flex-direction: column;
@@ -53,7 +53,8 @@
       cursor: pointer;
       transition: 0.2s;
 
-      &:hover {
+      &:hover,
+      &.active {
         background: #00f6ff;
         color: #000;
         box-shadow: 0 0 10px #00f6ff;
@@ -61,7 +62,6 @@
     }
   }
 
-  /* === 답변 박스 === */
   .npc-answer-box {
     background: rgba(0, 246, 255, 0.1);
     border: 1px solid #00f6ff55;
@@ -72,7 +72,6 @@
     line-height: 1.4;
   }
 
-  /* 닫기 버튼 */
   .npc-close-btn {
     width: 100%;
     padding: 8px;
@@ -88,6 +87,29 @@
       transform: scale(1.04);
       box-shadow: 0 0 8px #00f6ff;
     }
+  }
+}
+
+.npc-help-button {
+  position: fixed;
+  bottom: 40px;
+  right: 25px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #00f6ff;
+  color: #000;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 12px #00f6ff;
+  transition: 0.25s;
+
+  &:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 20px #00f6ff;
   }
 }
 

@@ -1,0 +1,92 @@
+/* =============================================== */
+/* INVENTORY — 카드 크기 조정으로 스크롤 제거 */
+/* =============================================== */
+
+.shop-inventory-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.shop-inventory-list {
+  width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* 카드 간격 약간 축소 */
+
+  /* 스크롤 제거 */
+  overflow: visible;
+}
+
+/* 인벤토리 카드 */
+.shop-inventory-card {
+  display: flex;
+  gap: 14px; /* 아이콘과 본문 간격 축소 */
+  padding: 14px; /* 카드 내부 패딩 축소 */
+  background: rgba(10, 14, 20, 0.82);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+
+  /* hover 효과 축소 */
+  transition: 0.15s;
+  &:hover {
+    background: rgba(0, 255, 255, 0.05);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+}
+
+.shop-inventory-card__icon {
+  width: 48px;  /* 아이콘 크기 축소 */
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(0,255,255,0.6));
+}
+
+.shop-inventory-card__body {
+  flex: 1;
+}
+
+.shop-inventory-card__title {
+  font-size: 1rem; /* 제목 폰트 축소 */
+  color: #00eaff;
+  margin-bottom: 2px;
+}
+
+.shop-inventory-card__count {
+  color: #ff33cc;
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.shop-inventory-card__desc {
+  color: #d8faff;
+  font-size: 0.85rem; /* 설명 폰트 축소 */
+}
+
+.shop-inventory-card__btn {
+  margin-left: auto;
+  align-self: center;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: rgba(255, 0, 200, 0.15);
+  border: 1px solid #ff33cc;
+  color: #ffb9f5;
+  font-weight: 600;
+  font-size: 0.85rem; /* 버튼 폰트 축소 */
+  cursor: pointer;
+  transition: 0.2s;
+  &:hover {
+    background: rgba(255, 0, 200, 0.25);
+    box-shadow: 0 0 10px rgba(255, 0, 200, 0.5);
+  }
+}
+
+.shop-inventory-empty {
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 20px 0;
+  color: #98f3ff;
+}
