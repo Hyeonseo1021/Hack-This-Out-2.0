@@ -52,6 +52,7 @@
             align-items: center;
             justify-content: center;
             transition: 0.25s ease;
+            font-family: 'Orbitron', sans-serif;
 
             &:hover {
                 transform: translateX(-4px) scale(1.06);
@@ -71,6 +72,7 @@
         grid-template-columns: 1fr 1fr;
         gap: 32px;
         margin-top: 8px;
+        position: relative; /* ⭐ 버튼 absolute 기준 */
 
         label {
             color: #cfeaff;
@@ -174,11 +176,12 @@
             }
         }
 
-        /* Submit button */
+        /* ⭐⭐⭐ Submit button 자연스럽게 아래로 이동하는 버전 ⭐⭐⭐ */
         .add-contest-form-button {
-            position: fixed;
-            bottom: 32px;
-            right: 32px;
+            position: absolute;  
+            bottom: -20px;  
+            right: 0;
+            transform: translateY(100%);
 
             button {
                 padding: 1rem 2rem;
@@ -194,7 +197,6 @@
                 &:hover {
                     transform: translateY(-3px) scale(1.05);
                     box-shadow: 0 0 16px rgba(139,243,255,0.9);
-                    margin-bottom: 4px;
                 }
             }
         }
@@ -213,31 +215,3 @@
         box-shadow: 0 0 12px rgba(255,100,100,0.4) !important;
     }
 }
-/* === Add Contest 버튼 위치만 수정 === */
-.add-contest-form {
-    .create-container {
-      .add-contest-form-button {
-        position: fixed;
-        bottom: -48px;   /* 기존 32px → 위로 16px 상승 */
-        right: 48px;    /* 기존 32px → 약간 더 안쪽으로 */
-  
-        button {
-          padding: 1rem 2rem;
-          font-size: 1.15rem;
-          border-radius: 16px;
-          background: rgba(8, 20, 30, 0.8);
-          border: 1.6px solid rgba(139,243,255,0.5);
-          color: #eaffff;
-          cursor: pointer;
-          transition: 0.25s ease;
-          font-family: Orbitron;
-  
-          &:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 0 16px rgba(139,243,255,0.9);
-          }
-        }
-      }
-    }
-  }
-  

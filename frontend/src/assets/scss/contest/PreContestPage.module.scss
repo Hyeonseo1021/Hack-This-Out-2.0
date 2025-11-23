@@ -78,6 +78,7 @@
 
     .contest_start {
       @include button_color;
+      font-family: 'Orbitron', monospace;
       font-weight: 700;
       font-size: 1.2rem;
       width: 160px;
