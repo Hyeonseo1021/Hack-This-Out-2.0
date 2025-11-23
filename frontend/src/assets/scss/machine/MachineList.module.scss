@@ -180,3 +180,44 @@
     }
   }
 }
+/* === GO 버튼 정확히 중앙 정렬 강제 === */
+.machine_list_container .machine_list_table td.machine_details {
+  /* 테이블 셀로 고정 + 가운데 정렬 */
+  display: table-cell !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 0.75rem 0 !important;
+  width: 15%;
+}
+
+/* MUI Box 래퍼가 있을 때도 중앙으로 */
+.machine_list_container .machine_list_table td.machine_details > div {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100%;
+}
+
+/* 버튼 자체 중앙 + 사이즈 */
+.machine_list_container .machine_list_table td.machine_details .details_button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto !important;
+  width: 68px;         /* 필요하면 조절 */
+  height: 40px;
+  border-radius: 8px;
+  border: 1.5px solid var(--mint);
+  background: transparent;
+  color: var(--mint);
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  transition: all 0.25s ease;
+}
+
+.machine_list_container .machine_list_table td.machine_details .details_button:hover {
+  background: rgba(139, 243, 255, 0.15);
+  box-shadow: 0 0 12px var(--mint);
+  transform: translateY(-2px);
+}

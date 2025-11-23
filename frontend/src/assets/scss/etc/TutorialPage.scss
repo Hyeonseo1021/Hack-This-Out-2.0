@@ -1,48 +1,24 @@
 @use "../style" as *;
 
-:root {
-  --cyber-bg: #0a1118;
-  --cyber-blue: #2e8ea7;
-  --cyber-light: #5ec8d8;
-  --cyber-glow: #aef3ff;
-  --cyber-dark: #071920;
-}
-
+/* ===============================
+   기본 레이아웃 (리더보드 스타일)
+=============================== */
 .tutorial-page-container {
-  @include background_set;
-  @include scrollbar-none;
-  /* ✅ 기존의 그라디언트 대신 완전 블랙으로 통일 */
-  background: #01020a; /* ← 상하단 동일 검은 배경 */
-  color: #dffcff;
-  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #02010a; /* ✅ 리더보드 스타일 통일 */
+  color: #00f6ff;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  position: relative;
-  min-height: 100vh;
+  font-family: 'Orbitron', sans-serif;
   overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 1;
+}
 
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0, 225, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 225, 255, 0.05) 1px, transparent 1px);
-    background-size: 60px 60px;
-    opacity: 0.1;
-    animation: grid-pan 20s linear infinite;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  @keyframes grid-pan {
-    0% { background-position: 0 0; }
-    100% { background-position: 60px 60px; }
-  }
-
-  /* ✅ 상단 영역도 동일한 블랙 배경 */
 /* ===============================
    상단 배너 이미지 (HTO Dark / Light)
 =============================== */
@@ -50,23 +26,30 @@
   width: 100%;
   position: relative;
   z-index: 2;
-  background: #01020a;
+  background: url('/path/to/your/image.png') no-repeat center center; /* 배경 이미지 추가 */
+  background-size: cover; /* 이미지가 꽉 차게 설정 */
   border-bottom: 1px solid rgba(94, 200, 216, 0.25);
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
 
   .tutorial-banner {
-    width: 100%; /* ✅ 가로 전체 */
-    height: 28vh; /* ✅ 세로 높이 (원하면 30~35vh로 조절 가능) */
-    object-fit: cover; /* ✅ 이미지 비율 유지하며 가득 채움 */
-    border-bottom: 2px solid var(--cyber-light);
-    transition: transform 0.5s ease, filter 0.5s ease;
-    filter: brightness(1) contrast(1.05);
+    width: 95%;
+    max-width: 1400px;
+    height: auto;
+    object-fit: contain;
     display: block;
+    border-radius: 12px;
+    border-bottom: 2px solid var(--cyber-light);
     margin: 0 auto;
+    filter: brightness(1.05) contrast(1.1) drop-shadow(0 0 25px rgba(0, 246, 255, 0.25));
+    transition: transform 0.4s ease, filter 0.4s ease;
 
     &:hover {
       transform: scale(1.03);
-      filter: brightness(1.15) contrast(1.2);
+      filter: brightness(1.2) contrast(1.3) drop-shadow(0 0 35px rgba(0, 246, 255, 0.4));
     }
   }
 
@@ -77,114 +60,95 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, var(--cyber-blue), var(--cyber-light));
+    background: linear-gradient(90deg, #2e8ea7, #5ec8d8);
     box-shadow: 0 0 8px rgba(94, 200, 216, 0.6);
   }
- }
 }
 
 
 /* ===============================
-   CONTENT CONTAINER
+   콘텐츠 컨테이너
 =============================== */
 .tutorial-page-content-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 1rem 2rem 3rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 20px;
-  gap: 32px;
-  max-width: 1200px;
-  margin-inline: auto;
-  padding-inline: 24px;
-  padding-bottom: 24px;
-  position: relative;
+  gap: 2rem;
   z-index: 2;
-  background: transparent;
-  backdrop-filter: none;
-  box-shadow: none;
+}
 
-  article {
-    position: relative;
-    max-width: 1200px;
-    width: 100%;
-    text-align: left;
-    padding: 32px 48px;
-    font-size: clamp(20px, 2vw, 24px);
-    line-height: 1.6;
-    background: rgba(8, 18, 26, 0.7); /* ✅ 반투명 네이비 */
-    border: 1px solid rgba(0, 225, 255, 0.15);
-    box-shadow:
-      0 0 10px rgba(0, 225, 255, 0.05),
-      inset 0 0 20px rgba(0, 225, 255, 0.05);
-    border-radius: 16px;
-    overflow: hidden;
-    z-index: 1;
-    isolation: isolate;
-    opacity: 0;
-    transform: scale(0.95);
-    transition: all 0.5s ease;
-    pointer-events: none;
+/* ===============================
+   튜토리얼 아티클
+=============================== */
+.tutorial-article {
+  width: 100%;
+  background: rgba(10, 20, 30, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem 3rem;
+  text-align: left;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.05);
+  color: #b9f8ff;
+  line-height: 1.6;
+  font-size: 1.1rem;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: all 0.5s ease;
 
-    &.visible {
-      opacity: 1;
-      transform: scale(1);
-      animation: glitch-fade-in 1s steps(2, end) both;
-      pointer-events: auto;
-    }
+  /* === 등장 시 애니메이션 === */
+  &.active {
+    opacity: 1;
+    transform: scale(1);
+    animation: glitch-fade-in 1s steps(2, end) both;
+  }
 
-    h2 {
-      margin-bottom: 16px;
-      padding-left: 24px;
-      border-left: 4px solid var(--cyber-light);
-      font-weight: 700;
-      font-size: clamp(28px, 2vw, 36px);
-      color: var(--cyber-glow);
-      font-family: "Orbitron", sans-serif;
-      text-transform: uppercase;
-      text-shadow:
-        0 0 4px var(--cyber-light),
-        0 0 10px rgba(174, 243, 255, 0.4);
-      animation: title-flicker 7s infinite linear;
-      letter-spacing: 2px;
-    }
+  /* === 이전 단계 === */
+  &.passed {
+    opacity: 0.5;
+  }
 
-    strong {
-      color: var(--cyber-glow);
-      font-weight: 700;
-    }
+  h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    color: #00f6ff;
+    text-shadow: 0 0 8px #00f6ff, 0 0 16px rgba(0, 246, 255, 0.4);
+    margin-bottom: 1rem;
+    animation: title-flicker 7s infinite linear;
+  }
 
-    p,
-    ol {
-      color: #d6e9ef;
-    }
+  li {
+    list-style: none;
+    margin: 6px 0;
+    color: #dffcff;
+  }
 
-    a {
-      color: var(--cyber-light);
-      text-decoration: none;
+  a {
+    color: #00f6ff;
+    text-decoration: none;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
 
-      &:hover {
-        color: var(--cyber-glow);
-      }
+    &:hover {
+      color: #aef3ff;
+      text-shadow: 0 0 8px #00f6ff;
     }
   }
 }
 
 /* ===============================
-   VIDEO SECTION
+   튜토리얼 영상
 =============================== */
 .tutorial-video-container {
   position: relative;
+  width: 100%;
   padding-bottom: 56.25%;
   height: 0;
-  margin: 20px 0;
-  z-index: 2;
-
-  h3 {
-    margin-bottom: 16px;
-    font-family: "Orbitron", sans-serif;
-    color: var(--cyber-light);
-    text-shadow: 0 0 8px var(--cyber-glow);
-  }
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 246, 255, 0.3);
 
   iframe {
     position: absolute;
@@ -192,61 +156,61 @@
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 12px;
+  }
+
+  h3 {
+    color: #00f6ff;
+    text-align: left;
+    margin-bottom: 12px;
+    animation: title-flicker 7s infinite linear;
   }
 }
 
 /* ===============================
-   ANIMATIONS
+   하단 문구
 =============================== */
+.tutorial-end-message {
+  text-align: center;
+  color: #aef3ff;
+  font-size: 1.3rem;
+  text-shadow: 0 0 10px #00f6ff;
+  animation: flicker 3s infinite;
+}
+
+.tutorial-hint {
+  color: rgba(0, 255, 255, 0.6);
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 1.5rem;
+  animation: flicker 2s infinite;
+}
+
+/* ===============================
+   애니메이션 모음
+=============================== */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 @keyframes glitch-fade-in {
-  0% {
-    opacity: 0;
-    filter: brightness(0.4) contrast(1.2);
-    transform: scale(0.9) translateX(0);
-  }
-  10% {
-    opacity: 1;
-    transform: scale(1.03) translateX(-4px);
-    filter: brightness(2) contrast(1.5);
-  }
-  20% {
-    transform: scale(0.98) translateX(4px);
-  }
-  30% {
-    transform: scale(1.03) translateY(-2px);
-  }
-  50% {
-    clip-path: inset(10% 0 40% 0);
-    opacity: 0.7;
-  }
-  60% {
-    clip-path: inset(80% 0 5% 0);
-    opacity: 1;
-  }
-  70% {
-    clip-path: inset(30% 0 30% 0);
-  }
-  100% {
-    opacity: 1;
-    clip-path: inset(0 0 0 0);
-    filter: none;
-    transform: none;
-  }
+  0% { opacity: 0; filter: brightness(0.4); transform: scale(0.9) translateX(0); }
+  10% { opacity: 1; transform: scale(1.03) translateX(-4px); filter: brightness(2); }
+  20% { transform: scale(0.98) translateX(4px); }
+  30% { transform: scale(1.03) translateY(-2px); }
+  50% { clip-path: inset(10% 0 40% 0); opacity: 0.7; }
+  70% { clip-path: inset(30% 0 30% 0); }
+  100% { opacity: 1; clip-path: inset(0 0 0 0); transform: none; }
 }
 
 @keyframes title-flicker {
   0%, 100% {
     opacity: 1;
-    text-shadow:
-      0 0 6px var(--cyber-light),
-      0 0 10px var(--cyber-blue);
+    text-shadow: 0 0 6px #00f6ff, 0 0 10px #00bfff;
   }
   45% {
     opacity: 0.9;
-    text-shadow:
-      0 0 4px var(--cyber-blue),
-      0 0 6px var(--cyber-light);
+    text-shadow: 0 0 4px #00bfff, 0 0 6px #00f6ff;
   }
   48% {
     opacity: 0.6;
@@ -254,186 +218,14 @@
   }
   50% {
     opacity: 1;
-    text-shadow:
-      0 0 10px var(--cyber-blue),
-      0 0 16px var(--cyber-light);
+    text-shadow: 0 0 10px #00bfff, 0 0 16px #00f6ff;
   }
 }
 
-/* =====================================
-   🔥 GLITCH TEXT (CRT 느낌)
-===================================== */
-.tutorial-page-content-container article {
-  color: #dffcff;
-  text-shadow:
-    0 0 2px #00e1ff,
-    0 0 4px #00e1ff,
-    0 0 8px rgba(0, 246, 255, 0.5),
-    0 0 12px rgba(255, 0, 193, 0.3);
-  animation: subtle-glitch-text 3s infinite ease-in-out alternate;
-}
-
-.tutorial-page-content-container article a,
-.tutorial-page-content-container article strong {
-  color: #b9f8ff;
-  text-shadow:
-    0 0 2px #00e1ff,
-    0 0 6px #00f6ff,
-    0 0 10px rgba(255, 0, 193, 0.3);
-}
-
-@keyframes subtle-glitch-text {
-  0% {
-    text-shadow:
-      0 0 1px #00f6ff,
-      1px 0 2px #ff00c1,
-      -1px 0 2px #00e1ff,
-      0 0 8px rgba(0, 255, 255, 0.3);
-  }
-  25% {
-    text-shadow:
-      -1px 0 2px #ff00c1,
-      1px 0 3px #00e1ff,
-      0 0 10px rgba(255, 0, 193, 0.4);
-  }
-  50% {
-    text-shadow:
-      1px 1px 2px #ff00c1, 
-      -1px -1px 2px #00e1ff,
-      0 0 12px rgba(0, 255, 255, 0.3);
-  }
-  75% {
-    text-shadow:
-      2px -1px 2px #00e1ff,
-      -2px 1px 2px #ff00c1,
-      0 0 10px rgba(0, 246, 255, 0.3);
-  }
-  100% {
-    text-shadow:
-      0 0 2px #00e1ff,
-      0 0 4px #00e1ff,
-      0 0 8px rgba(0, 246, 255, 0.4);
-  }
-}
-
-/* ===============================
-   🔹 튜토리얼 완료 문구
-=============================== */
-.tutorial-end-message {
-  text-align: center;
-  margin-top: 2rem;
-  color: #aef3ff;
-  font-size: 1.3rem;
-  text-shadow:
-    0 0 5px #00e1ff,
-    0 0 10px #00e1ff,
-    0 0 15px #ff00c1;
-  animation: flicker 3s infinite;
-  cursor: default;
-}
-
-@keyframes flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-.tutorial-page-top {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 30px;
-
-  .tutorial-page-logo {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(28px, 4vw, 40px);
-    color: #00f6ff;
-    text-shadow: 0 0 10px rgba(0, 246, 255, 0.7);
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.3s ease;
-
-    &:hover {
-      color: #ff00c1;
-      text-shadow: 0 0 12px rgba(255, 0, 193, 0.8);
-    }
-
-    .logo-text {
-      letter-spacing: 1px;
-      font-weight: 700;
-    }
-  }
-}
-
-/* ===============================
-   ARTICLE STAGE VISIBILITY
-=============================== */
-.tutorial-page-content-container article {
-  position: relative;
-  max-width: 1200px;
-  width: 100%;
-  text-align: left;
-  padding: 32px 48px;
-  font-size: clamp(20px, 2vw, 24px);
-  line-height: 1.6;
-  background: rgba(8, 18, 26, 0.7);
-  border: 1px solid rgba(0, 225, 255, 0.15);
-  box-shadow:
-    0 0 10px rgba(0, 225, 255, 0.05),
-    inset 0 0 20px rgba(0, 225, 255, 0.05);
-  border-radius: 16px;
-  overflow: hidden;
-  z-index: 1;
-  isolation: isolate;
-  opacity: 0;
-  transform: scale(0.95);
-  transition: all 0.6s ease;
-  pointer-events: none;
-
-  /* ✅ JS에서 articleClass()로 추가되는 .active 클래스 */
-  &.active {
-    opacity: 1;
-    transform: scale(1);
-    pointer-events: auto;
-    animation: glitch-fade-in 1s steps(2, end) both;
-  }
-
-/* ✅ 이전 단계(passed)는 남겨두기만 하고 반투명 처리 */
-&.passed {
-  opacity: 0.6;
-  transform: scale(1);
-  pointer-events: none;
-  }
-
-  h2 {
-    margin-bottom: 16px;
-    padding-left: 24px;
-    border-left: 4px solid var(--cyber-light);
-    font-weight: 700;
-    font-size: clamp(28px, 2vw, 36px);
-    color: var(--cyber-glow);
-    font-family: "Orbitron", sans-serif;
-    text-transform: uppercase;
-    text-shadow:
-      0 0 4px var(--cyber-light),
-      0 0 10px rgba(174, 243, 255, 0.4);
-    animation: title-flicker 7s infinite linear;
-    letter-spacing: 2px;
-  }
-
-  strong {
-    color: var(--cyber-glow);
-    font-weight: 700;
-  }
-
-  p,
-  ol {
-    color: #d6e9ef;
-  }
-
-  a {
-    color: var(--cyber-light);
-    text-decoration: none;
-    &:hover {
-      color: var(--cyber-glow);
-    }
-  }
+@keyframes hologram-shift {
+  0% { transform: skewX(0deg); filter: hue-rotate(0deg); }
+  25% { transform: skewX(2deg); filter: hue-rotate(10deg); }
+  50% { transform: skewX(-2deg); filter: hue-rotate(-10deg); }
+  75% { transform: skewX(1deg); filter: hue-rotate(5deg); }
+  100% { transform: skewX(0deg); filter: hue-rotate(0deg); }
 }

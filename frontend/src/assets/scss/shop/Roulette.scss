@@ -1,0 +1,132 @@
+/* === 전체 컨테이너 === */
+.roulette-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+
+  min-height: 420px; /* 흔들림 방지 */
+}
+
+/* === 룰렛 + 정보 패널 묶음 === */
+.roulette-main-row {
+  width: 100%;
+  max-width: 900px;
+  position: relative;
+  height: 320px; /* 고정 높이 */
+}
+
+/* === 룰렛 중앙 고정 === */
+.roulette-wheel-box {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 포인터 */
+.roulette-pointer {
+  position: absolute;
+  top: -25px;
+  font-size: 24px;
+  color: #fff;
+  z-index: 5;
+}
+
+/* 룰렛 원판 */
+.roulette-wheel {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 4px solid #00f6ff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 섹션 */
+.roulette-segment {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  left: 50%;
+  top: 50%;
+  transform-origin: 0% 0%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* === 룰렛 아이템 이미지 === */
+.roulette-item-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.7));
+}
+
+/* === 오른쪽 패널 고정 === */
+.roulette-info {
+  position: absolute;
+  right: 0px; /* 오타 수정 완료 */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 260px;
+
+  text-align: center;
+  color: #fff;
+}
+
+/* 제목 */
+.roulette-title {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+/* 설명 */
+.roulette-sub {
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+}
+
+/* 결과 박스 */
+.roulette-result-box {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #00f6ff88;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* === START 버튼 === */
+.roulette-button {
+  margin-top: 40px;
+  padding: 12px 36px;
+  background: #00f6ff;
+  color: #000;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: 0.2s;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px #00f6ff;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}

@@ -37,7 +37,6 @@ interface DashboardStats {
     active: number;
     byMode: {
       terminalRace: number;
-      defenseBattle: number;
       captureServer: number;
       hackersDeck: number;
       exploitChain: number;
@@ -56,7 +55,6 @@ const DashboardHome: React.FC = () => {
       active: 0,
       byMode: {
         terminalRace: 0,
-        defenseBattle: 0,
         captureServer: 0,
         hackersDeck: 0,
         exploitChain: 0
@@ -104,7 +102,6 @@ const DashboardHome: React.FC = () => {
             active: scenariosRes.scenarios.filter((s: any) => s.isActive).length,
             byMode: {
               terminalRace: scenariosRes.scenarios.filter((s: any) => s.mode === 'TERMINAL_HACKING_RACE').length,
-              defenseBattle: scenariosRes.scenarios.filter((s: any) => s.mode === 'CYBER_DEFENSE_BATTLE').length,
               captureServer: scenariosRes.scenarios.filter((s: any) => s.mode === 'CAPTURE_THE_SERVER').length,
               hackersDeck: scenariosRes.scenarios.filter((s: any) => s.mode === 'HACKERS_DECK').length,
               exploitChain: scenariosRes.scenarios.filter((s: any) => s.mode === 'EXPLOIT_CHAIN_CHALLENGE').length,
@@ -172,7 +169,6 @@ const DashboardHome: React.FC = () => {
             details={[
               { label: 'Active', value: stats.scenarios.active },
               { label: 'Terminal Race', value: stats.scenarios.byMode.terminalRace },
-              { label: 'Defense Battle', value: stats.scenarios.byMode.defenseBattle },
               { label: 'Capture Server', value: stats.scenarios.byMode.captureServer },
             ]}
           />

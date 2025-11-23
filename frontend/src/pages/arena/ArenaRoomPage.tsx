@@ -34,7 +34,6 @@ const ArenaRoomPage: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const chatMessagesEndRef = useRef<null | HTMLDivElement>(null);
-  const [tempArenaName, setTempArenaName] = useState('');
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
@@ -43,10 +42,10 @@ const ArenaRoomPage: React.FC = () => {
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
       'TERMINAL_HACKING_RACE': '⚡ Terminal Race',
-      'CYBER_DEFENSE_BATTLE': '⚔️ Defense Battle',
-      'CAPTURE_THE_SERVER': '🏰 Capture Server',
-      'HACKERS_DECK': "🎲 Hacker's Deck",
-      'EXPLOIT_CHAIN_CHALLENGE': '🎯 Exploit Chain'
+      'VULNERABILITY_SCANNER_RACE': '🔍 Vulnerability Scanner Race',  // ✅ 추가
+      'KING_OF_THE_HILL': '👑 King of the Hill',
+      'FORENSICS_RUSH': '🔎 Forensics Rush',
+      'SOCIAL_ENGINEERING_CHALLENGE': '💬 Social Engineering'
     };
     return names[mode] || mode;
   };
@@ -130,14 +129,6 @@ const ArenaRoomPage: React.FC = () => {
     }
   };
 
-  const handleArenaNameChange = () => {
-    if (isHost && status === 'waiting' && tempArenaName !== arenaName) {
-      socket.emit('arena:settingsChange', { 
-        newSettings: { name: tempArenaName } 
-      });
-    }
-  };
-
   // 유저 정보와 아레나 정보를 로드하는 useEffect
   useEffect(() => {
     const loadData = async () => {
@@ -153,9 +144,8 @@ const ArenaRoomPage: React.FC = () => {
 
         const arenaRes = await getArenaById(arenaId);
         const data = arenaRes?.data || arenaRes;
-        
+
         setArenaName(data?.name ?? 'Arena Room');
-        setTempArenaName(data?.name ?? 'Arena Room');
         setHostId(data?.host?._id || data?.host || null);
         setParticipants(data?.participants || []);
         setStatus(data?.status || 'waiting');
@@ -192,7 +182,6 @@ const ArenaRoomPage: React.FC = () => {
       setParticipants(payload.participants || []);
       if (payload.name) {
         setArenaName(payload.name);
-        setTempArenaName(payload.name);
       }
       if (payload.mode) setMode(payload.mode);
       if (payload.difficulty) setDifficulty(payload.difficulty);
