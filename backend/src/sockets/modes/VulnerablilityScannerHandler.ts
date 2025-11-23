@@ -10,7 +10,10 @@ import {
   getGameState
 } from '../../services/vulnerbilityScannerRace/vulnerabilityScannerEngine';
 import { generateVulnerableHTML } from '../../services/vulnerbilityScannerRace/generateVulnerableHTML';
-import { endArenaProcedure } from '../utils/endArenaProcedure';
+import { endArenaProcedure, endArenaImmediately } from '../utils/endArenaProcedure';
+
+// 유예 시간 타이머 저장
+const graceTimers = new Map<string, NodeJS.Timeout>();
 
 /**
  * 🔍 Vulnerability Scanner Race Socket Handlers
@@ -108,11 +111,67 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       });
 
       // 6. 게임 종료 체크
-      const arena = await Arena.findById(arenaId);
-      if (arena?.status === 'ended') {
-        console.log('🏁 [scannerRace:submit] Game ended! Calling endArenaProcedure...');
-        // ✅ endArenaProcedure 호출하여 경험치 계산 및 게임 종료
-        await endArenaProcedure(arenaId, io);
+      const { checkGameCompletion } = await import('../../services/vulnerbilityScannerRace/vulnerabilityScannerEngine');
+      const isFirstCompleter = await checkGameCompletion(arenaId);
+
+      const arena = await Arena.findById(arenaId).populate('scenarioId');
+      if (!arena) return;
+
+      const scenario = arena.scenarioId as any;
+      const totalVulns = scenario.data?.vulnerabilities?.length || 0;
+
+      // 모든 플레이어 진행 상황
+      const allProgressForCompletion = await ArenaProgress.find({ arena: arenaId });
+      const completers = allProgressForCompletion.filter((p: any) =>
+        (p.vulnerabilityScannerRace?.vulnerabilitiesFound || 0) >= totalVulns
+      );
+
+      if (isFirstCompleter) {
+        // 첫 완주자 발생! Grace period 시작
+        const graceMs = arena.settings?.graceMs ?? 60000;
+        const graceSec = Math.floor(graceMs / 1000);
+
+        console.log(`⏳ [ScannerRace] Grace period: ${graceSec}s`);
+
+        io.to(arenaId).emit('arena:grace-period-started', {
+          graceMs,
+          graceSec,
+          message: `First player completed! You have ${graceSec} seconds to finish.`
+        });
+
+        const timer = setTimeout(async () => {
+          console.log('⏰ [ScannerRace] Grace period ended');
+          graceTimers.delete(arenaId);
+          await endArenaImmediately(arenaId, io);
+        }, graceMs);
+
+        graceTimers.set(arenaId, timer);
+
+      } else if (arena.winner) {
+        // grace period 중 추가 완주자
+        console.log(`✅ Player ${userId} completed during grace period`);
+
+        const submittedAt = new Date();
+        await ArenaProgress.updateOne(
+          { arena: arenaId, user: userId },
+          { $set: { completed: true, submittedAt } }
+        );
+
+        // 활성 참가자 수 확인
+        const activeParticipants = arena.participants.filter((p: any) => !p.hasLeft);
+        const completedCount = allProgressForCompletion.filter((p: any) => p.completed).length;
+
+        if (completers.length >= activeParticipants.length) {
+          console.log('🎉 All completed! Ending immediately');
+
+          if (graceTimers.has(arenaId)) {
+            clearTimeout(graceTimers.get(arenaId)!);
+            graceTimers.delete(arenaId);
+            console.log('⏹️ Grace timer cancelled');
+          }
+
+          await endArenaImmediately(arenaId, io);
+        }
       }
 
     } catch (error) {

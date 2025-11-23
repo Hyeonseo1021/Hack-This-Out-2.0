@@ -154,7 +154,6 @@ export async function checkAndEndIfAllCompleted(arenaId: string, io: Server) {
 function convertArenaModeToGameMode(arenaMode: string): GameMode {
   const modeMap: Record<string, GameMode> = {
     'TERMINAL_HACKING_RACE': GameMode.TERMINAL_RACE,
-    'KING_OF_THE_HILL': GameMode.KING_OF_THE_HILL,
     'SOCIAL_ENGINEERING_CHALLENGE': GameMode.SOCIAL_ENGINEERING,
     'VULNERABILITY_SCANNER_RACE': GameMode.VULNERABILITY_SCANNER,
     'FORENSICS_RUSH': GameMode.FORENSICS_RUSH

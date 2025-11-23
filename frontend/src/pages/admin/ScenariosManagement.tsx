@@ -226,10 +226,40 @@ const ScenariosManagement: React.FC = () => {
           return false;
         }
 
-        // REAL 모드일 때만 URL 검증
-        if (form.data.mode === 'REAL') {
+        if (!form.data.targetDescription?.trim()) {
+          alert('Target description is required');
+          return false;
+        }
+
+        // 난이도 기반 모드 검증
+        const isEasyOrMedium = form.difficulty === 'EASY' || form.difficulty === 'MEDIUM';
+        const isHardOrExpert = form.difficulty === 'HARD' || form.difficulty === 'EXPERT';
+
+        // EASY/MEDIUM: SIMULATED 모드 강제, features 필수
+        if (isEasyOrMedium) {
+          if (form.data.mode !== 'SIMULATED') {
+            alert('EASY and MEDIUM difficulties must use SIMULATED mode (AI-generated HTML)');
+            return false;
+          }
+
+          if (!form.data.features || form.data.features.length === 0) {
+            alert('Features are required for SIMULATED mode (EASY/MEDIUM difficulty)');
+            return false;
+          }
+
+          // targetUrl은 무시/초기화
+          form.data.targetUrl = '';
+        }
+
+        // HARD/EXPERT: REAL 모드 강제, targetUrl 필수
+        if (isHardOrExpert) {
+          if (form.data.mode !== 'REAL') {
+            alert('HARD and EXPERT difficulties must use REAL mode (actual URL)');
+            return false;
+          }
+
           if (!form.data.targetUrl?.trim()) {
-            alert('Target URL is required for REAL mode');
+            alert('Target URL is required for REAL mode (HARD/EXPERT difficulty)');
             return false;
           }
 
@@ -252,7 +282,7 @@ const ScenariosManagement: React.FC = () => {
         for (let i = 0; i < form.data.vulnerabilities.length; i++) {
           const vuln = form.data.vulnerabilities[i];
 
-          if (!vuln.name?.trim()) {
+          if (!vuln.vulnName?.trim()) {
             alert(`Vulnerability ${i + 1}: Name is required`);
             return false;
           }
@@ -472,7 +502,25 @@ const ScenariosManagement: React.FC = () => {
                   <label>Difficulty *</label>
                   <select
                     value={form.difficulty}
-                    onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}
+                    onChange={e => {
+                      const newDifficulty = e.target.value;
+                      setForm(f => {
+                        // VULNERABILITY_SCANNER_RACE: 난이도에 따라 mode 자동 설정
+                        if (f.mode === 'VULNERABILITY_SCANNER_RACE') {
+                          const isEasyOrMedium = newDifficulty === 'EASY' || newDifficulty === 'MEDIUM';
+                          return {
+                            ...f,
+                            difficulty: newDifficulty,
+                            data: {
+                              ...f.data,
+                              mode: isEasyOrMedium ? 'SIMULATED' : 'REAL',
+                              targetUrl: isEasyOrMedium ? '' : f.data.targetUrl // EASY/MEDIUM이면 URL 초기화
+                            }
+                          };
+                        }
+                        return { ...f, difficulty: newDifficulty };
+                      });
+                    }}
                     required
                   >
                     <option value="EASY">Easy</option>
@@ -553,6 +601,7 @@ const ScenariosManagement: React.FC = () => {
                 <VulnerabilityScannerRaceForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
+                  difficulty={form.difficulty}
                 />
               )}
 

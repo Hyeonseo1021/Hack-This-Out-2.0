@@ -34,7 +34,6 @@ const ArenaSchema = new mongoose.Schema({
     enum: [
       'TERMINAL_HACKING_RACE',           // ⚡ 명령어 기반 속도 경쟁 (2-8명)
       'VULNERABILITY_SCANNER_RACE',      // 🔍 웹 취약점 스캔 경쟁 (2명) - NEW
-      'KING_OF_THE_HILL',                // 👑 점령 전쟁 (2-8명)
       'FORENSICS_RUSH',                  // 🔎 포렌식 분석 경쟁 (2-8명)
       'SOCIAL_ENGINEERING_CHALLENGE'     // 💬 사회공학 심리전 (1-4명)
     ],
@@ -96,24 +95,7 @@ const ArenaSchema = new mongoose.Schema({
         cost: Number              // 힌트 비용 (점수 차감)
       }]
     },
-    
-    // 👑 King of the Hill 설정
-    kingOfTheHill: {
-      currentKing: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-      kingCrownedAt: { type: Date, default: null },
-      defenseLevel: { type: Number, default: 0 },
-      kingChanges: [{
-        previousKing: mongoose.Schema.Types.ObjectId,
-        newKing: mongoose.Schema.Types.ObjectId,
-        timestamp: Date
-      }],
-      playerScores: [{
-        user: mongoose.Schema.Types.ObjectId,
-        kingDuration: { type: Number, default: 0 }, // 초 단위
-        lastKingTime: { type: Number, default: 0 }
-      }]
-    },
-    
+
     // 🔎 Forensics Rush 설정
     forensicsRush: {
       questions: [{

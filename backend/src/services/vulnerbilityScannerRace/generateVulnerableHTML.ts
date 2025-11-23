@@ -61,15 +61,20 @@ ${vulnsDescription}
 
 4. **Vulnerability Implementation**:
    - Each vulnerability should be realistic and exploitable
-   - When successfully exploited, send a postMessage to parent:
+   - When successfully exploited, send a postMessage to parent with ALL required fields:
      \`\`\`javascript
      window.parent.postMessage({
        type: 'vulnerability_found',
-       vulnId: 'vuln_xxx',
-       vulnType: 'SQLi',
-       endpoint: '/login'
+       vulnId: 'vuln_xxx',        // The vulnerability ID from the scenario
+       vulnType: 'SQLi',           // Type: SQLi, XSS, IDOR, etc.
+       endpoint: '/login',         // The endpoint that was exploited
+       parameter: 'username',      // The actual parameter name that contained the payload
+       payload: usernameValue      // The FULL INPUT VALUE that triggered the vulnerability
      }, '*');
      \`\`\`
+   - CRITICAL: You must detect which form field (username/password/query/etc.) contained the exploit
+   - CRITICAL: Send the ENTIRE value of that field as 'payload', not just a pattern
+   - CRITICAL: Send the field name as 'parameter' (e.g., 'username', 'password', 'query')
    - Include visual feedback (success messages, data displayed, etc.)
 
 5. **Simulated Backend**:
@@ -299,16 +304,34 @@ function generateFallbackHTML(scenario: any): string {
       // Vulnerable SQL query simulation
       const query = "SELECT * FROM users WHERE username='" + username + "' AND password='" + password + "'";
 
-      // Check for SQL Injection
-      const sqliPayloads = ["' OR 1=1--", "' OR '1'='1", "admin'--", "' OR 'a'='a"];
+      // Check for SQL Injection - use scenario's expected payload
+      const expectedPayload = sqliVuln.validation?.expectedPayload || "' OR 1=1--";
+      const sqliPayloads = [expectedPayload, "' OR 1=1--", "' OR '1'='1", "admin'--", "' OR 'a'='a"];
       const isSQLi = sqliPayloads.some(payload => username.includes(payload) || password.includes(payload));
 
       if (isSQLi) {
         resultDiv.className = 'result success';
         resultDiv.innerHTML = '✅ <strong>Login Successful!</strong><br>Welcome, Administrator!<br><small>Query: ' + query + '</small>';
 
-        // Determine which field had the SQLi payload
-        const usedPayload = sqliPayloads.find(p => username.includes(p) || password.includes(p)) || username;
+        // Determine which field had the SQLi payload and what it was
+        let usedPayload = '';
+        let usedParameter = sqliVuln.parameter || 'username';
+
+        // Check username field first
+        const foundInUsername = sqliPayloads.find(p => username.includes(p));
+        if (foundInUsername) {
+          usedPayload = username;
+          usedParameter = 'username';
+        } else {
+          // Check password field
+          const foundInPassword = sqliPayloads.find(p => password.includes(p));
+          if (foundInPassword) {
+            usedPayload = password;
+            usedParameter = 'password';
+          }
+        }
+
+        console.log('[HTML] Sending postMessage:', { vulnId: sqliVuln.vulnId, parameter: usedParameter, payload: usedPayload });
 
         // Notify parent window with correct vulnerability info
         window.parent.postMessage({
@@ -316,7 +339,7 @@ function generateFallbackHTML(scenario: any): string {
           vulnId: sqliVuln.vulnId,
           vulnType: sqliVuln.vulnType,
           endpoint: sqliVuln.endpoint,
-          parameter: sqliVuln.parameter,
+          parameter: usedParameter,
           payload: usedPayload
         }, '*');
       } else {

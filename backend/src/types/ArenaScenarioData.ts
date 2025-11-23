@@ -73,8 +73,9 @@ export interface VulnerabilityScannerRaceData {
     };
     comboMultiplier: number;            // 5 (연속 발견 시 +5pts/combo)
     invalidSubmissionPenalty: number;   // 5
+    graceTimeSeconds?: number;          // 60 (첫 완주자 이후 유예시간, 초 단위)
   };
-  
+
   totalVulnerabilities: number;         // 7
 }
 
@@ -93,51 +94,6 @@ export type VulnType =
   | 'SSRF'                              // Server-Side Request Forgery
   | 'DESERIALIZATION';                  // Insecure Deserialization
 
-// 👑 3️⃣ King of the Hill 데이터 구조
-export interface KingOfTheHillData {
-  serverInfo: {
-    name: string;
-    description: string;
-    os: string;
-    initialVulnerabilities: string[];
-  };
-  
-  attackActions: {
-    id: string;
-    name: string;
-    description: string;
-    energyCost: number;
-    successRate: number;  // % 단위
-    effect: 'capture' | 'points';
-    points?: number;
-    cooldown: number;
-  }[];
-  
-  defenseActions: {
-    id: string;
-    name: string;
-    description: string;
-    energyCost: number;
-    effect: 'defenseLevel' | 'block';
-    defenseBonus?: number;  // 방어 레벨 증가량
-    blockChance?: number;   // 공격 차단 확률 증가 %
-    cooldown: number;
-  }[];
-  
-  scoring: {
-    pointsPerSecond: number;  // 왕 상태 유지 시 초당 획득 점수
-    firstCaptureBonus: number;
-    fiveSecondBonus: number;
-    oneMinuteBonus: number;
-    captureBonus: number;  // 왕 탈환 성공 시
-  };
-  
-  energySettings: {
-    initial: number;
-    regenRate: number;  // 초당
-    maxEnergy: number;
-  };
-}
 
 // 🔎 4️⃣ Forensics Rush 데이터 구조
 export interface ForensicsRushData {
@@ -247,7 +203,6 @@ export interface SocialEngineeringData {
 export type ArenaScenarioData = 
   | TerminalHackingRaceData 
   | VulnerabilityScannerRaceData         // ✅ NEW (Defense Battle 대체)
-  | KingOfTheHillData
   | ForensicsRushData
   | SocialEngineeringData;
 
@@ -292,19 +247,6 @@ export const MODE_CONFIGS: Record<string, ModeConfiguration> = {
       EASY: { time: 600, description: '쉬운 취약점 (SQLi, XSS), 명확한 힌트' },
       MEDIUM: { time: 600, description: '중급 취약점 (IDOR, CSRF), 일부 힌트' },
       HARD: { time: 600, description: '고급 취약점 (Command Injection, XXE), 최소 힌트' }
-    }
-  },
-  KING_OF_THE_HILL: {
-    mode: 'KING_OF_THE_HILL',
-    displayName: 'King of the Hill',
-    emoji: '👑',
-    minPlayers: 2,
-    maxPlayers: 8,
-    defaultTime: 900,
-    difficulty: {
-      EASY: { time: 600, description: '간단한 공격/방어, 높은 성공률' },
-      MEDIUM: { time: 900, description: '균형잡힌 난이도, 전략 중요' },
-      HARD: { time: 900, description: '낮은 성공률, 고급 전략 필수' }
     }
   },
   FORENSICS_RUSH: {

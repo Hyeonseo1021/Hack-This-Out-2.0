@@ -1,70 +1,155 @@
-import React from 'react';
-import { FaPlus, FaTrash } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaPlus, FaTrash, FaCode, FaEdit } from 'react-icons/fa';
 import '../../../assets/scss/admin/forms/VulnerabilityScannerRaceForm.scss';
+
+interface Hint {
+  hintId: string;
+  vulnId: string;
+  level: 1 | 2 | 3;
+  text: string;
+  cost: number;
+}
 
 interface Vulnerability {
   vulnId: string;
-  name: string;
   vulnType: string;
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  vulnName: string;
   endpoint: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   parameter: string;
-  description: string;
-  points: number;
   validation: {
-    method: string;
-    expectedPayload: string;
+    expectedPayload?: string;
+    validationMethod?: 'contains' | 'exact' | 'regex' | 'stored' | 'unauthorized_access' | 'missing_token';
+    validationCriteria?: {
+      responseContains?: string;
+      statusCode?: number;
+      differentUserId?: boolean;
+      accessDenied?: boolean;
+      balanceRevealed?: boolean;
+      checkUrl?: string;
+      pattern?: string;
+      noCSRFToken?: boolean;
+    };
   };
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  basePoints: number;
+  category: string;
+  hintIds: string[];
 }
 
 interface VulnerabilityScannerRaceData {
   targetUrl: string;
   targetName: string;
   targetDescription: string;
-  mode: 'SIMULATED' | 'REAL';
+  features: string[];
   vulnerabilities: Vulnerability[];
+  hints: Hint[];
   scoring: {
     firstBloodBonus: number;
+    speedBonusThresholds: {
+      under3min: number;
+      under5min: number;
+      under7min: number;
+    };
+    comboMultiplier: number;
     invalidSubmissionPenalty: number;
+    graceTimeSeconds?: number;
   };
+  totalVulnerabilities: number;
 }
 
 interface Props {
   data: VulnerabilityScannerRaceData;
   onChange: (data: VulnerabilityScannerRaceData) => void;
+  difficulty?: string; // 난이도 (EASY, MEDIUM, HARD, EXPERT)
 }
 
-const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
+const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficulty = 'EASY' }) => {
+
+  // 난이도 기반 모드 확인
+  const isEasyOrMedium = difficulty === 'EASY' || difficulty === 'MEDIUM';
+  const isHardOrExpert = difficulty === 'HARD' || difficulty === 'EXPERT';
+  const currentMode = isEasyOrMedium ? 'SIMULATED (AI Generated)' : 'REAL (Actual URL)';
+
+  // 탭 상태 (form: 폼 모드, json: JSON 모드)
+  const [editMode, setEditMode] = useState<'form' | 'json'>('form');
+  const [jsonText, setJsonText] = useState('');
+  const [jsonError, setJsonError] = useState('');
+
+  // JSON 모드로 전환
+  const switchToJsonMode = () => {
+    try {
+      const jsonData = {
+        targetUrl: data.targetUrl || '',
+        targetName: data.targetName || '',
+        targetDescription: data.targetDescription || '',
+        features: data.features || [],
+        vulnerabilities: data.vulnerabilities || [],
+        hints: data.hints || [],
+        scoring: data.scoring || {
+          firstBloodBonus: 50,
+          speedBonusThresholds: { under3min: 30, under5min: 20, under7min: 10 },
+          comboMultiplier: 5,
+          invalidSubmissionPenalty: 5,
+          graceTimeSeconds: 60
+        },
+        totalVulnerabilities: data.vulnerabilities?.length || 0
+      };
+      setJsonText(JSON.stringify(jsonData, null, 2));
+      setJsonError('');
+      setEditMode('json');
+    } catch (error) {
+      setJsonError('Failed to convert to JSON');
+    }
+  };
+
+  // 폼 모드로 전환 (JSON 파싱)
+  const switchToFormMode = () => {
+    try {
+      const parsed = JSON.parse(jsonText);
+      onChange(parsed);
+      setJsonError('');
+      setEditMode('form');
+    } catch (error) {
+      setJsonError('Invalid JSON format. Please fix errors before switching to Form mode.');
+    }
+  };
 
   // 취약점 추가
   const addVulnerability = () => {
+    const newVulnId = `vuln_${Date.now()}`;
     onChange({
       ...data,
       vulnerabilities: [
-        ...data.vulnerabilities,
+        ...(data.vulnerabilities || []),
         {
-          vulnId: `vuln_${Date.now()}`,
-          name: '',
+          vulnId: newVulnId,
           vulnType: 'SQLi',
-          severity: 'MEDIUM',
+          vulnName: '',
           endpoint: '/',
+          method: 'POST',
           parameter: '',
-          description: '',
-          points: 50,
           validation: {
-            method: 'pattern',
-            expectedPayload: ''
-          }
+            expectedPayload: '',
+            validationMethod: 'contains'
+          },
+          difficulty: 'EASY',
+          basePoints: 50,
+          category: 'Authentication',
+          hintIds: []
         }
-      ]
+      ],
+      totalVulnerabilities: (data.vulnerabilities?.length || 0) + 1
     });
   };
 
   // 취약점 삭제
   const removeVulnerability = (index: number) => {
+    const newVulns = data.vulnerabilities.filter((_, i) => i !== index);
     onChange({
       ...data,
-      vulnerabilities: data.vulnerabilities.filter((_, i) => i !== index)
+      vulnerabilities: newVulns,
+      totalVulnerabilities: newVulns.length
     });
   };
 
@@ -90,26 +175,95 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
 
   return (
     <div className="vulnerability-scanner-race-form">
-      <h3>Vulnerability Scanner Race 시나리오</h3>
+      <div className="form-header">
+        <h3>Vulnerability Scanner Race 시나리오</h3>
+
+        {/* 편집 모드 전환 버튼 */}
+        <div className="edit-mode-toggle">
+          <button
+            type="button"
+            className={`mode-btn ${editMode === 'form' ? 'active' : ''}`}
+            onClick={() => editMode === 'json' && switchToFormMode()}
+          >
+            <FaEdit /> Form Mode
+          </button>
+          <button
+            type="button"
+            className={`mode-btn ${editMode === 'json' ? 'active' : ''}`}
+            onClick={() => editMode === 'form' && switchToJsonMode()}
+          >
+            <FaCode /> JSON Mode
+          </button>
+        </div>
+      </div>
+
+      {/* JSON 에러 메시지 */}
+      {jsonError && (
+        <div className="json-error">
+          ⚠️ {jsonError}
+        </div>
+      )}
+
+      {/* JSON 편집 모드 */}
+      {editMode === 'json' && (
+        <div className="json-editor-section">
+          <div className="json-editor-header">
+            <h4>📝 JSON Editor</h4>
+            <small>Edit the scenario data directly in JSON format</small>
+          </div>
+          <textarea
+            className="json-editor"
+            value={jsonText}
+            onChange={(e) => {
+              setJsonText(e.target.value);
+              setJsonError('');
+            }}
+            placeholder="Paste your JSON data here..."
+            spellCheck={false}
+          />
+          <div className="json-editor-actions">
+            <button
+              type="button"
+              className="btn-validate"
+              onClick={() => {
+                try {
+                  JSON.parse(jsonText);
+                  setJsonError('');
+                  alert('✅ Valid JSON!');
+                } catch (error) {
+                  setJsonError('Invalid JSON syntax');
+                }
+              }}
+            >
+              Validate JSON
+            </button>
+            <button
+              type="button"
+              className="btn-apply"
+              onClick={switchToFormMode}
+            >
+              Apply & Switch to Form
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 폼 편집 모드 */}
+      {editMode === 'form' && (
+        <>
+          {/* 모드 안내 배너 */}
+          <div className={`mode-indicator ${isEasyOrMedium ? 'simulated' : 'real'}`}>
+            <strong>🎯 Mode: {currentMode}</strong>
+            <p>
+              {isEasyOrMedium
+                ? '✨ AI가 취약한 HTML을 자동 생성합니다. Features 목록을 제공해주세요.'
+                : '🌐 실제 취약한 웹 앱의 URL을 제공해야 합니다. Features는 선택사항입니다.'}
+            </p>
+          </div>
 
       {/* 타겟 정보 */}
       <div className="form-section">
         <h4>타겟 정보</h4>
-
-        <div className="form-field">
-          <label>모드 *</label>
-          <select
-            value={data.mode || 'SIMULATED'}
-            onChange={e => onChange({ ...data, mode: e.target.value as 'SIMULATED' | 'REAL' })}
-            required
-          >
-            <option value="SIMULATED">SIMULATED (AI 자동 생성)</option>
-            <option value="REAL">REAL (실제 URL)</option>
-          </select>
-          <small>
-            SIMULATED: AI가 HTML 자동 생성 | REAL: 실제 URL 제공
-          </small>
-        </div>
 
         <div className="form-field">
           <label>타겟 이름 *</label>
@@ -133,7 +287,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
           />
         </div>
 
-        {data.mode === 'REAL' && (
+        {/* HARD/EXPERT: 실제 URL 필수 */}
+        {isHardOrExpert && (
           <div className="form-field">
             <label>타겟 URL *</label>
             <input
@@ -143,7 +298,42 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
               onChange={e => onChange({ ...data, targetUrl: e.target.value })}
               required
             />
-            <small>취약한 웹 애플리케이션 URL</small>
+            <small>실제 취약한 웹 애플리케이션의 URL을 입력하세요</small>
+          </div>
+        )}
+
+        {/* EASY/MEDIUM: Features 필수 */}
+        {isEasyOrMedium && (
+          <div className="form-field">
+            <label>Features (기능 목록) *</label>
+            <textarea
+              rows={5}
+              placeholder="User login&#10;Search functionality&#10;Profile viewing&#10;Money transfer&#10;Comment posting"
+              value={(data.features || []).join('\n')}
+              onChange={e => onChange({
+                ...data,
+                features: e.target.value.split('\n').filter(f => f.trim() !== '')
+              })}
+              required
+            />
+            <small>각 줄마다 하나씩 입력. AI가 이 기능들을 포함한 취약한 HTML을 생성합니다.</small>
+          </div>
+        )}
+
+        {/* HARD/EXPERT: Features 선택사항 */}
+        {isHardOrExpert && (
+          <div className="form-field">
+            <label>Features (기능 목록)</label>
+            <textarea
+              rows={3}
+              placeholder="User login&#10;Search functionality&#10;Profile viewing (선택사항)"
+              value={(data.features || []).join('\n')}
+              onChange={e => onChange({
+                ...data,
+                features: e.target.value.split('\n').filter(f => f.trim() !== '')
+              })}
+            />
+            <small>선택사항: 참고용 기능 목록</small>
           </div>
         )}
       </div>
@@ -161,7 +351,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
           <div key={idx} className="vulnerability-card">
             <div className="card-header">
               <span>
-                #{idx + 1} {vuln.name || '이름 없음'}
+                #{idx + 1} {vuln.vulnName || '이름 없음'}
               </span>
               <button type="button" onClick={() => removeVulnerability(idx)}>
                 <FaTrash />
@@ -176,8 +366,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
                   <input
                     type="text"
                     placeholder="Login SQL Injection"
-                    value={vuln.name}
-                    onChange={e => updateVulnerability(idx, 'name', e.target.value)}
+                    value={vuln.vulnName}
+                    onChange={e => updateVulnerability(idx, 'vulnName', e.target.value)}
                     required
                   />
                 </div>
@@ -193,29 +383,57 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
                     <option value="XSS">Cross-Site Scripting (XSS)</option>
                     <option value="CSRF">CSRF</option>
                     <option value="IDOR">IDOR</option>
-                    <option value="Path Traversal">Path Traversal</option>
-                    <option value="Command Injection">Command Injection</option>
-                    <option value="Broken Authentication">Broken Authentication</option>
-                    <option value="Security Misconfiguration">Security Misconfiguration</option>
+                    <option value="PATH_TRAVERSAL">Path Traversal</option>
+                    <option value="COMMAND_INJECTION">Command Injection</option>
+                    <option value="AUTH_BYPASS">Auth Bypass</option>
+                    <option value="INFO_DISCLOSURE">Info Disclosure</option>
+                    <option value="FILE_UPLOAD">File Upload</option>
+                    <option value="XXE">XXE</option>
+                    <option value="SSRF">SSRF</option>
+                    <option value="DESERIALIZATION">Deserialization</option>
                   </select>
                 </div>
               </div>
 
               <div className="input-row-3">
                 <div className="input-group">
-                  <label>심각도 *</label>
+                  <label>난이도 *</label>
                   <select
-                    value={vuln.severity}
-                    onChange={e => updateVulnerability(idx, 'severity', e.target.value)}
+                    value={vuln.difficulty}
+                    onChange={e => updateVulnerability(idx, 'difficulty', e.target.value)}
                     required
                   >
-                    <option value="CRITICAL">CRITICAL</option>
-                    <option value="HIGH">HIGH</option>
+                    <option value="EASY">EASY</option>
                     <option value="MEDIUM">MEDIUM</option>
-                    <option value="LOW">LOW</option>
+                    <option value="HARD">HARD</option>
                   </select>
                 </div>
 
+                <div className="input-group">
+                  <label>카테고리 *</label>
+                  <input
+                    type="text"
+                    placeholder="Authentication"
+                    value={vuln.category}
+                    onChange={e => updateVulnerability(idx, 'category', e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>배점 *</label>
+                  <input
+                    type="number"
+                    min={10}
+                    max={200}
+                    value={vuln.basePoints}
+                    onChange={e => updateVulnerability(idx, 'basePoints', Number(e.target.value))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="input-row-3">
                 <div className="input-group">
                   <label>엔드포인트 *</label>
                   <input
@@ -225,6 +443,21 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
                     onChange={e => updateVulnerability(idx, 'endpoint', e.target.value)}
                     required
                   />
+                </div>
+
+                <div className="input-group">
+                  <label>HTTP 메서드 *</label>
+                  <select
+                    value={vuln.method}
+                    onChange={e => updateVulnerability(idx, 'method', e.target.value)}
+                    required
+                  >
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="PATCH">PATCH</option>
+                  </select>
                 </div>
 
                 <div className="input-group">
@@ -239,54 +472,33 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
                 </div>
               </div>
 
-              <div className="input-group">
-                <label>설명 *</label>
-                <textarea
-                  rows={2}
-                  placeholder="SQL injection vulnerability in login form"
-                  value={vuln.description}
-                  onChange={e => updateVulnerability(idx, 'description', e.target.value)}
-                  required
-                />
-              </div>
-
               <div className="input-row-2">
-                <div className="input-group">
-                  <label>배점 *</label>
-                  <input
-                    type="number"
-                    min={10}
-                    max={100}
-                    value={vuln.points}
-                    onChange={e => updateVulnerability(idx, 'points', Number(e.target.value))}
-                    required
-                  />
-                </div>
-
                 <div className="input-group">
                   <label>검증 방법 *</label>
                   <select
-                    value={vuln.validation?.method || 'pattern'}
-                    onChange={e => updateValidation(idx, 'method', e.target.value)}
+                    value={vuln.validation?.validationMethod || 'contains'}
+                    onChange={e => updateValidation(idx, 'validationMethod', e.target.value)}
                     required
                   >
-                    <option value="pattern">Pattern (포함 여부)</option>
+                    <option value="contains">Contains (포함 여부)</option>
                     <option value="exact">Exact (정확히 일치)</option>
                     <option value="regex">Regex (정규식)</option>
+                    <option value="stored">Stored (저장 확인)</option>
+                    <option value="unauthorized_access">Unauthorized Access</option>
+                    <option value="missing_token">Missing Token</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="input-group">
-                <label>예상 페이로드 *</label>
-                <input
-                  type="text"
-                  placeholder="' OR 1=1--"
-                  value={vuln.validation?.expectedPayload || ''}
-                  onChange={e => updateValidation(idx, 'expectedPayload', e.target.value)}
-                  required
-                />
-                <small>패턴 모드: 문자열 포함 시 정답 처리</small>
+                <div className="input-group">
+                  <label>예상 페이로드 *</label>
+                  <input
+                    type="text"
+                    placeholder="' OR 1=1--"
+                    value={vuln.validation?.expectedPayload || ''}
+                    onChange={e => updateValidation(idx, 'expectedPayload', e.target.value)}
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -312,7 +524,14 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
               value={data.scoring?.firstBloodBonus || 50}
               onChange={e => onChange({
                 ...data,
-                scoring: { ...data.scoring, firstBloodBonus: Number(e.target.value) }
+                scoring: {
+                  ...data.scoring,
+                  firstBloodBonus: Number(e.target.value),
+                  speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
+                  comboMultiplier: data.scoring?.comboMultiplier || 5,
+                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
+                  graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
+                }
               })}
               required
             />
@@ -327,12 +546,140 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
               value={data.scoring?.invalidSubmissionPenalty || 5}
               onChange={e => onChange({
                 ...data,
-                scoring: { ...data.scoring, invalidSubmissionPenalty: Number(e.target.value) }
+                scoring: {
+                  ...data.scoring,
+                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
+                  speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
+                  comboMultiplier: data.scoring?.comboMultiplier || 5,
+                  invalidSubmissionPenalty: Number(e.target.value),
+                  graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
+                }
               })}
               required
             />
             <small>오답 시 감점</small>
           </div>
+        </div>
+
+        <div className="form-grid-3">
+          <div className="form-field">
+            <label>3분 이내 보너스 *</label>
+            <input
+              type="number"
+              min={0}
+              value={data.scoring?.speedBonusThresholds?.under3min || 30}
+              onChange={e => onChange({
+                ...data,
+                scoring: {
+                  ...data.scoring,
+                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
+                  speedBonusThresholds: {
+                    ...data.scoring?.speedBonusThresholds,
+                    under3min: Number(e.target.value),
+                    under5min: data.scoring?.speedBonusThresholds?.under5min || 20,
+                    under7min: data.scoring?.speedBonusThresholds?.under7min || 10
+                  },
+                  comboMultiplier: data.scoring?.comboMultiplier || 5,
+                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
+                }
+              })}
+              required
+            />
+          </div>
+
+          <div className="form-field">
+            <label>5분 이내 보너스 *</label>
+            <input
+              type="number"
+              min={0}
+              value={data.scoring?.speedBonusThresholds?.under5min || 20}
+              onChange={e => onChange({
+                ...data,
+                scoring: {
+                  ...data.scoring,
+                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
+                  speedBonusThresholds: {
+                    ...data.scoring?.speedBonusThresholds,
+                    under3min: data.scoring?.speedBonusThresholds?.under3min || 30,
+                    under5min: Number(e.target.value),
+                    under7min: data.scoring?.speedBonusThresholds?.under7min || 10
+                  },
+                  comboMultiplier: data.scoring?.comboMultiplier || 5,
+                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
+                }
+              })}
+              required
+            />
+          </div>
+
+          <div className="form-field">
+            <label>7분 이내 보너스 *</label>
+            <input
+              type="number"
+              min={0}
+              value={data.scoring?.speedBonusThresholds?.under7min || 10}
+              onChange={e => onChange({
+                ...data,
+                scoring: {
+                  ...data.scoring,
+                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
+                  speedBonusThresholds: {
+                    ...data.scoring?.speedBonusThresholds,
+                    under3min: data.scoring?.speedBonusThresholds?.under3min || 30,
+                    under5min: data.scoring?.speedBonusThresholds?.under5min || 20,
+                    under7min: Number(e.target.value)
+                  },
+                  comboMultiplier: data.scoring?.comboMultiplier || 5,
+                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
+                }
+              })}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="form-field">
+          <label>콤보 배율 *</label>
+          <input
+            type="number"
+            min={0}
+            value={data.scoring?.comboMultiplier || 5}
+            onChange={e => onChange({
+              ...data,
+              scoring: {
+                ...data.scoring,
+                firstBloodBonus: data.scoring?.firstBloodBonus || 50,
+                speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
+                comboMultiplier: Number(e.target.value),
+                invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
+                graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
+              }
+            })}
+            required
+          />
+          <small>1분 내 연속 발견 시 보너스 (개수 × 배율)</small>
+        </div>
+
+        <div className="form-field">
+          <label>유예시간 (초) *</label>
+          <input
+            type="number"
+            min={0}
+            value={data.scoring?.graceTimeSeconds || 60}
+            onChange={e => onChange({
+              ...data,
+              scoring: {
+                ...data.scoring,
+                firstBloodBonus: data.scoring?.firstBloodBonus || 50,
+                speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
+                comboMultiplier: data.scoring?.comboMultiplier || 5,
+                invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
+                graceTimeSeconds: Number(e.target.value)
+              }
+            })}
+            required
+          />
+          <small>첫 완주자 발생 후 다른 플레이어들에게 주어지는 시간</small>
         </div>
       </div>
 
@@ -343,7 +690,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
           <div className="summary-item">
             <span className="summary-label">모드</span>
             <span className="summary-value">
-              {(data.mode || 'SIMULATED') === 'SIMULATED' ? 'SIMULATED' : 'REAL'}
+              {isEasyOrMedium ? 'SIMULATED (AI)' : 'REAL URL'}
             </span>
           </div>
           <div className="summary-item">
@@ -353,8 +700,12 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
           <div className="summary-item">
             <span className="summary-label">총점</span>
             <span className="summary-value">
-              {(data.vulnerabilities || []).reduce((sum, v) => sum + v.points, 0)}pt
+              {(data.vulnerabilities || []).reduce((sum, v) => sum + v.basePoints, 0)}pt
             </span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Features</span>
+            <span className="summary-value">{data.features?.length || 0}개</span>
           </div>
           <div className="summary-item">
             <span className="summary-label">상태</span>
@@ -381,6 +732,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange }) => {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };

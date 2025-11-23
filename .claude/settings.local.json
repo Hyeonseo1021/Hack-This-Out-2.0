@@ -3,7 +3,13 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm run build:check:*)"
+      "Bash(npm run build:check:*)",
+      "Bash(taskkill:*)",
+      "Bash(nul)",
+      "Bash(timeout /t 2 /nobreak)",
+      "Bash(node create-scenario.js:*)",
+      "Bash(node delete-html.js:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

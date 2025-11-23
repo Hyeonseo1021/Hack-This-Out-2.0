@@ -18,7 +18,6 @@ interface IUser extends Document {
 
 export enum GameMode {
     TERMINAL_RACE = 'terminalRace',
-    KING_OF_THE_HILL = 'kingOfTheHill',
     SOCIAL_ENGINEERING = 'socialEngineering',
     VULNERABILITY_SCANNER = 'vulnerabilityScanner',
     FORENSICS_RUSH = 'forensicsRush'
@@ -46,7 +45,6 @@ const GAME_MODE_MULTIPLIERS: Record<GameMode, number> = {
     [GameMode.TERMINAL_RACE]: 0.8,          // Easy - 빠른 타이핑 게임
     [GameMode.SOCIAL_ENGINEERING]: 1.0,     // Normal - 중간 난이도
     [GameMode.VULNERABILITY_SCANNER]: 1.0,  // Normal - 중간 난이도
-    [GameMode.KING_OF_THE_HILL]: 1.2,       // Hard - 경쟁 치열
     [GameMode.FORENSICS_RUSH]: 1.3          // Very Hard - 복잡한 파일 분석
 };
 
