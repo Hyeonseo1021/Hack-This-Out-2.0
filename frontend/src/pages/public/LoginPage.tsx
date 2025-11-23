@@ -27,7 +27,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ intervalMs = 40 }) => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const noiseFrames = [screennoise, screennoise1, screennoise2, screennoise3, screennoise4];
+  const noiseFrames = useRef([screennoise, screennoise1, screennoise2, screennoise3, screennoise4]);
   const [currentImage, setCurrentImage] = useState(fullscreenBlack);
   const [glitchIntensity, setGlitchIntensity] = useState(0);
   const [isFirstPhase, setIsFirstPhase] = useState(true);
@@ -57,7 +57,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ intervalMs = 40 }) => {
       setCurrentImage(fullscreen);
       mainTimer = setTimeout(() => {
         noiseInterval = setInterval(() => {
-          setCurrentImage(noiseFrames[noiseIndex % noiseFrames.length]);
+          setCurrentImage(noiseFrames.current[noiseIndex % noiseFrames.current.length]);
           setGlitchIntensity(Math.random() * 0.8 + 0.3);
           noiseIndex++;
         }, intervalMs);
@@ -77,7 +77,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ intervalMs = 40 }) => {
       clearTimeout(mainTimer);
       clearInterval(noiseInterval);
     };
-  }, [intervalMs, isFirstPhase, noiseFrames]);
+  }, [intervalMs, isFirstPhase]);
 
   const style = {
     backgroundImage: `url(${currentImage})`,
