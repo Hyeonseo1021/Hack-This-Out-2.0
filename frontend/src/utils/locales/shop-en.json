@@ -1,0 +1,79 @@
+{
+  "title": "HTO Shop",
+  "balance": "Balance:",
+  "tabs": {
+    "shop": "Shop",
+    "inventory": "Inventory",
+    "roulette": "Roulette"
+  },
+  "buttons": {
+    "buy": "Buy",
+    "use": "Use"
+  },
+  "toast": {
+    "noCoin": "Not enough coins! (Need: {{price}} HTO)",
+    "added": "{{name}} added to inventory!",
+    "used": "Used {{name}}!",
+    "reward": "Gained {{name}}!"
+  },
+  "inventory": {
+    "empty": "No items in inventory."
+  },
+  "items": {
+    "item-hint1": {
+      "name": "Hint x1",
+      "desc": "You can view the hint once."
+    },
+    "item-hint3": {
+      "name": "Hint x3",
+      "desc": "You can view the hint three times."
+    },
+    "item-buff": {
+      "name": "Random Buff Package",
+      "desc": "Get a random buff effect."
+    },
+    "item-timestop": {
+      "name": "Time Stop",
+      "desc": "Pauses the arena timer for 30 seconds."
+    }
+  },
+  "roulette": {
+    "title": "🎰 HTO Roulette",
+    "cost": "Cost per spin:",
+    "got": "Gained!",
+    "rolling": "Spinning...",
+    "noCoin": "Not enough coins!",
+    "reward": "Gained {{item}}!"
+  },
+  "npc": {
+    "intro": {
+      "hello": "Hello! I'm HackCat 🐱",
+      "ask": "Press a button to check what you want to know!"
+    },
+    "faq": {
+      "shop": {
+        "question": "How do I buy items in the shop?",
+        "answer": "Go to the Shop tab, select the item you want, and press Buy."
+      },
+      "roulette": {
+        "question": "How do I spin the roulette?",
+        "answer": "Go to the Roulette tab and press START to spin and get rewards."
+      },
+      "inventory": {
+        "question": "How do I use items in inventory?",
+        "answer": "Go to the Inventory tab and press Use on the item you want to use."
+      },
+      "coin": {
+        "question": "How can I get coins?",
+        "answer": "You can earn coins by solving problems, participating in events, etc."
+      },
+      "chance": {
+        "question": "I want to know the roulette odds",
+        "answer": "\n\n🎲 Odds:\n- Hint x1: 40%\n- Hint x3: 25%\n- Random Buff Package: 20%\n- Time Stop: 15%"
+      }
+    },
+    "buttons": {
+      "close": "Close"
+    }
+  }
+}

@@ -1,158 +1,198 @@
 @use "../style" as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Audiowide&family=VT323&display=swap');
 
+:root {
+  --mint: #8BF3FF;
+  --white: #EFFFFF;
+  --bg-dark: #02070d;
+  --glass-bg: rgba(6, 15, 25, 0.55);
+}
+
+/* ===========================================================
+   전체 컨테이너 (네온 + 글라스 + CRT)
+=========================================================== */
 .contest-banner-container {
   width: 100%;
   max-width: 1200px;
+  position: relative;
+  font-family: 'Audiowide', sans-serif;
+  color: var(--white);
+  font-weight: 600;
+
+  background: radial-gradient(circle at 50% 50%, #06121a 0%, var(--bg-dark) 100%);
+  border-radius: clamp(16px, 2vw, 24px);
+  border: 1.5px solid rgba(139, 243, 255, 0.28);
+  box-shadow: 0 0 28px rgba(139, 243, 255, 0.15);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+
+  /* CRT 스캔 라인 */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.015) 1px,
+      transparent 2px
+    );
+    opacity: 0.15;
+    pointer-events: none;
+  }
+}
+
+/* ===========================================================
+   Carousel Wrapper
+=========================================================== */
+.carousel {
   height: 100%;
-  font-weight: bold;
-  
-  p{
-    font-weight: bold;
+  border-radius: inherit;
+
+  .banner-slide {
+    padding: clamp(20px, 2vw, 36px);
+    height: clamp(260px, 28vh, 420px);
+    background: var(--glass-bg);
+    border-radius: inherit;
+    backdrop-filter: blur(16px);
+    position: relative;
+    overflow: hidden;
+
+    /* subtle 글리치 */
+    animation: subtleGlitch 4s infinite ease-in-out;
   }
 
-  h4{
-    font-weight: bold;
+  @keyframes subtleGlitch {
+    0%, 100% { transform: translate(0, 0); filter: brightness(1); }
+    45% { transform: translate(-0.6px, 0.4px); filter: brightness(1.08); }
+    50% { transform: translate(0.6px, -0.4px); filter: brightness(1.15); }
   }
-  .carousel {
-    height: 100%;
-    border-radius: clamp(16px, 2vw, 24px);
-    border: 1px solid var(--blue-200);
-    
-    .banner-slide {
-      padding: clamp(16px, 2vw, 32px);
-      height: clamp(250px, 28vh, 400px);
-      background: var(--color-layout);
-      @include flex_center;
-      
-      .banner-contents {
-        height: 100%;
-        display: grid;
-        align-items: center;
-        width: min(90%, 1100px);
-        grid-template-columns: minmax(120px, 1fr) minmax(200px, 2fr) minmax(120px, 1fr);
-        grid-template-rows: auto 1fr 1fr auto;
-        gap: clamp(8px, 1vw, 16px);
-        white-space: normal;
-        
-        h3 {
-          width: 100%;
-          grid-column: 1 / -1;
-          font-size: clamp(1.2rem, 3vw, 1.8rem);
-          font-weight: 600;
-          color: var(--color-white);
-        }
+}
 
-        .contest-avatar {
-          justify-self: center;
-          grid-row: 1 / -1;
-          grid-row-start: 2;
-          width: clamp(80px, 8vw, 120px);
-          height: clamp(80px, 8vw, 120px);
-          font-size: var(--font-title);
-          margin: clamp(5px, 1vw, 10px);
-        }
+/* ===========================================================
+   메인 콘텐츠
+=========================================================== */
+.banner-contents {
+  height: 100%;
+  display: grid;
+  align-items: center;
+  width: min(90%, 1100px);
 
-        h4 {
-          justify-self: flex-start;
-          grid-column: 2;
-          grid-row: 2/4;
-          font-size: clamp(1.8rem, 4vw, 48px);
-          color: var(--color-white);
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
+  grid-template-columns:
+    minmax(120px, 1fr)
+    minmax(200px, 2fr)
+    minmax(120px, 1fr);
 
-        .ramaining-time {
-          height: 100%;
-          display: flex;
-          align-items: center;
-          grid-column: 2;
-          grid-row: 4;
-          gap: clamp(4px, 1vw, 8px);
-          color: var(--color-white);
-          font-size: clamp(0.8rem, 2vw, 1.2rem);
-          font-weight: 600;
-        }
+  grid-template-rows: auto 1fr 1fr auto;
+  gap: clamp(8px, 1vw, 16px);
 
-        .contest_reward_box {
-          grid-column: 3;
-          grid-row: 2/4;
-          justify-self: center;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          width: min(80%, 175px);
-          min-width: 77px;
-          border-radius: 4px;
-          background-color: var(--color-layout);
-          height: 77px;
-          border: 2px solid var(--color-white);
+  h3 {
+    grid-column: 1 / -1;
+    font-size: clamp(1.3rem, 3vw, 1.9rem);
+    color: var(--mint);
+    text-shadow: 0 0 10px var(--mint);
+    text-align: center;
+    letter-spacing: 1px;
+  }
 
-          .banner-exp {
-            padding-left: clamp(4px, 1vw, 8px);
-            font-size: clamp(0.8rem, 2vw, 1.2rem);
-            color: var(--color-white);
-          }
+  .contest-avatar {
+    justify-self: center;
+    grid-row: 2 / 4;
+    width: clamp(80px, 8vw, 120px);
+    height: clamp(80px, 8vw, 120px);
+    border: 1.5px solid var(--mint);
+    box-shadow: 0 0 18px rgba(139, 243, 255, 0.25);
+    color: var(--mint);
+    transition: 0.3s;
 
-          .exp {
-            padding-left: clamp(4px, 1vw, 8px);
-            font-size: clamp(0.8rem, 2vw, 1.2rem);
-            color: #fbff8f;
-            font-weight: 600;
-          }
-        }
-
-        .go-to-machine-btn {
-          background: var(--color-layout);
-          color: var(--color-white);
-          transition: all 0.3s ease-in-out;
-
-          &:hover {
-            background: var(--blue-400);
-            transform: translateY(-2px);
-            filter: drop-shadow(0 0 10px var(--blue-500));
-            border: 2px solid transparent;
-          }
-          justify-self: center;
-          width: 80%;
-          min-width: 175px;
-          grid-column: 3;
-          grid-row: 4;
-          border: 2px solid var(--color-white);
-          border-radius: 4px;
-          cursor: pointer;
-          white-space: nowrap;
-          font-size: var(--font-size-small);
-          font-weight: bold;
-        }
-      }
-    }
-
-    /* Customize Carousel Indicators */
-    .MuiCarousel-indicator {
-      background-color: #ccc;
-      /* Inactive indicator color */
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin: 0 4px;
-    }
-
-    .MuiCarousel-indicator.Mui-selected {
-      background-color: #3f51b5;
-      /* Active indicator color */
-    }
-
-    .MuiSvgIcon-root {
-      font-size: 1.2rem;
-    }
-
-    .MuiCarousel-indicators {
-      bottom: 10px;
-    }
-
-    .MuiCarousel-navButtons {
-      top: 45%;
+    &:hover {
+      transform: scale(1.06);
+      box-shadow: 0 0 28px var(--mint);
     }
   }
+
+  h4 {
+    grid-column: 2;
+    grid-row: 2/4;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    color: var(--white);
+    text-shadow: 0 0 12px rgba(139, 243, 255, 0.3);
+  }
+
+  .ramaining-time {
+    grid-column: 2;
+    grid-row: 4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--white);
+    opacity: 0.95;
+    text-shadow: 0 0 6px var(--mint);
+  }
+
+  .contest_reward_box {
+    grid-column: 3;
+    grid-row: 2 / 4;
+    justify-self: center;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+
+    width: min(80%, 180px);
+    height: 80px;
+
+    background: rgba(10, 30, 40, 0.5);
+    border-radius: 8px;
+    border: 1.5px solid rgba(139, 243, 255, 0.35);
+
+    box-shadow: 0 0 18px rgba(139, 243, 255, 0.15);
+    padding-left: clamp(6px, 1vw, 12px);
+
+    .banner-exp {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--white);
+      opacity: 0.95;
+    }
+
+    .exp {
+      font-size: clamp(1.3rem, 3vw, 1.5rem);
+      color: var(--mint);
+      font-weight: 700;
+      text-shadow: 0 0 10px var(--mint);
+    }
+  }
+
+  /* GO 버튼 → 네온 글리치 */
+  .go-to-machine-btn {
+    grid-column: 3;
+    grid-row: 4;
+    justify-self: center;
+
+    width: min(80%, 190px);
+    padding: 10px 0;
+
+    background: transparent;
+    border: 1.5px solid var(--mint);
+    border-radius: 6px;
+    color: var(--mint);
+    font-size: 1rem;
+    font-family: 'VT323', monospace;
+    letter-spacing: 1px;
+    cursor: pointer;
+
+    transition: 0.25s ease;
+    box-shadow: 0 0 12px rgba(139, 243, 255, 0.25);
+
+    &:hover {
+      background: rgba(139, 243, 255, 0.08);
+      transform: translateY(-4px);
+      box-shadow: 0 0 25px var(--mint);
+    }
+  }
+}
+.banner-contents {
+  transform: translateY(-20px); /* 원하는 만큼 올려주기 */
 }
