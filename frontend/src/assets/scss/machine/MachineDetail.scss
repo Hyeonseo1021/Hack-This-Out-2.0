@@ -1,5 +1,5 @@
 @use "../style" as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=VT323&display=swap');
 
 :root {
   --mint: #8BF3FF;
@@ -7,6 +7,23 @@
   --bg-dark: #02060a;
   --white: #eafaff;
 }
+
+/* ============================================
+   🔥 Machine Detail Page GLOBAL FONT 적용
+============================================ */
+.machine-detail-container,
+.machine-detail,
+.machine-textbox,
+.right-part,
+.machine-reward-box,
+.machine-play-btn,
+.rating-box,
+.machine-detail-page,
+.machine-detail-page-review,
+.machine-review {
+  font-family: 'Orbitron', 'VT323', sans-serif !important;
+}
+
 
 /* ===== 전체 컨테이너 ===== */
 .machine-detail-container {
@@ -192,4 +209,37 @@
   text-shadow: 0 0 10px var(--mint);
   color: var(--mint);
   transition: all 0.3s ease;
+}
+
+.machine-play-btn {
+  width: clamp(140px, 15vw, 180px);
+  height: clamp(60px, 8vh, 77px);
+  border-radius: 8px;
+
+  background: rgba(10, 30, 40, 0.5);
+  border: 1.5px solid rgba(139, 243, 255, 0.3);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--mint);
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+
+  text-shadow: 0 0 10px var(--mint-glow);
+  box-shadow: 0 0 16px rgba(139, 243, 255, 0.15),
+              inset 0 0 12px rgba(139, 243, 255, 0.3);
+
+  transition: 0.25s ease-in-out;
+
+  /* 항상 네온 효과 유지 */
+  animation: mintPulse 3s infinite ease-in-out;
+}
+
+.machine-play-btn:hover {
+  box-shadow: 0 0 25px var(--mint),
+              inset 0 0 20px var(--mint);
+  transform: translateY(-2px);
 }

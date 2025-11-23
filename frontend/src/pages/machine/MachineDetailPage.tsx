@@ -92,9 +92,6 @@ const MachineDetailPage: React.FC = () => {
           <div className="detail">
             <MachineDetail machineDetail={machineDetail} />
           </div>
-          <button onClick={handlePlay} className="play-button">
-            Play
-          </button>
         </div>
         <div className='machine-detail-page-review'>
           <div className='machine-review'>

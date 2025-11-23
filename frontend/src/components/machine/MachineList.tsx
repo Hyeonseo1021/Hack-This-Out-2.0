@@ -10,16 +10,8 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
+import CatIcon from '../../assets/img/icon/white_cat.png';
 
-interface Review {
-  _id: string;
-  reviewerId: string;
-  reviewerName: string;
-  content: string;
-  rating: number;
-  difficulty: string;
-  createdAt: string;
-}
 
 interface Machine {
   _id: string;
@@ -28,7 +20,12 @@ interface Machine {
   rating: number;
   playerCount: number;
   description?: string;
-  reviews?: Review[];
+  reviews?: string[];
+  difficulty?: {
+    creatorLevel: string;
+    confirmedLevel?: string;
+    isConfirmed: boolean;
+  };
 }
 
 interface MachinesResponse {
@@ -38,53 +35,70 @@ interface MachinesResponse {
 
 const MachineList: React.FC = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
-  const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
+  const [openRow, setOpenRow] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [filterVisible, setFilterVisible] = useState<boolean>(false);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null); // ✅ 아코디언 상태
+
+  const navigate = useNavigate();
 
   const categories = ['Web', 'Network', 'Database', 'Crypto', 'Cloud', 'AI', 'OS', 'Other'];
 
+  const toggleAccordion = (id: string) => {
+    setOpenRow(prev => (prev === id ? null : id));
+  };
+
+  const getDifficultyColor = (level: string): string => {
+    const colors: { [key: string]: string } = {
+      'very_easy': '#4ade80',
+      'easy': '#86efac',
+      'medium': '#fbbf24',
+      'hard': '#fb923c',
+      'very_hard': '#ef4444',
+    };
+    return colors[level] || '#94a3b8';
+  };
+
+  const getDifficultyLabel = (level: string): string => {
+    const labels: { [key: string]: string } = {
+      'very_easy': 'VE',
+      'easy': 'E',
+      'medium': 'M',
+      'hard': 'H',
+      'very_hard': 'VH'
+    };
+    return labels[level] || 'N/A';
+  };
+
   useEffect(() => {
-    const fetchMachines = async (): Promise<void> => {
+    const fetchMachines = async () => {
       try {
         const data: MachinesResponse = await getActiveMachines();
         setMachines(data.machines);
         setFilteredMachines(data.machines);
-        setLoading(false);
-      } catch (error: any) {
-        console.error('Error fetching machines:', error);
-        setError(`Error fetching machines: ${error.msg || error.message}`);
+      } catch (err: any) {
+        setError(err.msg || err.message);
+      } finally {
         setLoading(false);
       }
     };
+
     fetchMachines();
   }, []);
 
-  const handleMachineClick = (machine: Machine): void => {
-    navigate(`/machine/${machine._id}`);
-  };
-
-  const toggleExpand = (id: string): void => {
-    setExpandedRow(prev => (prev === id ? null : id));
-  };
-
   useEffect(() => {
-    if (categoryFilter === '') setFilteredMachines(machines);
-    else setFilteredMachines(machines.filter(m => m.category === categoryFilter));
+    if (categoryFilter === '') {
+      setFilteredMachines(machines);
+    } else {
+      setFilteredMachines(machines.filter(m => m.category === categoryFilter));
+    }
   }, [categoryFilter, machines]);
 
-  const toggleFilterVisibility = (e: React.MouseEvent): void => {
-    e.stopPropagation();
-    setFilterVisible(prev => !prev);
-  };
-
-  const handleClickAway = (): void => {
-    setFilterVisible(false);
+  const handleMachineClick = (machine: Machine) => {
+    navigate(`/machine/${machine._id}`);
   };
 
   if (loading) return <LoadingIcon />;
@@ -93,31 +107,34 @@ const MachineList: React.FC = () => {
   return (
     <div className={styles.machine_list_container}>
       <div className={styles.machine_list_title}>Machines</div>
+
       <table className={styles.machine_list_table}>
         <thead>
           <tr className={styles.table_text_box}>
             <th className={styles.table_name}>Name</th>
+
             <th className={styles.table_category}>
               Category
-              <ClickAwayListener onClickAway={handleClickAway}>
+              <ClickAwayListener onClickAway={() => setFilterVisible(false)}>
                 <div className={styles.category_filter_toggle}>
                   <FilterAltIcon
-                    onClick={toggleFilterVisibility}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFilterVisible(prev => !prev);
+                    }}
                     sx={{ fontSize: 'clamp(20px, 2.5vw, 24px)', cursor: 'pointer' }}
                   />
+
                   {filterVisible && (
                     <div className={styles.category_filter}>
-                      <label className={styles.category_label}>Filter by </label>
                       <select
                         className={styles.category_select}
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
                       >
-                        <option className={styles.category} value=''>All</option>
-                        {categories.map((category) => (
-                          <option className={styles.category} key={category} value={category}>
-                            {category}
-                          </option>
+                        <option value="">All</option>
+                        {categories.map((c) => (
+                          <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
                     </div>
@@ -125,97 +142,125 @@ const MachineList: React.FC = () => {
                 </div>
               </ClickAwayListener>
             </th>
+
+            <th className={styles.table_difficulty}>Difficulty</th>
             <th className={styles.table_rating}>Rating</th>
             <th className={styles.table_playCount}>Played</th>
             <th className={styles.table_details}>Detail</th>
           </tr>
         </thead>
-        <tbody>
-          {filteredMachines.length === 0 ? (
-            <tr className={styles['no-data']}></tr>
-          ) : (
-            filteredMachines.map((machine) => {
-              const avatarColorIndex = getAvatarColorIndex(machine.name);
-              const avatarBgColor = avatarBackgroundColors[avatarColorIndex];
-              const isExpanded = expandedRow === machine._id;
 
-              return (
-                <React.Fragment key={machine._id}>
-                  <tr className={styles.machine_box} onClick={() => toggleExpand(machine._id)}>
-                    <td className={styles.machine_name}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 16px)', width: '100%' }}>
-                        <Avatar
-                          variant="rounded"
-                          sx={{
-                            backgroundColor: avatarBgColor,
-                            width: 'clamp(32px, 5vw, 40px)',
-                            height: 'clamp(32px, 5vw, 40px)',
-                            fontSize: 'clamp(14px, 2vw, 16px)',
-                          }}
-                        >
-                          {machine.name.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <span>{machine.name.charAt(0).toUpperCase() + machine.name.slice(1)}</span>
-                      </Box>
-                    </td>
-                    <td className={styles.machine_category}>{machine.category}</td>
-                    <td className={styles.machine_rating}>
-                      <Rating
-                        name={`read-only-rating-${machine._id}`}
-                        value={Number(machine.rating)}
-                        precision={0.5}
-                        readOnly
+        <tbody>
+          {filteredMachines.map((machine) => {
+            const avatarColorIndex = getAvatarColorIndex(machine.name);
+            const avatarBgColor = avatarBackgroundColors[avatarColorIndex];
+            const difficulty = machine.difficulty?.confirmedLevel || machine.difficulty?.creatorLevel;
+
+            return (
+              <React.Fragment key={machine._id}>
+
+                {/* ▶ 기본 행 */}
+                <tr className={styles.machine_box}>
+                  <td className={styles.machine_name}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <Avatar
+                        variant="rounded"
                         sx={{
-                          fontSize: 'clamp(20px, 2vw, 24px)',
-                          '& .MuiRating-iconEmpty': { color: '#fff' },
-                          '& .MuiRating-iconFilled': { color: '#ffd700' },
+                          backgroundColor: avatarBgColor,
+                          width: '40px',
+                          height: '40px',
+                          fontSize: '16px',
                         }}
-                      />
-                    </td>
-                    <td className={styles.machine_playCount}>{machine.playerCount}</td>
-                    <td className={styles.machine_details}>
-                      <div className={styles.details_button_wrapper}>
-                        <button
-                          className={styles.details_button}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMachineClick(machine);
+                      >
+                          <img
+                            src={CatIcon}
+                            alt="cat"
+                            style={{
+                            width: '70%',          // 네모박스 안에 자연스럽게 들어오게 조절
+                            height: '70%',
+                            objectFit: 'contain',
                           }}
-                        >
-                          GO!
-                        </button>
+                       />
+                      </Avatar>
+                      <span>{machine.name}</span>
+                    </Box>
+                  </td>
+
+                  <td className={styles.machine_category}>{machine.category}</td>
+
+                  <td className={styles.machine_difficulty}>
+                    {difficulty && (
+                      <span
+                        style={{
+                          backgroundColor: getDifficultyColor(difficulty),
+                          padding: '4px 8px',
+                          borderRadius: '8px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {getDifficultyLabel(difficulty)}
+                      </span>
+                    )}
+                  </td>
+
+                  <td className={styles.machine_rating}>
+                    <Rating value={machine.rating} precision={0.5} readOnly />
+                  </td>
+
+                  <td className={styles.machine_playCount}>{machine.playerCount}</td>
+
+                  {/* 🔥 GO 버튼 + +/– 버튼 */}
+                  <td className={styles.machine_details}>
+                    <div className={styles.detail_buttons_wrapper}>
+                      
+                      {/* 아코디언 토글 */}
+                      <button
+                        className={styles.toggle_button}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleAccordion(machine._id);
+                        }}
+                      >
+                        {openRow === machine._id ? '^' : '⌄'}
+                      </button>
+
+                      {/* GO! 버튼 */}
+                      <button
+                        className={styles.go_button}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMachineClick(machine);
+                        }}
+                      >
+                        GO!
+                      </button>
+
+                    </div>
+                  </td>
+                </tr>
+
+                {/* ▼ 아코디언 */}
+                {openRow === machine._id && (
+                  <tr className={styles.machine_expand_row}>
+                    <td colSpan={6}>
+                      <div className={styles.expand_content}>
+                        <p className={styles.expand_description}>
+                          {machine.description || 'No description available.'}
+                        </p>
+
+                        <div className={styles.expand_reviews}>
+                          {machine.reviews?.map((r, i) => (
+                            <p key={i}>{r}</p>
+                          ))}
+                        </div>
                       </div>
                     </td>
                   </tr>
+                )}
 
-                  {/* ✅ 아코디언 확장 영역 */}
-                  {isExpanded && (
-                    <tr className={styles.machine_expand_row}>
-                      <td colSpan={5}>
-                        <div className={styles.expand_content}>
-                          <p className={styles.expand_description}>
-                            💬 {machine.description || "No description available."}
-                          </p>
-                          <div className={styles.expand_reviews}>
-                            {machine.reviews && machine.reviews.length > 0 ? (
-                              <>
-                                <p>📊 {machine.reviews.length} review{machine.reviews.length > 1 ? 's' : ''} · Average: {machine.rating.toFixed(1)}/5.0</p>
-                                {machine.reviews.slice(0, 2).map((review) => (
-                                  <p key={review._id}>⭐ "{review.content.substring(0, 50)}{review.content.length > 50 ? '...' : ''}"</p>
-                                ))}
-                              </>
-                            ) : (
-                              <p>No reviews yet. Be the first to review!</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              );
-            })
-          )}
+              </React.Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>
