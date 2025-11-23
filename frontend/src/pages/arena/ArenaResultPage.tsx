@@ -16,6 +16,7 @@ type BaseParticipant = {
   isCompleted: boolean;
   rank: number;
   score: number;
+  expEarned: number;  // ✨ 경험치 추가
 };
 
 // Terminal Race용
@@ -38,11 +39,12 @@ type ForensicsRushParticipant = BaseParticipant & {
   questionsCorrect?: number;
   totalAttempts?: number;
   penalties?: number;
+  totalQuestions?: number;
 };
 
-type Participant = 
-  | TerminalRaceParticipant 
-  | KingOfTheHillParticipant 
+type Participant =
+  | TerminalRaceParticipant
+  | KingOfTheHillParticipant
   | ForensicsRushParticipant;
 
 type Winner = {
@@ -86,7 +88,7 @@ const ArenaResultPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
-  
+
   const checkedRef = useRef(false);
 
   useEffect(() => {
@@ -96,31 +98,31 @@ const ArenaResultPage: React.FC = () => {
       try {
         checkedRef.current = true;
         setLoading(true);
-        
-        console.log('📊 [ArenaResultPage] Loading results for:', arenaId);
-        
+
+        console.log('[ArenaResultPage] Loading results for:', arenaId);
+
         const { user } = await getUserStatus();
         setCurrentUserId(user._id);
 
         const result = await getArenaResult(arenaId);
-        
-        console.log('📦 Arena result:', result);
-        console.log('📊 Arena status:', result.status);
-        console.log('🎮 Game mode:', result.mode);
-        
+
+        console.log('Arena result:', result);
+        console.log('Arena status:', result.status);
+        console.log('Game mode:', result.mode);
+
         if (result.status !== 'ended') {
-          console.log('⚠️ Game not ended, redirecting to play page...');
+          console.log('Game not ended, redirecting to play page...');
           navigate(`/arena/play/${arenaId}`, { replace: true });
           return;
         }
 
-        console.log('✅ Game ended, displaying results');
+        console.log('Game ended, displaying results');
         setArenaResult(result);
 
         setTimeout(() => setShowResults(true), 500);
 
       } catch (err: any) {
-        console.error('❌ Failed to load arena results:', err);
+        console.error('Failed to load arena results:', err);
         setError(err?.message || 'Failed to load results');
       } finally {
         setLoading(false);
@@ -132,8 +134,8 @@ const ArenaResultPage: React.FC = () => {
 
   const formatDuration = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const secs = seconds % 60;
+    return `${minutes}:${String(secs).padStart(2, '0')}`;
   };
 
   // ✅ 게임 모드별 상태 텍스트
@@ -146,15 +148,15 @@ const ArenaResultPage: React.FC = () => {
       case 'terminal-race':
         const trParticipant = participant as TerminalRaceParticipant;
         return trParticipant.stage > 0 ? 'PARTICIPATED' : 'DEFEATED';
-      
+
       case 'king-of-the-hill':
         const kothParticipant = participant as KingOfTheHillParticipant;
         return kothParticipant.timesKing && kothParticipant.timesKing > 0 ? 'PARTICIPATED' : 'DEFEATED';
-      
+
       case 'forensics-rush':
         const frParticipant = participant as ForensicsRushParticipant;
         return frParticipant.questionsAnswered && frParticipant.questionsAnswered > 0 ? 'PARTICIPATED' : 'DEFEATED';
-      
+
       default:
         return participant.score > 0 ? 'PARTICIPATED' : 'DEFEATED';
     }
@@ -169,15 +171,15 @@ const ArenaResultPage: React.FC = () => {
       case 'terminal-race':
         const trParticipant = participant as TerminalRaceParticipant;
         return trParticipant.stage > 0 ? 'connected' : 'defeated';
-      
+
       case 'king-of-the-hill':
         const kothParticipant = participant as KingOfTheHillParticipant;
         return kothParticipant.timesKing && kothParticipant.timesKing > 0 ? 'connected' : 'defeated';
-      
+
       case 'forensics-rush':
         const frParticipant = participant as ForensicsRushParticipant;
         return frParticipant.questionsAnswered && frParticipant.questionsAnswered > 0 ? 'connected' : 'defeated';
-      
+
       default:
         return participant.score > 0 ? 'connected' : 'defeated';
     }
@@ -185,26 +187,26 @@ const ArenaResultPage: React.FC = () => {
 
   // ✅ 게임 모드별 추가 정보 렌더링
   const renderParticipantDetails = (participant: Participant, mode: string) => {
-    const baseInfo = `⭐ ${participant.score} pts`;
+    const baseInfo = `${participant.score} pts • +${participant.expEarned} EXP`;
 
     switch (mode) {
       case 'terminal-race':
         const trParticipant = participant as TerminalRaceParticipant;
-        return `${baseInfo} • ${participant.isCompleted ? '✅ Completed' : `📊 Stage ${trParticipant.stage + 1}`}`;
-      
+        return `${baseInfo} • ${participant.isCompleted ? 'Completed' : `Stage ${trParticipant.stage + 1}`}`;
+
       case 'king-of-the-hill':
         const kothParticipant = participant as KingOfTheHillParticipant;
         const kingTime = kothParticipant.kingTime || 0;
-        return `${baseInfo} • ${participant.isCompleted ? '✅ Completed' : `👑 ${kingTime}s as King`}`;
-      
+        return `${baseInfo} • ${participant.isCompleted ? 'Completed' : `${kingTime}s as King`}`;
+
       case 'forensics-rush':
         const frParticipant = participant as ForensicsRushParticipant;
         const correctCount = frParticipant.questionsCorrect || 0;
-        const totalAnswered = frParticipant.questionsAnswered || 0;
-        return `${baseInfo} • ${participant.isCompleted ? '✅ Perfect Score' : `📝 ${correctCount}/${totalAnswered} correct`}`;
-      
+        const totalQuestions = frParticipant.totalQuestions || 0;
+        return `${baseInfo} • ${participant.isCompleted ? 'Perfect Score' : `${correctCount}/${totalQuestions} correct`}`;
+
       default:
-        return `${baseInfo} • ${participant.isCompleted ? '✅ Completed' : '📊 In Progress'}`;
+        return `${baseInfo} • ${participant.isCompleted ? 'Completed' : 'In Progress'}`;
     }
   };
 
@@ -238,59 +240,30 @@ const ArenaResultPage: React.FC = () => {
   }
 
   // ✅ duration 계산
-  const calculatedDuration = arenaResult.duration || 
+  const calculatedDuration = arenaResult.duration ||
     Math.floor((new Date(arenaResult.endTime).getTime() - new Date(arenaResult.startTime).getTime()) / 1000);
 
   return (
     <Main>
       <div className="ar-container">
         <div className="ar-grid-background"></div>
-        <div className="ar-hud-corners">
-          <div className="ar-corner top-left"></div>
-          <div className="ar-corner top-right"></div>
-          <div className="ar-corner bottom-left"></div>
-          <div className="ar-corner bottom-right"></div>
-        </div>
 
         {/* 게임 오버 헤더 */}
         <header className="ar-header">
           <div className="ar-game-over">
-            <h1 className="ar-game-over-text">MISSION COMPLETE</h1>
-            <div className="ar-arena-name">{arenaResult.name}</div>
+            <h1 className="ar-game-over-text">{arenaResult.name}</h1>
+            <div className="ar-arena-mode">{arenaResult.mode.toUpperCase().replace('-', ' ')}</div>
             <div className="ar-mission-stats">
               <span className="ar-stat">{formatDuration(calculatedDuration)} MIN</span>
               <span className="ar-separator">|</span>
               <span className="ar-stat">{arenaResult.stats.totalParticipants}/{arenaResult.maxParticipants} PARTICIPANTS</span>
               <span className="ar-separator">|</span>
               <span className="ar-stat">{arenaResult.stats.successRate}% SUCCESS</span>
-              <span className="ar-separator">|</span>
-              <span className="ar-stat">{arenaResult.mode.toUpperCase().replace('-', ' ')}</span>
             </div>
           </div>
         </header>
 
-        {/* 승리자 공지 */}
-        {arenaResult.winner && (
-          <div className={`ar-victory-announcement ${showResults ? 'show' : ''}`}>
-            <div className="ar-victory-content">
-              <div className="ar-victory-crown">👑</div>
-              <div className="ar-victory-text">
-                <div className="ar-victory-label">MISSION LEADER</div>
-                <div className="ar-victory-name">
-                  {arenaResult.winner.username}
-                </div>
-              </div>
-              <div className="ar-victory-time">
-                {arenaResult.winner.solvedAt && formatDuration(
-                  Math.floor((new Date(arenaResult.winner.solvedAt).getTime() - 
-                            new Date(arenaResult.startTime).getTime()) / 1000)
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 순위 리스트 */}
+        {/* 순위 리스트 - 세로 리스트 레이아웃 */}
         <div className={`ar-rankings ${showResults ? 'show' : ''}`}>
           {arenaResult.participants
             .sort((a, b) => a.rank - b.rank)
@@ -307,14 +280,16 @@ const ArenaResultPage: React.FC = () => {
                 {/* 플레이어 정보 */}
                 <div className="ar-rank-player-info">
                   <div className="ar-rank-player-name">
-                    {participant.rank === 1 && <span className="ar-crown-icon">👑</span>}
                     {participant.username}
                     {participant.userId === currentUserId && (
                       <span className="ar-you-tag">YOU</span>
                     )}
                   </div>
                   <div className={`ar-rank-player-status ${getStatusClass(participant, arenaResult.mode)}`}>
-                    {getStatusText(participant, arenaResult.mode)} • {renderParticipantDetails(participant, arenaResult.mode)}
+                    {getStatusText(participant, arenaResult.mode)}
+                  </div>
+                  <div className="ar-rank-player-details">
+                    {renderParticipantDetails(participant, arenaResult.mode)}
                   </div>
                 </div>
 
@@ -325,8 +300,8 @@ const ArenaResultPage: React.FC = () => {
                   </div>
                 )}
                 {participant.completionTime === null && (
-                  <div className="ar-rank-completion-time" style={{ opacity: 0.4 }}>
-                    DNF
+                  <div className="ar-rank-completion-time incomplete">
+                    NOT COMPLETED
                   </div>
                 )}
               </div>
@@ -335,14 +310,14 @@ const ArenaResultPage: React.FC = () => {
 
         {/* 액션 버튼들 */}
         <div className={`ar-actions ${showResults ? 'show' : ''}`}>
-          <button 
-            className="ar-button secondary" 
+          <button
+            className="ar-button secondary"
             onClick={() => navigate('/arena')}
           >
             RETURN TO LOBBY
           </button>
-          <button 
-            className="ar-button primary" 
+          <button
+            className="ar-button primary"
             onClick={() => navigate('/arena/create')}
           >
             START NEW MISSION

@@ -66,7 +66,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   arena,
   socket,
   currentUserId,
-  participants 
+  participants: _participants
 }) => {
   const navigate = useNavigate(); // ✅ 추가
   const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +85,6 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showHints, setShowHints] = useState(false);
   const [allCompleted, setAllCompleted] = useState(false);
-  const [evidenceClosed, setEvidenceClosed] = useState(false);
   const isInitializedRef = useRef(false);
 
   // 🎯 타이머 관련 state
@@ -189,6 +188,23 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       navigate(data.redirectUrl);
     }, 500);
   }, [navigate]);
+
+  // ✅ 모든 참가자 완료 핸들러
+  const handleAllCompleted = useCallback((data: { message: string }) => {
+    console.log('🎉 [ForensicsRush] All participants completed:', data.message);
+
+    // 유예 기간 타이머 정리
+    if (gracePeriodIntervalRef.current) {
+      clearInterval(gracePeriodIntervalRef.current);
+      gracePeriodIntervalRef.current = null;
+    }
+
+    setGracePeriodRemaining(null);
+    setAllCompleted(true);
+
+    // ✅ 리디렉션은 backend에서 arena:redirect-to-results 이벤트로 처리
+    // (endArenaProcedure가 완료된 후 2초 뒤에 전송됨)
+  }, []);
 
   // 소켓 이벤트 핸들러
   useEffect(() => {
@@ -397,6 +413,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.off('arena:grace-period-started');
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
+    socket.off('forensics:all-completed');
 
     socket.on('forensics:scenario-data', handleScenarioData);
     socket.on('forensics:questions-data', handleQuestionsData);
@@ -407,6 +424,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.on('arena:grace-period-started', handleGracePeriodStarted);
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
+    socket.on('forensics:all-completed', handleAllCompleted);
 
     return () => {
       // ✅ 타이머 정리
@@ -429,8 +447,9 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       socket.off('arena:grace-period-started', handleGracePeriodStarted);
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
+      socket.off('forensics:all-completed', handleAllCompleted);
     };
-  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults]);
+  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleAllCompleted]);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -447,13 +466,13 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
   const getFileIcon = (type: string) => {
     switch(type) {
-      case 'log': return '📋';
-      case 'pcap': return '📡';
-      case 'image': return '🖼️';
-      case 'disk': return '💾';
-      case 'memory': return '🧠';
-      case 'network': return '🌐';
-      default: return '📄';
+      case 'log': return '[LOG]';
+      case 'pcap': return '[PCAP]';
+      case 'image': return '[IMG]';
+      case 'disk': return '[DISK]';
+      case 'memory': return '[MEM]';
+      case 'network': return '[NET]';
+      default: return '[FILE]';
     }
   };
 
@@ -498,7 +517,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     );
   }
 
-  // ✅ 모든 문제 완료 시 ASCII 아트 화면
+  // ✅ 모든 문제 완료 시 터미널 화면
   if (allCompleted && questionsCorrect === totalQuestions && totalQuestions > 0) {
     return (
       <div className="forensics-rush-container completion">
@@ -517,67 +536,41 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
  ╚═╝      ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝ ╚═════╝╚══════╝
 `}
             </div>
-            
+
             <div className="completion-messages">
-              <div className="message-line">
-                <span className="prompt">$</span> echo "CASE STATUS: SOLVED"
-              </div>
-              <div className="output-line success">
-                CASE STATUS: SOLVED ✓
-              </div>
-              
               <div className="message-line">
                 <span className="prompt">$</span> cat investigation_summary.txt
               </div>
               <div className="output-block">
-                <div className="summary-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+                <div className="summary-line">================================================</div>
                 <div className="summary-line">  INVESTIGATION SUMMARY</div>
-                <div className="summary-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+                <div className="summary-line">================================================</div>
                 <div className="summary-line"></div>
                 <div className="summary-line">  Case: {scenario.title}</div>
-                <div className="summary-line">  Incident Type: {scenario.incidentType}</div>
-                <div className="summary-line">  Date: {scenario.date}</div>
+                <div className="summary-line">  Incident: {scenario.incidentType}</div>
                 <div className="summary-line"></div>
                 <div className="summary-line">  Questions Solved: {questionsCorrect}/{totalQuestions}</div>
                 <div className="summary-line">  Total Score: {score} points</div>
-                <div className="summary-line">  Total Attempts: {answeredQuestions.reduce((sum, q) => sum + q.attempts, 0)}</div>
                 <div className="summary-line"></div>
-                <div className="summary-line">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
-              </div>
-
-              <div className="message-line">
-                <span className="prompt">$</span> forensics --analyze-performance
-              </div>
-              <div className="output-block">
-                {answeredQuestions.filter(q => q.correct).map((q, index) => {
-                  const question = questions.find(qu => qu.id === q.questionId);
-                  return (
-                    <div key={q.questionId} className="performance-line">
-                      {index + 1}. {question?.question.substring(0, 50)}... 
-                      <span className={q.attempts === 1 ? 'perfect' : 'good'}>
-                        {q.attempts === 1 ? ' ⭐ FIRST TRY' : ` ✓ ${q.attempts} attempts`}
-                      </span>
-                    </div>
-                  );
-                })}
+                <div className="summary-line">================================================</div>
               </div>
 
               {gracePeriodRemaining !== null && firstWinner && (
                 <>
                   <div className="message-line">
-                    <span className="prompt">$</span> status --grace-period
+                    <span className="prompt">$</span> ./check_status.sh
                   </div>
                   <div className="output-line warning">
-                    {firstWinner === currentUserId 
-                      ? "🏆 YOU FINISHED FIRST! Waiting for others to complete..."
-                      : `⏰ Grace period active: ${gracePeriodRemaining}s remaining`
+                    {firstWinner === currentUserId
+                      ? "[PRIORITY] Awaiting field reports from remaining agents..."
+                      : `[ALERT] Evidence submission deadline: T-${gracePeriodRemaining}s`
                     }
                   </div>
                 </>
               )}
 
               <div className="message-line">
-                <span className="prompt">$</span> <span className="cursor">▋</span>
+                <span className="prompt">$</span> <span className="cursor">_</span>
               </div>
             </div>
           </div>
@@ -591,10 +584,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 헤더 */}
       <div className="forensics-header">
         <div className="header-left">
-          <h1 className="case-title">🔍 {scenario.title}</h1>
+          <div className="agency-badge">DIGITAL FORENSICS LAB</div>
+          <h1 className="case-title">{scenario.title}</h1>
           <div className="case-meta">
-            <span className="incident-type">{scenario.incidentType}</span>
-            <span className="case-date">{scenario.date}</span>
+            <span className="incident-type">[{scenario.incidentType}]</span>
+            <span className="case-date">DATE: {scenario.date}</span>
           </div>
         </div>
         
@@ -612,14 +606,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           {/* ✅ 유예 시간만 표시 (ForensicsRush는 시간 제한 없음) */}
           {gracePeriodRemaining !== null && (
             <div className="stat-card grace-card">
-              <div className="stat-label">Grace Period</div>
+              <div className="stat-label">DEADLINE</div>
               <div className="stat-value warning">{gracePeriodRemaining}s</div>
             </div>
           )}
           
           {allCompleted && (
             <div className="completion-badge">
-              ✅ Complete!
+              [CASE CLOSED]
             </div>
           )}
         </div>
@@ -629,11 +623,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {gracePeriodRemaining !== null && firstWinner && (
         <div className="grace-period-banner">
           <div className="banner-content">
-            <span className="banner-icon">⏰</span>
+            <span className="banner-icon">⚠</span>
             <span className="banner-text">
-              {firstWinner === currentUserId 
-                ? "You finished first! Others have grace period to complete." 
-                : `Grace period active - ${gracePeriodRemaining}s remaining to complete all questions!`}
+              {firstWinner === currentUserId
+                ? "[CASE CLOSED] Investigation complete - awaiting final reports from field agents"
+                : `[URGENT] Evidence collection window expires in ${gracePeriodRemaining}s - submit findings immediately`}
             </span>
           </div>
         </div>
@@ -642,8 +636,8 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 시나리오 설명 */}
       <div className="scenario-brief">
         <div className="brief-header">
-          <span className="brief-icon">📋</span>
           <span className="brief-title">CASE BRIEF</span>
+          <span className="classification">CLASSIFIED</span>
         </div>
         <p className="brief-description">{scenario.description}</p>
         <p className="brief-context">{scenario.context}</p>
@@ -651,17 +645,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
       {/* 메인 영역 */}
       {questions.length > 0 && (
-        <div className={`forensics-workspace ${evidenceClosed ? 'evidence-closed' : ''}`}>
+        <div className="forensics-workspace">
           {/* Evidence 터미널 */}
-          <div className={`evidence-terminal terminal-window ${evidenceClosed ? 'closed' : ''}`}>
+          <div className="evidence-terminal terminal-window">
             <div className="terminal-header">
               <div className="terminal-title">EVIDENCE FILES</div>
-              <button 
-                className="toggle-terminal"
-                onClick={() => setEvidenceClosed(!evidenceClosed)}
-              >
-                {evidenceClosed ? '▶' : '◀'}
-              </button>
             </div>
             <div className="terminal-body">
               <div className="file-list">
@@ -676,11 +664,10 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
                       className={`file-item ${isSelected ? 'selected' : ''} ${isRelated ? 'related' : ''}`}
                       onClick={() => setSelectedEvidenceFile(file)}
                     >
-                      <span className="file-perms">-rw-r--r--</span>
-                      <span className="file-size">{Math.floor(Math.random() * 900 + 100)}K</span>
                       <span className="file-icon">{getFileIcon(file.type)}</span>
                       <span className="file-name">{file.name}</span>
-                      {isRelated && <span className="flag-badge">[!]</span>}
+                      <span className="file-size">{Math.floor(Math.random() * 900 + 100)}KB</span>
+                      {isRelated && <span className="flag-badge">[RELEVANT]</span>}
                     </div>
                   );
                 })}
@@ -715,9 +702,9 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
 
               {relatedEvidenceFiles.length > 0 && (
                 <div className="hint-box">
-                  <div className="hint-header">⚡ ANALYST TIP</div>
+                  <div className="hint-header">[ANALYST NOTE]</div>
                   <div className="hint-content">
-                    Related files for current question:
+                    Related evidence for current investigation:
                     <ul>
                       {relatedEvidenceFiles.map(file => (
                         <li key={file.id}>{file.name}</li>
@@ -752,7 +739,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                   {isAnswered ? (
                     <div className="answered-status">
                       <div className="status-message">
-                        ✓ SOLVED (Attempts: {previousAnswer?.attempts || 1})
+                        [VERIFIED] Evidence confirmed ({previousAnswer?.attempts || 1} attempt{previousAnswer?.attempts !== 1 ? 's' : ''})
                       </div>
                       {currentQuestionIndex < questions.length - 1 && (
                         <button
@@ -806,7 +793,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
 
                       {feedback && (
                         <div className={`terminal-feedback ${feedback.type}`}>
-                          <span className="feedback-icon">{feedback.type === 'success' ? '✓' : '✗'}</span>
+                          <span className="feedback-icon">{feedback.type === 'success' ? '[MATCH]' : '[DENIED]'}</span>
                           {feedback.message}
                         </div>
                       )}
@@ -855,7 +842,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                         title={q.question}
                         disabled={allCompleted}
                       >
-                        {isCompleted ? '✓' : index + 1}
+                        {isCompleted ? 'OK' : `Q${index + 1}`}
                       </button>
                     );
                   })}

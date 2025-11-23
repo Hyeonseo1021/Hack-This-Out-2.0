@@ -2,18 +2,22 @@
 
 .progress-container {
   width: 100%;
-  padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 2rem 2rem 2rem;
   color: var(--color-white);
   font-family: 'Orbitron', sans-serif;
   overflow: hidden;
-  
+  min-height: 0;
 
   h2 {
     text-align: center;
     font-size: 2rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     color: #00f6ff;
     text-shadow: 0 0 10px #00f6ff;
+    flex-shrink: 0;
   }
 
   /* ===== Tabs ===== */
@@ -21,7 +25,8 @@
     display: flex;
     justify-content: center;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
 
     .tab-button {
       background: rgba(255, 255, 255, 0.05);
@@ -33,6 +38,7 @@
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
+      font-family: 'Orbitron', sans-serif;
 
       &:hover {
         background: rgba(0, 255, 255, 0.15);
@@ -49,16 +55,20 @@
   /* ===== Table Scroll Wrapper ===== */
   .table-wrapper {
     width: 100%;
-    max-height: 65vh; // ✅ 표만 스크롤
+    flex: 1;
     overflow-x: auto;
     overflow-y: auto;
-    margin-top: 1rem;
+    min-height: 0;
     border-radius: 10px;
 
     /* 스크롤바 스타일 */
     &::-webkit-scrollbar {
       height: 8px;
       width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
     }
     &::-webkit-scrollbar-thumb {
       background: rgba(0, 255, 255, 0.4);
@@ -73,8 +83,8 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 850px; // ✅ 스크롤 활성화 기준
-    margin: 0 auto;
+    min-width: 850px;
+    margin: 0;
     background: rgba(0, 10, 25, 0.6);
     border: 1px solid rgba(0, 255, 255, 0.3);
     border-radius: 0px;
@@ -85,14 +95,21 @@
       text-align: center;
       border-bottom: 1px solid rgba(0, 255, 255, 0.1);
       white-space: nowrap;
+      font-family: 'Orbitron', sans-serif;
     }
 
     thead {
-      background: rgba(0, 255, 255, 0.15);
       th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(0, 10, 25, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid rgba(0, 255, 255, 0.3);
         font-size: 1rem;
         color: #00f6ff;
         text-shadow: 0 0 8px #00f6ff;
+        font-weight: 600;
       }
     }
 
@@ -173,6 +190,7 @@
     font-size: 1.1rem;
     padding: 2rem;
     font-style: italic;
+    font-family: 'Orbitron', sans-serif;
   }
 
   /* ===== Responsive ===== */

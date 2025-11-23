@@ -2,7 +2,7 @@ import React from "react";
 import '../../assets/scss/landing/about.scss';
 import { GrFormCheckmark } from "react-icons/gr";
 import LoadingIcon from "../public/LoadingIcon";
-import aboutImage from '../../assets/img/icon/HTO ICON DARK RECOLORED_crop_fill.png';
+import aboutImage from '../../assets/img/icon/HTO Dark.png';
 // data의 타입을 정의
 interface AboutProps {
   data: {

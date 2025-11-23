@@ -67,6 +67,12 @@ const ArenaSchema = new mongoose.Schema({
     // 🔍 Vulnerability Scanner Race 설정 - NEW
     vulnerabilityScannerRace: {
       totalVulnerabilities: { type: Number, default: 7 },  // 총 취약점 개수
+      mode: {
+        type: String,
+        enum: ['SIMULATED', 'REAL'],  // SIMULATED: Claude 생성 HTML, REAL: 실제 웹
+        default: 'SIMULATED'
+      },
+      vulnerableHTML: { type: String, default: '' },  // Claude가 생성한 HTML (EASY/MEDIUM)
       vulnerabilities: [{
         vulnId: String,           // 취약점 고유 ID
         vulnType: String,         // 'SQLi', 'XSS', 'IDOR', etc.
@@ -81,7 +87,7 @@ const ArenaSchema = new mongoose.Schema({
           pointsAwarded: Number
         }]
       }],
-      targetUrl: String,          // 타겟 웹 애플리케이션 URL
+      targetUrl: String,          // 타겟 웹 애플리케이션 URL (HARD/EXPERT)
       targetDescription: String,  // 타겟 설명
       hints: [{
         vulnId: String,

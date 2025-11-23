@@ -149,6 +149,11 @@ export const submitAnswer = async (
     ).length || 0;
     const currentAttempt = previousAttempts + 1;
 
+    // ✅ 이전에 이 문제를 맞춘 적이 있는지 확인 (오답 후 정답 케이스)
+    const previouslyCorrect = progressDoc.forensicsRush?.answers?.some(
+      a => a.questionId === questionId && a.correct === true
+    ) || false;
+
     // 7. 점수 및 페널티 계산
     let pointsGained = 0;
     let penalty = 0;
@@ -180,16 +185,26 @@ export const submitAnswer = async (
     if (isCorrect) {
       // 정답인 경우
       updateData.$inc.score = pointsGained;
-      updateData.$inc['forensicsRush.questionsCorrect'] = 1;
-      
-      // 첫 정답인 경우에만 questionsAnswered 증가
-      if (previousAttempts === 0) {
-        updateData.$inc['forensicsRush.questionsAnswered'] = 1;
+
+      // ✅ 이전에 한 번도 정답을 맞추지 않은 경우에만 questionsCorrect와 questionsAnswered 증가
+      // (오답 후 정답 케이스도 포함)
+      if (!previouslyCorrect) {
+        updateData.$inc['forensicsRush.questionsCorrect'] = 1;
+
+        // questionsAnswered는 첫 시도인 경우에만 증가
+        if (previousAttempts === 0) {
+          updateData.$inc['forensicsRush.questionsAnswered'] = 1;
+        }
       }
     } else {
       // 오답인 경우
       updateData.$inc.score = -penalty;
       updateData.$inc['forensicsRush.penalties'] = penalty;
+
+      // ✅ 첫 오답인 경우 questionsAnswered 증가
+      if (previousAttempts === 0) {
+        updateData.$inc['forensicsRush.questionsAnswered'] = 1;
+      }
     }
 
     const updatedProgress = await ArenaProgress.findOneAndUpdate(
@@ -206,49 +221,69 @@ export const submitAnswer = async (
     const totalQuestions = scenarioData.totalQuestions || scenarioData.questions.length;
     const allCompleted = questionsCorrect >= totalQuestions;
 
-    // 10. Perfect Score 체크 (모든 문제를 첫 시도에 맞춤)
-    let perfectScore = false;
+    // 10. 완료 보너스 체크 (시도 횟수에 따라 차등 지급)
+    let completionBonus = 0;
     let finalScore = updatedProgress.score;
-    
+
     if (allCompleted) {
       const allAnswers = updatedProgress.forensicsRush?.answers || [];
       const correctAnswers = allAnswers.filter(a => a.correct);
-      
-      // 모든 정답이 첫 시도였는지 확인
-      perfectScore = correctAnswers.every(a => a.attempts === 1);
-      
-      if (perfectScore) {
-        // ✅ Perfect Score 보너스 추가
-        const bonus = scenarioData.scoring.perfectScoreBonus || 50;
-        const bonusUpdate = await ArenaProgress.findOneAndUpdate(
-          { arena: arenaId, user: userId },
-          { 
-            $inc: { score: bonus },
-            $set: { 'forensicsRush.perfectScore': true }
-          },
-          { new: true }
-        );
-        
-        finalScore = bonusUpdate?.score || (updatedProgress.score + bonus);
-        console.log(`   🎉 Perfect Score! Bonus: +${bonus}, Final Score: ${finalScore}`);
+
+      // ✅ 이미 보너스를 받았는지 확인
+      const alreadyGotBonus = updatedProgress.forensicsRush?.perfectScore === true;
+
+      if (!alreadyGotBonus && correctAnswers.length === totalQuestions) {
+        // 최대 시도 횟수 확인
+        const maxAttempts = Math.max(...correctAnswers.map(a => a.attempts || 1));
+
+        // 시도 횟수에 따른 차등 보너스
+        if (maxAttempts === 1) {
+          // 모든 문제를 첫 시도에 정답
+          completionBonus = 20;
+          console.log(`   🎯 Perfect Score! All correct on first try`);
+        } else if (maxAttempts === 2) {
+          // 모든 문제를 2번 이내에 정답
+          completionBonus = 10;
+          console.log(`   ✨ Great! All correct within 2 attempts`);
+        } else if (maxAttempts === 3) {
+          // 모든 문제를 3번 이내에 정답
+          completionBonus = 5;
+          console.log(`   👍 Good! All correct within 3 attempts`);
+        } else {
+          console.log(`   ✅ Completed all questions (max attempts: ${maxAttempts})`);
+        }
+
+        if (completionBonus > 0) {
+          const bonusUpdate = await ArenaProgress.findOneAndUpdate(
+            { arena: arenaId, user: userId },
+            {
+              $inc: { score: completionBonus },
+              $set: { 'forensicsRush.perfectScore': true }
+            },
+            { new: true }
+          );
+
+          finalScore = bonusUpdate?.score || (updatedProgress.score + completionBonus);
+          console.log(`   💰 Completion Bonus: +${completionBonus}, Final Score: ${finalScore}`);
+        }
       }
     }
 
-    // ✅ 11. 결과 반환 (중복 보너스 제거)
+    // ✅ 11. 결과 반환
     return {
       success: true,
-      message: isCorrect 
-        ? `Correct! +${pointsGained} points` 
+      message: isCorrect
+        ? `Correct! +${pointsGained} points`
         : `Incorrect. -${penalty} points`,
       correct: isCorrect,
       questionId,
       points: isCorrect ? pointsGained : 0,
       penalty: isCorrect ? 0 : penalty,
-      totalScore: finalScore, // ✅ 이미 보너스가 포함된 최종 점수
+      totalScore: finalScore, // ✅ 완료 보너스가 포함된 최종 점수
       attempts: currentAttempt,
       questionsAnswered: updatedProgress.forensicsRush?.questionsAnswered || 0,
       questionsCorrect: updatedProgress.forensicsRush?.questionsCorrect || 0,
-      perfectScore,
+      perfectScore: completionBonus === 20, // 첫 시도에 모두 맞춘 경우만 true
       allCompleted
     };
 

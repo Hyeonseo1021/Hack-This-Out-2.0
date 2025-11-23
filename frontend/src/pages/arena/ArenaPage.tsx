@@ -197,13 +197,11 @@ const ArenaPage: React.FC = () => {
 
   return (
     <Main>
-      <div className="blueprint-container">
-        <div className="blueprint-container__scanline"></div>
-
+      <div className="arena-container">
         {/* 좌측: 아레나 리스트 패널 */}
         <div className="blueprint-panel blueprint-panel--list">
           <div className="blueprint-panel__header">
-            <h2 className="blueprint-panel__title">ARENA LIST</h2>
+            <h2 className="blueprint-panel__title" data-text="ARENA LIST">ARENA LIST</h2>
           </div>
           <div className="blueprint-panel__body">
             <div className="arena-list">
@@ -257,7 +255,7 @@ const ArenaPage: React.FC = () => {
         {/* 우측: 방 만들기 패널 */}
         <div className="blueprint-panel blueprint-panel--create">
           <div className="blueprint-panel__header">
-            <h2 className="blueprint-panel__title">NEW CONNECTION</h2>
+            <h2 className="blueprint-panel__title" data-text="CREATE ROOM">CREATE ROOM</h2>
           </div>
           <div className="blueprint-panel__body blueprint-panel__body--center">
             <button className="blueprint-button" onClick={() => navigate('/arena/create')}>

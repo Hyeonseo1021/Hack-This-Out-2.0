@@ -3,6 +3,7 @@
 import { Server } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
+import { GameMode, assignBatchArenaExp } from './expCalculator';
 
 // 진행 중인 유예 타이머 추적
 const graceTimers = new Map<string, NodeJS.Timeout>();
@@ -147,6 +148,21 @@ export async function checkAndEndIfAllCompleted(arenaId: string, io: Server) {
   }
 }
 
+/**
+ * Arena mode를 GameMode enum으로 변환
+ */
+function convertArenaModeToGameMode(arenaMode: string): GameMode {
+  const modeMap: Record<string, GameMode> = {
+    'TERMINAL_HACKING_RACE': GameMode.TERMINAL_RACE,
+    'KING_OF_THE_HILL': GameMode.KING_OF_THE_HILL,
+    'SOCIAL_ENGINEERING_CHALLENGE': GameMode.SOCIAL_ENGINEERING,
+    'VULNERABILITY_SCANNER_RACE': GameMode.VULNERABILITY_SCANNER,
+    'FORENSICS_RUSH': GameMode.FORENSICS_RUSH
+  };
+
+  return modeMap[arenaMode] || GameMode.TERMINAL_RACE;
+}
+
 // handlers/utils/endArenaProcedure.ts의 finalizeArena 함수 수정
 
 async function finalizeArena(arenaId: string, io: Server) {
@@ -273,6 +289,75 @@ async function finalizeArena(arenaId: string, io: Server) {
 
     await arena.save();
     console.log(`✅ [finalizeArena] Arena saved with status: ended`);
+
+    // ✨ 경험치 계산 및 부여
+    console.log('\n✨ [finalizeArena] Calculating and assigning experience...');
+    try {
+      // 모든 참가자를 점수 순으로 정렬하여 순위 부여
+      const rankedProgress = await ArenaProgress.find({ arena: arenaId })
+        .sort({
+          completed: -1,  // 완료한 사람 우선
+          score: -1,      // 점수 높은 순
+          submittedAt: 1  // 빠른 제출 시간 우선
+        })
+        .lean();
+
+      // 중복 유저 제거 (각 유저당 하나의 progress만 유지)
+      const uniqueProgress = rankedProgress.reduce((acc: any[], progress: any) => {
+        const userId = progress.user.toString();
+        if (!acc.find(p => p.user.toString() === userId)) {
+          acc.push(progress);
+        }
+        return acc;
+      }, []);
+
+      console.log(`📊 [finalizeArena] Total progress: ${rankedProgress.length}, Unique users: ${uniqueProgress.length}`);
+
+      // 패배 조건 필터링: 점수가 0 이하인 플레이어는 EXP 부여하지 않음
+      const qualifiedProgress = uniqueProgress.filter(progress => {
+        const score = progress.score || 0;
+        if (score <= 0) {
+          console.log(`❌ [finalizeArena] User ${progress.user} excluded from EXP (score: ${score})`);
+          return false;
+        }
+        return true;
+      });
+
+      console.log(`🏆 [finalizeArena] Qualified for EXP: ${qualifiedProgress.length}/${uniqueProgress.length} players`);
+
+      // 순위별로 경험치 계산할 데이터 준비 (점수가 있는 플레이어만)
+      const expData = qualifiedProgress.map((progress, index) => ({
+        userId: progress.user.toString(),
+        rank: index + 1,
+        score: progress.score || 0,
+        completionTime: progress.completionTime || undefined
+      }));
+
+      // GameMode 변환
+      const gameMode = convertArenaModeToGameMode(arena.mode);
+
+      // 일괄 경험치 부여
+      const expResults = await assignBatchArenaExp(expData, gameMode);
+
+      // ArenaProgress에 경험치 정보 저장
+      for (const result of expResults) {
+        await ArenaProgress.updateOne(
+          { arena: arenaId, user: result.userId },
+          {
+            $set: {
+              expEarned: result.expResult.totalExp
+            }
+          }
+        );
+
+        console.log(`   ✅ User ${result.userId}: Rank ${expData.find(d => d.userId === result.userId)?.rank} → +${result.expResult.totalExp} EXP (Level ${result.previousLevel} → ${result.newLevel}${result.leveledUp ? ' 🎉 LEVEL UP!' : ''})`);
+      }
+
+      console.log('✨ [finalizeArena] Experience assignment completed\n');
+    } catch (error) {
+      console.error('❌ [finalizeArena] Error assigning experience:', error);
+      // 경험치 부여 실패는 게임 종료를 막지 않음
+    }
 
     // 모든 클라이언트에게 게임 종료 알림
     io.to(arenaId).emit('arena:ended', {

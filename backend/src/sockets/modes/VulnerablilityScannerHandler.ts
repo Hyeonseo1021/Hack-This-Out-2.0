@@ -8,7 +8,9 @@ import {
   processVulnerabilitySubmission,
   requestHint,
   getGameState
-} from '../../services/vulnerbilityScannerRace/Vulnerabilityscannerengine';
+} from '../../services/vulnerbilityScannerRace/vulnerabilityScannerEngine';
+import { generateVulnerableHTML } from '../../services/vulnerbilityScannerRace/generateVulnerableHTML';
+import { endArenaProcedure } from '../utils/endArenaProcedure';
 
 /**
  * 🔍 Vulnerability Scanner Race Socket Handlers
@@ -108,36 +110,9 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       // 6. 게임 종료 체크
       const arena = await Arena.findById(arenaId);
       if (arena?.status === 'ended') {
-        console.log('🏁 [scannerRace:submit] Game ended!');
-        
-        // 최종 순위
-        const finalRanking = await ArenaProgress.find({ arena: arenaId })
-          .sort({ score: -1 })
-          .populate('user', 'username')
-          .lean(); // ✅ lean() 추가
-
-        const winner = finalRanking[0];
-        const winnerUser = winner?.user as any;
-
-        io.to(arenaId).emit('arena:ended', {
-          arenaId,
-          winner: {
-            userId: winnerUser?._id || winnerUser,
-            username: winnerUser?.username || 'Unknown',
-            score: winner?.score || 0
-          },
-          ranking: finalRanking.map((p: any, index: number) => {
-            const pUser = p.user as any;
-            return {
-              rank: index + 1,
-              userId: pUser?._id || pUser,
-              username: pUser?.username || 'Unknown',
-              score: p.score || 0,
-              vulnerabilitiesFound: (p.vulnerabilityScannerRace as any)?.vulnerabilitiesFound || 0,
-              firstBloods: (p.vulnerabilityScannerRace as any)?.firstBloods || 0
-            };
-          })
-        });
+        console.log('🏁 [scannerRace:submit] Game ended! Calling endArenaProcedure...');
+        // ✅ endArenaProcedure 호출하여 경험치 계산 및 게임 종료
+        await endArenaProcedure(arenaId, io);
       }
 
     } catch (error) {
@@ -204,7 +179,7 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
    * 게임 상태 조회
    */
   socket.on('scannerRace:get-state', async () => {
-    
+
     const arenaId = (socket as any).arenaId;
     const userId = (socket as any).userId;
 
@@ -223,7 +198,16 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
         return;
       }
 
-      socket.emit('scannerRace:state-data', gameState);
+      // Arena에서 mode와 vulnerableHTML 가져오기
+      const arena = await Arena.findById(arenaId);
+      const mode = arena?.modeSettings?.vulnerabilityScannerRace?.mode || 'SIMULATED';
+      const vulnerableHTML = arena?.modeSettings?.vulnerabilityScannerRace?.vulnerableHTML || '';
+
+      socket.emit('scannerRace:state-data', {
+        ...gameState,
+        mode,
+        vulnerableHTML
+      });
 
     } catch (error) {
       console.error('[scannerRace:get-state] Error:', error);
@@ -383,22 +367,50 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
  * 🎬 게임 시작 시 초기화
  */
 export async function initializeScannerRace(arenaId: string): Promise<void> {
-  
+
+  const startTime = Date.now();
   console.log('🎬 [initializeScannerRace] Initializing...');
 
   try {
+    const t1 = Date.now();
     const arena = await Arena.findById(arenaId).populate('scenarioId');
     if (!arena) return;
 
     const scenario = arena.scenarioId as any;
     const vulnerabilities = scenario.data?.vulnerabilities || [];
+    const mode = scenario.data?.mode || 'SIMULATED';
+
+    console.log(`📊 [initializeScannerRace] Mode: ${mode}, DB fetch took ${Date.now() - t1}ms`);
+
+    // 시나리오 생성 시 저장된 HTML 사용
+    let vulnerableHTML = '';
+
+    if (mode === 'SIMULATED') {
+      const t2 = Date.now();
+      // 시나리오 생성 시 이미 생성된 HTML 사용
+      vulnerableHTML = scenario.data?.generatedHTML || '';
+
+      if (!vulnerableHTML) {
+        console.warn('⚠️ [initializeScannerRace] No generated HTML found in scenario. Generating fallback...');
+        vulnerableHTML = await generateVulnerableHTML(scenario);
+        console.log(`⏱️ [initializeScannerRace] HTML generation took ${Date.now() - t2}ms`);
+      } else {
+        console.log(`✅ [initializeScannerRace] Using pre-generated HTML (${vulnerableHTML.length} characters), took ${Date.now() - t2}ms`);
+      }
+    } else {
+      // REAL 모드: 실제 웹 사용
+      console.log(`🌐 [initializeScannerRace] Using real web: ${scenario.data?.targetUrl}`);
+    }
 
     // Arena에 취약점 초기화
+    const t3 = Date.now();
     await Arena.updateOne(
       { _id: arenaId },
       {
         $set: {
           'modeSettings.vulnerabilityScannerRace': {
+            mode,
+            vulnerableHTML,
             totalVulnerabilities: vulnerabilities.length,
             vulnerabilities: vulnerabilities.map((v: any) => ({
               vulnId: v.vulnId,
@@ -416,8 +428,10 @@ export async function initializeScannerRace(arenaId: string): Promise<void> {
         }
       }
     );
+    console.log(`⏱️ [initializeScannerRace] Arena update took ${Date.now() - t3}ms`);
 
     // 각 플레이어의 ArenaProgress 초기화
+    const t4 = Date.now();
     const participants = arena.participants.map((p: any) => p.user);
 
     for (const userId of participants) {
@@ -440,8 +454,10 @@ export async function initializeScannerRace(arenaId: string): Promise<void> {
         { upsert: true }
       );
     }
+    console.log(`⏱️ [initializeScannerRace] ArenaProgress updates took ${Date.now() - t4}ms (${participants.length} participants)`);
 
-    console.log('✅ [initializeScannerRace] Initialized successfully');
+
+    console.log(`✅ [initializeScannerRace] Initialized successfully in ${Date.now() - startTime}ms`);
 
   } catch (error) {
     console.error('[initializeScannerRace] Error:', error);

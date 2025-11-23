@@ -1,6 +1,7 @@
 /* * BattlePage.scss - Unstable Data Stream Theme (v4 - Star Removed)
  */
 @use "../style" as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Share+Tech+Mono&display=swap');
 
 // --- 테마 변수 ---
 :root {
@@ -26,8 +27,9 @@
   gap: 16px;
   overflow: hidden;
   width: 100%;
-  min-height: 100vh;
-  padding: 2rem 1rem;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 // --- 동적 배경 그리드 ---
@@ -46,18 +48,20 @@
 .battle-mode-module {
   position: relative;
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   width: clamp(300px, 90vw, 900px);
 }
 
 // --- 글리치 타이틀 ---
 .battle-title {
   position: relative;
-  font-size: clamp(3rem, 10vw, 6rem);
+  font-size: clamp(3rem, 10vw, 7rem);
   font-weight: 700;
   color: var(--text-color);
   text-transform: uppercase;
-  margin: 0 0 4rem 0;
+  margin: 0 0 3rem 0;
+  letter-spacing: 0.5rem;
+  font-family: 'Orbitron', sans-serif;
   animation: text-flicker 4s linear infinite;
 
   &::before, &::after {
@@ -87,11 +91,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5rem;
-  
+  gap: 2.5rem;
+
   @media(min-width: 768px) {
     flex-direction: row;
     justify-content: center;
+    gap: 3rem;
   }
 }
 
@@ -105,6 +110,7 @@
   text-decoration: none;
   text-transform: uppercase;
   font-size: 2rem;
+  font-family: 'Orbitron', sans-serif;
   border: 1px solid var(--border-color);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
   transition: all 0.3s ease;
@@ -139,9 +145,10 @@
 }
 
 .cyber-footer-text {
-  margin-top: 4rem;
+  margin-top: 2.5rem;
   color: var(--border-color);
   opacity: 0.7;
+  font-family: 'Share Tech Mono', monospace;
 }
 
 // --- 애니메이션 키프레임 ---

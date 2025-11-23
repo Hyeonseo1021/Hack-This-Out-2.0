@@ -1,51 +1,40 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createArena } from '../../api/axiosArena';
-import '../../assets/scss/arena/AddArenaForm.scss'; 
+import '../../assets/scss/arena/AddArenaForm.scss';
 
 const modes = [
-  { 
-    id: 'TERMINAL_HACKING_RACE', 
-    icon: '⚡', 
-    title: 'Terminal Hacking Race', 
-    desc: '터미널 명령어로 가장 빠르게 해킹!',
+  {
+    id: 'TERMINAL_HACKING_RACE',
+    title: 'Terminal Race',
+    desc: '터미널 명령어로 가장 빠르게 해킹',
     players: '2-8명'
   },
-  { 
-    id: 'VULNERABILITY_SCANNER_RACE',  // ✅ 추가
-    icon: '🔍', 
-    title: 'Vulnerability Scanner Race', 
-    desc: '웹 애플리케이션의 취약점을 찾아내라!',
+  {
+    id: 'VULNERABILITY_SCANNER_RACE',
+    title: 'Vulnerability Scanner Race',
+    desc: '웹 애플리케이션의 취약점을 찾아내라',
     players: '2명'
   },
-  { 
-    id: 'KING_OF_THE_HILL', 
-    icon: '👑', 
-    title: 'King of the Hill', 
-    desc: '서버를 점령하고 왕좌를 지켜라!',
+  {
+    id: 'FORENSICS_RUSH',
+    title: 'Forensics Rush',
+    desc: '증거를 분석하고 범인을 찾아내라',
     players: '2-8명'
   },
-  { 
-    id: 'FORENSICS_RUSH', 
-    icon: '🔎',  // 🔍에서 🔎으로 변경 (구분)
-    title: 'Forensics Rush', 
-    desc: '증거를 분석하고 범인을 찾아내라!',
-    players: '2-8명'
-  },
-  { 
-    id: 'SOCIAL_ENGINEERING_CHALLENGE', 
-    icon: '💬', 
-    title: 'Social Engineering', 
-    desc: 'AI를 속여 정보를 빼내는 심리전!',
+  {
+    id: 'SOCIAL_ENGINEERING_CHALLENGE',
+    title: 'Social Engineering',
+    desc: 'AI를 속여 정보를 빼내는 심리전',
     players: '1-4명'
   },
 ];
 
 const difficulties = [
-  { id: 'EASY', icon: '🟢', title: 'Easy' },
-  { id: 'MEDIUM', icon: '🟡', title: 'Medium'},
-  { id: 'HARD', icon: '🔴', title: 'Hard' },
-  { id: 'EXPERT', icon: '💀', title: 'Expert'},
+  { id: 'EASY', title: 'Easy' },
+  { id: 'MEDIUM', title: 'Medium'},
+  { id: 'HARD', title: 'Hard' },
+  { id: 'EXPERT', title: 'Expert'},
 ];
 
 const AddArenaForm: React.FC = () => {
@@ -66,9 +55,9 @@ const AddArenaForm: React.FC = () => {
 
   const handleModeSelect = (mode: string) => {
     setFormData(prev => ({ ...prev, mode }));
-    
+
     // 모드별 참가자 수 자동 설정
-    if (mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
+    if (mode === 'VULNERABILITY_SCANNER_RACE') {
       setFormData(prev => ({ ...prev, maxParticipants: 2 }));
     } else if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
       setFormData(prev => ({ ...prev, maxParticipants: Math.min(prev.maxParticipants, 4) }));
@@ -88,7 +77,6 @@ const AddArenaForm: React.FC = () => {
       return;
     }
 
-    // ✅ Vulnerability Scanner Race 검증 추가
     if (formData.mode === 'VULNERABILITY_SCANNER_RACE' && formData.maxParticipants !== 2) {
       setError('System Error: Vulnerability Scanner Race requires exactly 2 players.');
       return;
@@ -113,9 +101,8 @@ const AddArenaForm: React.FC = () => {
     }
   };
 
-  // 선택된 모드의 참가자 수 제한 가져오기
   const getMaxParticipantsLimit = () => {
-    if (formData.mode === 'VULNERABILITY_SCANNER_RACE') {  // ✅ 추가
+    if (formData.mode === 'VULNERABILITY_SCANNER_RACE') {
       return { min: 2, max: 2 };
     }
     if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
@@ -128,17 +115,16 @@ const AddArenaForm: React.FC = () => {
 
   return (
     <div className="arena-create-container">
-      <div className="crt-overlay"></div>
-      <h1 className="glitch-title" data-text="CREATE ARENA">CREATE ARENA</h1>
+      <h1>Create Arena</h1>
 
       <form className="arena-grid-layout" onSubmit={handleSubmit}>
-        
-        {/* --- 1. 메인 컨트롤 창 --- */}
-        <div className="widget-window main-controls">
-          <div className="widget-titlebar">MAIN_CONTROL</div>
-          <div className="widget-content">
+
+        {/* 왼쪽: 모든 설정 */}
+        <div className="card settings-card">
+          <h2 className="card-title">Arena Settings</h2>
+          <div className="card-content">
             <div className="form-group">
-              <label>ROOM NAME</label>
+              <label>Room Name</label>
               <input
                 type="text"
                 name="name"
@@ -148,101 +134,71 @@ const AddArenaForm: React.FC = () => {
                 maxLength={30}
               />
             </div>
-            
-            <div className="form-inline">
-              <div className="form-group small">
-                <label>MAX PARTICIPANTS</label>
-                <input
-                  type="number"
-                  name="maxParticipants"
-                  value={formData.maxParticipants}
-                  onChange={handleChange}
-                  min={participantsLimit.min}
-                  max={participantsLimit.max}
-                  disabled={ 
-                    formData.mode === 'VULNERABILITY_SCANNER_RACE'  // ✅ 추가
+
+            <div className="form-group">
+              <label>Max Participants</label>
+              <input
+                type="number"
+                name="maxParticipants"
+                value={formData.maxParticipants}
+                onChange={handleChange}
+                min={participantsLimit.min}
+                max={participantsLimit.max}
+                disabled={formData.mode === 'VULNERABILITY_SCANNER_RACE'}
+              />
+              {formData.mode && (
+                <small className="input-hint">
+                  {participantsLimit.min === participantsLimit.max
+                    ? `Fixed: ${participantsLimit.max} players`
+                    : `Range: ${participantsLimit.min}-${participantsLimit.max} players`
                   }
-                />
-                {formData.mode && (
-                  <small className="input-hint">
-                    {participantsLimit.min === participantsLimit.max 
-                      ? `Fixed: ${participantsLimit.max} players`
-                      : `Range: ${participantsLimit.min}-${participantsLimit.max} players`
-                    }
-                  </small>
-                )}
+                </small>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label>Difficulty</label>
+              <div className="difficulty-buttons">
+                {difficulties.map(diff => (
+                  <button
+                    key={diff.id}
+                    type="button"
+                    className={`difficulty-btn ${formData.difficulty === diff.id ? 'selected' : ''}`}
+                    onClick={() => handleDifficultySelect(diff.id)}
+                  >
+                    <span>{diff.title}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* --- 2. 모드 선택 창 --- */}
-        <div className="widget-window mode-selector">
-          <div className="widget-titlebar">MODE_SELECT</div>
-          <div className="widget-content">
-            <div className="mode-table-layout">
-              {modes.map(mode => (
-                <div
-                  key={mode.id}
-                  className={`mode-row ${formData.mode === mode.id ? 'selected' : ''}`}
-                  onClick={() => handleModeSelect(mode.id)}
-                >
-                  <div className="mode-icon">{mode.icon}</div>
-                  <div className="mode-info">
-                    <div className="mode-title">{mode.title}</div>
-                    <div className="mode-desc">{mode.desc}</div>
-                    <div className="mode-players">{mode.players}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+            {error && <div className="error-message">{error}</div>}
 
-        {/* --- 3. 난이도 선택 창 --- */}
-        <div className="widget-window difficulty-selector">
-          <div className="widget-titlebar">DIFFICULTY_SELECT</div>
-          <div className="widget-content">
-            <div className="difficulty-grid">
-              {difficulties.map(diff => (
-                <div
-                  key={diff.id}
-                  className={`difficulty-card ${formData.difficulty === diff.id ? 'selected' : ''}`}
-                  onClick={() => handleDifficultySelect(diff.id)}
-                >
-                  <div className="difficulty-icon">{diff.icon}</div>
-                  <div className="difficulty-title">{diff.title}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* --- 4. 시스템 로그 창 --- */}
-        <div className="widget-window system-log">
-          <div className="widget-titlebar">SYSTEM_LOG</div>
-          <div className="widget-content">
-            <div className="log-area">
-              {!error && !loading && !formData.mode && (
-                <p className="log-entry info">System ready. Awaiting command...</p>
-              )}
-              {!error && !loading && formData.mode && !formData.difficulty && (
-                <p className="log-entry info">Mode selected: {formData.mode}. Select difficulty...</p>
-              )}
-              {!error && !loading && formData.mode && formData.difficulty && (
-                <p className="log-entry success">
-                  Configuration complete: {formData.mode} - {formData.difficulty}
-                </p>
-              )}
-              {loading && <p className="log-entry processing">Connecting to host... Creating arena...</p>}
-              {error && <p className="log-entry error">{error}</p>}
-            </div>
-            <button type="submit" className="neon-button" disabled={loading}>
-              {loading ? 'EXECUTING...' : 'EXECUTE'}
+            <button type="submit" className="submit-button" disabled={loading}>
+              <span>{loading ? 'Creating...' : 'Create Arena'}</span>
             </button>
           </div>
         </div>
 
+        {/* 오른쪽: 게임 모드 */}
+        <div className="card mode-selector">
+          <h2 className="card-title">Select Game Mode</h2>
+          <div className="card-content">
+            <div className="mode-list">
+              {modes.map(mode => (
+                <div
+                  key={mode.id}
+                  className={`mode-card ${formData.mode === mode.id ? 'selected' : ''}`}
+                  onClick={() => handleModeSelect(mode.id)}
+                >
+                  <h3 className="mode-title">{mode.title}</h3>
+                  <p className="mode-desc">{mode.desc}</p>
+                  <span className="mode-players">{mode.players}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </form>
     </div>
   );

@@ -39,13 +39,13 @@ export interface ArenaHistoryItem {
   _id: string;
   name: string; // 아레나 이름
   mode: string; // ex: 'Terminal Race', 'Defense Battle', etc.
-  host: {
+  host?: {
     _id: string;
     username: string;
   };
-  startTime: string;
+  startTime?: string;
   endTime: string;
-  status: 'waiting' | 'started' | 'ended';
+  status?: 'waiting' | 'started' | 'ended';
   winner: {
     _id: string;
     username: string;
@@ -57,9 +57,13 @@ export interface ArenaHistoryItem {
     };
     rank: number;
     expEarned: number;
-    flagCorrect: boolean;
+    flagCorrect?: boolean;
     score: number;
-    stage: number;
+    stage?: number;
   }[];
-  arenaExp: number;
+  arenaExp?: number;
+  myExpEarned: number;  // ✨ 내가 획득한 경험치
+  myRank?: number;
+  myScore?: number;
+  myCompleted?: boolean;
 }

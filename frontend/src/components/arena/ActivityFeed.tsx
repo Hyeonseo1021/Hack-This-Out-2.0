@@ -248,8 +248,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 className={`feed-item feed-${feed.type} ${feed.isMe ? 'feed-me' : ''}`}
               >
                 <span className="feed-icon">
-                  {feed.type === 'flag' && '🚩'}
-                  {feed.type === 'stage' && '⬆️'}
+                  {feed.type === 'flag' && ''}
+                  {feed.type === 'stage' && '⬆'}
                   {feed.type === 'score' && ''}
                   {feed.type === 'command' && '▶'}
                 </span>

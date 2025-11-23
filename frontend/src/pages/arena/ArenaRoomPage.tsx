@@ -6,12 +6,10 @@ import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaRoomPage.scss';
 
-const MAX_PLAYERS = 8;
-
 type ChatMessage = {
-  type: 'chat' | 'system' | 'notification'; 
+  type: 'chat' | 'system' | 'notification';
   senderId?: string;
-  senderName: string; 
+  senderName: string;
   message: string;
   timestamp: string;
 };
@@ -36,28 +34,31 @@ const ArenaRoomPage: React.FC = () => {
   const chatMessagesEndRef = useRef<null | HTMLDivElement>(null);
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const [maxPlayers, setMaxPlayers] = useState<number>(8);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initMessage, setInitMessage] = useState('');
   const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
 
   // Mode/Difficulty 헬퍼
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
-      'TERMINAL_HACKING_RACE': '⚡ Terminal Race',
-      'VULNERABILITY_SCANNER_RACE': '🔍 Vulnerability Scanner Race',  // ✅ 추가
-      'KING_OF_THE_HILL': '👑 King of the Hill',
-      'FORENSICS_RUSH': '🔎 Forensics Rush',
-      'SOCIAL_ENGINEERING_CHALLENGE': '💬 Social Engineering'
+      'TERMINAL_HACKING_RACE': 'Terminal Race',
+      'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',
+      'KING_OF_THE_HILL': 'King of the Hill',
+      'FORENSICS_RUSH': 'Forensics Rush',
+      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'
     };
     return names[mode] || mode;
   };
 
   const getDifficultyInfo = (diff: string) => {
-    const info: Record<string, { emoji: string; color: string }> = {
-      'EASY': { emoji: '🟢', color: '#4ade80' },
-      'MEDIUM': { emoji: '🟡', color: '#fbbf24' },
-      'HARD': { emoji: '🔴', color: '#f87171' },
-      'EXPERT': { emoji: '💀', color: '#a855f7' }
+    const info: Record<string, { color: string }> = {
+      'EASY': { color: '#4ade80' },
+      'MEDIUM': { color: '#fbbf24' },
+      'HARD': { color: '#f87171' },
+      'EXPERT': { color: '#a855f7' }
     };
-    return info[diff] || { emoji: '⚪', color: '#999' };
+    return info[diff] || { color: '#999' };
   };
 
   // 본인 정보
@@ -66,14 +67,14 @@ const ArenaRoomPage: React.FC = () => {
     [activeParticipants, currentUserId]
   );
   
-  // 8개의 슬롯을 만들고, 활성 참가자로 채워넣는 로직
+  // 슬롯을 만들고, 활성 참가자로 채워넣는 로직
   const displaySlots = useMemo(() => {
-    const slots = new Array(MAX_PLAYERS).fill(null);
-    activeParticipants.slice(0, MAX_PLAYERS).forEach((p, index) => {
+    const slots = new Array(maxPlayers).fill(null);
+    activeParticipants.slice(0, maxPlayers).forEach((p, index) => {
       slots[index] = p;
     });
     return slots;
-  }, [activeParticipants]);
+  }, [activeParticipants, maxPlayers]);
 
   // 호스트 판별
   useEffect(() => {
@@ -113,6 +114,7 @@ const ArenaRoomPage: React.FC = () => {
   };
 
   const handleLeave = () => {
+    skipLeaveRef.current = true; // cleanup에서 중복 호출 방지
     socket.emit('arena:leave', { arenaId, userId: currentUserId });
     navigate('/arena');
   };
@@ -151,6 +153,7 @@ const ArenaRoomPage: React.FC = () => {
         setStatus(data?.status || 'waiting');
         setMode(data?.mode || '');
         setDifficulty(data?.difficulty || '');
+        setMaxPlayers(data?.maxParticipants || 8);
         setLoading(false);
       } catch (error) {
         console.error('❌ Error loading arena data:', error);
@@ -167,24 +170,47 @@ const ArenaRoomPage: React.FC = () => {
       return;
     }
 
+    console.log('🔌 [ArenaRoomPage] Socket connected:', socket.connected);
+    console.log('🔌 [ArenaRoomPage] Setting up event listeners for arenaId:', arenaId);
+
     socket.off('arena:update');
     socket.off('arena:start');
     socket.off('arena:join-failed');
-    socket.off('arena:chatMessage'); 
-    socket.off('arena:notify');      
+    socket.off('arena:chatMessage');
+    socket.off('arena:notify');
     socket.off('arena:kicked');
+    socket.off('arena:initializing');
+    socket.off('arena:initialized');
 
     socket.on('arena:update', payload => {
-      if (payload.arenaId !== arenaId) return;
-      
+      console.log('🔄 [ArenaRoomPage] arena:update received:', payload);
+      if (payload.arenaId !== arenaId) {
+        console.log('⚠️ [ArenaRoomPage] arenaId mismatch:', payload.arenaId, arenaId);
+        return;
+      }
+
       setStatus(payload.status || 'waiting');
       setHostId(payload.host || null);
       setParticipants(payload.participants || []);
+      console.log('👥 [ArenaRoomPage] Updated participants:', payload.participants);
       if (payload.name) {
         setArenaName(payload.name);
       }
       if (payload.mode) setMode(payload.mode);
       if (payload.difficulty) setDifficulty(payload.difficulty);
+      if (payload.maxParticipants) setMaxPlayers(payload.maxParticipants);
+    });
+
+    socket.on('arena:initializing', ({ message }: { message: string }) => {
+      console.log('⏳ [ArenaRoomPage] arena:initializing:', message);
+      setIsInitializing(true);
+      setInitMessage(message);
+    });
+
+    socket.on('arena:initialized', () => {
+      console.log('✅ [ArenaRoomPage] arena:initialized');
+      setIsInitializing(false);
+      setInitMessage('');
     });
 
     socket.on('arena:start', ({ arenaId: startedId }) => {
@@ -192,7 +218,7 @@ const ArenaRoomPage: React.FC = () => {
         skipLeaveRef.current = true;
         setShowStartOverlay(true);
         setCountdown(3);
-        
+
         const countdownInterval = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
@@ -202,7 +228,7 @@ const ArenaRoomPage: React.FC = () => {
             return prev - 1;
           });
         }, 1000);
-        
+
         setTimeout(() => {
           navigate(`/arena/play/${arenaId}`);
         }, 3500);
@@ -219,6 +245,7 @@ const ArenaRoomPage: React.FC = () => {
     });
 
     socket.on('arena:notify', (payload: { type: 'system', message: string }) => {
+      console.log('📢 [ArenaRoomPage] arena:notify received:', payload);
       setChatMessages(prev => [...prev, {
         ...payload,
         senderName: 'SYSTEM',
@@ -232,16 +259,21 @@ const ArenaRoomPage: React.FC = () => {
       navigate('/arena');
     });
 
+    console.log('📡 [ArenaRoomPage] Emitting arena:join...', { arenaId, userId: currentUserId });
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {
-      socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      if (!skipLeaveRef.current) {
+        socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      }
       socket.off('arena:update');
       socket.off('arena:start');
       socket.off('arena:join-failed');
       socket.off('arena:chatMessage');
-      socket.off('arena:notify');     
+      socket.off('arena:notify');
       socket.off('arena:kicked');
+      socket.off('arena:initializing');
+      socket.off('arena:initialized');
     };
   }, [arenaId, currentUserId, navigate]);
 
@@ -265,20 +297,31 @@ const ArenaRoomPage: React.FC = () => {
 
   return (
     <Main>
-      {/* 게임 시작 오버레이 */}
-        {showStartOverlay && (
-          <div className="game-start-overlay">
-            <div className="start-overlay-content">
-              <div className="start-title">GAME STARTING</div>
-              {countdown > 0 ? (
-                <div className="countdown-number">{countdown}</div>
-              ) : (
-                <div className="countdown-go">GO!</div>
-              )}
-              <div className="start-subtitle">Prepare for battle...</div>
-            </div>
+      {/* 초기화 로딩 오버레이 */}
+      {isInitializing && (
+        <div className="game-start-overlay initializing">
+          <div className="start-overlay-content">
+            <div className="loading-spinner-large"></div>
+            <div className="start-title">INITIALIZING</div>
+            <div className="start-subtitle">{initMessage || '게임 환경을 준비 중입니다...'}</div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* 게임 시작 오버레이 */}
+      {showStartOverlay && (
+        <div className="game-start-overlay">
+          <div className="start-overlay-content">
+            <div className="start-title">GAME STARTING</div>
+            {countdown > 0 ? (
+              <div className="countdown-number">{countdown}</div>
+            ) : (
+              <div className="countdown-go">GO!</div>
+            )}
+            <div className="start-subtitle">Prepare for battle...</div>
+          </div>
+        </div>
+      )}
       <div className="battle-cyber-container room-variant">
         <div className="background-grid"></div>
 
@@ -292,16 +335,19 @@ const ArenaRoomPage: React.FC = () => {
               <div className="arena-metadata">
                 <span className="mode-badge">{getModeName(mode)}</span>
                 {difficulty && (
-                  <span 
-                    className="difficulty-badge" 
-                    style={{ 
+                  <span
+                    className="difficulty-badge"
+                    style={{
                       color: diffInfo.color,
-                      borderColor: diffInfo.color 
+                      borderColor: diffInfo.color
                     }}
                   >
-                    {diffInfo.emoji} {difficulty}
+                    {difficulty}
                   </span>
                 )}
+                <span className="participant-count-badge">
+                  {activeParticipants.length} / {maxPlayers} PLAYERS
+                </span>
               </div>
             )}
           </div>

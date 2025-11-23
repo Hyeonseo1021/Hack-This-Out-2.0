@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  getAllArenas, 
+import {
+  getAllArenas,
   deleteArena,
-  getArenaById 
+  getArenaById
 } from '../../api/axiosArena';
 import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
-import { FaEye, FaTrash, FaUsers, FaGamepad, FaClock } from 'react-icons/fa';
-import '../../assets/scss/admin/ArenasManagement.scss';
+import '../../assets/scss/admin/DataTable.scss';
 
 interface Arena {
   _id?: string;
@@ -49,10 +48,6 @@ const ArenasManagement: React.FC = () => {
   const [selectedArena, setSelectedArena] = useState<Arena | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
-  const [filterMode, setFilterMode] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
   useEffect(() => {
     loadArenas();
   }, []);
@@ -70,20 +65,6 @@ const ArenasManagement: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const filteredArenas = arenas.filter(r => {
-    if (filterStatus !== 'ALL' && r.status !== filterStatus) return false;
-    if (filterMode !== 'ALL' && r.gameMode !== filterMode) return false;
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      if (!r.name.toLowerCase().includes(query) && 
-          !r.host.username.toLowerCase().includes(query) &&
-          !r.scenario?.title.toLowerCase().includes(query)) {
-        return false;
-      }
-    }
-    return true;
-  });
 
   const handleDelete = async (arenaId: string, arenaName: string) => {
     if (!window.confirm(`Are you sure you want to delete arena "${arenaName}"?\n\nThis will:\n- Remove the arena from the database\n- Kick all participants\n- This action cannot be undone.`)) {
@@ -113,38 +94,17 @@ const ArenasManagement: React.FC = () => {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'WAITING': return 'status-waiting';
-      case 'STARTED': return 'status-progress';
-      case 'ENDED': return 'status-completed';
+      case 'WAITING': return 'status-pending';
+      case 'STARTED': return 'status-running';
+      case 'ENDED': return 'status-terminated';
       default: return '';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'WAITING': return '⏳';
-      case 'STARTED': return '🎮';
-      case 'ENDED': return '✅';
-      default: return '❓';
-    }
-  };
-
-  const getModeIcon = (mode: string) => {
-    switch (mode) {
-      case 'TERMINAL_HACKING_RACE': return '⚡';
-      case 'VULNERABILITY_SCANNER_RACE': return '🔍';  // ✅ 추가
-      case 'KING_OF_THE_HILL': return '👑';
-      case 'FORENSICS_RUSH': return '🔎';
-      case 'SOCIAL_ENGINEERING_CHALLENGE': return '💬';
-      default: return '🎯';
     }
   };
 
   const getModeName = (mode: string) => {
     switch (mode) {
       case 'TERMINAL_HACKING_RACE': return 'Terminal Race';
-      case 'VULNERABILITY_SCANNER_RACE': return 'Vulnerability Scanner Race';  // ✅ 추가
-      case 'KING_OF_THE_HILL': return 'King of the Hill';
+      case 'VULNERABILITY_SCANNER_RACE': return 'Vulnerability Scanner Race';
       case 'FORENSICS_RUSH': return 'Forensics Rush';
       case 'SOCIAL_ENGINEERING_CHALLENGE': return 'Social Engineering';
       default: return mode;
@@ -179,59 +139,13 @@ const ArenasManagement: React.FC = () => {
     <div className="admin-dashboard">
       <Sidebar />
       <div className="admin-content">
-        <div className="page-header">
-          <h1>🏟️ Arena Rooms Management</h1>
-          <div className="header-stats">
-            <span className="stat-chip">
-              <FaGamepad /> Total: {arenas.length}
-            </span>
-            <span className="stat-chip waiting">
-              ⏳ Waiting: {arenas.filter(r => r.status === 'WAITING').length}
-            </span>
-            <span className="stat-chip progress">
-              🎮 Started: {arenas.filter(r => r.status === 'STARTED').length}
-            </span>
-          </div>
-        </div>
-
+        <h1>Arenas Management</h1>
         {error && <ErrorMessage message={error} />}
 
-        {/* Filters */}
-        <div className="filters-section">
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-            <option value="ALL">All Status</option>
-            <option value="WAITING">⏳ Waiting</option>
-            <option value="STARTED">🎮 Started</option>
-            <option value="ENDED">✅ Ended</option>
-          </select>
-
-          <select value={filterMode} onChange={e => setFilterMode(e.target.value)}>
-            <option value="ALL">All Modes</option>
-            <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
-            <option value="VULNERABILITY_SCANNER_RACE">🔍 Vulnerability Scanner Race</option>
-            <option value="KING_OF_THE_HILL">👑 King of the Hill</option>
-            <option value="FORENSICS_RUSH">🔎 Forensics Rush</option>
-            <option value="SOCIAL_ENGINEERING_CHALLENGE">💬 Social Engineering</option>
-          </select>
-
-          <input
-            type="text"
-            placeholder="🔍 Search by arena name, host, or scenario..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-
-          <button onClick={loadArenas} className="refresh-btn" disabled={loading}>
-            {loading ? '🔄 Loading...' : '🔄 Refresh'}
-          </button>
-        </div>
-
-        {/* Table */}
         {loading ? (
-          <div className="loading-state">Loading arenas...</div>
+          <div>Loading arenas...</div>
         ) : (
-          <table className="data-table arenas-table">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Arena Name</th>
@@ -241,70 +155,44 @@ const ArenasManagement: React.FC = () => {
                 <th>Players</th>
                 <th>Status</th>
                 <th>Created</th>
-                <th>Duration</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredArenas.length === 0 ? (
+              {arenas.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="no-data">
-                    {searchQuery.trim() || filterStatus !== 'ALL' || filterMode !== 'ALL'
-                      ? 'No arenas match your filters.'
-                      : 'No arenas found.'}
-                  </td>
+                  <td colSpan={8}>No arenas found.</td>
                 </tr>
               ) : (
-                filteredArenas.map(arena => (
+                arenas.map(arena => (
                   <tr key={arena._id}>
-                    <td className="arena-name-cell">
-                      <strong>{arena.name}</strong>
-                    </td>
-                    <td>
-                      <span className="mode-badge">
-                        {getModeIcon(arena.gameMode)} {getModeName(arena.gameMode)}
-                      </span>
-                    </td>
+                    <td>{arena.name}</td>
+                    <td>{getModeName(arena.gameMode)}</td>
                     <td>
                       {arena.scenario ? (
-                        <div className="scenario-info">
-                          <div className="scenario-title">{arena.scenario.title}</div>
-                          <div className="scenario-difficulty">{arena.scenario.difficulty}</div>
+                        <div>
+                          <div>{arena.scenario.title}</div>
+                          <small>({arena.scenario.difficulty})</small>
                         </div>
                       ) : (
-                        <span className="text-muted">No scenario</span>
+                        'No scenario'
                       )}
                     </td>
                     <td>{arena.host.username}</td>
-                    <td>
-                      <span className="players-badge">
-                        <FaUsers /> {arena.currentPlayers}/{arena.maxPlayers}
-                      </span>
-                    </td>
+                    <td>{arena.currentPlayers}/{arena.maxPlayers}</td>
                     <td>
                       <span className={`status-badge ${getStatusBadgeClass(arena.status)}`}>
-                        {getStatusIcon(arena.status)} {arena.status}
+                        {arena.status}
                       </span>
                     </td>
-                    <td className="text-muted">
-                      <FaClock /> {formatDate(arena.createdAt)}
-                    </td>
-                    <td>{getDuration(arena)}</td>
+                    <td>{formatDate(arena.createdAt)}</td>
                     <td>
                       <div className="action-buttons">
-                        <button
-                          className="btn-view"
-                          onClick={() => handleViewDetails(arena._id!)}
-                          title="View Details"
-                        >
-                          <FaEye /> View
+                        <button onClick={() => handleViewDetails(arena._id!)}>
+                          View
                         </button>
-                        <button
-                          className="btn-delete"
-                          onClick={() => handleDelete(arena._id!, arena.name)}
-                          title="Delete Arena"
-                        >
-                          <FaTrash /> Delete
+                        <button className="delete-button" onClick={() => handleDelete(arena._id!, arena.name)}>
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -321,113 +209,45 @@ const ArenasManagement: React.FC = () => {
             <div className="modal-content" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>Arena Details</h2>
-                <button className="close-btn" onClick={() => setShowDetailsModal(false)}>✕</button>
+                <button className="close-btn" onClick={() => setShowDetailsModal(false)}>×</button>
               </div>
               <div className="modal-body">
                 <div className="detail-section">
                   <h3>Basic Information</h3>
-                  <table className="detail-table">
-                    <tbody>
-                      <tr>
-                        <td><strong>Arena Name:</strong></td>
-                        <td>{selectedArena.name}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Game Mode:</strong></td>
-                        <td>{getModeIcon(selectedArena.gameMode)} {getModeName(selectedArena.gameMode)}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Status:</strong></td>
-                        <td>
-                          <span className={`status-badge ${getStatusBadgeClass(selectedArena.status)}`}>
-                            {getStatusIcon(selectedArena.status)} {selectedArena.status}
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td><strong>Host:</strong></td>
-                        <td>{selectedArena.host.username}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Players:</strong></td>
-                        <td>{selectedArena.currentPlayers}/{selectedArena.maxPlayers}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Created:</strong></td>
-                        <td>{formatDate(selectedArena.createdAt)}</td>
-                      </tr>
-                      {selectedArena.startedAt && (
-                        <tr>
-                          <td><strong>Started:</strong></td>
-                          <td>{formatDate(selectedArena.startedAt)}</td>
-                        </tr>
-                      )}
-                      {selectedArena.completedAt && (
-                        <tr>
-                          <td><strong>Completed:</strong></td>
-                          <td>{formatDate(selectedArena.completedAt)}</td>
-                        </tr>
-                      )}
-                      <tr>
-                        <td><strong>Duration:</strong></td>
-                        <td>{getDuration(selectedArena)}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <p><strong>Arena Name:</strong> {selectedArena.name}</p>
+                  <p><strong>Game Mode:</strong> {getModeName(selectedArena.gameMode)}</p>
+                  <p><strong>Status:</strong> {selectedArena.status}</p>
+                  <p><strong>Host:</strong> {selectedArena.host.username}</p>
+                  <p><strong>Players:</strong> {selectedArena.currentPlayers}/{selectedArena.maxPlayers}</p>
+                  <p><strong>Created:</strong> {formatDate(selectedArena.createdAt)}</p>
+                  {selectedArena.startedAt && <p><strong>Started:</strong> {formatDate(selectedArena.startedAt)}</p>}
+                  {selectedArena.completedAt && <p><strong>Completed:</strong> {formatDate(selectedArena.completedAt)}</p>}
+                  <p><strong>Duration:</strong> {getDuration(selectedArena)}</p>
                 </div>
 
                 {selectedArena.scenario && (
                   <div className="detail-section">
                     <h3>Scenario</h3>
-                    <table className="detail-table">
-                      <tbody>
-                        <tr>
-                          <td><strong>Title:</strong></td>
-                          <td>{selectedArena.scenario.title}</td>
-                        </tr>
-                        <tr>
-                          <td><strong>Difficulty:</strong></td>
-                          <td>{selectedArena.scenario.difficulty}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <p><strong>Title:</strong> {selectedArena.scenario.title}</p>
+                    <p><strong>Difficulty:</strong> {selectedArena.scenario.difficulty}</p>
                   </div>
                 )}
 
                 <div className="detail-section">
                   <h3>Participants ({selectedArena.participants.length})</h3>
-                  <table className="participants-table">
-                    <thead>
-                      <tr>
-                        <th>Username</th>
-                        <th>Joined At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedArena.participants.map(p => (
-                        <tr key={p.userId}>
-                          <td>{p.username}</td>
-                          <td>{formatDate(p.joinedAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ul>
+                    {selectedArena.participants.map(p => (
+                      <li key={p.userId}>
+                        {p.username} - Joined: {formatDate(p.joinedAt)}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div className="detail-section">
                   <h3>Settings</h3>
-                  <table className="detail-table">
-                    <tbody>
-                      <tr>
-                        <td><strong>End on First Solve:</strong></td>
-                        <td>{selectedArena.settings.endOnFirstSolve ? 'Yes' : 'No'}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>Grace Period:</strong></td>
-                        <td>{(selectedArena.settings.graceMs / 1000).toFixed(0)}s</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <p><strong>End on First Solve:</strong> {selectedArena.settings.endOnFirstSolve ? 'Yes' : 'No'}</p>
+                  <p><strong>Grace Period:</strong> {(selectedArena.settings.graceMs / 1000).toFixed(0)}s</p>
                 </div>
               </div>
             </div>

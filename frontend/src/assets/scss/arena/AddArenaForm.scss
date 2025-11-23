@@ -1,403 +1,419 @@
 @use '../style' as *;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Share+Tech+Mono&display=swap');
 
-// --- 1. 창(Window) 등장 애니메이션 ---
-@keyframes widget-load-in {
+// ========================================
+// 색상 팔레트 (하얀색 + 네온 민트)
+// ========================================
+$neon-mint: #00e5ff;
+$white: #ffffff;
+
+// ========================================
+// 애니메이션
+// ========================================
+
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-// --- 2. CRT 스캔라인 애니메이션 ---
-@keyframes scan-line-vertical {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100%);
+    transform: translateY(0);
   }
 }
 
 .arena-create-container {
-  position: relative;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 20% 20%, #02010a, #000);
-  color: #eafaff;
+  background: #000000;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 2% 20px 40px;
+  justify-content: center;
+  padding: 15px;
   font-family: 'Orbitron', sans-serif;
-  overflow-x: hidden;
+  position: relative;
+  box-sizing: border-box;
 
-  @media (max-width: 768px) {
-    padding: 60px 20px;
-    min-height: 100vh;
-    width: 100%;
-  }
-  @media (max-width: 576px) {
-    padding: 40px 15px;
-  }
-
-  // CRT 오버레이
-  .crt-overlay {
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.03) 0px,
-      rgba(255, 255, 255, 0.03) 1px,
-      transparent 2px
-    );
-    pointer-events: none;
-    opacity: 0.3;
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      height: 100%;
-      background: linear-gradient(
-        0deg,
-        transparent 0%,
-        rgba(0, 246, 255, 0.1) 50%,
-        transparent 100%
-      );
-      animation: scan-line-vertical 10s linear infinite;
-    }
-  }
-
-  // 글리치 타이틀
-  .glitch-title {
-    font-size: 3rem;
-    font-weight: 700;
-    color: #00f6ff;
-    position: relative;
-    margin-bottom: 40px;
-    text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    color: $neon-mint;
+    margin-bottom: 30px;
     text-align: center;
-
-    &::before, &::after {
-      content: attr(data-text);
-      position: absolute;
-      left: 0;
-      width: 100%;
-      overflow: hidden;
-      color: #00ff6a;
-      clip: rect(0, 0, 0, 0);
-      animation: glitch 2s infinite;
-    }
-    &::before { left: 2px; text-shadow: -2px 0 #00ff6a; }
-    &::after { left: -2px; text-shadow: 2px 0 #00fff0; }
-
-    @keyframes glitch {
-      0% { clip: rect(42px, 9999px, 44px, 0); }
-      5% { clip: rect(12px, 9999px, 59px, 0); }
-      10% { clip: rect(48px, 9999px, 29px, 0); }
-      100% { clip: rect(0, 9999px, 0, 0); }
-    }
-
-    @media (max-width: 576px) {
-      font-size: 2rem;
-      margin-bottom: 30px;
-    }
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    position: relative;
+    text-shadow:
+      2px 2px 0 rgba(0, 229, 255, 0.3),
+      -2px -2px 0 rgba(255, 255, 255, 0.3);
   }
 
-  // ✅ 그리드 레이아웃 (3x2로 수정)
   .arena-grid-layout {
+    width: 100%;
+    max-width: 1200px;
     display: grid;
-    width: 95%;
-    height: 80%;
-    max-width: 1400px;
-    gap: 20px;
-
-    // ✅ 3열 레이아웃: main | mode | difficulty
-    //                  log  | mode | difficulty
-    grid-template-columns: 1.5fr 2fr 1.5fr;
-    grid-template-rows: auto auto;
-    grid-template-areas:
-      'main mode difficulty'
-      'log  mode difficulty';
+    grid-template-columns: 480px 1fr;
+    gap: 30px;
+    position: relative;
+    z-index: 1;
+    align-items: start;
 
     @media (max-width: 1024px) {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto auto;
-      grid-template-areas:
-        'main main'
-        'mode difficulty'
-        'log  log';
-    }
-
-    @media (max-width: 768px) {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: auto;
+      grid-template-columns: 1fr;
+      max-width: 700px;
     }
   }
 
-  // 공통 창 스타일
-  .widget-window {
-    background: rgba(10, 10, 20, 0.6);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 8px;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.05),
-                0 0 20px rgba(0, 255, 255, 0.1) inset;
+  // 카드 공통 스타일
+  .card {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border: 3px solid $neon-mint;
+    border-radius: 0;
     overflow: hidden;
-    animation: widget-load-in 0.5s ease-out forwards;
-    
+    transition: all 0.3s ease;
+    animation: fadeIn 0.8s ease-out forwards;
+    height: 100%;
+    box-shadow:
+      0 0 30px rgba(0, 229, 255, 0.4),
+      0 0 60px rgba(0, 229, 255, 0.3),
+      inset 0 0 40px rgba(0, 229, 255, 0.05),
+      inset 0 0 10px rgba(0, 0, 0, 0.8);
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $neon-mint;
+    padding: 1.125rem 1.5rem;
+    border-bottom: 3px solid $neon-mint;
+    background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), rgba(255, 255, 255, 0.05));
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    line-height: 1;
+    position: relative;
+    text-shadow:
+      0 0 10px rgba(0, 229, 255, 0.8),
+      0 0 20px rgba(0, 229, 255, 0.5);
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  // Settings Card
+  .settings-card {
     display: flex;
     flex-direction: column;
 
-    &.main-controls { grid-area: main; }
-    &.mode-selector  { grid-area: mode; }
-    &.difficulty-selector { grid-area: difficulty; } // ✅ 추가
-    &.system-log     { grid-area: log; }
-
-    .widget-titlebar {
-      background: rgba(0, 246, 255, 0.05);
-      padding: 8px 12px;
-      font-size: 1.5rem;
-      color: #00f6ff;
-      border-bottom: 1px solid rgba(0, 255, 255, 0.15);
-      text-shadow: 0 0 5px #00f6ff;
-      flex-shrink: 0;
-    }
-
-    .widget-content {
-      padding: 20px;
-      overflow-y: auto; 
-      flex-grow: 1;
-
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-      &::-webkit-scrollbar-track {
-        background: #00000033;
-      }
-      &::-webkit-scrollbar-thumb {
-        background: #00f6ff55;
-        border-radius: 3px;
-      }
-    }
-  }
-
-  // 폼 그룹
-  .form-group {
-    margin-bottom: 20px;
-    
-    label { 
-      display: block; 
-      color: #00f6ff; 
-      font-size: 0.9rem; 
-      margin-bottom: 6px; 
-      letter-spacing: 1px; 
-    }
-    
-    input { 
-      width: 100%; 
-      padding: 10px; 
-      border: 1px solid #00f6ff55; 
-      border-radius: 4px; 
-      background: #050510; 
-      color: #eafaff; 
-      transition: 0.2s; 
-      font-size: 1rem;
-      
-      &:focus { 
-        outline: none; 
-        box-shadow: 0 0 10px #00f6ff; 
-      }
-    }
-  }
-
-  .form-inline {
-    display: flex; 
-    gap: 20px;
-    
-    .form-group.small { 
-      flex: 1; 
-      margin-bottom: 0; 
-    }
-    
-    @media (max-width: 576px) { 
-      flex-direction: column; 
-      gap: 20px; 
-      
-      .form-group.small { 
-        margin-bottom: 0; 
-      } 
-    }
-  }
-
-  // 모드 선택 (테이블 레이아웃)
-  .mode-table-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .mode-row {
-    display: flex;
-    align-items: center;
-    background: rgba(0, 10, 15, 0.7);
-    border: 2px solid #222;
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 8px;
-    width: 100%;
-
-    .mode-icon {
-      font-size: 24px;
-      margin-right: 15px;
-    }
-    
-    .mode-info {
+    .card-content {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      flex: 1;
-    }
-
-    .mode-title {
-      color: #00f6ff;
-      font-weight: bold;
-      font-size: 0.9rem;
-      margin-bottom: 3px;
-    }
-
-    .mode-desc {
-      color: #ccc;
-      font-size: 0.8rem;
-    }
-    
-    &:hover {
-      border-color: #00f6ff;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 246, 255, 0.1);
-    }
-    
-    &.selected {
-      border-color: #00ff6a;
-      background: rgba(0, 255, 106, 0.1);
-      box-shadow: 0 0 12px #00ff6a55;
-      transform: translateY(-2px);
+      gap: 24px;
+      justify-content: flex-start;
+      padding-top: 1.25rem;
     }
   }
 
-  // ✅ 난이도 선택 (그리드 레이아웃)
-  .difficulty-grid {
+  // Difficulty Buttons
+  .difficulty-buttons {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 
-  .difficulty-card {
-    background: rgba(0, 10, 15, 0.7);
-    border: 2px solid #222;
-    padding: 15px;
+  .difficulty-btn {
+    padding: 18px 16px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 3px solid rgba(0, 229, 255, 0.3);
+    border-radius: 0;
+    color: $neon-mint;
+    font-size: 1rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 8px;
-    text-align: center;
-
-    .difficulty-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-
-    .difficulty-title {
-      color: #00f6ff;
-      font-weight: bold;
-      font-size: 1rem;
-      margin-bottom: 5px;
-    }
-
-    .difficulty-desc {
-      color: #999;
-      font-size: 0.75rem;
-    }
+    transition: all 0.25s ease;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: 'Orbitron', sans-serif;
+    position: relative;
+    box-shadow:
+      0 0 15px rgba(0, 229, 255, 0.3),
+      0 0 30px rgba(0, 229, 255, 0.2);
 
     &:hover {
-      border-color: #00f6ff;
+      border-color: $neon-mint;
+      background: rgba(0, 229, 255, 0.1);
       transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 246, 255, 0.1);
+      box-shadow:
+        0 0 20px rgba(0, 229, 255, 0.5),
+        0 0 40px rgba(0, 229, 255, 0.3);
     }
 
     &.selected {
-      border-color: #00ff6a;
-      background: rgba(0, 255, 106, 0.1);
-      box-shadow: 0 0 12px #00ff6a55;
-      transform: translateY(-2px);
+      border-color: $white;
+      background: rgba(0, 229, 255, 0.15);
+      color: $white;
+      box-shadow:
+        0 0 20px rgba(255, 255, 255, 0.4),
+        0 0 40px rgba(0, 229, 255, 0.3);
+    }
 
-      .difficulty-title {
-        color: #00ff6a;
-      }
+    &:active {
+      transform: translateY(0);
     }
   }
 
-  // 시스템 로그
-  .system-log {
-    .widget-content {
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: $neon-mint;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px 18px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(0, 229, 255, 0.3);
+      border-radius: 0;
+      color: #ffffff;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      &:hover {
+        border-color: rgba(0, 229, 255, 0.5);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $neon-mint;
+        background: rgba(0, 0, 0, 0.7);
+        box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    .input-hint {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+    }
+  }
+
+  .error-message {
+    padding: 12px 16px;
+    background: rgba(255, 68, 68, 0.15);
+    border: 1px solid rgba(255, 68, 68, 0.4);
+    border-radius: 0;
+    color: #ff8a80;
+    font-size: 0.85rem;
+    font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+  }
+
+  .submit-button {
+    width: 100%;
+    padding: 18px;
+    background: transparent;
+    border: 3px solid $neon-mint;
+    color: $neon-mint;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Orbitron', sans-serif;
+    box-shadow:
+      0 0 30px rgba(0, 229, 255, 0.5),
+      0 0 50px rgba(0, 229, 255, 0.3),
+      inset 0 0 20px rgba(0, 229, 255, 0.1);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background-color: rgba(0, 229, 255, 0.2);
+      transition: width 0.3s ease;
+      z-index: 0;
+    }
+
+    span {
+      position: relative;
+      z-index: 1;
+    }
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      box-shadow:
+        0 0 40px rgba(0, 229, 255, 0.8),
+        0 0 60px rgba(255, 255, 255, 0.6),
+        0 0 80px rgba(0, 229, 255, 0.4),
+        inset 0 0 30px rgba(0, 229, 255, 0.3);
+
+      &::before {
+        width: 100%;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  // 모드 선택
+  .mode-selector {
+    animation-delay: 0.2s;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+
+    .card-content {
+      flex: 1;
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
       display: flex;
-      flex-direction: column;
-      height: 90%;
+      align-items: stretch;
+      justify-content: flex-start;
     }
-    
-    .log-area {
-      flex-grow: 1;
-      background: #00000033;
-      border: 1px solid #00f6ff33;
-      border-radius: 4px;
-      padding: 10px;
-      min-height: 80px;
-      margin-bottom: 15px;
+  }
+
+  .mode-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .mode-card {
+    padding: 20px 22px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 3px solid rgba(0, 229, 255, 0.3);
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin: 0;
+    position: relative;
+    box-shadow:
+      0 0 20px rgba(0, 229, 255, 0.3),
+      0 0 40px rgba(0, 229, 255, 0.2);
+
+    .mode-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 10px 0;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      transition: all 0.25s ease;
+    }
+
+    .mode-desc {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      margin: 0 0 14px 0;
+      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+    }
+
+    .mode-players {
+      display: inline-block;
+      padding: 8px 14px;
+      background: rgba(0, 229, 255, 0.15);
+      border: 2px solid rgba(0, 229, 255, 0.3);
+      border-radius: 0;
+      color: $neon-mint;
       font-size: 0.9rem;
-      overflow-y: auto;
-      
-      .log-entry {
-        margin: 0 0 5px;
-        
-        &.info { color: #999; }
-        &.success { color: #00ff6a; } // ✅ 추가
-        &.processing { color: #00f6ff; }
-        &.error { color: #ff0066; }
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    &:hover {
+      border-color: $neon-mint;
+      background: rgba(0, 229, 255, 0.1);
+      transform: translateX(4px);
+      box-shadow:
+        0 0 30px rgba(0, 229, 255, 0.5),
+        0 0 50px rgba(0, 229, 255, 0.3);
+
+      .mode-title {
+        color: $neon-mint;
+      }
+    }
+
+    &.selected {
+      border-color: $white;
+      background: rgba(0, 229, 255, 0.15);
+      box-shadow:
+        0 0 30px rgba(255, 255, 255, 0.4),
+        0 0 50px rgba(0, 229, 255, 0.3);
+
+      .mode-title {
+        color: $white;
+      }
+
+      .mode-players {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: $white;
+        color: $white;
       }
     }
   }
 
-  // 버튼
-  .neon-button {
-    display: block; 
-    width: 100%; 
-    padding: 12px; 
-    background: transparent; 
-    border: 2px solid #00f6ff; 
-    color: #00f6ff; 
-    font-size: 1rem; 
-    cursor: pointer; 
-    border-radius: 6px; 
-    transition: all 0.25s ease; 
-    text-transform: uppercase; 
-    letter-spacing: 2px;
-    
-    &:hover { 
-      background: #00f6ff22; 
-      box-shadow: 0 0 15px #00f6ff; 
+
+  @media (max-width: 768px) {
+    padding: 24px 16px;
+
+    h1 {
+      margin-bottom: 24px;
+      font-size: 1.8rem;
     }
-    
-    &:disabled { 
-      opacity: 0.6; 
-      cursor: not-allowed; 
+
+    .arena-grid-layout {
+      gap: 20px;
+    }
+
+    .card-title {
+      padding: 1rem 1.25rem;
+      font-size: 1.05rem;
+    }
+
+    .card-content {
+      padding: 1.25rem;
+    }
+
+    .mode-selector .card-content {
+      padding: 1rem;
+    }
+
+    .difficulty-btn {
+      padding: 24px 16px;
+      font-size: 1.05rem;
     }
   }
 }
