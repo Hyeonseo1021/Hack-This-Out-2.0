@@ -11,40 +11,73 @@ import Roulette from "../../components/shop/Roulette";
 import NPCHelp from "../../components/shop/NPCHelp";
 import ShopToast from "../../components/shop/ShopToast";
 
-import hint1Img from "../../assets/img/shop/hint1.png";
-import hint3Img from "../../assets/img/shop/hint3.png";
-import randomBuffImg from "../../assets/img/shop/randombuff.png";
-import timeStopImg from "../../assets/img/shop/timestop.png";
+import {
+  getBalance,
+  getShopItems,
+  buyShopItem,
+  getInventory,
+  useInventoryItem,
+} from "../../api/axiosShop";
 
-type InventoryItem = {
-  itemId: string;
-  count: number;
+type ShopItem = {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  icon: string;
+  type: string;
 };
 
-export const LOCAL_ITEMS = [
-  { _id: "item-hint1", price: 5, icon: hint1Img },
-  { _id: "item-hint3", price: 12, icon: hint3Img },
-  { _id: "item-buff", price: 15, icon: randomBuffImg },
-  { _id: "item-timestop", price: 25, icon: timeStopImg },
-];
+type InventoryItem = {
+  _id: string;
+  item: {
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    icon: string;
+    type: string;
+  };
+  quantity: number;
+  acquiredAt: string;
+};
 
 const ShopPage: React.FC = () => {
   const { t, i18n } = useTranslation("shop");
 
-  const [balance, setBalance] = useState(150);
+  const [balance, setBalance] = useState(0);
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [tab, setTab] = useState<"shop" | "inventory" | "roulette">("shop");
   const [isNPCOpen, setIsNPCOpen] = useState(false);
   const [toast, setToast] = useState<{ msg: string; icon?: string } | null>(null);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // 초기 데이터 로드
   useEffect(() => {
-    const saved = localStorage.getItem("HTO_INVENTORY");
-    if (saved) setInventory(JSON.parse(saved));
+    loadInitialData();
   }, []);
 
-  const saveInventory = (list: InventoryItem[]) => {
-    localStorage.setItem("HTO_INVENTORY", JSON.stringify(list));
-    setInventory(list);
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      
+      // 병렬로 데이터 로드
+      const [balanceData, itemsData, inventoryData] = await Promise.all([
+        getBalance(),
+        getShopItems(),
+        getInventory(),
+      ]);
+
+      setBalance(balanceData.balance);
+      setShopItems(itemsData);
+      setInventory(inventoryData);
+    } catch (error: any) {
+      console.error('❌ Failed to load initial data:', error);
+      showToast(error?.response?.data?.msg || t('errors.loadFailed') || '데이터를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const showToast = (msg: string, icon?: string) => {
@@ -52,82 +85,76 @@ const ShopPage: React.FC = () => {
   };
 
   /* -------------------------------------- */
-  /* 구매 */
+  /* 🛒 구매 */
   /* -------------------------------------- */
-  const handleBuyItem = (id: string) => {
-    const base = LOCAL_ITEMS.find((x) => x._id === id);
-    if (!base) return;
-
-    const price = base.price;
-    const itemName = t(`items.${id}.name`);
-
-    if (balance < price) {
-      showToast(t("toast.noCoin", { price }));
-      return;
+  const handleBuyItem = async (itemId: string) => {
+    try {
+      const result = await buyShopItem(itemId);
+      
+      // 잔액 업데이트
+      setBalance(result.updatedBalance);
+      
+      // 인벤토리 새로고침
+      const updatedInventory = await getInventory();
+      setInventory(updatedInventory);
+      
+      // 성공 토스트
+      const item = shopItems.find(i => i._id === itemId);
+      showToast(result.msg, item?.icon);
+    } catch (error: any) {
+      console.error('❌ Failed to buy item:', error);
+      showToast(error?.response?.data?.msg || t('errors.buyFailed') || '구매에 실패했습니다.');
     }
-
-    setBalance((prev) => prev - price);
-
-    const exists = inventory.find((x) => x.itemId === id);
-
-    let newInventory;
-    if (exists) {
-      newInventory = inventory.map((x) =>
-        x.itemId === id ? { ...x, count: x.count + 1 } : x
-      );
-    } else {
-      newInventory = [...inventory, { itemId: id, count: 1 }];
-    }
-
-    saveInventory(newInventory);
-    showToast(t("toast.added", { name: itemName }), base.icon);
   };
 
   /* -------------------------------------- */
-  /* 사용 */
+  /* 🧩 사용 */
   /* -------------------------------------- */
-  const handleUseItem = (itemId: string) => {
-    const target = inventory.find((x) => x.itemId === itemId);
-    if (!target) return;
-
-    let newInventory;
-    if (target.count > 1) {
-      newInventory = inventory.map((x) =>
-        x.itemId === itemId ? { ...x, count: x.count - 1 } : x
-      );
-    } else {
-      newInventory = inventory.filter((x) => x.itemId !== itemId);
+  const handleUseItem = async (invId: string) => {
+    try {
+      const result = await useInventoryItem(invId);
+      
+      // 인벤토리 새로고침
+      const updatedInventory = await getInventory();
+      setInventory(updatedInventory);
+      
+      showToast(result.msg);
+    } catch (error: any) {
+      console.error('❌ Failed to use item:', error);
+      showToast(error?.response?.data?.msg || t('errors.useFailed') || '아이템 사용에 실패했습니다.');
     }
-
-    saveInventory(newInventory);
-
-    const itemName = t(`items.${itemId}.name`);
-    showToast(t("toast.used", { name: itemName }));
   };
 
   /* -------------------------------------- */
-  /* 룰렛 보상 */
+  /* 🎰 룰렛 보상 */
   /* -------------------------------------- */
-  const handleRouletteReward = (rewardId: string) => {
-    const base = LOCAL_ITEMS.find((x) => x._id === rewardId);
-    if (!base) return;
-
-    const exists = inventory.find((x) => x.itemId === rewardId);
-
-    let newInventory;
-    if (exists) {
-      newInventory = inventory.map((x) =>
-        x.itemId === rewardId ? { ...x, count: x.count + 1 } : x
-      );
-    } else {
-      newInventory = [...inventory, { itemId: rewardId, count: 1 }];
+  const handleRouletteReward = async (rewardId: string) => {
+    try {
+      // 인벤토리 새로고침
+      const updatedInventory = await getInventory();
+      setInventory(updatedInventory);
+      
+      // 잔액도 새로고침 (룰렛에서 이미 업데이트했지만 확실하게)
+      const balanceData = await getBalance();
+      setBalance(balanceData.balance);
+    } catch (error: any) {
+      console.error('❌ Failed to process roulette reward:', error);
     }
-
-    saveInventory(newInventory);
-
-    const itemName = t(`items.${rewardId}.name`);
-    showToast(t("toast.reward", { name: itemName }), base.icon);
   };
+
+  if (loading) {
+    return (
+      <Main>
+        <div className="shop-layout">
+          <div className="shop-panel">
+            <div className="shop-loading">
+              {t('loading') || '로딩 중...'}
+            </div>
+          </div>
+        </div>
+      </Main>
+    );
+  }
 
   return (
     <Main>
@@ -158,13 +185,22 @@ const ShopPage: React.FC = () => {
 
           {/* 탭 */}
           <div className="shop-tabs">
-            <button className={tab === "shop" ? "active" : ""} onClick={() => setTab("shop")}>
+            <button 
+              className={tab === "shop" ? "active" : ""} 
+              onClick={() => setTab("shop")}
+            >
               {t("tabs.shop")}
             </button>
-            <button className={tab === "inventory" ? "active" : ""} onClick={() => setTab("inventory")}>
+            <button 
+              className={tab === "inventory" ? "active" : ""} 
+              onClick={() => setTab("inventory")}
+            >
               {t("tabs.inventory")}
             </button>
-            <button className={tab === "roulette" ? "active" : ""} onClick={() => setTab("roulette")}>
+            <button 
+              className={tab === "roulette" ? "active" : ""} 
+              onClick={() => setTab("roulette")}
+            >
               {t("tabs.roulette")}
             </button>
           </div>
@@ -172,24 +208,45 @@ const ShopPage: React.FC = () => {
           {/* SHOP */}
           {tab === "shop" && (
             <div className="shop-grid">
-              {LOCAL_ITEMS.map((item) => (
-                <div className="shop-item-card" key={item._id}>
-                  <img src={item.icon} className="shop-item-card__icon" />
-
-                  <div className="shop-item-card__header">
-                    <h3>{t(`items.${item._id}.name`)}</h3>
-                    <span>{item.price} HTO</span>
-                  </div>
-
-                  <p className="shop-item-card__desc">
-                    {t(`items.${item._id}.desc`)}
-                  </p>
-
-                  <button className="shop-item-card__btn" onClick={() => handleBuyItem(item._id)}>
-                    {t("buttons.buy")}
-                  </button>
+              {shopItems.length === 0 ? (
+                <div className="shop-empty">
+                  {t('shop.empty') || '판매 중인 아이템이 없습니다.'}
                 </div>
-              ))}
+              ) : (
+                shopItems.map((item) => (
+                  <div className="shop-item-card" key={item._id}>
+                    <img 
+                      src={item.icon} 
+                      className="shop-item-card__icon" 
+                      alt={item.name}
+                      onError={(e) => {
+                        // 이미지 로드 실패 시 기본 이미지
+                        e.currentTarget.src = '/img/default-item.png';
+                      }}
+                    />
+
+                    <div className="shop-item-card__header">
+                      <h3>{item.name}</h3>
+                      <span>{item.price} HTO</span>
+                    </div>
+
+                    <p className="shop-item-card__desc">
+                      {item.description}
+                    </p>
+
+                    <button 
+                      className="shop-item-card__btn" 
+                      onClick={() => handleBuyItem(item._id)}
+                      disabled={balance < item.price}
+                    >
+                      {balance < item.price 
+                        ? (t("buttons.notEnough") || "코인 부족") 
+                        : (t("buttons.buy") || "구매")
+                      }
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
@@ -198,29 +255,35 @@ const ShopPage: React.FC = () => {
             <div className="shop-inventory-wrapper">
               <div className="shop-inventory-scroll-area">
                 {inventory.length === 0 ? (
-                  <div className="shop-inventory-empty">{t("inventory.empty")}</div>
+                  <div className="shop-inventory-empty">
+                    {t("inventory.empty")}
+                  </div>
                 ) : (
                   <div className="shop-inventory-list">
-                    {inventory.map((item) => (
-                      <div className="shop-inventory-card" key={item.itemId}>
+                    {inventory.map((inv) => (
+                      <div className="shop-inventory-card" key={inv._id}>
                         <img
-                          src={LOCAL_ITEMS.find((x) => x._id === item.itemId)?.icon}
+                          src={inv.item.icon}
                           className="shop-inventory-card__icon"
+                          alt={inv.item.name}
+                          onError={(e) => {
+                            e.currentTarget.src = '/img/default-item.png';
+                          }}
                         />
 
                         <div className="shop-inventory-card__body">
                           <h3 className="shop-inventory-card__title">
-                            {t(`items.${item.itemId}.name`)}
+                            {inv.item.name}
                           </h3>
-                          <p className="shop-inventory-card__count">x{item.count}</p>
+                          <p className="shop-inventory-card__count">x{inv.quantity}</p>
                           <p className="shop-inventory-card__desc">
-                            {t(`items.${item.itemId}.desc`)}
+                            {inv.item.description}
                           </p>
                         </div>
 
                         <button
                           className="shop-inventory-card__btn"
-                          onClick={() => handleUseItem(item.itemId)}
+                          onClick={() => handleUseItem(inv._id)}
                         >
                           {t("buttons.use")}
                         </button>
@@ -248,7 +311,12 @@ const ShopPage: React.FC = () => {
       <NPCHelp open={isNPCOpen} onClose={() => setIsNPCOpen(false)} />
 
       {/* NPC BUTTON */}
-      <button className="npc-help-button" onClick={() => setIsNPCOpen((prev) => !prev)}>?</button>
+      <button 
+        className="npc-help-button" 
+        onClick={() => setIsNPCOpen((prev) => !prev)}
+      >
+        ?
+      </button>
 
       {/* TOAST */}
       {toast && (

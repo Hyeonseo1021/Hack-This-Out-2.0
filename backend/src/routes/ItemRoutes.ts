@@ -4,30 +4,33 @@ import {
     getItems,
     createItem,
     buyItem,
+    getBalance,
     getInventory,
     useInventoryItem,
     getShopItems,
     buyShopItem,
-    spinRoulette
+    spinRoulette,
+    uploadItemImage
 } from "../controllers/ItemController";
 import { verifyAdmin } from '../middlewares/Admin';
-import Item from '../models/Item';
+import { uploadItemImage as uploadMiddleware } from '../middlewares/Upload';
 
 const ItemRoutes = express.Router();
 
-// 상점 아이템 관리
-ItemRoutes.get("/shop/items", getShopItems); // 상점 아이템 조회
-ItemRoutes.post("/shop/buy", verifyToken, buyShopItem); // 상점 아이템 구매
+ItemRoutes.get("/balance", verifyToken, getBalance);
 
-// 룰렛
+ItemRoutes.get("/items", getShopItems); // 상점 아이템 조회
+ItemRoutes.post("/buy", verifyToken, buyShopItem); // 상점 아이템 구매
+
 ItemRoutes.post("/roulette/spin", verifyToken, spinRoulette); // 룰렛 돌리기
 
-// 인벤토리 관리
 ItemRoutes.get("/inventory", verifyToken, getInventory); // 인벤토리 조회
 ItemRoutes.patch('/inventory/:invId/use', verifyToken, useInventoryItem); // 아이템 사용
 
-// 관리자를 위한 아이템 생성
-ItemRoutes.post("/", verifyToken, verifyAdmin, createItem); // 아이템 생성
+// 이미지 업로드 (관리자 전용)
+ItemRoutes.post("/upload-image", verifyToken, verifyAdmin, uploadMiddleware.single('image'), uploadItemImage);
+
+ItemRoutes.post("/item", verifyToken, verifyAdmin, createItem); // 아이템 생성
 ItemRoutes.post("/buy/:id", verifyToken, buyItem); // 일반 아이템 구매
 
 export default ItemRoutes;

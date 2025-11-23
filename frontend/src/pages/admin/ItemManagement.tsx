@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import type { ShopItem } from '../../types/ShopItem';
 import { getShopItems, createItem } from '../../api/axiosShop'; // <- toggle/delete 제거
+import { uploadItemImage } from '../../api/axiosUpload';
 import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
 import { purple } from '@mui/material/colors';
@@ -11,6 +12,16 @@ type FormState = {
   price: number;
   description?: string;
   isListed: boolean;
+  icon?: string;
+  type: string;
+  effect: {
+    hintCount: number;
+    freezeSeconds: number;
+  };
+  roulette: {
+    enabled: boolean;
+    weight: number;
+  };
 };
 
 const initialForm: FormState = {
@@ -18,6 +29,16 @@ const initialForm: FormState = {
   price: 0,
   description: '',
   isListed: true,
+  icon: '',
+  type: 'buff',
+  effect: {
+    hintCount: 0,
+    freezeSeconds: 0,
+  },
+  roulette: {
+    enabled: false,
+    weight: 1,
+  },
 };
 
 const ItemManagementPage: React.FC = () => {
@@ -26,12 +47,18 @@ const ItemManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   // 테이블 컬럼 정의(헤더 렌더용) - Actions 제거
   const columns = [
     { header: 'Image', accessor: 'image' },
+    { header: 'Icon', accessor: 'icon' },
     { header: 'Name', accessor: 'name' },
+    { header: 'Type', accessor: 'type' },
     { header: 'Price', accessor: 'price' },
+    { header: 'Effect', accessor: 'effect' },
+    { header: 'Roulette', accessor: 'roulette' },
     { header: 'Listed', accessor: 'isListed' },
   ];
 
@@ -52,24 +79,60 @@ const ItemManagementPage: React.FC = () => {
     loadItems();
   }, []);
 
+  /** 이미지 파일 선택 처리 */
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      // 미리보기 생성
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   /** 생성 */
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return alert('이름을 입력하세요.');
     if (Number.isNaN(form.price) || form.price < 0) return alert('가격을 0 이상으로 입력하세요.');
+    if (!form.type.trim()) return alert('타입을 입력하세요.');
 
     setSaving(true);
     setError(null);
     try {
+      let uploadedImageUrl = '';
+
+      // 이미지가 선택되었으면 먼저 업로드
+      if (imageFile) {
+        const uploadResult = await uploadItemImage(imageFile);
+        uploadedImageUrl = uploadResult.imageUrl;
+      }
+
       const payload = {
         name: form.name.trim(),
         price: Number(form.price),
-        description: (form.description || '').trim() || undefined,
+        description: (form.description || '').trim() || '설명 없음',
         isListed: form.isListed,
+        icon: form.icon?.trim() || '',
+        imageUrl: uploadedImageUrl,
+        type: form.type.trim(),
+        effect: {
+          hintCount: Number(form.effect.hintCount) || 0,
+          freezeSeconds: Number(form.effect.freezeSeconds) || 0,
+        },
+        roulette: {
+          enabled: form.roulette.enabled,
+          weight: Number(form.roulette.weight) || 1,
+        },
       };
       const created = await createItem(payload); // POST /shop
       setItems(prev => [created, ...prev]);
       setForm(initialForm);
+      setImageFile(null);
+      setImagePreview('');
       alert('아이템을 생성했습니다.');
     } catch (e: any) {
       const msg = e?.response?.data?.msg ?? '생성에 실패했습니다.';
@@ -89,27 +152,48 @@ const ItemManagementPage: React.FC = () => {
         {error && <ErrorMessage message={error} />}
 
         {/* 생성 폼 */}
-        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, maxWidth: 680, marginBottom: 24 }}>
-          <div style={{ display: 'grid', gap: 6 }}>
-            <label style={{ fontSize: 12, opacity: .8 }}>Name</label>
-            <input
-              placeholder="EXP Booster x5"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              required
-            />
-          </div>
-
+        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, maxWidth: 900, marginBottom: 24 }}>
           <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ display: 'grid', gap: 6 }}>
-              <label style={{ fontSize: 12, opacity: .8 }}>Price (HTO)</label>
+              <label style={{ fontSize: 12, opacity: .8 }}>Name *</label>
+              <input
+                placeholder="힌트 1회권"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div style={{ display: 'grid', gap: 6 }}>
+              <label style={{ fontSize: 12, opacity: .8 }}>Type *</label>
+              <input
+                placeholder="buff / random_buff / freeze"
+                value={form.type}
+                onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <label style={{ fontSize: 12, opacity: .8 }}>Price (HTO) *</label>
               <input
                 type="number"
                 min={0}
-                placeholder="e.g. 50"
+                placeholder="50"
                 value={form.price}
                 onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
                 required
+              />
+            </div>
+
+            <div style={{ display: 'grid', gap: 6 }}>
+              <label style={{ fontSize: 12, opacity: .8 }}>Icon (emoji or url)</label>
+              <input
+                placeholder="🎁"
+                value={form.icon}
+                onChange={e => setForm(f => ({ ...f, icon: e.target.value }))}
               />
             </div>
 
@@ -121,22 +205,157 @@ const ItemManagementPage: React.FC = () => {
                 style={{
                   width: '16px',
                   height: '16px',
-                  accentColor: '#00f5ff',   // 체크 색 (지원하는 브라우저)
-                  appearance: 'auto',       
+                  accentColor: '#00f5ff',
+                  appearance: 'auto',
                 }}
               />
-              생성 후 상점에 표시 (Listed)
+              상점에 표시 (Listed)
             </label>
           </div>
 
           <div style={{ display: 'grid', gap: 6 }}>
-            <label style={{ fontSize: 12, opacity: .8 }}>Description (optional)</label>
+            <label style={{ fontSize: 12, opacity: .8 }}>Description</label>
             <textarea
-              rows={3}
-              placeholder="간단 설명"
+              rows={2}
+              placeholder="아이템 설명"
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             />
+          </div>
+
+          {/* Image Upload */}
+          <div style={{ border: '1px solid #333', padding: 12, borderRadius: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'block' }}>
+              Item Image (아이템 이미지)
+            </label>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: imagePreview ? '1fr auto' : '1fr' }}>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{
+                    padding: '8px',
+                    border: '1px solid #444',
+                    borderRadius: 4,
+                    background: '#1a1a1a',
+                    color: '#fff',
+                  }}
+                />
+                <small style={{ opacity: 0.6, fontSize: 11 }}>
+                  PNG, JPG, GIF, WebP (최대 5MB)
+                </small>
+              </div>
+              {imagePreview && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{
+                      width: 80,
+                      height: 80,
+                      objectFit: 'cover',
+                      borderRadius: 8,
+                      border: '2px solid #00f5ff',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview('');
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: 11,
+                      background: '#ff4444',
+                      border: 'none',
+                      borderRadius: 4,
+                      color: '#fff',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    제거
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Effect Settings */}
+          <div style={{ border: '1px solid #333', padding: 12, borderRadius: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'block' }}>
+              Effect (효과)
+            </label>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label style={{ fontSize: 12, opacity: .8 }}>Hint Count</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={form.effect.hintCount}
+                  onChange={e => setForm(f => ({
+                    ...f,
+                    effect: { ...f.effect, hintCount: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label style={{ fontSize: 12, opacity: .8 }}>Freeze Seconds</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={form.effect.freezeSeconds}
+                  onChange={e => setForm(f => ({
+                    ...f,
+                    effect: { ...f.effect, freezeSeconds: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Roulette Settings */}
+          <div style={{ border: '1px solid #333', padding: 12, borderRadius: 8 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'block' }}>
+              Roulette (룰렛 설정)
+            </label>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 2fr' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={form.roulette.enabled}
+                  onChange={(e) => setForm(f => ({
+                    ...f,
+                    roulette: { ...f.roulette, enabled: e.target.checked }
+                  }))}
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    accentColor: '#00f5ff',
+                  }}
+                />
+                룰렛에 포함
+              </label>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label style={{ fontSize: 12, opacity: .8 }}>Weight (확률 가중치)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="1"
+                  value={form.roulette.weight}
+                  onChange={e => setForm(f => ({
+                    ...f,
+                    roulette: { ...f.roulette, weight: Number(e.target.value) }
+                  }))}
+                  disabled={!form.roulette.enabled}
+                />
+              </div>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
@@ -160,22 +379,77 @@ const ItemManagementPage: React.FC = () => {
             <tbody>
               {items.map(item => {
                 const id = (item as any)._id as string;
+                const effect = (item as any).effect;
+                const roulette = (item as any).roulette;
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+                const baseUrl = apiUrl.replace('/api', '');
+                const imageUrl = item.imageUrl ? `${baseUrl}${item.imageUrl}` : '';
+
                 return (
                   <tr key={id}>
                     <td>
-                      {'imageUrl' in item && (item as any).imageUrl ? (
+                      {imageUrl ? (
                         <img
-                          src={(item as any).imageUrl}
+                          src={imageUrl}
                           alt={item.name}
-                          style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8 }}
+                          style={{
+                            width: 60,
+                            height: 60,
+                            objectFit: 'cover',
+                            borderRadius: 8,
+                            border: '1px solid #444',
+                          }}
                         />
                       ) : (
-                        <div style={{ width: 48, height: 48, border: '1px dashed #444', borderRadius: 8 }} />
+                        <div
+                          style={{
+                            width: 60,
+                            height: 60,
+                            border: '1px dashed #444',
+                            borderRadius: 8,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.3,
+                            fontSize: 9,
+                          }}
+                        >
+                          No Image
+                        </div>
                       )}
                     </td>
+                    <td style={{ fontSize: 24, textAlign: 'center' }}>
+                      {item.icon || '📦'}
+                    </td>
                     <td>{item.name}</td>
+                    <td>
+                      <span style={{
+                        padding: '4px 8px',
+                        background: '#222',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontFamily: 'monospace'
+                      }}>
+                        {item.type}
+                      </span>
+                    </td>
                     <td>{item.price} HTO</td>
-                    <td>{item.isListed ? 'Yes' : 'No'}</td>
+                    <td style={{ fontSize: 11 }}>
+                      {effect?.hintCount > 0 && <div>💡 Hint: {effect.hintCount}</div>}
+                      {effect?.freezeSeconds > 0 && <div>⏸️ Freeze: {effect.freezeSeconds}s</div>}
+                      {(!effect?.hintCount && !effect?.freezeSeconds) && <span style={{ opacity: 0.5 }}>-</span>}
+                    </td>
+                    <td style={{ fontSize: 11 }}>
+                      {roulette?.enabled ? (
+                        <div>
+                          <span style={{ color: '#00f5ff' }}>✓ Enabled</span>
+                          <div style={{ opacity: 0.7 }}>Weight: {roulette.weight}</div>
+                        </div>
+                      ) : (
+                        <span style={{ opacity: 0.5 }}>-</span>
+                      )}
+                    </td>
+                    <td>{item.isListed ? '✓ Yes' : 'No'}</td>
                   </tr>
                 );
               })}
