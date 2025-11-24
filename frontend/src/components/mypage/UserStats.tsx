@@ -136,7 +136,7 @@ const UserStats = () => {
             />
             <Box className="progress-text">
               <Typography style={{ fontSize: "1.5rem", fontWeight: "bold" }} component="div" color="var(--color-white)">
-                LVL. {myStats?.myLevel}
+                LV. {myStats?.myLevel}
               </Typography>
               <Typography variant="h6" component="div" color="var(--color-white)">
                 {Math.round(expPercentage)}%

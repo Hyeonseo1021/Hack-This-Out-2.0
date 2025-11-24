@@ -71,7 +71,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ leaderboard, curren
                                             `#${startIdx + index + 1}` // 4위 이후는 순위만 표시
                                         )}
                                     </div>
-                                    <div className={styles.leaderboard_level}>LVL. {user.level}</div>
+                                    <div className={styles.leaderboard_level}>LV. {user.level}</div>
                                     <div className={styles.leaderboard_userinfo}>
                                         <Avatar className={styles.leaderboard_avatar} alt={user.username} sx={{ backgroundColor: avatarBgColor }}>
                                             {user.username.charAt(0).toUpperCase()}
