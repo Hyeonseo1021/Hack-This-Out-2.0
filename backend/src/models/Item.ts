@@ -39,6 +39,14 @@ const ItemSchema = new mongoose.Schema(
         type: Number,
         default: 0,    // time_freeze: 30 등
       },
+      scoreBoost: {
+        type: Number,
+        default: 0,    // score_boost: 50 (50% 증가)
+      },
+      invincibleSeconds: {
+        type: Number,
+        default: 0,    // invincible: 10 (10초 무적)
+      },
     },
     
     // 룰렛 설정

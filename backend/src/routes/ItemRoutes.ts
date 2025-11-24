@@ -10,7 +10,8 @@ import {
     getShopItems,
     buyShopItem,
     spinRoulette,
-    uploadItemImage
+    uploadItemImage,
+    deleteItem
 } from "../controllers/ItemController";
 import { verifyAdmin } from '../middlewares/Admin';
 import { uploadItemImage as uploadMiddleware } from '../middlewares/Upload';
@@ -31,6 +32,7 @@ ItemRoutes.patch('/inventory/:invId/use', verifyToken, useInventoryItem); // 아
 ItemRoutes.post("/upload-image", verifyToken, verifyAdmin, uploadMiddleware.single('image'), uploadItemImage);
 
 ItemRoutes.post("/item", verifyToken, verifyAdmin, createItem); // 아이템 생성
+ItemRoutes.delete("/item/:id", verifyToken, verifyAdmin, deleteItem); // 아이템 삭제 (관리자 전용)
 ItemRoutes.post("/buy/:id", verifyToken, buyItem); // 일반 아이템 구매
 
 export default ItemRoutes;
