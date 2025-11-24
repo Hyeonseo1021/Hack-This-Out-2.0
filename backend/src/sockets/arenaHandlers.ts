@@ -265,6 +265,14 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       arena.status = 'started';
       arena.startTime = new Date();
       arena.endTime = new Date(arena.startTime.getTime() + arena.timeLimit * 1000);
+
+      // ✅ 모든 참가자의 personalEndTime 초기화 (전체 endTime과 동일하게 시작)
+      arena.participants.forEach((p: any) => {
+        if (!p.hasLeft) {
+          p.personalEndTime = arena.endTime;
+        }
+      });
+
       await arena.save();
 
       // (2) 모드별 초기화
@@ -720,7 +728,156 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
   
-  // 9. [추가] 설정 변경 (arena:settingsChange)
+  // 9. [추가] 아이템 사용 (arena:use-item)
+  socket.on('arena:use-item', async ({ arenaId, userId, itemType, value, duration }: { arenaId: string, userId: string, itemType: string, value: number, duration?: number }) => {
+    try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) return;
+
+      // 게임이 시작된 상태에서만 아이템 사용 가능
+      if (arena.status !== 'started') {
+        return socket.emit('arena:use-item-failed', { reason: '게임 중에만 아이템을 사용할 수 있습니다.' });
+      }
+
+      // 참가자 확인
+      const participant = arena.participants.find(
+        (p: any) => String((p.user as any)?._id ?? p.user) === userId && !p.hasLeft
+      );
+      if (!participant) {
+        return socket.emit('arena:use-item-failed', { reason: '참가자가 아닙니다.' });
+      }
+
+      // 아이템 타입별 처리
+      if ((itemType === 'time_extension' || itemType === 'time_freeze') && value > 0) {
+        // ✅ 유예시간 중인지 확인 (winner가 있고 firstSolvedAt이 설정된 상태)
+        const isGracePeriod = arena.winner && arena.firstSolvedAt;
+
+        // 사용자 이름 가져오기
+        const user = await User.findById(userId).select('username').lean();
+        const username = user?.username || 'Someone';
+
+        if (isGracePeriod) {
+          // ✅ 유예시간 중에는 시간 연장 불가
+          return socket.emit('arena:use-item-failed', {
+            reason: '유예시간 중에는 시간 연장권을 사용할 수 없습니다.'
+          });
+        }
+
+        // ✅ 평상시 - 개인 personalEndTime만 연장 (본인만 영향)
+        const participantIndex = arena.participants.findIndex(
+          (p: any) => String((p.user as any)?._id ?? p.user) === userId
+        );
+
+        if (participantIndex !== -1) {
+          const currentPersonalEndTime = arena.participants[participantIndex].personalEndTime || arena.endTime;
+          const newPersonalEndTime = new Date(currentPersonalEndTime.getTime() + value * 1000);
+          arena.participants[participantIndex].personalEndTime = newPersonalEndTime;
+          await arena.save();
+
+          // 해당 유저에게만 개인 타이머 업데이트 알림
+          socket.emit('arena:personal-time-extended', {
+            userId,
+            personalEndTime: newPersonalEndTime.toISOString(),
+            value
+          });
+
+          // 전체에게 아이템 사용 알림
+          io.to(arenaId).emit('arena:item-used', {
+            userId,
+            username,
+            itemType,
+            value,
+            message: `${username}님이 시간 연장권을 사용했습니다! (+${value}초)`
+          });
+        }
+      } else if (itemType === 'score_boost' && value > 0) {
+        // Score boost buff 추가 (value는 % 값, duration은 초 단위)
+        const startedAt = new Date();
+        const durationMs = (duration || 120) * 1000; // 기본값 120초
+        const expiresAt = new Date(startedAt.getTime() + durationMs);
+
+        const participantIndex = arena.participants.findIndex(
+          (p: any) => String((p.user as any)?._id ?? p.user) === userId
+        );
+
+        if (participantIndex !== -1) {
+          if (!arena.participants[participantIndex].activeBuffs) {
+            arena.participants[participantIndex].activeBuffs = [];
+          }
+
+          // 기존 score_boost 제거 후 새로 추가
+          arena.participants[participantIndex].activeBuffs = arena.participants[participantIndex].activeBuffs.filter(
+            (b: any) => b.type !== 'score_boost'
+          );
+
+          arena.participants[participantIndex].activeBuffs.push({
+            type: 'score_boost',
+            value,
+            startedAt,
+            expiresAt
+          } as any);
+
+          await arena.save();
+
+          const user = await User.findById(userId).select('username').lean();
+          const username = user?.username || 'Someone';
+
+          io.to(arenaId).emit('arena:item-used', {
+            userId,
+            username,
+            itemType,
+            value,
+            message: `${username}님이 점수 부스트를 사용했습니다! (+${value}% 점수)`
+          });
+        }
+      } else if (itemType === 'invincible' && value > 0) {
+        // Invincible buff 추가
+        const startedAt = new Date();
+        const expiresAt = new Date(startedAt.getTime() + value * 1000); // value는 초 단위
+
+        const participantIndex = arena.participants.findIndex(
+          (p: any) => String((p.user as any)?._id ?? p.user) === userId
+        );
+
+        if (participantIndex !== -1) {
+          if (!arena.participants[participantIndex].activeBuffs) {
+            arena.participants[participantIndex].activeBuffs = [];
+          }
+
+          // 기존 invincible 제거 후 새로 추가
+          arena.participants[participantIndex].activeBuffs = arena.participants[participantIndex].activeBuffs.filter(
+            (b: any) => b.type !== 'invincible'
+          );
+
+          arena.participants[participantIndex].activeBuffs.push({
+            type: 'invincible',
+            value,
+            startedAt,
+            expiresAt
+          } as any);
+
+          await arena.save();
+
+          const user = await User.findById(userId).select('username').lean();
+          const username = user?.username || 'Someone';
+
+          io.to(arenaId).emit('arena:item-used', {
+            userId,
+            username,
+            itemType,
+            value,
+            message: `${username}님이 무적권을 사용했습니다! (${value}초 동안 패널티 무시)`
+          });
+        }
+      }
+
+    } catch (e) {
+      console.error('[arena:use-item] error:', e);
+      socket.emit('arena:use-item-failed', { reason: '아이템 사용 중 오류가 발생했습니다.' });
+    }
+  });
+
+  // 10. [추가] 설정 변경 (arena:settingsChange)
   socket.on('arena:settingsChange', async ({ newSettings }: { newSettings: { name?: string, maxParticipants?: number } }) => {
     const arenaId = (socket as any).arenaId;
     const hostId = (socket as any).userId;

@@ -28,7 +28,7 @@ type FormState = {
 const ITEM_TYPES = [
   { value: 'hint', label: '힌트권' },
   { value: 'hint_bundle', label: '힌트 묶음' },
-  { value: 'time_freeze', label: '시간 정지' },
+  { value: 'time_freeze', label: '시간 연장' },
   { value: 'random_buff', label: '랜덤 버프' },
   { value: 'score_boost', label: '점수 부스트' },
   { value: 'invincible', label: '무적권' },
@@ -332,7 +332,7 @@ const ItemManagementPage: React.FC = () => {
               </div>
 
               <div style={{ display: 'grid', gap: 6 }}>
-                <label style={{ fontSize: 12, opacity: .8 }}>⏸️ Freeze Seconds</label>
+                <label style={{ fontSize: 12, opacity: .8 }}>⏰ Extension Seconds (시간 연장)</label>
                 <input
                   type="number"
                   min={0}
@@ -490,7 +490,7 @@ const ItemManagementPage: React.FC = () => {
                     <td>{item.price} HTO</td>
                     <td style={{ fontSize: 11 }}>
                       {effect?.hintCount > 0 && <div>💡 Hint: {effect.hintCount}</div>}
-                      {effect?.freezeSeconds > 0 && <div>⏸️ Freeze: {effect.freezeSeconds}s</div>}
+                      {effect?.freezeSeconds > 0 && <div>⏰ Extension: {effect.freezeSeconds}s</div>}
                       {effect?.scoreBoost > 0 && <div>🚀 Boost: +{effect.scoreBoost}%</div>}
                       {effect?.invincibleSeconds > 0 && <div>🛡️ Shield: {effect.invincibleSeconds}s</div>}
                       {(!effect?.hintCount && !effect?.freezeSeconds && !effect?.scoreBoost && !effect?.invincibleSeconds) && <span style={{ opacity: 0.5 }}>-</span>}

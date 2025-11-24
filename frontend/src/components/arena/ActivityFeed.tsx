@@ -153,10 +153,15 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
       // 명령어 실행만 표시 (점수는 participant:update에서 처리)
       if (data.scoreGain && data.scoreGain > 0 && data.command) {
+        // 부스트 적용 여부 확인
+        const hasBoost = (data as any).baseScore && data.scoreGain > (data as any).baseScore;
+
         const entry: FeedEntry = {
           id: feedCounter.current++,
           userId: data.userId,
-          text: `You: ${data.command} (+${data.scoreGain} points)`,
+          text: hasBoost
+            ? `You: ${data.command} (+${(data as any).baseScore} pts → +${data.scoreGain} pts 🚀)`
+            : `You: ${data.command} (+${data.scoreGain} points)`,
           type: 'command',
           timestamp: new Date(),
           isMe
@@ -225,10 +230,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       const username = getUsernameById(data.userId);
       const isMe = data.userId === currentUserId;
 
+      // basePoints가 있으면 기본 점수, 없으면 points (부스트 적용된 점수) 사용
+      const displayPoints = data.basePoints || data.points;
+      const hasBoost = data.basePoints && data.points > data.basePoints;
+
       const entry: FeedEntry = {
         id: feedCounter.current++,
         userId: data.userId,
-        text: `${username} found ${data.vulnName || 'a vulnerability'} (+${data.points} pts)`,
+        text: hasBoost
+          ? `${username} found ${data.vulnName || 'a vulnerability'} (+${displayPoints} pts → ${data.points} pts 🚀)`
+          : `${username} found ${data.vulnName || 'a vulnerability'} (+${displayPoints} pts)`,
         type: data.isFirstBlood ? 'first_blood' : 'vuln_found',
         timestamp: new Date(),
         isMe

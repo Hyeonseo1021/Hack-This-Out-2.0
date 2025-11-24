@@ -27,6 +27,7 @@ interface TerminalResultData {
   command: string;
   message: string;
   scoreGain?: number;
+  baseScore?: number;
   stageAdvanced?: boolean;
   completed?: boolean;
   currentStage?: number;
@@ -190,9 +191,14 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       setLastScoreGain(data.scoreGain || 0);
       setTimeout(() => setLastScoreGain(0), 1500);
 
+      // 부스트 적용 여부 확인
+      const hasBoost = data.baseScore && data.scoreGain && data.scoreGain > data.baseScore;
+
       newLogs.push({
         id: logCounter.current++,
-        text: `[+${data.scoreGain} POINTS]`,
+        text: hasBoost
+          ? `[+${data.baseScore} POINTS → +${data.scoreGain} POINTS 🚀]`
+          : `[+${data.scoreGain} POINTS]`,
         type: 'score'
       });
 
@@ -293,6 +299,18 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
+  const handleItemUsed = useCallback((data: { userId: string; username: string; itemType: string; value: number; message: string }) => {
+    console.log('[TerminalRace] arena:item-used received:', data);
+
+    // 터미널에 아이템 사용 알림 표시
+    setLogs(prev => [
+      ...prev,
+      { id: logCounter.current++, text: '', type: 'output' },
+      { id: logCounter.current++, text: `[ITEM] ${data.message}`, type: 'system' },
+      { id: logCounter.current++, text: '', type: 'output' }
+    ]);
+  }, []);
+
   useEffect(() => {
 
     socket.off('terminal:progress-data');
@@ -302,6 +320,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.off('arena:grace-period-started');
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
+    socket.off('arena:item-used');
 
     socket.on('terminal:progress-data', handleProgressData);
     socket.on('terminal:prompt-data', handlePromptData);
@@ -310,6 +329,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.on('arena:grace-period-started', handleGracePeriodStarted);
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
+    socket.on('arena:item-used', handleItemUsed);
 
 
     return () => {
@@ -323,9 +343,10 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       socket.off('arena:grace-period-started', handleGracePeriodStarted);
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
+      socket.off('arena:item-used', handleItemUsed);
     };
   }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError,
-      handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults]);
+      handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleItemUsed]);
 
   useEffect(() => {
     if (logContainerRef.current) {

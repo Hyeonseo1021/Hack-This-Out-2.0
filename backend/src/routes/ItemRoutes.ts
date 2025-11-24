@@ -10,6 +10,7 @@ import {
     getShopItems,
     buyShopItem,
     spinRoulette,
+    getRouletteItems,
     uploadItemImage,
     deleteItem
 } from "../controllers/ItemController";
@@ -23,6 +24,7 @@ ItemRoutes.get("/balance", verifyToken, getBalance);
 ItemRoutes.get("/items", getShopItems); // 상점 아이템 조회
 ItemRoutes.post("/buy", verifyToken, buyShopItem); // 상점 아이템 구매
 
+ItemRoutes.get("/roulette/items", getRouletteItems); // 룰렛 아이템 목록 조회
 ItemRoutes.post("/roulette/spin", verifyToken, spinRoulette); // 룰렛 돌리기
 
 ItemRoutes.get("/inventory", verifyToken, getInventory); // 인벤토리 조회

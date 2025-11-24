@@ -63,15 +63,31 @@ export const useInventoryItem = async (
 };
 
 
+/** 🎰 룰렛 아이템 목록 조회 */
+export const getRouletteItems = async (): Promise<
+  Array<{
+    id: string;
+    name: string;
+    icon: string;
+    weight: number;
+  }>
+> => {
+  const res = await axiosInstance.get('/item/roulette/items'); // ✅ GET /api/item/roulette/items
+  return res.data?.items ?? [];
+};
+
+/** 🎰 룰렛 돌리기 */
 export const spinRoulette = async (): Promise<{
   rewardId: string;
   rewardName: string;
+  rewardIcon: string;
   updatedBalance: number;
 }> => {
   const res = await axiosInstance.post('/item/roulette/spin'); // ✅ POST /api/item/roulette/spin
   return {
     rewardId: res.data?.rewardId ?? '',
     rewardName: res.data?.rewardName ?? '',
+    rewardIcon: res.data?.rewardIcon ?? '',
     updatedBalance: res.data?.updatedBalance ?? 0,
   };
 };

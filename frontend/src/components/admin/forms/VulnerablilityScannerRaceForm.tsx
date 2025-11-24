@@ -45,13 +45,6 @@ interface VulnerabilityScannerRaceData {
   vulnerabilities: Vulnerability[];
   hints: Hint[];
   scoring: {
-    firstBloodBonus: number;
-    speedBonusThresholds: {
-      under3min: number;
-      under5min: number;
-      under7min: number;
-    };
-    comboMultiplier: number;
     invalidSubmissionPenalty: number;
     graceTimeSeconds?: number;
   };
@@ -87,9 +80,6 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         vulnerabilities: data.vulnerabilities || [],
         hints: data.hints || [],
         scoring: data.scoring || {
-          firstBloodBonus: 50,
-          speedBonusThresholds: { under3min: 30, under5min: 20, under7min: 10 },
-          comboMultiplier: 5,
           invalidSubmissionPenalty: 5,
           graceTimeSeconds: 60
         },
@@ -517,28 +507,6 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         <h4>점수 시스템</h4>
         <div className="form-grid-2">
           <div className="form-field">
-            <label>First Blood 보너스 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.firstBloodBonus || 50}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: Number(e.target.value),
-                  speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
-                  graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
-                }
-              })}
-              required
-            />
-            <small>최초 발견 보너스</small>
-          </div>
-
-          <div className="form-field">
             <label>오답 페널티 *</label>
             <input
               type="number"
@@ -548,138 +516,42 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
                 ...data,
                 scoring: {
                   ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
                   invalidSubmissionPenalty: Number(e.target.value),
                   graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
                 }
               })}
               required
             />
-            <small>오답 시 감점</small>
+            <small>오답 시 감점 (무적 아이템으로 방어 가능)</small>
           </div>
-        </div>
 
-        <div className="form-grid-3">
           <div className="form-field">
-            <label>3분 이내 보너스 *</label>
+            <label>유예시간 (초) *</label>
             <input
               type="number"
               min={0}
-              value={data.scoring?.speedBonusThresholds?.under3min || 30}
+              value={data.scoring?.graceTimeSeconds || 60}
               onChange={e => onChange({
                 ...data,
                 scoring: {
                   ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: {
-                    ...data.scoring?.speedBonusThresholds,
-                    under3min: Number(e.target.value),
-                    under5min: data.scoring?.speedBonusThresholds?.under5min || 20,
-                    under7min: data.scoring?.speedBonusThresholds?.under7min || 10
-                  },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
+                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
+                  graceTimeSeconds: Number(e.target.value)
                 }
               })}
               required
             />
-          </div>
-
-          <div className="form-field">
-            <label>5분 이내 보너스 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.speedBonusThresholds?.under5min || 20}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: {
-                    ...data.scoring?.speedBonusThresholds,
-                    under3min: data.scoring?.speedBonusThresholds?.under3min || 30,
-                    under5min: Number(e.target.value),
-                    under7min: data.scoring?.speedBonusThresholds?.under7min || 10
-                  },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
-                }
-              })}
-              required
-            />
-          </div>
-
-          <div className="form-field">
-            <label>7분 이내 보너스 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.speedBonusThresholds?.under7min || 10}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: {
-                    ...data.scoring?.speedBonusThresholds,
-                    under3min: data.scoring?.speedBonusThresholds?.under3min || 30,
-                    under5min: data.scoring?.speedBonusThresholds?.under5min || 20,
-                    under7min: Number(e.target.value)
-                  },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
-                }
-              })}
-              required
-            />
+            <small>첫 완주자 발생 후 다른 플레이어들에게 주어지는 시간</small>
           </div>
         </div>
 
-        <div className="form-field">
-          <label>콤보 배율 *</label>
-          <input
-            type="number"
-            min={0}
-            value={data.scoring?.comboMultiplier || 5}
-            onChange={e => onChange({
-              ...data,
-              scoring: {
-                ...data.scoring,
-                firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                comboMultiplier: Number(e.target.value),
-                invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
-                graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
-              }
-            })}
-            required
-          />
-          <small>1분 내 연속 발견 시 보너스 (개수 × 배율)</small>
-        </div>
-
-        <div className="form-field">
-          <label>유예시간 (초) *</label>
-          <input
-            type="number"
-            min={0}
-            value={data.scoring?.graceTimeSeconds || 60}
-            onChange={e => onChange({
-              ...data,
-              scoring: {
-                ...data.scoring,
-                firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                comboMultiplier: data.scoring?.comboMultiplier || 5,
-                invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
-                graceTimeSeconds: Number(e.target.value)
-              }
-            })}
-            required
-          />
-          <small>첫 완주자 발생 후 다른 플레이어들에게 주어지는 시간</small>
+        <div className="info-box">
+          <strong>💡 점수 시스템 안내</strong>
+          <ul>
+            <li>각 취약점마다 설정한 기본 점수만 획득합니다</li>
+            <li>점수 부스트 아이템을 사용하면 점수가 증가합니다 (예: 20% 부스트)</li>
+            <li>오답 제출 시 페널티가 적용되지만, 무적 아이템으로 방어할 수 있습니다</li>
+          </ul>
         </div>
       </div>
 

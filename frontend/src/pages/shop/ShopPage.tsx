@@ -16,7 +16,6 @@ import {
   getShopItems,
   buyShopItem,
   getInventory,
-  useInventoryItem,
 } from "../../api/axiosShop";
 
 type ShopItem = {
@@ -108,22 +107,22 @@ const ShopPage: React.FC = () => {
   };
 
   /* -------------------------------------- */
-  /* 🧩 사용 */
+  /* 🧩 사용 (상점에서는 사용 불가 - Arena에서만 가능) */
   /* -------------------------------------- */
-  const handleUseItem = async (invId: string) => {
-    try {
-      const result = await useInventoryItem(invId);
-      
-      // 인벤토리 새로고침
-      const updatedInventory = await getInventory();
-      setInventory(updatedInventory);
-      
-      showToast(result.msg);
-    } catch (error: any) {
-      console.error('❌ Failed to use item:', error);
-      showToast(error?.response?.data?.msg || t('errors.useFailed') || '아이템 사용에 실패했습니다.');
-    }
-  };
+  // const handleUseItem = async (invId: string) => {
+  //   try {
+  //     const result = await useInventoryItem(invId);
+  //
+  //     // 인벤토리 새로고침
+  //     const updatedInventory = await getInventory();
+  //     setInventory(updatedInventory);
+  //
+  //     showToast(result.msg);
+  //   } catch (error: any) {
+  //     console.error('❌ Failed to use item:', error);
+  //     showToast(error?.response?.data?.msg || t('errors.useFailed') || '아이템 사용에 실패했습니다.');
+  //   }
+  // };
 
   /* -------------------------------------- */
   /* 🎰 룰렛 보상 */
@@ -290,14 +289,15 @@ const ShopPage: React.FC = () => {
                           <p className="shop-inventory-card__desc">
                             {translatedDesc}
                           </p>
+                          <p className="shop-inventory-card__note" style={{
+                            fontSize: '0.85rem',
+                            color: '#94a3b8',
+                            marginTop: '0.5rem',
+                            fontStyle: 'italic'
+                          }}>
+                            💡 {t("inventory.useInArena", { defaultValue: "아이템은 Arena 플레이 중에 사용할 수 있습니다" })}
+                          </p>
                         </div>
-
-                        <button
-                          className="shop-inventory-card__btn"
-                          onClick={() => handleUseItem(inv._id)}
-                        >
-                          {t("buttons.use")}
-                        </button>
                       </div>
                       );
                     })}

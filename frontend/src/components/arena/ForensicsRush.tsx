@@ -1,7 +1,8 @@
 // src/components/arena/ForensicsRush.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
-import { useNavigate } from 'react-router-dom'; // ✅ 추가
+import { useNavigate } from 'react-router-dom';
+import { usePlayContext } from '../../contexts/PlayContext'; // ✅ 추가
 import '../../assets/scss/arena/ForensicsRush.scss';
 
 type Participant = {
@@ -68,7 +69,8 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   currentUserId,
   participants: _participants
 }) => {
-  const navigate = useNavigate(); // ✅ 추가
+  const navigate = useNavigate();
+  const { availableHints, useHint } = usePlayContext(); // ✅ 힌트 시스템 연동
   const [isLoading, setIsLoading] = useState(true);
   const [scenario, setScenario] = useState<ScenarioInfo | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -83,9 +85,12 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [showHints, setShowHints] = useState(false);
+  const [unlockedHints, setUnlockedHints] = useState<Set<string>>(new Set()); // ✅ 힌트를 해금한 문제 ID 목록
+  const [hintsVisible, setHintsVisible] = useState(false); // ✅ 현재 힌트 표시 여부 (토글용)
   const [allCompleted, setAllCompleted] = useState(false);
+  const [itemNotifications, setItemNotifications] = useState<Array<{ id: number; message: string; timestamp: Date }>>([]);
   const isInitializedRef = useRef(false);
+  const notificationIdCounter = useRef(0);
 
   // 🎯 타이머 관련 state
   const [gameTimeRemaining, setGameTimeRemaining] = useState<number | null>(null);
@@ -93,6 +98,18 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [firstWinner, setFirstWinner] = useState<string | null>(null);
   const gameTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const gracePeriodIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 사용자 이름 가져오기 헬퍼 함수
+  const getUsernameById = useCallback((userId: string): string => {
+    const participant = _participants.find((p) => {
+      const id = typeof p.user === 'string' ? p.user : p.user._id;
+      return id === userId;
+    });
+    if (participant) {
+      return typeof participant.user === 'string' ? 'User' : participant.user.username;
+    }
+    return 'Unknown';
+  }, [_participants]);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -102,7 +119,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       try {
         isInitializedRef.current = true;
         console.log('🔍 [ForensicsRush] Loading data for arena:', arena._id);
-        
+
         socket.emit('forensics:get-scenario', { arenaId: arena._id });
         socket.emit('forensics:get-questions', { arenaId: arena._id });
         socket.emit('forensics:get-progress', { arenaId: arena._id });
@@ -205,6 +222,53 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     // ✅ 리디렉션은 backend에서 arena:redirect-to-results 이벤트로 처리
     // (endArenaProcedure가 완료된 후 2초 뒤에 전송됨)
   }, []);
+
+  // ✅ 아이템 사용 알림 핸들러
+  const handleItemUsed = useCallback((data: { userId: string; itemType: string; username?: string }) => {
+    console.log('🎁 [ForensicsRush] Item used:', data);
+
+    const username = data.username || getUsernameById(data.userId);
+    const isMe = data.userId === currentUserId;
+
+    let itemEmoji = '🎁';
+    let itemName = 'Item';
+
+    switch (data.itemType) {
+      case 'hint':
+        itemEmoji = '💡';
+        itemName = 'Hint';
+        break;
+      case 'time_freeze':
+        itemEmoji = '⏰';
+        itemName = 'Time Extension';
+        break;
+      case 'score_boost':
+        itemEmoji = '🚀';
+        itemName = 'Score Boost';
+        break;
+      case 'invincible':
+        itemEmoji = '🛡️';
+        itemName = 'Shield';
+        break;
+    }
+
+    const message = isMe
+      ? `[SYSTEM] You used ${itemEmoji} ${itemName}`
+      : `[SYSTEM] ${username} used ${itemEmoji} ${itemName}`;
+
+    const notification = {
+      id: notificationIdCounter.current++,
+      message,
+      timestamp: new Date()
+    };
+
+    setItemNotifications(prev => [...prev, notification]);
+
+    // 5초 후 자동 제거
+    setTimeout(() => {
+      setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 5000);
+  }, [currentUserId, getUsernameById]);
 
   // 소켓 이벤트 핸들러
   useEffect(() => {
@@ -414,6 +478,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
     socket.off('forensics:all-completed');
+    socket.off('arena:item-used');
 
     socket.on('forensics:scenario-data', handleScenarioData);
     socket.on('forensics:questions-data', handleQuestionsData);
@@ -425,6 +490,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('forensics:all-completed', handleAllCompleted);
+    socket.on('arena:item-used', handleItemUsed);
 
     return () => {
       // ✅ 타이머 정리
@@ -448,8 +514,9 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('forensics:all-completed', handleAllCompleted);
+      socket.off('arena:item-used', handleItemUsed);
     };
-  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleAllCompleted]);
+  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleAllCompleted, handleItemUsed]);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -581,6 +648,39 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
   return (
     <div className="forensics-rush-container">
+      {/* ✅ 아이템 사용 알림 */}
+      {itemNotifications.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '20px',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          maxWidth: '400px'
+        }}>
+          {itemNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              style={{
+                backgroundColor: 'rgba(0, 245, 255, 0.1)',
+                border: '1px solid rgba(0, 245, 255, 0.3)',
+                padding: '12px 16px',
+                borderRadius: '4px',
+                color: '#00f5ff',
+                fontFamily: 'monospace',
+                fontSize: '13px',
+                boxShadow: '0 4px 12px rgba(0, 245, 255, 0.2)',
+                animation: 'slideInRight 0.3s ease-out'
+              }}
+            >
+              {notification.message}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className="forensics-header">
         <div className="header-left">
@@ -735,7 +835,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                             setCurrentQuestionIndex(prev => prev + 1);
                             setUserAnswer('');
                             setFeedback(null);
-                            setShowHints(false);
+                            setHintsVisible(false); // ✅ 다음 문제로 이동 시 힌트 숨김 (해금은 유지)
                           }}
                         >
                           NEXT QUESTION →
@@ -766,14 +866,35 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           >
                             {isSubmitting ? '[ANALYZING...]' : allCompleted ? '[COMPLETE]' : '[SUBMIT]'}
                           </button>
-                          
+
+                          {/* ✅ 힌트 아이템 사용 버튼 */}
                           <button
                             type="button"
                             className="terminal-button hint"
-                            onClick={() => setShowHints(!showHints)}
-                            disabled={allCompleted}
+                            onClick={() => {
+                              const questionId = currentQuestion?.id;
+                              if (!questionId) return;
+
+                              const isUnlocked = unlockedHints.has(questionId);
+
+                              if (!isUnlocked && availableHints > 0) {
+                                // 힌트 아이템 사용하여 해금
+                                useHint();
+                                setUnlockedHints(prev => new Set(prev).add(questionId));
+                                setHintsVisible(true);
+                              } else if (isUnlocked) {
+                                // 이미 해금된 경우 토글만
+                                setHintsVisible(prev => !prev);
+                              }
+                            }}
+                            disabled={allCompleted || (!unlockedHints.has(currentQuestion?.id || '') && availableHints === 0)}
                           >
-                            {showHints ? '[HIDE HINTS]' : '[SHOW HINTS]'}
+                            {unlockedHints.has(currentQuestion?.id || '')
+                              ? (hintsVisible ? '[HIDE HINTS]' : '[SHOW HINTS]')
+                              : availableHints > 0
+                                ? `[USE HINT (${availableHints})]`
+                                : '[NO HINTS]'
+                            }
                           </button>
                         </div>
                       </form>
@@ -785,9 +906,10 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                         </div>
                       )}
 
-                      {showHints && currentQuestion.hints && currentQuestion.hints.length > 0 && (
+                      {/* ✅ 힌트 표시 (해금된 문제이고 visible 상태일 때만 표시) */}
+                      {hintsVisible && unlockedHints.has(currentQuestion?.id || '') && currentQuestion.hints && currentQuestion.hints.length > 0 && (
                         <div className="hints-terminal">
-                          <div className="hints-header">HINTS:</div>
+                          <div className="hints-header">HINTS (Unlocked):</div>
                           <ul className="hints-list">
                             {currentQuestion.hints.map((hint, index) => (
                               <li key={index}>
@@ -824,7 +946,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           setCurrentQuestionIndex(index);
                           setUserAnswer('');
                           setFeedback(null);
-                          setShowHints(false);
+                          setHintsVisible(false); // ✅ 문제 변경 시 힌트 숨김 (해금은 유지)
                         }}
                         title={q.question}
                         disabled={allCompleted}

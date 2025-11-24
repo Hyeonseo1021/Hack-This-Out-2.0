@@ -10,6 +10,29 @@ const graceTimers = new Map<string, NodeJS.Timeout>();
 // ✅ 중복 처리 방지를 위한 Map
 const processingCommands = new Map<string, boolean>();
 
+// ✅ Helper: 활성 버프 가져오기
+const getActiveBuffs = (arena: any, userId: string) => {
+  const participant = arena.participants.find(
+    (p: any) => String((p.user as any)?._id ?? p.user) === userId
+  );
+
+  if (!participant || !participant.activeBuffs) return [];
+
+  const now = new Date();
+  return participant.activeBuffs.filter((buff: any) => {
+    return buff.expiresAt && new Date(buff.expiresAt) > now;
+  });
+};
+
+// ✅ Helper: 점수 부스트 적용
+const applyScoreBoost = (baseScore: number, buffs: any[]) => {
+  const scoreBoostBuff = buffs.find((b: any) => b.type === 'score_boost');
+  if (!scoreBoostBuff || !scoreBoostBuff.value) return baseScore;
+
+  const multiplier = 1 + (scoreBoostBuff.value / 100);
+  return Math.floor(baseScore * multiplier);
+};
+
 export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
   
   socket.on('terminal:execute', async ({ arenaId, command }: { arenaId?: string; command: string }) => {
@@ -94,9 +117,18 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
 
       // 5. 진행 상황 업데이트 (명령어 성공)
       const updatePayload: any = {};
-      
+      let boostedScore = 0;
+
       if (result.progressDelta && result.progressDelta > 0) {
-        updatePayload.$inc = { score: result.progressDelta };
+        // ✅ 점수 부스트 적용
+        const activeBuffs = getActiveBuffs(arena, String(userId));
+        boostedScore = applyScoreBoost(result.progressDelta, activeBuffs);
+        updatePayload.$inc = { score: boostedScore };
+
+        // 부스트가 적용되었는지 로그
+        if (boostedScore !== result.progressDelta) {
+          console.log(`🚀 Score boost applied: ${result.progressDelta} → ${boostedScore}`);
+        }
       }
       
       if (result.advanceStage) {
@@ -142,7 +174,8 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         userId: String(userId),
         command,
         message: result.message,
-        scoreGain: result.progressDelta || 0,
+        scoreGain: boostedScore || result.progressDelta || 0, // 부스트 적용된 점수
+        baseScore: result.progressDelta || 0, // 기본 점수
         stageAdvanced: result.advanceStage || false,
         currentStage: progressDoc.stage,
         totalScore: progressDoc.score,

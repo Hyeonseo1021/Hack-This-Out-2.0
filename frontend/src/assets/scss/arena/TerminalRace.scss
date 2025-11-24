@@ -4,13 +4,14 @@
 .terminal-race-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   background: #0c0c0c;
   color: #00ff00;
   font-family: 'Source Code Pro', 'Consolas', 'Monaco', monospace;
   position: relative;
   padding: 20px;
   gap: 16px;
+  overflow: hidden;
 }
 
 // Scenario Info Bar
@@ -102,6 +103,7 @@
     inset 0 0 100px rgba(0, 255, 0, 0.02);
   overflow: hidden;
   position: relative;
+  min-height: 0;
 
   // Scanline effect
   &::before {
@@ -239,6 +241,7 @@
 .terminal-output {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px 20px;
   font-size: 0.95rem;
   line-height: 1.6;
@@ -246,6 +249,7 @@
   background: #000;
   position: relative;
   z-index: 1;
+  min-height: 0;
 
   &::-webkit-scrollbar {
     width: 10px;

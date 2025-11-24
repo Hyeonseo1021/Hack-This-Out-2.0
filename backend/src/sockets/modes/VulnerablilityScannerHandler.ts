@@ -81,13 +81,14 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       // 3. 현재 플레이어 점수
       const progress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
 
-      // 4. 모든 플레이어에게 발견 알림 브로드캐스트
+      // 4. 모든 플레이어에게 발견 알림 브로드캐스트 (부스트 적용된 점수 표시)
       io.to(arenaId).emit('scannerRace:vulnerability-found', {
         userId,
         vulnType: result.vulnInfo?.vulnType,
         vulnName: result.vulnInfo?.vulnName,
         isFirstBlood: result.isFirstBlood,
-        points: result.pointsAwarded,
+        points: result.pointsAwarded, // 부스트 적용된 최종 점수
+        basePoints: result.breakdown?.basePoints || result.pointsAwarded, // 기본 점수
         currentScore: progress?.score || 0
       });
 
