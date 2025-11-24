@@ -2,21 +2,24 @@
 
 .tutorial-play-viewport {
   @include background_set;
-  background-color: #01020a;
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  width: 100%;
   position: relative;
+  backdrop-filter: blur(40px);
+  overflow: hidden;
 
   &::before {
     content: "";
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(0, 225, 255, 0.2) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 225, 255, 0.2) 1px, transparent 1px);
-    background-size: 60px 60px;
+      linear-gradient(rgba(0, 225, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.5) 1px, transparent 1px);
+    background-size: 50px 50px;
     opacity: 0.1;
     animation: grid-pan 10s linear infinite;
     z-index: 0;
@@ -25,7 +28,7 @@
 
 @keyframes grid-pan {
   0% { background-position: 0 0; }
-  100% { background-position: 60px 60px; }
+  100% { background-position: 50px 50px; }
 }
 
 .tutorial-play-container {

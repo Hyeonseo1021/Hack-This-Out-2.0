@@ -11,7 +11,7 @@ import { ArrowForwardIos, ArrowBackIos } from '@mui/icons-material';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
-import whiteCat from '../../assets/img/icon/white_cat.png';
+import whiteCat from '../../assets/img/icon/Hack cat.png';
 
 
 const MachineBanner: React.FC = () => {
@@ -90,7 +90,7 @@ const MachineBanner: React.FC = () => {
                   sx={{
                     backgroundColor: avatarBgColor
                   }}
-                  
+
                 >
                     <img
                       src={whiteCat}
@@ -103,9 +103,13 @@ const MachineBanner: React.FC = () => {
   />
 
                 </Avatar>
-                <h4>
-                  <b>
-                    {machine?.name ? machine.name.charAt(0).toUpperCase() + machine.name.slice(1) : "Nothing new"}</b></h4>
+                <div className="machine-info-center">
+                  <h4>
+                    <b>
+                      {machine?.name ? machine.name.charAt(0).toUpperCase() + machine.name.slice(1) : "Nothing new"}</b>
+                  </h4>
+                  <p className="machine-category">{machine?.category || 'Uncategorized'}</p>
+                </div>
                 <div className='machine_reward_box'>
                   <p className='banner-exp'>Reward</p>
                   <p className='exp'>{machine.exp} EXP</p>
