@@ -10,7 +10,7 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
-import CatIcon from '../../assets/img/icon/Hack cat.png';
+import CatIcon from '../../assets/img/icon/Hack_cat.png';
 
 
 interface Machine {
