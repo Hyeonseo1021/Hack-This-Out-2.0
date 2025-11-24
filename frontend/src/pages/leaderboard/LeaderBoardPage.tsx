@@ -76,31 +76,7 @@ const LeaderBoardPage: React.FC = () => {
 
         {/* 메인 콘텐츠 */}
         <div className="leaderboard-grid">
-          {/* 좌측 패널 */}
-          <aside className="user-hud">
-            <h2>{language === "en" ? "PLAYER STATUS" : "플레이어 상태"}</h2>
-            <div className="hud-info">
-              <p>
-                USERNAME: <span>{myRank?.myUsername || 'Guest'}</span>
-              </p>
-              <p>
-                LEVEL: <span>{myRank?.myLevel || 1}</span>
-              </p>
-              <p>
-                EXP: <span>{myRank?.myExp || 0}</span>
-              </p>
-              <p>
-                RANK: <span>{myRank?.myRank || 'N/A'}</span>
-              </p>
-              <div className="hud-bar">
-                <div className="fill" style={{
-                  width: `${Math.min(((myRank?.myExp || 0) / ((myRank?.myLevel || 1) * 100)) * 100, 100)}%`
-                }} />
-              </div>
-            </div>
-          </aside>
-
-          {/* 중앙 랭킹 */}
+          {/* 좌측 랭킹 */}
           <section className="main-board">
             <table className="cyber-table">
               <thead>
@@ -141,15 +117,28 @@ const LeaderBoardPage: React.FC = () => {
             </table>
           </section>
 
-          {/* 우측 로그 */}
-          <aside className="activity-log">
-            <h2>{language === "en" ? "RECENT ACTIVITY" : "최근 활동"}</h2>
-            <ul>
-              <li>[+250 EXP] COMPLETE</li>
-              <li>[+180 EXP] RockSteel won “ARENA”</li>
-              <li>[+90 EXP] ARENA</li>
-              <li>[+300 EXP] ARENA WIN</li>
-            </ul>
+          {/* 우측 플레이어 상태 */}
+          <aside className="user-hud">
+            <h2>{language === "en" ? "PLAYER STATUS" : "플레이어 상태"}</h2>
+            <div className="hud-info">
+              <p>
+                USERNAME: <span>{myRank?.myUsername || 'Guest'}</span>
+              </p>
+              <p>
+                LEVEL: <span>{myRank?.myLevel || 1}</span>
+              </p>
+              <p>
+                EXP: <span>{myRank?.myExp || 0}</span>
+              </p>
+              <p>
+                RANK: <span>{myRank?.myRank || 'N/A'}</span>
+              </p>
+              <div className="hud-bar">
+                <div className="fill" style={{
+                  width: `${Math.min(((myRank?.myExp || 0) / ((myRank?.myLevel || 1) * 100)) * 100, 100)}%`
+                }} />
+              </div>
+            </div>
           </aside>
         </div>
       </div>

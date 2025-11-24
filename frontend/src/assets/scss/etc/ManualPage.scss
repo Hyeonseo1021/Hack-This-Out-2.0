@@ -20,15 +20,19 @@ $color-bubble: #ffffff;
 // --- 전체 뷰포트 ---
 .manual-beginner-viewport {
   @include background_set;
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
   position: relative;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(40px);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
   box-sizing: border-box;
-  background-color: #01020a;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 
+  // 배경 그리드 효과
   &::before {
     content: "";
     position: absolute;
@@ -52,12 +56,10 @@ $color-bubble: #ffffff;
 .manual-beginner-container {
   position: relative;
   z-index: 1;
-  width: 100%;
-  max-width: 1000px;
-  height: 85vh;
-  max-height: 800px;
+  width: clamp(300px, 95vw, 1400px);
+  height: clamp(500px, 90vh, 1000px);
   background: rgba(13, 13, 13, 0.7);
-  padding: 30px;
+  padding: clamp(20px, 4vw, 50px);
   display: flex;
   flex-direction: column;
 }
@@ -155,14 +157,17 @@ $color-bubble: #ffffff;
   flex-grow: 1;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 // --- 아바타 ---
 .guide-avatar {
   flex-shrink: 0;
-  margin-right: 20px;
-  width: 60px;
-  height: 60px;
+  margin-right: clamp(15px, 2vw, 25px);
+  width: clamp(50px, 6vw, 70px);
+  height: clamp(50px, 6vw, 70px);
   border-radius: 50%;
   object-fit: cover;
   background-color: $color-container-bg;
@@ -172,10 +177,21 @@ $color-bubble: #ffffff;
 .dialog-wrapper {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: clamp(15px, 1.8vh, 25px);
   opacity: 0;
   transform: translateY(20px);
   animation: dialogEnter 0.6s ease-out forwards;
+}
+
+// 첫 페이지 스타일
+.page-one {
+  .dialog-wrapper {
+    .guide-avatar {
+      width: clamp(70px, 8vw, 90px);
+      height: clamp(70px, 8vw, 90px);
+      margin-right: clamp(25px, 2.5vw, 35px);
+    }
+  }
 }
 
 @keyframes dialogEnter {
@@ -188,13 +204,13 @@ $color-bubble: #ffffff;
 .speech-bubble {
   position: relative;
   background: rgba(10, 20, 30, 0.9);
-  border: 1px solid rgba(0, 225, 255, 0.4);
-  border-radius: 16px;
-  padding: 20px 25px;
+  border: 2px solid rgba(0, 225, 255, 0.4);
+  border-radius: 18px;
+  padding: clamp(18px, 2vh, 28px) clamp(25px, 3vw, 40px);
   width: 100%;
   color: #cfd8dc;
   font-family: 'VT323', monospace;
-  box-shadow: 0 0 15px rgba(0, 225, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 225, 255, 0.4);
 
   // 꼬리
   &::before {
@@ -228,25 +244,26 @@ $color-bubble: #ffffff;
 
   h2 {
     display: block; // 제목은 항상 한 줄 차지
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+    font-size: clamp(1.3rem, 2vw, 1.7rem);
+    margin-bottom: clamp(8px, 1vh, 12px);
     color: #00e1ff;
-    text-shadow: 0 0 4px rgba(0, 225, 255, 0.7);
+    text-shadow: 0 0 6px rgba(0, 225, 255, 0.7);
     white-space: normal;
     word-break: keep-all;
+    font-weight: 600;
   }
 
   p, li {
     display: block;
     width: 100%;
-    font-size: 1.1rem;
+    font-size: clamp(1rem, 1.5vw, 1.3rem);
     line-height: 1.6;
     color: #b0bec5;
     text-shadow: 0 0 4px rgba(0, 225, 255, 0.4);
     white-space: normal;     /* 줄바꿈 허용 */
     word-break: keep-all;    /* 단어 단위로 줄바꿈 */
     overflow-wrap: break-word; /* 긴 문장 자동 개행 */
-    margin-top: 5px; 
+    margin-top: clamp(6px, 0.8vh, 10px);
   }
 
   li::before {
@@ -283,10 +300,10 @@ $color-bubble: #ffffff;
 // 클릭 안내 텍스트
 .cyber-footer-text {
   font-family: 'VT323', monospace;
-  font-size: 1rem;
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
   color: rgba(0, 225, 255, 0.7);
   text-align: center;
-  margin-top: 15px;
+  margin-top: clamp(20px, 2vh, 30px);
   animation: flicker 1.5s infinite;
 }
 
@@ -296,13 +313,29 @@ $color-bubble: #ffffff;
 }
 
 /* === 글리치 텍스트 효과 (약화 버전) === */
-.glitch-text, .glitch-subtext {
+.glitch-text {
   position: relative;
   display: inline-block;
   color: #00eaff;
   font-family: 'IBM Plex Mono', monospace;
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  font-weight: 600;
   text-shadow: 0 0 3px rgba(0,255,255,0.4), 0 0 6px rgba(255,0,255,0.2);
   animation: text-glitch-soft 5s infinite linear alternate;
+}
+
+.glitch-subtext {
+  position: relative;
+  display: inline-block;
+  color: #00eaff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+  line-height: 1.7;
+  text-shadow: 0 0 3px rgba(0,255,255,0.4), 0 0 6px rgba(255,0,255,0.2);
+  animation: text-glitch-soft 5s infinite linear alternate;
+}
+
+.glitch-text, .glitch-subtext {
 
   &::before,
   &::after {
