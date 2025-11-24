@@ -213,12 +213,17 @@ const ShopPage: React.FC = () => {
                   {t('shop.empty') || '판매 중인 아이템이 없습니다.'}
                 </div>
               ) : (
-                shopItems.map((item) => (
+                shopItems.map((item) => {
+                  const translationKey = `items.${item.name}`;
+                  const translatedName = t(`${translationKey}.name`, { defaultValue: item.name });
+                  const translatedDesc = t(`${translationKey}.desc`, { defaultValue: item.description });
+
+                  return (
                   <div className="shop-item-card" key={item._id}>
-                    <img 
-                      src={item.icon} 
-                      className="shop-item-card__icon" 
-                      alt={item.name}
+                    <img
+                      src={`http://localhost:5000${item.icon || (item as any).imageUrl || ''}`}
+                      className="shop-item-card__icon"
+                      alt={translatedName}
                       onError={(e) => {
                         // 이미지 로드 실패 시 기본 이미지
                         e.currentTarget.src = '/img/default-item.png';
@@ -226,26 +231,27 @@ const ShopPage: React.FC = () => {
                     />
 
                     <div className="shop-item-card__header">
-                      <h3>{item.name}</h3>
+                      <h3>{translatedName}</h3>
                       <span>{item.price} HTO</span>
                     </div>
 
                     <p className="shop-item-card__desc">
-                      {item.description}
+                      {translatedDesc}
                     </p>
 
-                    <button 
-                      className="shop-item-card__btn" 
+                    <button
+                      className="shop-item-card__btn"
                       onClick={() => handleBuyItem(item._id)}
                       disabled={balance < item.price}
                     >
-                      {balance < item.price 
-                        ? (t("buttons.notEnough") || "코인 부족") 
+                      {balance < item.price
+                        ? (t("buttons.notEnough") || "코인 부족")
                         : (t("buttons.buy") || "구매")
                       }
                     </button>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
@@ -260,12 +266,17 @@ const ShopPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="shop-inventory-list">
-                    {inventory.map((inv) => (
+                    {inventory.map((inv) => {
+                      const translationKey = `items.${inv.item.name}`;
+                      const translatedName = t(`${translationKey}.name`, { defaultValue: inv.item.name });
+                      const translatedDesc = t(`${translationKey}.desc`, { defaultValue: inv.item.description });
+
+                      return (
                       <div className="shop-inventory-card" key={inv._id}>
                         <img
-                          src={inv.item.icon}
+                          src={`http://localhost:5000${inv.item.icon || (inv.item as any).imageUrl || ''}`}
                           className="shop-inventory-card__icon"
-                          alt={inv.item.name}
+                          alt={translatedName}
                           onError={(e) => {
                             e.currentTarget.src = '/img/default-item.png';
                           }}
@@ -273,11 +284,11 @@ const ShopPage: React.FC = () => {
 
                         <div className="shop-inventory-card__body">
                           <h3 className="shop-inventory-card__title">
-                            {inv.item.name}
+                            {translatedName}
                           </h3>
                           <p className="shop-inventory-card__count">x{inv.quantity}</p>
                           <p className="shop-inventory-card__desc">
-                            {inv.item.description}
+                            {translatedDesc}
                           </p>
                         </div>
 
@@ -288,7 +299,8 @@ const ShopPage: React.FC = () => {
                           {t("buttons.use")}
                         </button>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

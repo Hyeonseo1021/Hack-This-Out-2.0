@@ -85,7 +85,12 @@ export const createItem = async (payload: {
   icon?: string;
   type?: string;
 }) => {
-  const res = await axiosInstance.post('/shop', payload); // ✅ POST /api/item (관리자 전용)
+  const res = await axiosInstance.post('/shop/item', payload); // ✅ POST /api/item (관리자 전용)
+  return res.data;
+};
+
+export const deleteItem = async (itemId: string) => {
+  const res = await axiosInstance.delete(`/shop/item/${itemId}`); // ✅ DELETE /api/shop/item/:id (관리자 전용)
   return res.data;
 };
 

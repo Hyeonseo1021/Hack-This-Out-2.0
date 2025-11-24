@@ -1,7 +1,7 @@
 // ItemManagementPage.tsx
 import React, { useEffect, useState } from 'react';
 import type { ShopItem } from '../../types/ShopItem';
-import { getShopItems, createItem } from '../../api/axiosShop'; // <- toggle/delete 제거
+import { getShopItems, createItem, deleteItem } from '../../api/axiosShop';
 import { uploadItemImage } from '../../api/axiosUpload';
 import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
@@ -12,11 +12,12 @@ type FormState = {
   price: number;
   description?: string;
   isListed: boolean;
-  icon?: string;
   type: string;
   effect: {
     hintCount: number;
     freezeSeconds: number;
+    scoreBoost: number;
+    invincibleSeconds: number;
   };
   roulette: {
     enabled: boolean;
@@ -24,16 +25,26 @@ type FormState = {
   };
 };
 
+const ITEM_TYPES = [
+  { value: 'hint', label: '힌트권' },
+  { value: 'hint_bundle', label: '힌트 묶음' },
+  { value: 'time_freeze', label: '시간 정지' },
+  { value: 'random_buff', label: '랜덤 버프' },
+  { value: 'score_boost', label: '점수 부스트' },
+  { value: 'invincible', label: '무적권' },
+];
+
 const initialForm: FormState = {
   name: '',
   price: 0,
   description: '',
   isListed: true,
-  icon: '',
-  type: 'buff',
+  type: 'hint',
   effect: {
     hintCount: 0,
     freezeSeconds: 0,
+    scoreBoost: 0,
+    invincibleSeconds: 0,
   },
   roulette: {
     enabled: false,
@@ -50,16 +61,16 @@ const ItemManagementPage: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
 
-  // 테이블 컬럼 정의(헤더 렌더용) - Actions 제거
+  // 테이블 컬럼 정의(헤더 렌더용)
   const columns = [
     { header: 'Image', accessor: 'image' },
-    { header: 'Icon', accessor: 'icon' },
     { header: 'Name', accessor: 'name' },
     { header: 'Type', accessor: 'type' },
     { header: 'Price', accessor: 'price' },
     { header: 'Effect', accessor: 'effect' },
     { header: 'Roulette', accessor: 'roulette' },
     { header: 'Listed', accessor: 'isListed' },
+    { header: 'Actions', accessor: 'actions' },
   ];
 
   const loadItems = async () => {
@@ -98,7 +109,7 @@ const ItemManagementPage: React.FC = () => {
     e.preventDefault();
     if (!form.name.trim()) return alert('이름을 입력하세요.');
     if (Number.isNaN(form.price) || form.price < 0) return alert('가격을 0 이상으로 입력하세요.');
-    if (!form.type.trim()) return alert('타입을 입력하세요.');
+    if (!form.type.trim()) return alert('타입을 선택하세요.');
 
     setSaving(true);
     setError(null);
@@ -116,12 +127,13 @@ const ItemManagementPage: React.FC = () => {
         price: Number(form.price),
         description: (form.description || '').trim() || '설명 없음',
         isListed: form.isListed,
-        icon: form.icon?.trim() || '',
         imageUrl: uploadedImageUrl,
         type: form.type.trim(),
         effect: {
           hintCount: Number(form.effect.hintCount) || 0,
           freezeSeconds: Number(form.effect.freezeSeconds) || 0,
+          scoreBoost: Number(form.effect.scoreBoost) || 0,
+          invincibleSeconds: Number(form.effect.invincibleSeconds) || 0,
         },
         roulette: {
           enabled: form.roulette.enabled,
@@ -140,6 +152,20 @@ const ItemManagementPage: React.FC = () => {
       alert(msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  /** 삭제 */
+  const handleDelete = async (itemId: string, itemName: string) => {
+    if (!confirm(`"${itemName}" 아이템을 정말 삭제하시겠습니까?`)) return;
+
+    try {
+      await deleteItem(itemId);
+      setItems(prev => prev.filter(item => (item as any)._id !== itemId));
+      alert('아이템이 삭제되었습니다.');
+    } catch (e: any) {
+      const msg = e?.response?.data?.msg ?? '삭제에 실패했습니다.';
+      alert(msg);
     }
   };
 
@@ -166,16 +192,28 @@ const ItemManagementPage: React.FC = () => {
 
             <div style={{ display: 'grid', gap: 6 }}>
               <label style={{ fontSize: 12, opacity: .8 }}>Type *</label>
-              <input
-                placeholder="buff / random_buff / freeze"
+              <select
                 value={form.type}
                 onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
                 required
-              />
+                style={{
+                  padding: '8px',
+                  background: '#1a1a1a',
+                  border: '1px solid #444',
+                  borderRadius: 4,
+                  color: '#fff',
+                }}
+              >
+                {ITEM_TYPES.map(type => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr 1fr' }}>
+          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ display: 'grid', gap: 6 }}>
               <label style={{ fontSize: 12, opacity: .8 }}>Price (HTO) *</label>
               <input
@@ -185,15 +223,6 @@ const ItemManagementPage: React.FC = () => {
                 value={form.price}
                 onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
                 required
-              />
-            </div>
-
-            <div style={{ display: 'grid', gap: 6 }}>
-              <label style={{ fontSize: 12, opacity: .8 }}>Icon (emoji or url)</label>
-              <input
-                placeholder="🎁"
-                value={form.icon}
-                onChange={e => setForm(f => ({ ...f, icon: e.target.value }))}
               />
             </div>
 
@@ -285,11 +314,11 @@ const ItemManagementPage: React.FC = () => {
           {/* Effect Settings */}
           <div style={{ border: '1px solid #333', padding: 12, borderRadius: 8 }}>
             <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'block' }}>
-              Effect (효과)
+              Effect (효과) - 사용할 효과의 값만 입력
             </label>
             <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
               <div style={{ display: 'grid', gap: 6 }}>
-                <label style={{ fontSize: 12, opacity: .8 }}>Hint Count</label>
+                <label style={{ fontSize: 12, opacity: .8 }}>💡 Hint Count</label>
                 <input
                   type="number"
                   min={0}
@@ -303,7 +332,7 @@ const ItemManagementPage: React.FC = () => {
               </div>
 
               <div style={{ display: 'grid', gap: 6 }}>
-                <label style={{ fontSize: 12, opacity: .8 }}>Freeze Seconds</label>
+                <label style={{ fontSize: 12, opacity: .8 }}>⏸️ Freeze Seconds</label>
                 <input
                   type="number"
                   min={0}
@@ -312,6 +341,34 @@ const ItemManagementPage: React.FC = () => {
                   onChange={e => setForm(f => ({
                     ...f,
                     effect: { ...f.effect, freezeSeconds: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label style={{ fontSize: 12, opacity: .8 }}>🚀 Score Boost (%)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={form.effect.scoreBoost}
+                  onChange={e => setForm(f => ({
+                    ...f,
+                    effect: { ...f.effect, scoreBoost: Number(e.target.value) }
+                  }))}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gap: 6 }}>
+                <label style={{ fontSize: 12, opacity: .8 }}>🛡️ Invincible Seconds</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={form.effect.invincibleSeconds}
+                  onChange={e => setForm(f => ({
+                    ...f,
+                    effect: { ...f.effect, invincibleSeconds: Number(e.target.value) }
                   }))}
                 />
               </div>
@@ -418,9 +475,6 @@ const ItemManagementPage: React.FC = () => {
                         </div>
                       )}
                     </td>
-                    <td style={{ fontSize: 24, textAlign: 'center' }}>
-                      {item.icon || '📦'}
-                    </td>
                     <td>{item.name}</td>
                     <td>
                       <span style={{
@@ -437,7 +491,9 @@ const ItemManagementPage: React.FC = () => {
                     <td style={{ fontSize: 11 }}>
                       {effect?.hintCount > 0 && <div>💡 Hint: {effect.hintCount}</div>}
                       {effect?.freezeSeconds > 0 && <div>⏸️ Freeze: {effect.freezeSeconds}s</div>}
-                      {(!effect?.hintCount && !effect?.freezeSeconds) && <span style={{ opacity: 0.5 }}>-</span>}
+                      {effect?.scoreBoost > 0 && <div>🚀 Boost: +{effect.scoreBoost}%</div>}
+                      {effect?.invincibleSeconds > 0 && <div>🛡️ Shield: {effect.invincibleSeconds}s</div>}
+                      {(!effect?.hintCount && !effect?.freezeSeconds && !effect?.scoreBoost && !effect?.invincibleSeconds) && <span style={{ opacity: 0.5 }}>-</span>}
                     </td>
                     <td style={{ fontSize: 11 }}>
                       {roulette?.enabled ? (
@@ -450,6 +506,23 @@ const ItemManagementPage: React.FC = () => {
                       )}
                     </td>
                     <td>{item.isListed ? '✓ Yes' : 'No'}</td>
+                    <td>
+                      <button
+                        onClick={() => handleDelete(id, item.name)}
+                        style={{
+                          padding: '6px 12px',
+                          background: '#ff4444',
+                          border: 'none',
+                          borderRadius: 4,
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontSize: 11,
+                          fontWeight: 600,
+                        }}
+                      >
+                        삭제
+                      </button>
+                    </td>
                   </tr>
                 );
               })}

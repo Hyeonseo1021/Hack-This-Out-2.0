@@ -18,13 +18,17 @@ export const createItem = async (req: Request, res: Response): Promise<void> => 
     try {
         const { name, price, description, isListed, icon, type, effect, roulette, imageUrl } = req.body;
 
+        // icon과 imageUrl 중 하나라도 있으면 둘 다 설정
+        const finalIcon = icon || imageUrl || '';
+        const finalImageUrl = imageUrl || icon || '';
+
         const newItem = new Item({
             name,
             price,
             description: description || '설명 없음',
             isListed: isListed !== undefined ? isListed : true,
-            icon: icon || '',
-            imageUrl: imageUrl || '',
+            icon: finalIcon,
+            imageUrl: finalImageUrl,
             type,
             effect: effect || { hintCount: 0, freezeSeconds: 0 },
             roulette: roulette || { enabled: false, weight: 1 },
@@ -262,6 +266,25 @@ export const buyShopItem = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ message: 'ERROR', msg: '서버 오류가 발생했습니다.' });
   } finally {
     session.endSession();
+  }
+};
+
+/** 🗑️ 아이템 삭제 (관리자 전용) */
+export const deleteItem = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const item = await Item.findByIdAndDelete(id);
+
+    if (!item) {
+      res.status(404).json({ message: 'ERROR', msg: '아이템을 찾을 수 없습니다.' });
+      return;
+    }
+
+    res.status(200).json({ message: 'OK', msg: '아이템이 삭제되었습니다.' });
+  } catch (err) {
+    console.error('❌ deleteItem error:', err);
+    res.status(500).json({ message: 'ERROR', msg: '서버 오류' });
   }
 };
 

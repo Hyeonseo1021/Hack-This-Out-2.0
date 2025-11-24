@@ -35,6 +35,22 @@
     "item-timestop": {
       "name": "Time Stop",
       "desc": "Pauses the arena timer for 30 seconds."
+    },
+    "힌트 1회권": {
+      "name": "Hint x1",
+      "desc": "You can view the hint once."
+    },
+    "힌트 3회권": {
+      "name": "Hint x3",
+      "desc": "You can view the hint three times."
+    },
+    "랜덤 버프 패키지": {
+      "name": "Random Buff Package",
+      "desc": "Get a random buff effect."
+    },
+    "시간 정지권": {
+      "name": "Time Stop",
+      "desc": "Pauses the arena timer for 30 seconds."
     }
   },
   "roulette": {
