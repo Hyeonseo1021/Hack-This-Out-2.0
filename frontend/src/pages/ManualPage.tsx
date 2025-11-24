@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import '../assets/scss/etc/ManualPage.scss';
 import Main from '../components/main/Main';
 import { Link } from 'react-router-dom';
-import Hackcat from "../assets/img/icon/Hack cat.png";
+import Hackcat from "../assets/img/icon/Hack_cat.png";
 import { useTranslation } from 'react-i18next';
 
 const ManualPage: React.FC = () => {

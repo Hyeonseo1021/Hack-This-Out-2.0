@@ -75,7 +75,7 @@
 
         h3 {
           grid-column: 1 / -1;
-          font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+          font-size: clamp(1.4rem, 2.8vw, 2rem);
           text-align: center;
           letter-spacing: 1px;
           color: var(--mint);
@@ -85,13 +85,13 @@
         .machine-avatar {
           justify-self: center;
           grid-row: 2 / 4;
-          width: clamp(80px, 8vw, 120px);
-          height: clamp(80px, 8vw, 120px);
+          width: clamp(90px, 9vw, 140px);
+          height: clamp(90px, 9vw, 140px);
           border: 1.5px solid var(--mint);
           background-color: rgba(139, 243, 255, 0.08);
           box-shadow: 0 0 20px rgba(139, 243, 255, 0.2);
           transition: all 0.3s ease-in-out;
-          font-size: 2rem;
+          font-size: 2.2rem;
           color: var(--mint);
 
           &:hover {
@@ -100,14 +100,30 @@
           }
         }
 
-        h4 {
+        .machine-info-center {
           grid-column: 2;
           grid-row: 2 / 4;
-          font-size: clamp(1.6rem, 3vw, 2.2rem);
-          color: var(--white);
-          text-shadow: 0 0 10px rgba(139, 243, 255, 0.3);
-          font-weight: 600;
-          transition: text-shadow 0.3s ease;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: clamp(8px, 1vh, 12px);
+
+          h4 {
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+            color: var(--white);
+            text-shadow: 0 0 10px rgba(139, 243, 255, 0.3);
+            font-weight: 600;
+            transition: text-shadow 0.3s ease;
+            margin: 0;
+          }
+
+          .machine-category {
+            font-size: clamp(1rem, 1.8vw, 1.3rem);
+            color: rgba(139, 243, 255, 0.8);
+            text-shadow: 0 0 6px rgba(139, 243, 255, 0.2);
+            margin: 0;
+            font-weight: 400;
+          }
         }
 
         .machine_reward_box {
@@ -121,17 +137,17 @@
           background: rgba(8, 20, 28, 0.6);
           border: 1.5px solid rgba(139, 243, 255, 0.3);
           border-radius: 8px;
-          width: min(80%, 180px);
-          height: 70px;
+          width: min(85%, 200px);
+          height: clamp(75px, 10vh, 85px);
           box-shadow: 0 0 10px rgba(139, 243, 255, 0.1);
 
           .banner-exp {
             color: var(--white);
-            font-size: 1rem;
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
           }
           .exp {
             color: var(--mint);
-            font-size: 1.2rem;
+            font-size: clamp(1.3rem, 2vw, 1.5rem);
             font-weight: bold;
             text-shadow: 0 0 6px var(--mint);
           }
@@ -143,14 +159,14 @@
           grid-row: 3.1; /* 안정적인 위치로 조정 */
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           color: var(--mint);
           margin-top: -23px; /* 위로 살짝 이동 */
           z-index: 2;
           transition: transform 0.25s ease, margin 0.25s ease;
 
           .rating-text {
-            font-size: 1.2rem;
+            font-size: clamp(1.2rem, 2vw, 1.4rem);
             text-shadow: 0 0 6px var(--mint);
           }
         }
@@ -163,10 +179,10 @@
           color: var(--mint);
           border: 1.5px solid var(--mint);
           border-radius: 6px;
-          font-size: 1rem;
+          font-size: clamp(1rem, 1.5vw, 1.2rem);
           font-family: 'VT323', monospace;
           letter-spacing: 1px;
-          padding: 10px 24px;
+          padding: clamp(10px, 1.5vh, 14px) clamp(24px, 3vw, 32px);
           cursor: pointer;
           transition: all 0.25s ease;
           box-shadow: 0 0 10px rgba(139, 243, 255, 0.15);

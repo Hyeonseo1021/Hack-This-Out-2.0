@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import "../../assets/scss/shop/NPCHelp.scss";
-import HackCat from "../../assets/img/icon/Hack cat.png";
+import HackCat from "../../assets/img/icon/Hack_cat.png";
 
 interface NPCHelpProps {
   open: boolean;
