@@ -58,14 +58,8 @@ const getInitialData = (mode: string) => {
         vulnerabilities: [],
         hints: [],
         scoring: {
-          firstBloodBonus: 50,
-          speedBonusThresholds: {
-            under3min: 30,
-            under5min: 20,
-            under7min: 10
-          },
-          comboMultiplier: 5,
-          invalidSubmissionPenalty: 5
+          invalidSubmissionPenalty: 5,
+          graceTimeSeconds: 60
         },
         totalVulnerabilities: 0
       };
@@ -73,8 +67,6 @@ const getInitialData = (mode: string) => {
     case 'FORENSICS_RUSH':
       return {
         scenario: {
-          title: { ko: '', en: '' },
-          description: { ko: '', en: '' },
           incidentType: 'ransomware',
           date: '',
           context: { ko: '', en: '' }
@@ -255,35 +247,24 @@ const ScenariosManagement: React.FC = () => {
           return false;
         }
 
-        // 난이도 기반 모드 검증
-        const isEasyOrMedium = form.difficulty === 'EASY' || form.difficulty === 'MEDIUM';
-        const isHardOrExpert = form.difficulty === 'HARD' || form.difficulty === 'EXPERT';
-
-        // EASY/MEDIUM: SIMULATED 모드 강제, features 필수
-        if (isEasyOrMedium) {
-          if (form.data.mode !== 'SIMULATED') {
-            alert('EASY and MEDIUM difficulties must use SIMULATED mode (AI-generated HTML)');
-            return false;
-          }
-
-          if (!form.data.features || form.data.features.length === 0) {
-            alert('Features are required for SIMULATED mode (EASY/MEDIUM difficulty)');
-            return false;
-          }
-
-          // targetUrl은 무시/초기화
-          form.data.targetUrl = '';
+        // 모드 기본값 설정 (없으면 SIMULATED)
+        if (!form.data.mode) {
+          form.data.mode = 'SIMULATED';
         }
 
-        // HARD/EXPERT: REAL 모드 강제, targetUrl 필수
-        if (isHardOrExpert) {
-          if (form.data.mode !== 'REAL') {
-            alert('HARD and EXPERT difficulties must use REAL mode (actual URL)');
+        // 모드 기반 검증
+        if (form.data.mode === 'SIMULATED') {
+          // SIMULATED 모드: features 필수
+          if (!form.data.features || form.data.features.length === 0) {
+            alert('Features are required for SIMULATED mode');
             return false;
           }
-
+          // targetUrl은 무시/초기화
+          form.data.targetUrl = '';
+        } else if (form.data.mode === 'REAL') {
+          // REAL 모드: targetUrl 필수
           if (!form.data.targetUrl?.trim()) {
-            alert('Target URL is required for REAL mode (HARD/EXPERT difficulty)');
+            alert('Target URL is required for REAL mode');
             return false;
           }
 
@@ -294,6 +275,8 @@ const ScenariosManagement: React.FC = () => {
             alert('Target URL must be a valid URL (e.g., https://example.com)');
             return false;
           }
+          // features는 무시/초기화
+          form.data.features = [];
         }
         
         // Vulnerabilities 배열 검증
@@ -306,7 +289,18 @@ const ScenariosManagement: React.FC = () => {
         for (let i = 0; i < form.data.vulnerabilities.length; i++) {
           const vuln = form.data.vulnerabilities[i];
 
-          if (!vuln.vulnName?.trim()) {
+          // vulnName 검증 (객체 형태)
+          if (typeof vuln.vulnName === 'object') {
+            if (!vuln.vulnName?.ko?.trim() || !vuln.vulnName?.en?.trim()) {
+              alert(`Vulnerability ${i + 1}: Name is required in both Korean and English`);
+              return false;
+            }
+          } else if (typeof vuln.vulnName === 'string') {
+            if (!vuln.vulnName?.trim()) {
+              alert(`Vulnerability ${i + 1}: Name is required`);
+              return false;
+            }
+          } else {
             alert(`Vulnerability ${i + 1}: Name is required`);
             return false;
           }
@@ -334,31 +328,12 @@ const ScenariosManagement: React.FC = () => {
           }
         }
         
-        // Scoring 검증
-        if (!form.data.scoring) {
-          alert('Scoring configuration is required');
-          return false;
-        }
-        
-        if (typeof form.data.scoring.firstBloodBonus !== 'number' || form.data.scoring.firstBloodBonus < 0) {
-          alert('First Blood Bonus must be a non-negative number');
-          return false;
-        }
-        
         // totalVulnerabilities 자동 설정
         form.data.totalVulnerabilities = form.data.vulnerabilities.length;
         
         break;
 
       case 'FORENSICS_RUSH':
-        if (!form.data.scenario?.title?.ko?.trim() || !form.data.scenario?.title?.en?.trim()) {
-          alert('Scenario title is required in both Korean and English');
-          return false;
-        }
-        if (!form.data.scenario?.description?.ko?.trim() || !form.data.scenario?.description?.en?.trim()) {
-          alert('Scenario description is required in both Korean and English');
-          return false;
-        }
         if (!form.data.scenario?.context?.ko?.trim() || !form.data.scenario?.context?.en?.trim()) {
           alert('Scenario context is required in both Korean and English');
           return false;
@@ -766,12 +741,16 @@ const ScenariosManagement: React.FC = () => {
                       </strong>
                       {s.description && (
                         <div className="description-preview">
-                          {typeof s.description === 'object'
-                            ? (() => {
-                                const combined = `${s.description.ko} / ${s.description.en}`;
-                                return combined.substring(0, 50) + (combined.length > 50 ? '...' : '');
-                              })()
-                            : s.description.substring(0, 50) + (s.description.length > 50 ? '...' : '')}
+                          {(() => {
+                            if (typeof s.description === 'object' && s.description !== null && 'ko' in s.description && 'en' in s.description) {
+                              const combined = `${s.description.ko} / ${s.description.en}`;
+                              return combined.substring(0, 50) + (combined.length > 50 ? '...' : '');
+                            } else if (typeof s.description === 'string') {
+                              const desc = s.description as string;
+                              return desc.substring(0, 50) + (desc.length > 50 ? '...' : '');
+                            }
+                            return '';
+                          })()}
                         </div>
                       )}
                     </td>

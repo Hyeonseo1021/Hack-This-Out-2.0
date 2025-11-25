@@ -152,26 +152,14 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
 
       if (isFirstCompleter) {
         // 첫 완주자 발생! Grace period 시작
-        const graceMs = arena.settings?.graceMs ?? 60000;
-        const graceSec = Math.floor(graceMs / 1000);
+        console.log(`⏳ [ScannerRace] Calling endArenaProcedure for dynamic grace period`);
 
-        console.log(`⏳ [ScannerRace] Starting grace period: ${graceSec}s`);
+        // ✅ endArenaProcedure를 호출하여 동적 유예시간 계산
+        const timer = await endArenaProcedure(arenaId, io);
 
-        io.to(arenaId).emit('arena:grace-period-started', {
-          graceMs,
-          graceSec,
-          message: `First player completed! You have ${graceSec} seconds to finish.`
-        });
-
-        const timer = setTimeout(async () => {
-          console.log(`⏰ [ScannerRace] Grace period ended for arena ${arenaId}`);
-          console.log(`🔄 [ScannerRace] Calling endArenaImmediately...`);
-          graceTimers.delete(arenaId);
-          await endArenaImmediately(arenaId, io);
-          console.log(`✅ [ScannerRace] endArenaImmediately completed`);
-        }, graceMs);
-
-        graceTimers.set(arenaId, timer);
+        if (timer) {
+          graceTimers.set(arenaId, timer);
+        }
 
       } else if (hadWinnerBefore || completers.length > 1) {
         // grace period 중 추가 완주자 또는 이미 winner가 있었던 경우

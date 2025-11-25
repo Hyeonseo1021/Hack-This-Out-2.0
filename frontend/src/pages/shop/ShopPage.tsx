@@ -20,8 +20,8 @@ import {
 
 type ShopItem = {
   _id: string;
-  name: string;
-  description: string;
+  name: string | { ko: string; en: string };
+  description: string | { ko: string; en: string };
   price: number;
   icon: string;
   type: string;
@@ -31,8 +31,8 @@ type InventoryItem = {
   _id: string;
   item: {
     _id: string;
-    name: string;
-    description: string;
+    name: string | { ko: string; en: string };
+    description: string | { ko: string; en: string };
     price: number;
     icon: string;
     type: string;
@@ -105,24 +105,6 @@ const ShopPage: React.FC = () => {
       showToast(error?.response?.data?.msg || t('errors.buyFailed') || '구매에 실패했습니다.');
     }
   };
-
-  /* -------------------------------------- */
-  /* 🧩 사용 (상점에서는 사용 불가 - Arena에서만 가능) */
-  /* -------------------------------------- */
-  // const handleUseItem = async (invId: string) => {
-  //   try {
-  //     const result = await useInventoryItem(invId);
-  //
-  //     // 인벤토리 새로고침
-  //     const updatedInventory = await getInventory();
-  //     setInventory(updatedInventory);
-  //
-  //     showToast(result.msg);
-  //   } catch (error: any) {
-  //     console.error('❌ Failed to use item:', error);
-  //     showToast(error?.response?.data?.msg || t('errors.useFailed') || '아이템 사용에 실패했습니다.');
-  //   }
-  // };
 
   /* -------------------------------------- */
   /* 🎰 룰렛 보상 */

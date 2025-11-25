@@ -8,8 +8,8 @@ interface InventoryItemData {
   _id: string;
   item: {
     _id: string;
-    name: string;
-    description: string;
+    name: string | { ko: string; en: string };
+    description: string | { ko: string; en: string };
     type: string;
     icon?: string;
     imageUrl?: string;
@@ -70,9 +70,9 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
         const data = await getInventory();
         // 🎮 게임 모드에 따라 아이템 필터링
         const filteredData = gameMode && isInGame
-          ? data.filter(invItem => isItemUsableInMode(invItem.item.effect))
+          ? data.filter(invItem => isItemUsableInMode((invItem.item as any).effect))
           : data;
-        setItems(filteredData);
+        setItems(filteredData as InventoryItemData[]);
       } catch (err) {
         toast.error('인벤토리를 불러오지 못했습니다.');
       } finally {
@@ -92,7 +92,7 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
       const effect = itemData.item.effect;
 
       if (effect?.hintCount) {
-        setAvailableHints(prev => prev + effect.hintCount);
+        setAvailableHints(prev => prev + (effect.hintCount || 0));
         toast.success(`💡 힌트 ${effect.hintCount}개를 획득했습니다!`);
       }
 

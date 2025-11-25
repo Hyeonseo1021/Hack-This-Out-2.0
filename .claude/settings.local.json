@@ -3,7 +3,9 @@
     "allow": [
       "Bash(cat c:UsersAdministratorDocumentsGitHubHack-This-Out-2.0backend.env 2)",
       "Bash(NUL)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

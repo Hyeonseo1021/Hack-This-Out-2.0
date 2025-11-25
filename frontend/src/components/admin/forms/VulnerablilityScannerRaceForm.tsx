@@ -44,6 +44,7 @@ interface Vulnerability {
 }
 
 interface VulnerabilityScannerRaceData {
+  mode: 'SIMULATED' | 'REAL';
   targetUrl: string;
   targetName: {
     ko: string;
@@ -71,10 +72,8 @@ interface Props {
 
 const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficulty = 'EASY' }) => {
 
-  // 난이도 기반 모드 확인
+  // 난이도 기반 모드 확인 (초기값 설정용)
   const isEasyOrMedium = difficulty === 'EASY' || difficulty === 'MEDIUM';
-  const isHardOrExpert = difficulty === 'HARD' || difficulty === 'EXPERT';
-  const currentMode = isEasyOrMedium ? 'SIMULATED (AI Generated)' : 'REAL (Actual URL)';
 
   // 탭 상태 (form: 폼 모드, json: JSON 모드)
   const [editMode, setEditMode] = useState<'form' | 'json'>('form');
@@ -85,6 +84,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
   const switchToJsonMode = () => {
     try {
       const jsonData = {
+        mode: data.mode || (isEasyOrMedium ? 'SIMULATED' : 'REAL'),
         targetUrl: data.targetUrl || '',
         targetName: data.targetName || '',
         targetDescription: data.targetDescription || '',
@@ -253,14 +253,25 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
       {/* 폼 편집 모드 */}
       {editMode === 'form' && (
         <>
-          {/* 모드 안내 배너 */}
-          <div className={`mode-indicator ${isEasyOrMedium ? 'simulated' : 'real'}`}>
-            <strong>🎯 Mode: {currentMode}</strong>
-            <p>
-              {isEasyOrMedium
-                ? '✨ AI가 취약한 HTML을 자동 생성합니다. Features 목록을 제공해주세요.'
-                : '🌐 실제 취약한 웹 앱의 URL을 제공해야 합니다. Features는 선택사항입니다.'}
-            </p>
+          {/* 모드 선택 */}
+          <div className="form-section">
+            <h4>🎮 게임 모드 설정</h4>
+            <div className="form-field">
+              <label>모드 (Mode) *</label>
+              <select
+                value={data.mode || 'SIMULATED'}
+                onChange={(e) => onChange({ ...data, mode: e.target.value as 'SIMULATED' | 'REAL' })}
+                required
+              >
+                <option value="SIMULATED">SIMULATED (AI 생성 HTML)</option>
+                <option value="REAL">REAL (실제 URL)</option>
+              </select>
+              <small>
+                {data.mode === 'SIMULATED'
+                  ? '✨ AI가 취약한 HTML을 자동 생성합니다. Features 목록을 제공해주세요.'
+                  : '🌐 실제 취약한 웹 앱의 URL을 제공해야 합니다.'}
+              </small>
+            </div>
           </div>
 
       {/* 타겟 정보 */}
@@ -325,8 +336,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           </div>
         </div>
 
-        {/* HARD/EXPERT: 실제 URL 필수 */}
-        {isHardOrExpert && (
+        {/* REAL 모드: 실제 URL 필수 */}
+        {data.mode === 'REAL' && (
           <div className="form-field">
             <label>타겟 URL *</label>
             <input
@@ -340,8 +351,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           </div>
         )}
 
-        {/* EASY/MEDIUM: Features 필수 */}
-        {isEasyOrMedium && (
+        {/* SIMULATED 모드: Features 필수 */}
+        {data.mode === 'SIMULATED' && (
           <div className="form-field">
             <label>Features (기능 목록) *</label>
             <textarea
@@ -358,8 +369,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           </div>
         )}
 
-        {/* HARD/EXPERT: Features 선택사항 */}
-        {isHardOrExpert && (
+        {/* REAL 모드: Features 선택사항 */}
+        {data.mode === 'REAL' && (
           <div className="form-field">
             <label>Features (기능 목록)</label>
             <textarea

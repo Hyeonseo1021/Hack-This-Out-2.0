@@ -22,10 +22,10 @@ interface ForensicsRushProps {
 
 interface Question {
   id: string;
-  question: string;
+  question: { ko: string; en: string } | string;
   type: string;
   points: number;
-  hints: string[];
+  hints: { ko: string[]; en: string[] } | string[];
   difficulty: string;
   relatedFiles: string[];
 }
@@ -50,7 +50,7 @@ interface ScenarioInfo {
   description: { ko: string; en: string } | string;
   incidentType: string;
   date: string;
-  context: string;
+  context: { ko: string; en: string } | string;
 }
 
 interface ProgressData {
@@ -96,7 +96,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const notificationIdCounter = useRef(0);
 
   // 🎯 타이머 관련 state
-  const [gameTimeRemaining, setGameTimeRemaining] = useState<number | null>(null);
+  const [_gameTimeRemaining, setGameTimeRemaining] = useState<number | null>(null);
   const [gracePeriodRemaining, setGracePeriodRemaining] = useState<number | null>(null);
   const [firstWinner, setFirstWinner] = useState<string | null>(null);
   const gameTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -592,12 +592,12 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     ? evidenceFiles.filter(f => currentQuestion.relatedFiles?.includes(f.id))
     : [];
 
-  const formatTime = (seconds: number | null): string => {
-    if (seconds === null) return '--:--';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  // const formatTime = (seconds: number | null): string => {
+  //   if (seconds === null) return '--:--';
+  //   const mins = Math.floor(seconds / 60);
+  //   const secs = seconds % 60;
+  //   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  // };
 
   if (isLoading) {
     return (
@@ -765,7 +765,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 헤더 */}
       <div className="forensics-header">
         <div className="header-left">
-          <div className="agency-badge">DIGITAL FORENSICS LAB</div>
+          <div className="agency-badge">{t('forensics.labTitle')}</div>
           <h1 className="case-title">
             {typeof scenario.title === 'object'
               ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en
@@ -798,7 +798,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           
           {allCompleted && (
             <div className="completion-badge">
-              [CASE CLOSED]
+              [{t('forensics.caseClosed').toUpperCase()}]
             </div>
           )}
         </div>
@@ -808,15 +808,19 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 시나리오 설명 */}
       <div className="scenario-brief">
         <div className="brief-header">
-          <span className="brief-title">CASE BRIEF</span>
-          <span className="classification">CLASSIFIED</span>
+          <span className="brief-title">{t('forensics.caseBrief')}</span>
+          <span className="classification">{t('forensics.classified')}</span>
         </div>
         <p className="brief-description">
           {typeof scenario.description === 'object'
             ? (scenario.description as any)[i18n.language] || (scenario.description as any).ko || (scenario.description as any).en
             : scenario.description}
         </p>
-        <p className="brief-context">{scenario.context}</p>
+        <p className="brief-context">
+          {typeof scenario.context === 'object'
+            ? (scenario.context as any)[i18n.language] || (scenario.context as any).ko || (scenario.context as any).en
+            : scenario.context}
+        </p>
       </div>
 
       {/* 메인 영역 */}
@@ -825,7 +829,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           {/* Evidence 터미널 */}
           <div className="evidence-terminal terminal-window">
             <div className="terminal-header">
-              <div className="terminal-title">EVIDENCE FILES</div>
+              <div className="terminal-title">{t('forensics.evidenceFiles')}</div>
             </div>
             <div className="terminal-body">
               <div className="file-list">
@@ -855,7 +859,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
                     $ cat {selectedEvidenceFile.path}
                   </div>
                   <div className="viewer-toolbar">
-                    <span className="toolbar-label">TOOLS:</span>
+                    <span className="toolbar-label">{t('forensics.tools')}:</span>
                     {availableTools.slice(0, 6).map(tool => (
                       <span key={tool} className="tool-chip">{tool}</span>
                     ))}
@@ -878,9 +882,9 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
 
               {relatedEvidenceFiles.length > 0 && (
                 <div className="hint-box">
-                  <div className="hint-header">[ANALYST NOTE]</div>
+                  <div className="hint-header">[{t('forensics.analystNote').toUpperCase()}]</div>
                   <div className="hint-content">
-                    Related evidence for current investigation:
+                    {t('forensics.relatedEvidence')}:
                     <ul>
                       {relatedEvidenceFiles.map(file => (
                         <li key={file.id}>{file.name}</li>
@@ -895,7 +899,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
           {/* 질문 터미널 */}
           <div className="question-terminal terminal-window">
             <div className="terminal-header">
-              <div className="terminal-title">INVESTIGATION QUERY</div>
+              <div className="terminal-title">{t('forensics.investigationQuery')}</div>
             </div>
             <div className="terminal-body">
               {currentQuestion && (
@@ -909,13 +913,15 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                   </div>
 
                   <div className="question-text">
-                    <span className="prompt">$</span> {currentQuestion.question}
+                    <span className="prompt">$</span> {typeof currentQuestion.question === 'object'
+                      ? (currentQuestion.question as any)[i18n.language] || (currentQuestion.question as any).ko || (currentQuestion.question as any).en
+                      : currentQuestion.question}
                   </div>
 
                   {isAnswered ? (
                     <div className="answered-status">
                       <div className="status-message">
-                        [VERIFIED] Evidence confirmed ({previousAnswer?.attempts || 1} attempt{previousAnswer?.attempts !== 1 ? 's' : ''})
+                        [{t('forensics.verified')}] {t('forensics.evidenceConfirmed')} ({previousAnswer?.attempts || 1} {(previousAnswer?.attempts || 1) !== 1 ? t('forensics.attempts') : t('forensics.attempt')})
                       </div>
                       {currentQuestionIndex < questions.length - 1 && (
                         <button
@@ -927,7 +933,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                             setHintsVisible(false); // ✅ 다음 문제로 이동 시 힌트 숨김 (해금은 유지)
                           }}
                         >
-                          NEXT QUESTION →
+                          {t('forensics.nextQuestion')} →
                         </button>
                       )}
                     </div>
@@ -953,7 +959,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                             className="terminal-button submit"
                             disabled={!userAnswer.trim() || isSubmitting || allCompleted}
                           >
-                            {isSubmitting ? '[ANALYZING...]' : allCompleted ? '[COMPLETE]' : '[SUBMIT]'}
+                            {isSubmitting ? `[${t('forensics.analyzing').toUpperCase()}]` : allCompleted ? `[${t('forensics.complete').toUpperCase()}]` : `[${t('forensics.submit').toUpperCase()}]`}
                           </button>
 
                           {/* ✅ 힌트 아이템 사용 버튼 */}
@@ -979,10 +985,10 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                             disabled={allCompleted || (!unlockedHints.has(currentQuestion?.id || '') && availableHints === 0)}
                           >
                             {unlockedHints.has(currentQuestion?.id || '')
-                              ? (hintsVisible ? '[HIDE HINTS]' : '[SHOW HINTS]')
+                              ? (hintsVisible ? `[${t('forensics.hideHints').toUpperCase()}]` : `[${t('forensics.showHints').toUpperCase()}]`)
                               : availableHints > 0
-                                ? `[USE HINT (${availableHints})]`
-                                : '[NO HINTS]'
+                                ? `[${t('forensics.useHint').toUpperCase()} (${availableHints})]`
+                                : `[${t('forensics.noHints').toUpperCase()}]`
                             }
                           </button>
                         </div>
@@ -990,28 +996,36 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
 
                       {feedback && (
                         <div className={`terminal-feedback ${feedback.type}`}>
-                          <span className="feedback-icon">{feedback.type === 'success' ? '[MATCH]' : '[DENIED]'}</span>
+                          <span className="feedback-icon">{feedback.type === 'success' ? `[${t('forensics.match').toUpperCase()}]` : `[${t('forensics.denied').toUpperCase()}]`}</span>
                           {feedback.message}
                         </div>
                       )}
 
                       {/* ✅ 힌트 표시 (해금된 문제이고 visible 상태일 때만 표시) */}
-                      {hintsVisible && unlockedHints.has(currentQuestion?.id || '') && currentQuestion.hints && currentQuestion.hints.length > 0 && (
-                        <div className="hints-terminal">
-                          <div className="hints-header">HINTS (Unlocked):</div>
-                          <ul className="hints-list">
-                            {currentQuestion.hints.map((hint, index) => (
-                              <li key={index}>
-                                <span className="hint-bullet">▸</span> {hint}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      {hintsVisible && unlockedHints.has(currentQuestion?.id || '') && currentQuestion.hints && (() => {
+                        // 다국어 지원: hints가 객체인 경우 현재 언어로 선택
+                        const lang = i18n.language as 'ko' | 'en';
+                        const hintsArray = typeof currentQuestion.hints === 'object' && 'ko' in currentQuestion.hints
+                          ? currentQuestion.hints[lang] || currentQuestion.hints.ko || currentQuestion.hints.en
+                          : currentQuestion.hints as string[];
+
+                        return hintsArray && hintsArray.length > 0 ? (
+                          <div className="hints-terminal">
+                            <div className="hints-header">{t('forensics.hints').toUpperCase()} ({t('forensics.unlocked')}):</div>
+                            <ul className="hints-list">
+                              {hintsArray.map((hint: string, index: number) => (
+                                <li key={index}>
+                                  <span className="hint-bullet">▸</span> {hint}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null;
+                      })()}
 
                       {previousAnswer && !previousAnswer.correct && (
                         <div className="attempts-display">
-                          Previous attempts: {previousAnswer.attempts}
+                          {t('forensics.previousAttempts')}: {previousAnswer.attempts}
                         </div>
                       )}
                     </>
@@ -1037,7 +1051,9 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           setFeedback(null);
                           setHintsVisible(false); // ✅ 문제 변경 시 힌트 숨김 (해금은 유지)
                         }}
-                        title={q.question}
+                        title={typeof q.question === 'object'
+                          ? (q.question as any)[i18n.language] || (q.question as any).ko || (q.question as any).en
+                          : q.question}
                         disabled={allCompleted}
                       >
                         {isCompleted ? 'OK' : `Q${index + 1}`}

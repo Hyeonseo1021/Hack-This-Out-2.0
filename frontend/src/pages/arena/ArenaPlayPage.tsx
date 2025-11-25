@@ -22,6 +22,7 @@ type Participant = {
   isReady: boolean;
   hasLeft?: boolean;
   progress?: any;
+  personalEndTime?: string | Date;
 };
 
 type ArenaUpdatePayload = {

@@ -38,7 +38,28 @@ interface Props {
 }
 
 const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
-  
+  const [isJsonMode, setIsJsonMode] = React.useState(false);
+  const [jsonInput, setJsonInput] = React.useState('');
+  const [jsonError, setJsonError] = React.useState('');
+
+  const handleJsonImport = () => {
+    try {
+      const parsed = JSON.parse(jsonInput);
+      onChange(parsed);
+      setJsonError('');
+      setIsJsonMode(false);
+      alert('✅ JSON 데이터가 성공적으로 가져와졌습니다!');
+    } catch (err) {
+      setJsonError('❌ JSON 형식이 올바르지 않습니다: ' + (err as Error).message);
+    }
+  };
+
+  const handleJsonExport = () => {
+    const json = JSON.stringify(data, null, 2);
+    setJsonInput(json);
+    setIsJsonMode(true);
+  };
+
   const addStage = () => {
     onChange({
       ...data,
@@ -122,12 +143,75 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
     <div className="terminal-race-form scenario-form">
       <div className="form-header">
         <h3>Terminal Hacking Race 시나리오</h3>
-        <button type="button" onClick={addStage} className="btn-add">
-          <FaPlus /> 추가
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button type="button" onClick={() => setIsJsonMode(!isJsonMode)} className="btn-add">
+            {isJsonMode ? '📝 폼 모드' : '📋 JSON 모드'}
+          </button>
+          {isJsonMode && (
+            <button type="button" onClick={handleJsonImport} className="btn-add" style={{ background: '#28a745' }}>
+              ✅ JSON 가져오기
+            </button>
+          )}
+          {!isJsonMode && (
+            <>
+              <button type="button" onClick={handleJsonExport} className="btn-add" style={{ background: '#007bff' }}>
+                📤 JSON 내보내기
+              </button>
+              <button type="button" onClick={addStage} className="btn-add">
+                <FaPlus /> 스테이지 추가
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="stages-list">
+      {isJsonMode ? (
+        <div style={{ padding: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600 }}>
+            JSON 데이터 입력
+          </label>
+          <textarea
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+            style={{
+              width: '100%',
+              minHeight: '400px',
+              fontFamily: 'monospace',
+              fontSize: '13px',
+              padding: '12px',
+              border: '1px solid #444',
+              borderRadius: '6px',
+              background: '#1a1a1a',
+              color: '#e0e0e0'
+            }}
+            placeholder={`{
+  "totalStages": 3,
+  "stages": [
+    {
+      "stage": 1,
+      "prompt": {
+        "ko": "환영합니다...",
+        "en": "Welcome..."
+      },
+      "commands": [...],
+      "defaultResponse": {
+        "ko": "유효하지 않은 명령어입니다.",
+        "en": "Invalid command."
+      }
+    }
+  ]
+}`}
+          />
+          {jsonError && (
+            <div style={{ color: '#ff4444', marginTop: '10px', fontSize: '13px' }}>
+              {jsonError}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {!isJsonMode && (
+        <div className="stages-list">
         {data.stages.map((stage, sIdx) => (
           <div key={sIdx} className="stage-card">
             <div className="stage-header">
@@ -313,7 +397,8 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

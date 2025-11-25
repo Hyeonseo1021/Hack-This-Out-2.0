@@ -2,7 +2,7 @@ import { Server, Socket } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { terminalProcessCommand } from '../../services/terminalRace/terminalEngine';
-import { endArenaImmediately } from '../utils/endArenaProcedure';
+import { endArenaImmediately, endArenaProcedure } from '../utils/endArenaProcedure';
 
 // 유예 시간 타이머 저장
 const graceTimers = new Map<string, NodeJS.Timeout>();
@@ -204,32 +204,22 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
       // 9. 게임 종료 처리
       if (progressDoc.completed && !arena.winner) {
         console.log(`🏆 First winner: ${userId}`);
-        
+
         const submittedAt = new Date();
         await ArenaProgress.updateOne({ _id: progressDoc._id }, { $set: { submittedAt } });
-        
+
         arena.winner = userId;
         arena.firstSolvedAt = submittedAt;
         await arena.save();
-        
-        const graceMs = arena.settings?.graceMs ?? 90000;
-        const graceSec = Math.floor(graceMs / 1000);
-        
-        console.log(`⏳ [TerminalRace] Grace period: ${graceSec}s`);
-        
-        io.to(effectiveArenaId).emit('arena:grace-period-started', {
-          graceMs,
-          graceSec,
-          message: `First player completed! You have ${graceSec} seconds to finish.`
-        });
-        
-        const timer = setTimeout(async () => {
-          console.log('⏰ [TerminalRace] Grace period ended');
-          graceTimers.delete(effectiveArenaId);
-          await endArenaImmediately(effectiveArenaId, io);
-        }, graceMs);
-        
-        graceTimers.set(effectiveArenaId, timer);
+
+        console.log(`⏳ [TerminalRace] Calling endArenaProcedure for dynamic grace period`);
+
+        // ✅ endArenaProcedure를 호출하여 동적 유예시간 계산
+        const timer = await endArenaProcedure(effectiveArenaId, io);
+
+        if (timer) {
+          graceTimers.set(effectiveArenaId, timer);
+        }
         
       } else if (progressDoc.completed && arena.winner) {
         console.log(`✅ Player ${userId} completed during grace period`);

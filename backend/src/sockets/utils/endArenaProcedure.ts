@@ -43,6 +43,7 @@ export async function endArenaImmediately(arenaId: string, io: Server) {
 
 /**
  * ✅ Arena 종료 프로시저 (유예 시간 적용)
+ * 유예 시간 = 남은 시간의 1/2 (최소 30초, 최대 5분)
  */
 export async function endArenaProcedure(arenaId: string, io: Server) {
   console.log(`\n🏁 [endArenaProcedure] Starting for arena: ${arenaId}`);
@@ -68,9 +69,8 @@ export async function endArenaProcedure(arenaId: string, io: Server) {
 
     // 설정 확인
     const endOnFirstSolve = arena.settings?.endOnFirstSolve ?? true;
-    const graceMs = arena.settings?.graceMs ?? 90000;
 
-    console.log(`⚙️ Settings: endOnFirstSolve=${endOnFirstSolve}, graceMs=${graceMs}`);
+    console.log(`⚙️ Settings: endOnFirstSolve=${endOnFirstSolve}`);
 
     // endOnFirstSolve가 false면 바로 종료하지 않음
     if (!endOnFirstSolve) {
@@ -78,16 +78,35 @@ export async function endArenaProcedure(arenaId: string, io: Server) {
       return;
     }
 
+    // ✅ 동적 유예 시간 계산: 남은 시간의 1/2
+    const now = new Date();
+    const startTime = arena.startTime ? new Date(arena.startTime) : now;
+    const timeLimitMs = (arena.timeLimit || 600) * 1000; // 기본 10분
+    const elapsedMs = now.getTime() - startTime.getTime();
+    const remainingMs = Math.max(0, timeLimitMs - elapsedMs);
+
+    // 남은 시간의 1/2, 최소 30초, 최대 5분, 그리고 남은 시간을 초과할 수 없음
+    const calculatedGraceMs = Math.floor(remainingMs / 2);
+    const MIN_GRACE_MS = 30000;  // 30초
+    const MAX_GRACE_MS = 300000; // 5분
+    const graceMs = Math.min(remainingMs, Math.max(MIN_GRACE_MS, Math.min(MAX_GRACE_MS, calculatedGraceMs)));
+
+    console.log(`⏱️ Time calculation:
+      - Time limit: ${arena.timeLimit}s
+      - Elapsed: ${Math.floor(elapsedMs / 1000)}s
+      - Remaining: ${Math.floor(remainingMs / 1000)}s
+      - Grace period: ${Math.floor(graceMs / 1000)}s (${Math.floor(remainingMs / 2000)}s calculated, clamped to ${Math.floor(MIN_GRACE_MS / 1000)}-${Math.floor(MAX_GRACE_MS / 1000)}s)`);
+
     // graceMs가 0이면 즉시 종료
-    if (graceMs === 0) {
-      console.log('⚡ No grace period, ending immediately');
+    if (graceMs === 0 || remainingMs === 0) {
+      console.log('⚡ No time remaining, ending immediately');
       await endArenaImmediately(arenaId, io);
       return;
     }
 
     // ✅ 유예 시간 시작
-    console.log(`⏳ Starting grace period: ${graceMs}ms (${graceMs / 1000}s)`);
-    
+    console.log(`⏳ Starting grace period: ${graceMs}ms (${Math.floor(graceMs / 1000)}s)`);
+
     // 모든 참가자에게 유예 시간 알림
     io.to(arenaId).emit('arena:grace-period-started', {
       graceMs,
