@@ -1,0 +1,80 @@
+{
+  "landing": {
+    "title": "HACK THIS OUT",
+    "subtitle": "Cybersecurity Training Platform",
+    "getStarted": "GET STARTED",
+    "login": "LOGIN",
+    "features": {
+      "title": "Features",
+      "machines": {
+        "title": "Practice Machines",
+        "desc": "Improve your hacking skills with various vulnerable machines"
+      },
+      "contests": {
+        "title": "CTF Contests",
+        "desc": "Compete with others in real-time capture the flag competitions"
+      },
+      "arenas": {
+        "title": "Team Arena",
+        "desc": "Collaborate or compete in multiplayer hacking challenges"
+      },
+      "shop": {
+        "title": "Item Shop",
+        "desc": "Purchase power-ups and boosters with HTO coins"
+      }
+    }
+  },
+  "leaderboard": {
+    "title": "RANKING",
+    "rank": "RANK",
+    "user": "USER",
+    "username": "Username",
+    "level": "LEVEL",
+    "exp": "EXP",
+    "progress": "PROGRESS",
+    "score": "Score",
+    "solvedMachines": "Solved",
+    "loading": "Loading leaderboard...",
+    "noData": "No leaderboard data available",
+    "playerStatus": "PLAYER STATUS",
+    "tabs": {
+      "overall": "Overall",
+      "machines": "Machines",
+      "contests": "Contests",
+      "arenas": "Arenas"
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "machines": "Machines",
+    "contests": "Contests",
+    "arenas": "Arena",
+    "shop": "Shop",
+    "leaderboard": "Leaderboard",
+    "manual": "Manual",
+    "mypage": "My Page",
+    "admin": "Admin",
+    "logout": "Logout"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "open": "Open",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

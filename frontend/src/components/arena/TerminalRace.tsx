@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../../assets/scss/arena/TerminalRace.scss';
 
 type Participant = {
@@ -16,8 +17,8 @@ interface TerminalRaceProps {
   currentUserId: string | null;
   participants: Participant[];
   scenario?: {
-    title: string;
-    description: string;
+    title: { ko: string; en: string } | string;
+    description: { ko: string; en: string } | string;
     difficulty: string;
   } | null;
 }
@@ -25,7 +26,7 @@ interface TerminalRaceProps {
 interface TerminalResultData {
   userId: string;
   command: string;
-  message: string;
+  message: string | { ko: string; en: string };
   scoreGain?: number;
   baseScore?: number;
   stageAdvanced?: boolean;
@@ -38,12 +39,12 @@ interface ProgressData {
   stage: number;
   score: number;
   completed: boolean;
-  prompt?: string;
+  prompt?: string | { ko: string; en: string };
   totalStages?: number;
 }
 
 interface PromptData {
-  prompt: string;
+  prompt: string | { ko: string; en: string };
   stage: number;
   totalStages: number;
 }
@@ -61,6 +62,15 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   scenario
 }) => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
+
+  // Helper function to extract bilingual text
+  const getBilingualText = (text: string | { ko: string; en: string } | undefined): string => {
+    if (!text) return '';
+    if (typeof text === 'string') return text;
+    const lang = i18n.language as 'ko' | 'en';
+    return text[lang] || text.ko || text.en;
+  };
   const [command, setCommand] = useState('');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -147,10 +157,12 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     }
     lastPromptStageRef.current = data.stage;
 
+    const promptText = getBilingualText(data.prompt);
+
     const newLogs: LogEntry[] = [
       { id: logCounter.current++, text: '', type: 'output' },
       { id: logCounter.current++, text: `[STAGE ${data.stage}/${data.totalStages}]`, type: 'system' },
-      { id: logCounter.current++, text: `${data.prompt}`, type: 'prompt' },
+      { id: logCounter.current++, text: promptText, type: 'prompt' },
       { id: logCounter.current++, text: '', type: 'output' }
     ];
 
@@ -180,13 +192,15 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     processingRef.current = true;
     lastProcessedCommandRef.current = commandKey;
 
+    const messageText = getBilingualText(data.message);
+
     const newLogs: LogEntry[] = [];
     const isDefaultResponse = !data.scoreGain || data.scoreGain === 0;
 
     if (isDefaultResponse) {
-      newLogs.push({ id: logCounter.current++, text: data.message, type: 'output' });
+      newLogs.push({ id: logCounter.current++, text: messageText, type: 'output' });
     } else {
-      newLogs.push({ id: logCounter.current++, text: `[SUCCESS] ${data.message}`, type: 'success' });
+      newLogs.push({ id: logCounter.current++, text: `[SUCCESS] ${messageText}`, type: 'success' });
 
       setLastScoreGain(data.scoreGain || 0);
       setTimeout(() => setLastScoreGain(0), 1500);
@@ -377,8 +391,16 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         <div className="scenario-info-bar">
           <div className="scenario-main">
             <div className="scenario-details">
-              <h3 className="scenario-title">{scenario.title}</h3>
-              <p className="scenario-description">{scenario.description}</p>
+              <h3 className="scenario-title">
+                {typeof scenario.title === 'object'
+                  ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en
+                  : scenario.title}
+              </h3>
+              <p className="scenario-description">
+                {typeof scenario.description === 'object'
+                  ? (scenario.description as any)[i18n.language] || (scenario.description as any).ko || (scenario.description as any).en
+                  : scenario.description}
+              </p>
             </div>
           </div>
           <div className="scenario-meta">
@@ -462,7 +484,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
                   ref={inputRef}
                   type="text"
                   className="terminal-input"
-                  placeholder={isCompleted ? "Mission complete" : "Enter command..."}
+                  placeholder={isCompleted ? t('game.missionComplete') : t('game.enterCommand')}
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmitCommand(e as any))}

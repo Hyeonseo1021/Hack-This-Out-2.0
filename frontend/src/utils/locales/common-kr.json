@@ -1,0 +1,80 @@
+{
+  "landing": {
+    "title": "HACK THIS OUT",
+    "subtitle": "사이버 보안 트레이닝 플랫폼",
+    "getStarted": "시작하기",
+    "login": "로그인",
+    "features": {
+      "title": "기능",
+      "machines": {
+        "title": "연습용 머신",
+        "desc": "다양한 취약한 머신으로 해킹 스킬을 향상시키세요"
+      },
+      "contests": {
+        "title": "CTF 대회",
+        "desc": "실시간 캡처 더 플래그 대회에서 경쟁하세요"
+      },
+      "arenas": {
+        "title": "팀 아레나",
+        "desc": "멀티플레이어 해킹 챌린지에서 협력하거나 경쟁하세요"
+      },
+      "shop": {
+        "title": "아이템 상점",
+        "desc": "HTO 코인으로 파워업과 부스터를 구매하세요"
+      }
+    }
+  },
+  "leaderboard": {
+    "title": "RANKING",
+    "rank": "순위",
+    "user": "사용자",
+    "username": "사용자 이름",
+    "level": "레벨",
+    "exp": "EXP",
+    "progress": "진행도",
+    "score": "점수",
+    "solvedMachines": "해결",
+    "loading": "리더보드 로딩 중...",
+    "noData": "순위 데이터가 없습니다",
+    "playerStatus": "플레이어 상태",
+    "tabs": {
+      "overall": "전체",
+      "machines": "머신",
+      "contests": "대회",
+      "arenas": "아레나"
+    }
+  },
+  "nav": {
+    "home": "홈",
+    "machines": "머신",
+    "contests": "대회",
+    "arenas": "아레나",
+    "shop": "상점",
+    "leaderboard": "리더보드",
+    "manual": "매뉴얼",
+    "mypage": "마이페이지",
+    "admin": "관리자",
+    "logout": "로그아웃"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공",
+    "cancel": "취소",
+    "confirm": "확인",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "수정",
+    "submit": "제출",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "close": "닫기",
+    "open": "열기",
+    "yes": "예",
+    "no": "아니오"
+  }
+}

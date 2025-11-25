@@ -156,11 +156,11 @@ const GetHints: React.FC<GetHintsProps> = ({ machineId, playType, contestId, req
       </div>
       <div className="lower-text">
         {!requiresHintItem ? (
-          <h3>💡 힌트를 무료로 사용할 수 있습니다</h3>
+          <h3>힌트를 무료로 사용할 수 있습니다</h3>
         ) : availableHints > 0 ? (
           <h3>힌트권 {availableHints}개 보유 중 - 버튼을 눌러 힌트 확인</h3>
         ) : remainingHints > 0 ? (
-          <h3>🔒 힌트권이 필요합니다! 인벤토리에서 사용하세요.</h3>
+          <h3>힌트권이 필요합니다! 인벤토리에서 사용하세요.</h3>
         ) : (
           <h3>You have used all the hints for this machine.</h3>
         )}

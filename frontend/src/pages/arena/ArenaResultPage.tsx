@@ -1,6 +1,7 @@
 // src/pages/arena/ArenaResultPage.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Main from '../../components/main/Main';
 import { getArenaResult } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
@@ -17,6 +18,7 @@ type BaseParticipant = {
   rank: number;
   score: number;
   expEarned: number;  // ✨ 경험치 추가
+  coinsEarned: number; // 💰 코인 추가
 };
 
 // Terminal Race용
@@ -82,6 +84,7 @@ type ArenaResult = {
 const ArenaResultPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [arenaResult, setArenaResult] = useState<ArenaResult | null>(null);
@@ -187,7 +190,8 @@ const ArenaResultPage: React.FC = () => {
 
   // ✅ 게임 모드별 추가 정보 렌더링
   const renderParticipantDetails = (participant: Participant, mode: string) => {
-    const baseInfo = `${participant.score} pts • +${participant.expEarned} EXP`;
+    const coinsEarned = participant.coinsEarned || 0;
+    const baseInfo = `${participant.score} pts • +${participant.expEarned} EXP • +${coinsEarned} HTO`;
 
     switch (mode) {
       case 'terminal-race':
@@ -256,7 +260,7 @@ const ArenaResultPage: React.FC = () => {
             <div className="ar-mission-stats">
               <span className="ar-stat">{formatDuration(calculatedDuration)} MIN</span>
               <span className="ar-separator">|</span>
-              <span className="ar-stat">{arenaResult.stats.totalParticipants}/{arenaResult.maxParticipants} PARTICIPANTS</span>
+              <span className="ar-stat">{arenaResult.stats.totalParticipants}/{arenaResult.maxParticipants} {t('participants').toUpperCase()}</span>
               <span className="ar-separator">|</span>
               <span className="ar-stat">{arenaResult.stats.successRate}% SUCCESS</span>
             </div>
@@ -282,7 +286,7 @@ const ArenaResultPage: React.FC = () => {
                   <div className="ar-rank-player-name">
                     {participant.username}
                     {participant.userId === currentUserId && (
-                      <span className="ar-you-tag">YOU</span>
+                      <span className="ar-you-tag">{i18n.language === 'ko' ? '나' : 'YOU'}</span>
                     )}
                   </div>
                   <div className={`ar-rank-player-status ${getStatusClass(participant, arenaResult.mode)}`}>
@@ -301,7 +305,7 @@ const ArenaResultPage: React.FC = () => {
                 )}
                 {participant.completionTime === null && (
                   <div className="ar-rank-completion-time incomplete">
-                    NOT COMPLETED
+                    {i18n.language === 'ko' ? '미완료' : 'NOT COMPLETED'}
                   </div>
                 )}
               </div>
@@ -314,13 +318,13 @@ const ArenaResultPage: React.FC = () => {
             className="ar-button secondary"
             onClick={() => navigate('/arena')}
           >
-            RETURN TO LOBBY
+            {t('result.backToArena').toUpperCase()}
           </button>
           <button
             className="ar-button primary"
             onClick={() => navigate('/arena/create')}
           >
-            START NEW MISSION
+            {t('result.startNewMission').toUpperCase()}
           </button>
         </div>
       </div>

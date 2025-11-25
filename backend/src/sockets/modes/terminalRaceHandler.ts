@@ -95,6 +95,8 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
       // 3. 명령어 처리
       const result = await terminalProcessCommand(effectiveArenaId, String(userId), command);
       console.log('📤 Engine Result:', result);
+      console.log('📤 Message type:', typeof result.message);
+      console.log('📤 Message value:', JSON.stringify(result.message));
 
       // 4. 기본 응답 (명령어 불일치)
       if (!result.progressDelta && !result.advanceStage && !result.flagFound) {

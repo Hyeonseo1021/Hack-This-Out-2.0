@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getLeaderboard, getMyRank } from '../../api/axiosUser';
 import Main from '../../components/main/Main';
 import Loading from '../../components/public/Loading';
@@ -7,13 +8,11 @@ import { CurrentUser } from '../../types/CurrentUser';
 import "../../assets/scss/leaderboard/LearderboardPage.scss";
 
 const LeaderBoardPage: React.FC = () => {
-  const [language, setLanguage] = useState<"en" | "ko">("en");
+  const { t } = useTranslation('common');
   const [leaderboard, setLeaderboard] = useState<Partial<User>[]>([]);
   const [myRank, setMyRank] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-
-  const toggleLanguage = () => setLanguage((prev) => (prev === "en" ? "ko" : "en"));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,14 +48,9 @@ const LeaderBoardPage: React.FC = () => {
 
         {/* 헤더 */}
         <header className="cyber-header">
-          <h1 className="title-glitch" data-text="RANKING">
-            <span className="text">RANKING</span>
+          <h1 className="title-glitch" data-text={t('leaderboard.title')}>
+            <span className="text">{t('leaderboard.title')}</span>
           </h1>
-          <div className="header-right">
-            <button className="lang-toggle" onClick={toggleLanguage}>
-              {language === "en" ? "🇺🇸 EN" : "🇰🇷 KR"}
-            </button>
-          </div>
         </header>
 
         {/* 에러 메시지 */}
@@ -81,11 +75,11 @@ const LeaderBoardPage: React.FC = () => {
             <table className="cyber-table">
               <thead>
                 <tr>
-                  <th>{language === "en" ? "RANK" : "순위"}</th>
-                  <th>{language === "en" ? "USER" : "사용자"}</th>
-                  <th>{language === "en" ? "LEVEL" : "레벨"}</th>
-                  <th>EXP</th>
-                  <th>{language === "en" ? "PROGRESS" : "진행도"}</th>
+                  <th>{t('leaderboard.rank')}</th>
+                  <th>{t('leaderboard.user')}</th>
+                  <th>{t('leaderboard.level')}</th>
+                  <th>{t('leaderboard.exp')}</th>
+                  <th>{t('leaderboard.progress')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -109,7 +103,7 @@ const LeaderBoardPage: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                      {language === "en" ? "No leaderboard data available" : "순위 데이터가 없습니다"}
+                      {t('leaderboard.noData')}
                     </td>
                   </tr>
                 )}
@@ -119,7 +113,7 @@ const LeaderBoardPage: React.FC = () => {
 
           {/* 우측 플레이어 상태 */}
           <aside className="user-hud">
-            <h2>{language === "en" ? "PLAYER STATUS" : "플레이어 상태"}</h2>
+            <h2>{t('leaderboard.playerStatus')}</h2>
             <div className="hud-info">
               <p>
                 USERNAME: <span>{myRank?.myUsername || 'Guest'}</span>

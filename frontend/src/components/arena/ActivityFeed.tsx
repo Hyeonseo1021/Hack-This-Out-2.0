@@ -249,15 +249,37 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       setFeeds(prev => [...prev, entry].slice(-50));
     };
 
+    // ✅ VulnerabilityScannerRace: 잘못된 제출 (페널티)
+    const handleInvalidSubmission = (data: any) => {
+      console.log('❌ [ActivityFeed] Invalid submission:', data);
+
+      const username = getUsernameById(data.userId);
+      const isMe = data.userId === currentUserId;
+
+      const entry: FeedEntry = {
+        id: feedCounter.current++,
+        userId: data.userId,
+        text: `${username} incorrect submission (-${data.penalty} pts)`,
+        type: 'score',
+        timestamp: new Date(),
+        isMe
+      };
+
+      console.log('✅ [ActivityFeed] Adding penalty entry:', entry);
+      setFeeds(prev => [...prev, entry].slice(-50));
+    };
+
     socket.on('terminal:result', handleTerminalResult);
     socket.on('participant:update', handleParticipantUpdate);
     socket.on('scannerRace:vulnerability-found', handleVulnDiscovered); // ✅ VulnerabilityScannerRace
+    socket.on('scannerRace:invalid-submission', handleInvalidSubmission); // ✅ 잘못된 제출
 
     return () => {
       console.log('🔧 [ActivityFeed] Cleaning up listeners');
       socket.off('terminal:result', handleTerminalResult);
       socket.off('participant:update', handleParticipantUpdate);
       socket.off('scannerRace:vulnerability-found', handleVulnDiscovered);
+      socket.off('scannerRace:invalid-submission', handleInvalidSubmission);
       listenersRegisteredRef.current = false;
     };
   }, [socket, currentUserId]);
@@ -281,12 +303,12 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 className={`feed-item feed-${feed.type} ${feed.isMe ? 'feed-me' : ''}`}
               >
                 <span className="feed-icon">
-                  {feed.type === 'flag' && '🏆'}
+                  {feed.type === 'flag' && ''}
                   {feed.type === 'stage' && '⬆'}
-                  {feed.type === 'score' && '✨'}
+                  {feed.type === 'score' && ''}
                   {feed.type === 'command' && '▶'}
-                  {feed.type === 'vuln_found' && '🔍'}
-                  {feed.type === 'first_blood' && '🩸'}
+                  {feed.type === 'vuln_found' && ''}
+                  {feed.type === 'first_blood' && ''}
                 </span>
                 <span className="feed-text">{feed.text}</span>
               </div>

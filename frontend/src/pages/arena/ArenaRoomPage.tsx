@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import socket from '../../utils/socket';
 import Main from '../../components/main/Main';
 import { getArenaById } from '../../api/axiosArena';
@@ -17,6 +18,7 @@ type ChatMessage = {
 const ArenaRoomPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [hostId, setHostId] = useState<string | null>(null);
@@ -41,14 +43,10 @@ const ArenaRoomPage: React.FC = () => {
 
   // Mode/Difficulty 헬퍼
   const getModeName = (mode: string) => {
-    const names: Record<string, string> = {
-      'TERMINAL_HACKING_RACE': 'Terminal Race',
-      'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',
-      'KING_OF_THE_HILL': 'King of the Hill',
-      'FORENSICS_RUSH': 'Forensics Rush',
-      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'
-    };
-    return names[mode] || mode;
+    const modeKey = `modes.${mode}.title`;
+    // 번역이 있으면 사용, 없으면 원래 이름 반환
+    const translated = t(modeKey);
+    return translated !== modeKey ? translated : mode;
   };
 
   const getDifficultyInfo = (diff: string) => {
@@ -312,13 +310,13 @@ const ArenaRoomPage: React.FC = () => {
       {showStartOverlay && (
         <div className="game-start-overlay">
           <div className="start-overlay-content">
-            <div className="start-title">GAME STARTING</div>
+            <div className="start-title">{(i18n.language === 'ko' ? '게임 시작' : 'GAME STARTING').toUpperCase()}</div>
             {countdown > 0 ? (
               <div className="countdown-number">{countdown}</div>
             ) : (
-              <div className="countdown-go">GO!</div>
+              <div className="countdown-go">{i18n.language === 'ko' ? '시작!' : 'GO!'}</div>
             )}
-            <div className="start-subtitle">Prepare for battle...</div>
+            <div className="start-subtitle">{i18n.language === 'ko' ? '전투 준비...' : 'Prepare for battle...'}</div>
           </div>
         </div>
       )}
@@ -342,11 +340,11 @@ const ArenaRoomPage: React.FC = () => {
                       borderColor: diffInfo.color
                     }}
                   >
-                    {difficulty}
+                    {t(`difficulties.${difficulty}`)}
                   </span>
                 )}
                 <span className="participant-count-badge">
-                  {activeParticipants.length} / {maxPlayers} PLAYERS
+                  {activeParticipants.length} / {maxPlayers} {(i18n.language === 'ko' ? '플레이어' : 'PLAYERS').toUpperCase()}
                 </span>
               </div>
             )}
@@ -367,21 +365,21 @@ const ArenaRoomPage: React.FC = () => {
                     <div key={uid || index} className={`participant-card ${isMe ? 'is-me' : ''} ${isUserHost ? 'is-host' : ''} ${p.isReady ? 'is-ready' : ''}`}>
                       <div className="card-content">
                         <div className="player-info">
-                          <span className="player-slot">PLAYER {index + 1}</span>
+                          <span className="player-slot">{(i18n.language === 'ko' ? '플레이어' : 'PLAYER').toUpperCase()} {index + 1}</span>
                           <span className="username">{username}</span>
                         </div>
                         <div className="player-status">
-                          {isUserHost && <span className="host-tag">HOST</span>}
-                          {isMe && !isUserHost && <span className="me-tag">(YOU)</span>}
+                          {isUserHost && <span className="host-tag">{i18n.language === 'ko' ? '호스트' : 'HOST'}</span>}
+                          {isMe && !isUserHost && <span className="me-tag">({i18n.language === 'ko' ? '나' : 'YOU'})</span>}
                           {!isUserHost && (
-                            <span className="status">{p.isReady ? 'READY' : 'WAITING'}</span>
+                            <span className="status">{p.isReady ? t('ready') : t('waiting')}</span>
                           )}
                         </div>
 
                         {/* 강퇴 버튼 */}
                         {isHost && !isMe && status === 'waiting' && (
                           <button className="cyber-button kick-btn" onClick={() => handleKick(uid, username)}>
-                            강퇴
+                            {i18n.language === 'ko' ? '강퇴' : 'KICK'}
                           </button>
                         )}
                       </div>
@@ -392,8 +390,8 @@ const ArenaRoomPage: React.FC = () => {
                     <div key={`empty-${index}`} className="participant-card is-empty">
                       <div className="card-content">
                         <div className="player-info">
-                          <span className="player-slot">PLAYER {index + 1}</span>
-                          <span className="username">... WAITING FOR PLAYER ...</span>
+                          <span className="player-slot">{(i18n.language === 'ko' ? '플레이어' : 'PLAYER').toUpperCase()} {index + 1}</span>
+                          <span className="username">... {i18n.language === 'ko' ? '플레이어 대기 중' : 'WAITING FOR PLAYER'} ...</span>
                         </div>
                       </div>
                     </div>
@@ -425,11 +423,11 @@ const ArenaRoomPage: React.FC = () => {
                         handleSendMessage();
                       }
                     }}
-                    placeholder="메시지 입력..."
+                    placeholder={i18n.language === 'ko' ? '메시지 입력...' : 'Type a message...'}
                     disabled={status !== 'waiting'}
                   />
                   <button className="cyber-button" onClick={handleSendMessage} disabled={!currentMessage.trim() || status !== 'waiting'}>
-                    전송
+                    {i18n.language === 'ko' ? '전송' : 'SEND'}
                   </button>
                 </div>
               </div>
@@ -437,15 +435,21 @@ const ArenaRoomPage: React.FC = () => {
               <div className="footer-actions">
                 {isHost ? (
                   <button className="cyber-button start-btn" disabled={!everyoneExceptHostReady || isStarting || status !== 'waiting'} onClick={handleStart}>
-                    {isStarting ? 'STARTING...' : 'START GAME'}
+                    {isStarting
+                      ? (i18n.language === 'ko' ? '시작 중...' : 'STARTING...')
+                      : t('startGame').toUpperCase()
+                    }
                   </button>
                 ) : (
                   <button className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`} disabled={status !== 'waiting'} onClick={toggleReady}>
-                    {myParticipant?.isReady ? 'CANCEL' : 'READY'}
+                    {myParticipant?.isReady
+                      ? (i18n.language === 'ko' ? '취소' : 'CANCEL')
+                      : t('ready').toUpperCase()
+                    }
                   </button>
                 )}
                 <button className="cyber-button leave-btn" onClick={handleLeave}>
-                  LEAVE
+                  {t('leave').toUpperCase()}
                 </button>
               </div>
             </div>

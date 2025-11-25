@@ -66,6 +66,16 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
           isCorrect: result.isCorrect,
           pointsAwarded: result.pointsAwarded
         });
+
+        // 🔴 잘못된 제출도 Activity Feed에 표시 (페널티 점수 포함)
+        if (result.pointsAwarded < 0) {
+          io.to(arenaId).emit('scannerRace:invalid-submission', {
+            userId,
+            penalty: Math.abs(result.pointsAwarded),
+            message: result.message
+          });
+        }
+
         return;
       }
 
@@ -117,6 +127,11 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
 
       const scenario = arena.scenarioId as any;
       const totalVulns = scenario.data?.vulnerabilities?.length || 0;
+
+      // 🔍 현재 플레이어의 발견 취약점 수 로그
+      const currentProgress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
+      const currentFound = currentProgress?.vulnerabilityScannerRace?.vulnerabilitiesFound || 0;
+      console.log(`🔍 [ScannerRace] User ${userId} found: ${currentFound}/${totalVulns} vulnerabilities`);
 
       // 현재 winner 상태 저장 (checkGameCompletion 호출 전)
       const hadWinnerBefore = !!arena.winner;

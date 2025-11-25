@@ -29,20 +29,50 @@ interface InventoryModalProps {
   socket?: any; // Arena 전용: 소켓 인스턴스
   arenaId?: string; // Arena 전용: 아레나 ID
   userId?: string; // Arena 전용: 유저 ID
+  gameMode?: string; // 현재 게임 모드 (TERMINAL_HACKING_RACE, VULNERABILITY_SCANNER_RACE 등)
 }
 
-const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = false, socket, arenaId, userId }) => {
+const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = false, socket, arenaId, userId, gameMode }) => {
   const [items, setItems] = useState<InventoryItemData[]>([]);
   const [loading, setLoading] = useState(true);
   const [using, setUsing] = useState<string | null>(null);
 
   const { addBuff, setAvailableHints, setIsTimeFrozen } = usePlayContext();
 
+  // 🎮 게임 모드별로 사용 가능한 효과 정의
+  const isItemUsableInMode = (itemEffect: InventoryItemData['item']['effect']): boolean => {
+    if (!gameMode || !isInGame) return true; // 게임 외에서는 모든 아이템 표시
+
+    // 각 게임 모드별 사용 가능한 효과
+    const modeEffects: Record<string, string[]> = {
+      'TERMINAL_HACKING_RACE': ['hintCount', 'freezeSeconds', 'scoreBoost'],
+      'VULNERABILITY_SCANNER_RACE': ['hintCount', 'scoreBoost'], // 힌트, 점수 부스트만
+      'FORENSICS_RUSH': ['hintCount', 'freezeSeconds', 'scoreBoost'],
+      'SOCIAL_ENGINEERING_CHALLENGE': ['scoreBoost', 'invincibleSeconds'],
+    };
+
+    const allowedEffects = modeEffects[gameMode] || [];
+
+    // 아이템의 효과 중 하나라도 현재 모드에서 사용 가능하면 true
+    if (!itemEffect) return false;
+
+    return !!(
+      (itemEffect.hintCount && allowedEffects.includes('hintCount')) ||
+      (itemEffect.freezeSeconds && allowedEffects.includes('freezeSeconds')) ||
+      (itemEffect.scoreBoost && allowedEffects.includes('scoreBoost')) ||
+      (itemEffect.invincibleSeconds && allowedEffects.includes('invincibleSeconds'))
+    );
+  };
+
   useEffect(() => {
     const fetchInventory = async () => {
       try {
         const data = await getInventory();
-        setItems(data);
+        // 🎮 게임 모드에 따라 아이템 필터링
+        const filteredData = gameMode && isInGame
+          ? data.filter(invItem => isItemUsableInMode(invItem.item.effect))
+          : data;
+        setItems(filteredData);
       } catch (err) {
         toast.error('인벤토리를 불러오지 못했습니다.');
       } finally {
@@ -50,7 +80,7 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
       }
     };
     fetchInventory();
-  }, []);
+  }, [gameMode, isInGame]);
 
   const handleUseItem = async (invId: string, itemData: InventoryItemData) => {
     setUsing(invId);

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { usePlayContext } from '../../contexts/PlayContext'; // ✅ 추가
 import '../../assets/scss/arena/ForensicsRush.scss';
 
@@ -45,8 +46,8 @@ interface AnsweredQuestion {
 }
 
 interface ScenarioInfo {
-  title: string;
-  description: string;
+  title: { ko: string; en: string } | string;
+  description: { ko: string; en: string } | string;
   incidentType: string;
   date: string;
   context: string;
@@ -70,6 +71,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   participants: _participants
 }) => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
   const { availableHints, useHint } = usePlayContext(); // ✅ 힌트 시스템 연동
   const [isLoading, setIsLoading] = useState(true);
   const [scenario, setScenario] = useState<ScenarioInfo | null>(null);
@@ -89,6 +91,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [hintsVisible, setHintsVisible] = useState(false); // ✅ 현재 힌트 표시 여부 (토글용)
   const [allCompleted, setAllCompleted] = useState(false);
   const [itemNotifications, setItemNotifications] = useState<Array<{ id: number; message: string; timestamp: Date }>>([]);
+  const [participantsStatus, setParticipantsStatus] = useState<Map<string, { username: string; completed: boolean; score: number }>>(new Map());
   const isInitializedRef = useRef(false);
   const notificationIdCounter = useRef(0);
 
@@ -106,9 +109,24 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       return id === userId;
     });
     if (participant) {
-      return typeof participant.user === 'string' ? 'User' : participant.user.username;
+      return typeof participant.user === 'string' ? t('game.user') : participant.user.username;
     }
-    return 'Unknown';
+    return t('game.unknown');
+  }, [_participants, t]);
+
+  // 참가자 초기 상태 설정
+  useEffect(() => {
+    const initialStatus = new Map();
+    _participants.forEach(p => {
+      const userId = typeof p.user === 'string' ? p.user : p.user._id;
+      const username = typeof p.user === 'string' ? t('game.user') : p.user.username;
+      initialStatus.set(userId, {
+        username,
+        completed: false,
+        score: 0
+      });
+    });
+    setParticipantsStatus(initialStatus);
   }, [_participants]);
 
   // 초기 데이터 로드
@@ -223,6 +241,24 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     // (endArenaProcedure가 완료된 후 2초 뒤에 전송됨)
   }, []);
 
+  // 🎯 다른 플레이어 완료 핸들러
+  const handlePlayerCompleted = useCallback((data: {
+    userId: string;
+    username: string;
+    score: number;
+  }) => {
+    console.log('✅ [ForensicsRush] Player completed:', data);
+    setParticipantsStatus(prev => {
+      const newStatus = new Map(prev);
+      newStatus.set(data.userId, {
+        username: data.username,
+        completed: true,
+        score: data.score
+      });
+      return newStatus;
+    });
+  }, []);
+
   // ✅ 아이템 사용 알림 핸들러
   const handleItemUsed = useCallback((data: { userId: string; itemType: string; username?: string }) => {
     console.log('🎁 [ForensicsRush] Item used:', data);
@@ -231,24 +267,24 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     const isMe = data.userId === currentUserId;
 
     let itemEmoji = '🎁';
-    let itemName = 'Item';
+    let itemName = t('game.user');
 
     switch (data.itemType) {
       case 'hint':
         itemEmoji = '💡';
-        itemName = 'Hint';
+        itemName = t('game.hint');
         break;
       case 'time_freeze':
         itemEmoji = '⏰';
-        itemName = 'Time Extension';
+        itemName = t('game.timeExtension');
         break;
       case 'score_boost':
         itemEmoji = '🚀';
-        itemName = 'Score Boost';
+        itemName = t('game.scoreBoost');
         break;
       case 'invincible':
         itemEmoji = '🛡️';
-        itemName = 'Shield';
+        itemName = t('game.shield');
         break;
     }
 
@@ -490,6 +526,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('forensics:all-completed', handleAllCompleted);
+    socket.on('forensics:player-completed', handlePlayerCompleted);
     socket.on('arena:item-used', handleItemUsed);
 
     return () => {
@@ -514,9 +551,10 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('forensics:all-completed', handleAllCompleted);
+      socket.off('forensics:player-completed', handlePlayerCompleted);
       socket.off('arena:item-used', handleItemUsed);
     };
-  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleAllCompleted, handleItemUsed]);
+  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleAllCompleted, handlePlayerCompleted, handleItemUsed]);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -613,7 +651,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
                 <div className="summary-line">  INVESTIGATION SUMMARY</div>
                 <div className="summary-line">================================================</div>
                 <div className="summary-line"></div>
-                <div className="summary-line">  Case: {scenario.title}</div>
+                <div className="summary-line">
+                  Case: {typeof scenario.title === 'object'
+                    ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en
+                    : scenario.title}
+                </div>
                 <div className="summary-line">  Incident: {scenario.incidentType}</div>
                 <div className="summary-line"></div>
                 <div className="summary-line">  Questions Solved: {questionsCorrect}/{totalQuestions}</div>
@@ -622,18 +664,57 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
                 <div className="summary-line">================================================</div>
               </div>
 
-              {gracePeriodRemaining !== null && firstWinner && (
+              {/* 다른 플레이어 상태 표시 */}
+              <div className="message-line">
+                <span className="prompt">$</span> ./check_team_status.sh
+              </div>
+              <div className="output-block">
+                <div className="summary-line">================================================</div>
+                <div className="summary-line">  TEAM STATUS</div>
+                <div className="summary-line">================================================</div>
+                {Array.from(participantsStatus.entries()).map(([userId, status]) => (
+                  <div key={userId} className="summary-line" style={{
+                    color: status.completed ? '#00ff88' : '#ffaa00',
+                    paddingLeft: '  '
+                  }}>
+                    {status.completed ? '✓' : '○'} {status.username} {userId === currentUserId ? '(YOU)' : ''} - {status.completed ? `COMPLETED (${status.score} pts)` : 'IN PROGRESS'}
+                  </div>
+                ))}
+                <div className="summary-line">================================================</div>
+              </div>
+
+              {/* 유예 시간 또는 게임 종료 메시지 */}
+              {gracePeriodRemaining !== null && firstWinner ? (
                 <>
                   <div className="message-line">
-                    <span className="prompt">$</span> ./check_status.sh
+                    <span className="prompt">$</span> ./check_deadline.sh
                   </div>
                   <div className="output-line warning">
                     {firstWinner === currentUserId
-                      ? "[PRIORITY] Awaiting field reports from remaining agents..."
+                      ? `[PRIORITY] Awaiting field reports from remaining agents... (T-${gracePeriodRemaining}s)`
                       : `[ALERT] Evidence submission deadline: T-${gracePeriodRemaining}s`
                     }
                   </div>
                 </>
+              ) : (
+                Array.from(participantsStatus.values()).every(p => p.completed) && (
+                  <>
+                    <div className="message-line">
+                      <span className="prompt">$</span> ./finalize_investigation.sh
+                    </div>
+                    <div className="output-line" style={{ color: '#00ff88', fontSize: '1.2em', fontWeight: 'bold', textAlign: 'center', padding: '20px 0' }}>
+                      ╔════════════════════════════════════╗
+                      ║                                    ║
+                      ║         🏁 GAME OVER 🏁           ║
+                      ║                                    ║
+                      ║   All agents have submitted       ║
+                      ║   their reports. Preparing        ║
+                      ║   final results...                ║
+                      ║                                    ║
+                      ╚════════════════════════════════════╝
+                    </div>
+                  </>
+                )
               )}
 
               <div className="message-line">
@@ -685,7 +766,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       <div className="forensics-header">
         <div className="header-left">
           <div className="agency-badge">DIGITAL FORENSICS LAB</div>
-          <h1 className="case-title">{scenario.title}</h1>
+          <h1 className="case-title">
+            {typeof scenario.title === 'object'
+              ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en
+              : scenario.title}
+          </h1>
           <div className="case-meta">
             <span className="incident-type">[{scenario.incidentType}]</span>
             <span className="case-date">DATE: {scenario.date}</span>
@@ -726,7 +811,11 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           <span className="brief-title">CASE BRIEF</span>
           <span className="classification">CLASSIFIED</span>
         </div>
-        <p className="brief-description">{scenario.description}</p>
+        <p className="brief-description">
+          {typeof scenario.description === 'object'
+            ? (scenario.description as any)[i18n.language] || (scenario.description as any).ko || (scenario.description as any).en
+            : scenario.description}
+        </p>
         <p className="brief-context">{scenario.context}</p>
       </div>
 
@@ -850,7 +939,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           <input
                             type="text"
                             className="terminal-input"
-                            placeholder="Type your answer..."
+                            placeholder={t('game.typeAnswer')}
                             value={userAnswer}
                             onChange={(e) => setUserAnswer(e.target.value)}
                             disabled={isSubmitting || allCompleted}

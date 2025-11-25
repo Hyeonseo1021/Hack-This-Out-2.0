@@ -1,0 +1,120 @@
+{
+  "title": "아레나",
+  "createArena": "아레나 생성",
+  "arenaList": "아레나 목록",
+  "joinArena": "참가",
+  "startGame": "게임 시작",
+  "ready": "준비",
+  "notReady": "준비 안함",
+  "waiting": "대기 중",
+  "playing": "플레이 중",
+  "finished": "종료",
+  "participants": "참가자",
+  "maxParticipants": "최대 참가자",
+  "difficulty": "난이도",
+  "gameMode": "게임 모드",
+  "status": "상태",
+  "actions": "액션",
+  "leave": "나가기",
+  "arenaSettings": "아레나 설정",
+  "arenaName": "아레나 이름",
+  "selectGameMode": "게임 모드 선택",
+  "enterRoomName": "방 이름을 입력하세요...",
+  "fixedPlayers": "고정: {{max}}명",
+  "rangePlayers": "범위: {{min}}-{{max}}명",
+  "creating": "생성 중...",
+  "loading": "로딩 중...",
+  "noArenas": "사용 가능한 아레나가 없습니다",
+  "createNew": "새 아레나를 만들어 시작하세요!",
+  "modes": {
+    "TERMINAL_HACKING_RACE": {
+      "title": "터미널 레이스",
+      "desc": "터미널 명령어로 가장 빠르게 해킹",
+      "players": "2-8명"
+    },
+    "VULNERABILITY_SCANNER_RACE": {
+      "title": "취약점 스캐너 레이스",
+      "desc": "웹 애플리케이션의 취약점을 찾아내라",
+      "players": "2명"
+    },
+    "FORENSICS_RUSH": {
+      "title": "포렌식 러시",
+      "desc": "증거를 분석하고 범인을 찾아내라",
+      "players": "2-8명"
+    },
+    "SOCIAL_ENGINEERING_CHALLENGE": {
+      "title": "소셜 엔지니어링",
+      "desc": "AI를 속여 정보를 빼내는 심리전",
+      "players": "1-4명"
+    }
+  },
+  "difficulties": {
+    "EASY": "쉬움",
+    "MEDIUM": "보통",
+    "HARD": "어려움",
+    "EXPERT": "전문가"
+  },
+  "result": {
+    "title": "미션 완료",
+    "rank": "순위",
+    "score": "점수",
+    "exp": "경험치",
+    "coins": "코인",
+    "winner": "승자",
+    "stage": "스테이지",
+    "completed": "완료",
+    "defeated": "패배",
+    "startNewMission": "새 미션 시작",
+    "backToArena": "아레나로 돌아가기"
+  },
+  "errors": {
+    "allFieldsRequired": "시스템 오류: 모든 필드를 입력해야 합니다.",
+    "vulnScannerOnly2": "시스템 오류: 취약점 스캐너 레이스는 정확히 2명이 필요합니다.",
+    "socialEngOnly4": "시스템 오류: 소셜 엔지니어링은 1-4명만 지원합니다.",
+    "failedToCreate": "아레나 생성에 실패했습니다.",
+    "failedToLoad": "아레나 목록을 불러오는데 실패했습니다."
+  },
+  "play": {
+    "remaining": "남은 시간",
+    "players": "플레이어",
+    "info": "정보",
+    "startTime": "시작 시간",
+    "duration": "소요 시간",
+    "pending": "대기 중",
+    "inventory": "인벤토리",
+    "noItems": "아이템 없음",
+    "use": "사용",
+    "loadingGameMode": "게임 모드 로딩 중...",
+    "unknownGameMode": "알 수 없는 게임 모드",
+    "hideSidebar": "사이드바 숨기기",
+    "showSidebar": "사이드바 보기",
+    "left": "나감",
+    "active": "활동 중"
+  },
+  "game": {
+    "missionComplete": "미션 완료",
+    "enterCommand": "명령어를 입력하세요...",
+    "typeAnswer": "답을 입력하세요...",
+    "submit": "제출",
+    "hint": "힌트",
+    "timeExtension": "시간 연장",
+    "scoreBoost": "점수 부스트",
+    "shield": "보호막",
+    "user": "유저",
+    "unknown": "알 수 없음",
+    "vulnerableApp": "취약한 애플리케이션",
+    "pathTraversal": "경로 순회",
+    "commandInjection": "명령어 인젝션",
+    "authBypass": "인증 우회",
+    "misconfiguration": "설정 오류"
+  },
+  "toast": {
+    "hintGained": "💡 힌트 {{count}}개를 획득했습니다!",
+    "timeExtended": "⏰ {{seconds}}초 동안 시간이 연장됩니다!",
+    "scoreBoostApplied": "🚀 점수 {{percent}}% 증가 효과 적용!",
+    "invincible": "🛡️ {{seconds}}초 동안 무적 상태!",
+    "itemUseFailed": "아이템 사용에 실패했습니다.",
+    "vulnerabilityFound": "🎯 {{message}} (+{{points}} pts)",
+    "incorrectReport": "❌ {{message}}"
+  }
+}

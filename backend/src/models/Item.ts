@@ -3,13 +3,24 @@ import mongoose from "mongoose";
 const ItemSchema = new mongoose.Schema(
   {
     name: {
-      type: String,
-      required: true,
-      unique: true,
+      ko: {
+        type: String,
+        required: true,
+      },
+      en: {
+        type: String,
+        required: true,
+      },
     },
     description: {
-      type: String,
-      required: true,
+      ko: {
+        type: String,
+        required: true,
+      },
+      en: {
+        type: String,
+        required: true,
+      },
     },
     price: {
       type: Number,
@@ -57,8 +68,9 @@ const ItemSchema = new mongoose.Schema(
       },
       weight: {
         type: Number,
-        default: 1,      // 확률 가중치 (높을수록 자주 당첨)
+        default: 0,      // 확률 가중치 (소수점, 전체 합계 = 1)
         min: 0,
+        max: 1,          // 최대 1 (100%)
       },
     },
     

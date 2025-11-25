@@ -325,9 +325,10 @@ export const getArenaResult = async (req: Request, res: Response): Promise<void>
         completionTime: progress.completionTime || null,
         submittedAt: progress.submittedAt || null,
         isCompleted: progress.completed || false,
-        rank: 0, 
+        rank: 0,
         score: progress.score || 0,
-        expEarned: progress.expEarned || 0  
+        expEarned: progress.expEarned || 0,
+        coinsEarned: progress.coinsEarned || 0  // 💰 코인 추가
       };
 
       switch (arena.mode) {

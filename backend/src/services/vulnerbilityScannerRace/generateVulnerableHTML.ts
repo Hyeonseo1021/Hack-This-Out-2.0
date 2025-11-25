@@ -33,12 +33,21 @@ ${index + 1}. ${v.vulnType} (${v.severity || 'MEDIUM'})
 `)
       .join('\n');
 
+    // Extract bilingual fields
+    const targetName = typeof scenario.data.targetName === 'object'
+      ? scenario.data.targetName.en || scenario.data.targetName.ko
+      : scenario.data.targetName || 'Practice Web App';
+
+    const targetDescription = typeof scenario.data.targetDescription === 'object'
+      ? scenario.data.targetDescription.en || scenario.data.targetDescription.ko
+      : scenario.data.targetDescription || 'A web application with intentional vulnerabilities';
+
     const prompt = `
 You are a cybersecurity educator. Create a single, self-contained HTML file for a vulnerable web application training scenario.
 
 **Target Application Details:**
-- Name: ${scenario.data.targetName || 'Practice Web App'}
-- Description: ${scenario.data.targetDescription || 'A web application with intentional vulnerabilities'}
+- Name: ${targetName}
+- Description: ${targetDescription}
 - Theme: ${scenario.data.htmlTemplate?.theme || 'login'} (e.g., login portal, online shop, blog, social network)
 - Difficulty: ${scenario.difficulty}
 
@@ -176,7 +185,11 @@ OUTPUT THE HTML NOW (start with <!DOCTYPE html>):
 
 function generateFallbackHTML(scenario: any): string {
   const vulns = scenario.data.vulnerabilities || [];
-  const targetName = scenario.data.targetName || 'Practice Web App';
+
+  // Extract bilingual targetName
+  const targetName = typeof scenario.data.targetName === 'object'
+    ? scenario.data.targetName.en || scenario.data.targetName.ko
+    : scenario.data.targetName || 'Practice Web App';
 
   return `<!DOCTYPE html>
 <html lang="en">

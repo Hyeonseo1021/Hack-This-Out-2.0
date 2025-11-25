@@ -5,7 +5,10 @@ import '../../../assets/scss/admin/forms/TerminalRaceForm.scss';
 interface Command {
   command: string;
   args?: string[];
-  response: string;
+  response: {
+    ko: string;
+    en: string;
+  };
   progressDelta?: number;
   advanceStage?: boolean;
   flagFound?: boolean;
@@ -13,9 +16,15 @@ interface Command {
 
 interface Stage {
   stage: number;
-  prompt: string;
+  prompt: {
+    ko: string;
+    en: string;
+  };
   commands: Command[];
-  defaultResponse: string;
+  defaultResponse: {
+    ko: string;
+    en: string;
+  };
 }
 
 interface TerminalRaceData {
@@ -36,11 +45,11 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
       totalStages: data.stages.length + 1,
       stages: [
         ...data.stages,
-        { 
-          stage: data.stages.length + 1, 
-          prompt: '', 
+        {
+          stage: data.stages.length + 1,
+          prompt: { ko: '', en: '' },
           commands: [],
-          defaultResponse: '유효하지 않은 명령어입니다.'
+          defaultResponse: { ko: '유효하지 않은 명령어입니다.', en: 'Invalid command.' }
         }
       ]
     });
@@ -65,15 +74,15 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
   const addCommand = (stageIndex: number) => {
     onChange({
       ...data,
-      stages: data.stages.map((s, i) => 
+      stages: data.stages.map((s, i) =>
         i === stageIndex ? {
           ...s,
           commands: [
-            ...s.commands, 
-            { 
-              command: '', 
-              response: '', 
-              progressDelta: 0, 
+            ...s.commands,
+            {
+              command: '',
+              response: { ko: '', en: '' },
+              progressDelta: 0,
               advanceStage: false,
               flagFound: false
             }
@@ -131,29 +140,63 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
             </div>
 
             <div className="stage-content">
-              {/* Prompt */}
-              <div className="form-field">
-                <label>프롬프트 메시지 *</label>
-                <input
-                  type="text"
-                  placeholder="Welcome. Start by scanning the target."
-                  value={stage.prompt}
-                  onChange={e => updateStage(sIdx, 'prompt', e.target.value)}
-                  required
-                />
+              {/* Prompt - Bilingual */}
+              <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+                  프롬프트 메시지 (Prompt Message) *
+                </label>
+                <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="환영합니다. 타겟 스캔부터 시작하세요."
+                      value={stage.prompt.ko}
+                      onChange={e => updateStage(sIdx, 'prompt', { ...stage.prompt, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Welcome. Start by scanning the target."
+                      value={stage.prompt.en}
+                      onChange={e => updateStage(sIdx, 'prompt', { ...stage.prompt, en: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
                 <small>스테이지 시작 메시지</small>
               </div>
 
-              {/* Default Response */}
-              <div className="form-field">
-                <label>기본 응답 메시지 *</label>
-                <input
-                  type="text"
-                  placeholder="유효하지 않은 명령어입니다."
-                  value={stage.defaultResponse}
-                  onChange={e => updateStage(sIdx, 'defaultResponse', e.target.value)}
-                  required
-                />
+              {/* Default Response - Bilingual */}
+              <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+                  기본 응답 메시지 (Default Response) *
+                </label>
+                <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="유효하지 않은 명령어입니다."
+                      value={stage.defaultResponse.ko}
+                      onChange={e => updateStage(sIdx, 'defaultResponse', { ...stage.defaultResponse, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Invalid command."
+                      value={stage.defaultResponse.en}
+                      onChange={e => updateStage(sIdx, 'defaultResponse', { ...stage.defaultResponse, en: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
                 <small>잘못된 명령어 응답</small>
               </div>
 
@@ -202,16 +245,33 @@ const TerminalRaceForm: React.FC<Props> = ({ data, onChange }) => {
                         />
                       </div>
 
-                      {/* Response */}
-                      <div className="input-group full-width">
-                        <label>응답 메시지 *</label>
-                        <textarea
-                          rows={3}
-                          placeholder="Port 80 (HTTP), 22 (SSH) 발견"
-                          value={cmd.response}
-                          onChange={e => updateCommand(sIdx, cIdx, 'response', e.target.value)}
-                          required
-                        />
+                      {/* Response - Bilingual */}
+                      <div className="input-group full-width" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                          응답 메시지 (Response Message) *
+                        </label>
+                        <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                          <div style={{ display: 'grid', gap: '4px' }}>
+                            <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                            <textarea
+                              rows={3}
+                              placeholder="Port 80 (HTTP), 22 (SSH) 발견"
+                              value={cmd.response.ko}
+                              onChange={e => updateCommand(sIdx, cIdx, 'response', { ...cmd.response, ko: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div style={{ display: 'grid', gap: '4px' }}>
+                            <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                            <textarea
+                              rows={3}
+                              placeholder="Port 80 (HTTP), 22 (SSH) found"
+                              value={cmd.response.en}
+                              onChange={e => updateCommand(sIdx, cIdx, 'response', { ...cmd.response, en: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       {/* Progress Delta */}

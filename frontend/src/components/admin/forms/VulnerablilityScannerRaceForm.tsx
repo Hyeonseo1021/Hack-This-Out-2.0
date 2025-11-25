@@ -6,14 +6,20 @@ interface Hint {
   hintId: string;
   vulnId: string;
   level: 1 | 2 | 3;
-  text: string;
+  text: {
+    ko: string;
+    en: string;
+  };
   cost: number;
 }
 
 interface Vulnerability {
   vulnId: string;
   vulnType: string;
-  vulnName: string;
+  vulnName: {
+    ko: string;
+    en: string;
+  };
   endpoint: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   parameter: string;
@@ -39,8 +45,14 @@ interface Vulnerability {
 
 interface VulnerabilityScannerRaceData {
   targetUrl: string;
-  targetName: string;
-  targetDescription: string;
+  targetName: {
+    ko: string;
+    en: string;
+  };
+  targetDescription: {
+    ko: string;
+    en: string;
+  };
   features: string[];
   vulnerabilities: Vulnerability[];
   hints: Hint[];
@@ -115,7 +127,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         {
           vulnId: newVulnId,
           vulnType: 'SQLi',
-          vulnName: '',
+          vulnName: { ko: '', en: '' },
           endpoint: '/',
           method: 'POST',
           parameter: '',
@@ -255,26 +267,62 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
       <div className="form-section">
         <h4>타겟 정보</h4>
 
-        <div className="form-field">
-          <label>타겟 이름 *</label>
-          <input
-            type="text"
-            placeholder="SecureBank Login Portal"
-            value={data.targetName || ''}
-            onChange={e => onChange({ ...data, targetName: e.target.value })}
-            required
-          />
+        {/* Target Name - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            타겟 이름 (Target Name) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <input
+                type="text"
+                placeholder="시큐어뱅크 로그인 포털"
+                value={data.targetName?.ko || ''}
+                onChange={e => onChange({ ...data, targetName: { ...data.targetName, ko: e.target.value } })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <input
+                type="text"
+                placeholder="SecureBank Login Portal"
+                value={data.targetName?.en || ''}
+                onChange={e => onChange({ ...data, targetName: { ...data.targetName, en: e.target.value } })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="form-field">
-          <label>타겟 설명 *</label>
-          <textarea
-            rows={2}
-            placeholder="A vulnerable banking login portal"
-            value={data.targetDescription || ''}
-            onChange={e => onChange({ ...data, targetDescription: e.target.value })}
-            required
-          />
+        {/* Target Description - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            타겟 설명 (Target Description) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <textarea
+                rows={2}
+                placeholder="취약한 은행 로그인 포털"
+                value={data.targetDescription?.ko || ''}
+                onChange={e => onChange({ ...data, targetDescription: { ...data.targetDescription, ko: e.target.value } })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <textarea
+                rows={2}
+                placeholder="A vulnerable banking login portal"
+                value={data.targetDescription?.en || ''}
+                onChange={e => onChange({ ...data, targetDescription: { ...data.targetDescription, en: e.target.value } })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
         {/* HARD/EXPERT: 실제 URL 필수 */}
@@ -341,7 +389,9 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           <div key={idx} className="vulnerability-card">
             <div className="card-header">
               <span>
-                #{idx + 1} {vuln.vulnName || '이름 없음'}
+                #{idx + 1} {typeof vuln.vulnName === 'object'
+                  ? (vuln.vulnName.ko || vuln.vulnName.en || '이름 없음')
+                  : (vuln.vulnName || '이름 없음')}
               </span>
               <button type="button" onClick={() => removeVulnerability(idx)}>
                 <FaTrash />
@@ -349,19 +399,37 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
             </div>
 
             <div className="card-content">
+              {/* Vuln Name - Bilingual */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                  취약점 이름 (Vulnerability Name) *
+                </label>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="로그인 SQL 인젝션"
+                      value={vuln.vulnName?.ko || ''}
+                      onChange={e => updateVulnerability(idx, 'vulnName', { ...vuln.vulnName, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Login SQL Injection"
+                      value={vuln.vulnName?.en || ''}
+                      onChange={e => updateVulnerability(idx, 'vulnName', { ...vuln.vulnName, en: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* 기본 정보 */}
               <div className="input-row-2">
-                <div className="input-group">
-                  <label>취약점 이름 *</label>
-                  <input
-                    type="text"
-                    placeholder="Login SQL Injection"
-                    value={vuln.vulnName}
-                    onChange={e => updateVulnerability(idx, 'vulnName', e.target.value)}
-                    required
-                  />
-                </div>
-
                 <div className="input-group">
                   <label>취약점 타입 *</label>
                   <select
@@ -546,7 +614,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         </div>
 
         <div className="info-box">
-          <strong>💡 점수 시스템 안내</strong>
+          <strong>점수 시스템 안내</strong>
           <ul>
             <li>각 취약점마다 설정한 기본 점수만 획득합니다</li>
             <li>점수 부스트 아이템을 사용하면 점수가 증가합니다 (예: 20% 부스트)</li>

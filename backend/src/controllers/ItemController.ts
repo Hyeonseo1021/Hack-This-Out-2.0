@@ -326,7 +326,7 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
 
   try {
     const userId = res.locals.jwtData?.id;
-    const ROULETTE_COST = 10;
+    const ROULETTE_COST = 5;
 
     if (!userId) {
       await session.abortTransaction();
@@ -344,7 +344,7 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
     // 💰 잔액 확인
     if (user.htoCoin < ROULETTE_COST) {
       await session.abortTransaction();
-      res.status(400).json({ message: 'ERROR', msg: '코인이 부족합니다! (필요: 10 HTO)' });
+      res.status(400).json({ message: 'ERROR', msg: '코인이 부족합니다! (필요: 5 HTO)' });
       return;
     }
 
@@ -361,15 +361,21 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // 가중치 기반 랜덤 선택
-    const totalWeight = rouletteItems.reduce((sum, item) => sum + (item.roulette?.weight || 1), 0);
-    const rand = Math.random() * totalWeight;
+    // 가중치 기반 랜덤 선택 (소수점 확률, 합계 = 1)
+    const totalWeight = rouletteItems.reduce((sum, item) => sum + (item.roulette?.weight || 0), 0);
+
+    // 가중치 합계가 1이 아닌 경우 경고
+    if (Math.abs(totalWeight - 1) > 0.001) {
+      console.warn(`⚠️ [Roulette] 가중치 합계가 1이 아닙니다: ${totalWeight}`);
+    }
+
+    const rand = Math.random(); // 0 ~ 1 사이의 랜덤 값
 
     let acc = 0;
     let selectedItem = rouletteItems[0];
 
     for (const item of rouletteItems) {
-      acc += item.roulette?.weight || 1;
+      acc += item.roulette?.weight || 0;
       if (rand <= acc) {
         selectedItem = item;
         break;

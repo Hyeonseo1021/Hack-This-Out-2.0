@@ -7,28 +7,46 @@ interface EvidenceFile {
   name: string;
   type: 'log' | 'pcap' | 'memory' | 'filesystem' | 'image';
   path: string;
-  description: string;
+  description: {
+    ko: string;
+    en: string;
+  };
   content?: string;  // ✅ 파일의 실제 내용
 }
 
 interface Question {
   id: string;
-  question: string;
+  question: {
+    ko: string;
+    en: string;
+  };
   type: 'text' | 'multiple-choice' | 'ip-address' | 'timestamp';
   answer: string | string[];
   points: number;
-  hints?: string[];
+  hints?: {
+    ko: string[];
+    en: string[];
+  };
   relatedFiles: string[];
   difficulty: 'easy' | 'medium' | 'hard';
 }
 
 interface ForensicsRushData {
   scenario: {
-    title: string;
-    description: string;
+    title: {
+      ko: string;
+      en: string;
+    };
+    description: {
+      ko: string;
+      en: string;
+    };
     incidentType: 'ransomware' | 'breach' | 'ddos' | 'insider' | 'phishing';
     date: string;
-    context: string;
+    context: {
+      ko: string;
+      en: string;
+    };
   };
   evidenceFiles: EvidenceFile[];
   availableTools: string[];
@@ -59,7 +77,7 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
           name: '',
           type: 'log',
           path: '',
-          description: '',
+          description: { ko: '', en: '' },
           content: ''  // ✅ 빈 content 초기화
         }
       ]
@@ -90,11 +108,11 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
         ...data.questions,
         {
           id: `q_${Date.now()}`,
-          question: '',
+          question: { ko: '', en: '' },
           type: 'text',
           answer: '',
           points: 10,
-          hints: [],
+          hints: { ko: [], en: [] },
           relatedFiles: [],
           difficulty: 'medium'
         }
@@ -127,20 +145,41 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
       {/* 사고 시나리오 정보 */}
       <div className="form-section">
         <h4>사고 시나리오</h4>
-        
+
         <div className="form-grid-2">
-          <div className="form-field">
-            <label>시나리오 제목 *</label>
-            <input
-              type="text"
-              placeholder="랜섬웨어 감염 사고"
-              value={data.scenario.title}
-              onChange={e => onChange({ 
-                ...data, 
-                scenario: { ...data.scenario, title: e.target.value }
-              })}
-              required
-            />
+          {/* Title - Bilingual */}
+          <div className="form-field" style={{ gridColumn: '1 / -1', border: '1px solid #444', padding: '12px', borderRadius: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+              시나리오 제목 (Scenario Title) *
+            </label>
+            <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+              <div style={{ display: 'grid', gap: '4px' }}>
+                <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+                <input
+                  type="text"
+                  placeholder="랜섬웨어 감염 사고"
+                  value={data.scenario.title.ko}
+                  onChange={e => onChange({
+                    ...data,
+                    scenario: { ...data.scenario, title: { ...data.scenario.title, ko: e.target.value } }
+                  })}
+                  required
+                />
+              </div>
+              <div style={{ display: 'grid', gap: '4px' }}>
+                <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+                <input
+                  type="text"
+                  placeholder="Ransomware Infection Incident"
+                  value={data.scenario.title.en}
+                  onChange={e => onChange({
+                    ...data,
+                    scenario: { ...data.scenario, title: { ...data.scenario.title, en: e.target.value } }
+                  })}
+                  required
+                />
+              </div>
+            </div>
           </div>
 
           <div className="form-field">
@@ -168,40 +207,82 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
             type="text"
             placeholder="2025년 11월 13일 오전 2시"
             value={data.scenario.date}
-            onChange={e => onChange({ 
-              ...data, 
+            onChange={e => onChange({
+              ...data,
               scenario: { ...data.scenario, date: e.target.value }
             })}
             required
           />
         </div>
 
-        <div className="form-field">
-          <label>시나리오 설명 *</label>
-          <textarea
-            rows={2}
-            placeholder="회사 파일 서버가 랜섬웨어에 감염되어 모든 파일이 암호화되었습니다."
-            value={data.scenario.description}
-            onChange={e => onChange({ 
-              ...data, 
-              scenario: { ...data.scenario, description: e.target.value }
-            })}
-            required
-          />
+        {/* Description - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            시나리오 설명 (Description) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <textarea
+                rows={2}
+                placeholder="회사 파일 서버가 랜섬웨어에 감염되어 모든 파일이 암호화되었습니다."
+                value={data.scenario.description.ko}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, description: { ...data.scenario.description, ko: e.target.value } }
+                })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <textarea
+                rows={2}
+                placeholder="The company file server was infected with ransomware and all files have been encrypted."
+                value={data.scenario.description.en}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, description: { ...data.scenario.description, en: e.target.value } }
+                })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="form-field">
-          <label>배경 정보 (Context) *</label>
-          <textarea
-            rows={3}
-            placeholder="보안팀이 발견한 정보, 피해 범위, 조치 상황 등"
-            value={data.scenario.context}
-            onChange={e => onChange({ 
-              ...data, 
-              scenario: { ...data.scenario, context: e.target.value }
-            })}
-            required
-          />
+        {/* Context - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            배경 정보 (Context) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <textarea
+                rows={3}
+                placeholder="보안팀이 발견한 정보, 피해 범위, 조치 상황 등"
+                value={data.scenario.context.ko}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, context: { ...data.scenario.context, ko: e.target.value } }
+                })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <textarea
+                rows={3}
+                placeholder="Information found by security team, damage scope, actions taken, etc."
+                value={data.scenario.context.en}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, context: { ...data.scenario.context, en: e.target.value } }
+                })}
+                required
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -264,15 +345,33 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                 <small>파일 경로</small>
               </div>
 
-              <div className="input-group">
-                <label>설명 *</label>
-                <input
-                  type="text"
-                  placeholder="웹 서버 접근 로그, 공격 시도 기록 포함"
-                  value={file.description}
-                  onChange={e => updateEvidenceFile(idx, 'description', e.target.value)}
-                  required
-                />
+              {/* Description - Bilingual */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                  설명 (Description) *
+                </label>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="웹 서버 접근 로그, 공격 시도 기록 포함"
+                      value={file.description.ko}
+                      onChange={e => updateEvidenceFile(idx, 'description', { ...file.description, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Web server access log, including attack attempts"
+                      value={file.description.en}
+                      onChange={e => updateEvidenceFile(idx, 'description', { ...file.description, en: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* ✅ 파일 내용 입력 (새로 추가) */}
@@ -338,15 +437,33 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
             </div>
 
             <div className="question-inputs">
-              <div className="input-group">
-                <label>질문 *</label>
-                <input
-                  type="text"
-                  placeholder="공격자의 IP 주소는?"
-                  value={q.question}
-                  onChange={e => updateQuestion(idx, 'question', e.target.value)}
-                  required
-                />
+              {/* Question - Bilingual */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                  질문 (Question) *
+                </label>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="공격자의 IP 주소는?"
+                      value={q.question.ko}
+                      onChange={e => updateQuestion(idx, 'question', { ...q.question, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="What is the attacker's IP address?"
+                      value={q.question.en}
+                      onChange={e => updateQuestion(idx, 'question', { ...q.question, en: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="input-row-3">
@@ -407,14 +524,37 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
                 <small>정답 (대소문자 무시, 여러 개는 쉼표로 구분)</small>
               </div>
 
-              <div className="input-group">
-                <label>힌트 (선택, 쉼표로 구분)</label>
-                <input
-                  type="text"
-                  placeholder="access.log 파일을 확인하세요, grep 명령어를 사용하세요"
-                  value={q.hints?.join(', ') || ''}
-                  onChange={e => updateQuestion(idx, 'hints', e.target.value ? e.target.value.split(',').map(s => s.trim()) : [])}
-                />
+              {/* Hints - Bilingual */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                  힌트 (Hints) - 선택, 쉼표로 구분
+                </label>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="access.log 파일을 확인하세요, grep 명령어를 사용하세요"
+                      value={q.hints?.ko?.join(', ') || ''}
+                      onChange={e => updateQuestion(idx, 'hints', {
+                        ko: e.target.value ? e.target.value.split(',').map(s => s.trim()) : [],
+                        en: q.hints?.en || []
+                      })}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Check the access.log file, Use the grep command"
+                      value={q.hints?.en?.join(', ') || ''}
+                      onChange={e => updateQuestion(idx, 'hints', {
+                        ko: q.hints?.ko || [],
+                        en: e.target.value ? e.target.value.split(',').map(s => s.trim()) : []
+                      })}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="input-group">

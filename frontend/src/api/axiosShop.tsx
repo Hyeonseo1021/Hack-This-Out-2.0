@@ -19,10 +19,10 @@ export const getShopItems = async (): Promise<ShopItem[]> => {
 
 export const buyShopItem = async (
   itemId: string
-): Promise<{ 
-  msg: string; 
+): Promise<{
+  msg: string;
   updatedBalance: number;
-  acquiredItem?: { id: string; name: string };
+  acquiredItem?: { id: string; name: { ko: string; en: string } | string };
 }> => {
   const res = await axiosInstance.post('/shop/buy', { itemId }); // ✅ POST /api/item/shop/buy
   return {
@@ -38,8 +38,8 @@ export const getInventory = async (): Promise<
     _id: string;
     item: {
       _id: string;
-      name: string;
-      description: string;
+      name: { ko: string; en: string } | string;
+      description: { ko: string; en: string } | string;
       price: number;
       icon: string;
       type: string;
@@ -67,23 +67,23 @@ export const useInventoryItem = async (
 export const getRouletteItems = async (): Promise<
   Array<{
     id: string;
-    name: string;
+    name: { ko: string; en: string } | string;
     icon: string;
     weight: number;
   }>
 > => {
-  const res = await axiosInstance.get('/item/roulette/items'); // ✅ GET /api/item/roulette/items
+  const res = await axiosInstance.get('/shop/roulette/items'); // ✅ GET /api/item/roulette/items
   return res.data?.items ?? [];
 };
 
 /** 🎰 룰렛 돌리기 */
 export const spinRoulette = async (): Promise<{
   rewardId: string;
-  rewardName: string;
+  rewardName: { ko: string; en: string } | string;
   rewardIcon: string;
   updatedBalance: number;
 }> => {
-  const res = await axiosInstance.post('/item/roulette/spin'); // ✅ POST /api/item/roulette/spin
+  const res = await axiosInstance.post('/shop/roulette/spin'); // ✅ POST /api/item/roulette/spin
   return {
     rewardId: res.data?.rewardId ?? '',
     rewardName: res.data?.rewardName ?? '',
@@ -94,12 +94,14 @@ export const spinRoulette = async (): Promise<{
 
 
 export const createItem = async (payload: {
-  name: string;
+  name: { ko: string; en: string };
   price: number;
-  description?: string;
+  description?: { ko: string; en: string };
   isListed?: boolean;
   icon?: string;
   type?: string;
+  effect?: any;
+  roulette?: any;
 }) => {
   const res = await axiosInstance.post('/shop/item', payload); // ✅ POST /api/item (관리자 전용)
   return res.data;

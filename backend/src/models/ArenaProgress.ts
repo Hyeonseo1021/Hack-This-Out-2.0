@@ -60,6 +60,12 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: 0
   },
 
+  // 💰 HTO 코인 보상 (게임 종료 시 계산)
+  coinsEarned: {
+    type: Number,
+    default: 0
+  },
+
   // 🔍 Vulnerability Scanner Race 전용 - NEW
   vulnerabilityScannerRace: {
     vulnerabilitiesFound: { type: Number, default: 0 },  // 발견한 취약점 개수

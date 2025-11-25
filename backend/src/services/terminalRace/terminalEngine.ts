@@ -5,7 +5,7 @@ import ArenaProgress from '../../models/ArenaProgress';
 import ArenaScenario from '../../models/ArenaScenario';
 
 export interface TerminalResult {
-  message: string;
+  message: string | { ko: string; en: string };
   progressDelta?: number;
   advanceStage?: boolean;
   flagFound?: boolean;
@@ -72,7 +72,11 @@ export const terminalProcessCommand = async (
     }
 
     console.log(`   ✅ Stage ${currentStageNum} found`);
-    console.log(`   Current prompt: ${stageData.prompt}`);
+    // Handle bilingual prompt
+    const promptText = typeof stageData.prompt === 'object'
+      ? `[KO: ${stageData.prompt.ko}] [EN: ${stageData.prompt.en}]`
+      : stageData.prompt;
+    console.log(`   Current prompt: ${promptText}`);
     console.log(`   Available commands:`, stageData.commands.map((c: any) => c.command));
 
     // 5. 명령어 파싱
@@ -124,29 +128,48 @@ export const terminalProcessCommand = async (
     // 7. 결과 반환
     if (matchedCommand) {
       console.log(`   ✅ Command matched successfully!`);
-      
+
+      // Handle bilingual response
+      const responseMsg = matchedCommand.message || matchedCommand.response;
+      if (typeof responseMsg === 'object') {
+        console.log(`   Response (bilingual): [KO: ${responseMsg.ko}] [EN: ${responseMsg.en}]`);
+      } else {
+        console.log(`   Response: "${responseMsg}"`);
+      }
+
       const result: TerminalResult = {
-        message: matchedCommand.message || matchedCommand.response,
+        message: responseMsg,
         progressDelta: matchedCommand.scoreGain || matchedCommand.progressDelta || 0,
         advanceStage: matchedCommand.advanceStage !== false,
         flagFound: matchedCommand.flagFound || false
       };
-      
-      console.log(`   📤 Returning result:`, result);
+
+      console.log(`   📤 Returning result (progressDelta: ${result.progressDelta}, advanceStage: ${result.advanceStage})`);
       return result;
       
     } else {
       console.log(`   ⚠️ Command not recognized - using default response`);
-      
-      const defaultMsg = stageData.defaultResponse
-        ?.replace('{command}', command) 
-        || `Command '${command}' not recognized.`;
-      
-      console.log(`   Default response: "${defaultMsg}"`);
-      
+
+      // Handle bilingual defaultResponse
+      let defaultMsg: string;
+      if (typeof stageData.defaultResponse === 'object') {
+        // For bilingual response, return the object as-is for client to handle
+        // But for logging, use English version
+        defaultMsg = stageData.defaultResponse.en || stageData.defaultResponse.ko;
+        console.log(`   Default response (bilingual): [KO: ${stageData.defaultResponse.ko}] [EN: ${stageData.defaultResponse.en}]`);
+      } else {
+        defaultMsg = (stageData.defaultResponse as string)
+          ?.replace('{command}', command)
+          || `Command '${command}' not recognized.`;
+        console.log(`   Default response: "${defaultMsg}"`);
+      }
+
       // ✅ 기본 응답은 점수나 진행 없음
+      // Return the bilingual object if available, otherwise the string
       return {
-        message: defaultMsg,
+        message: typeof stageData.defaultResponse === 'object'
+          ? stageData.defaultResponse
+          : defaultMsg as any,
         progressDelta: 0,
         advanceStage: false,
         flagFound: false

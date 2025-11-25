@@ -6,16 +6,10 @@ import Hackcat from "../assets/img/icon/Hack cat.png";
 import { useTranslation } from 'react-i18next';
 
 const ManualPage: React.FC = () => {
-  const { t, i18n } = useTranslation('manual');
-  
+  const { t } = useTranslation('manual');
+
   const [currentPage, setCurrentPage] = useState(1);
   const [currentDialog, setCurrentDialog] = useState(0);
-
-  // ✅ 언어 토글 버튼 클릭 시 한/영 전환
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'ko' ? 'en' : 'ko';
-    i18n.changeLanguage(newLang);
-  };
   
   // 다국어 리소스 로드
   const rulesData = t('rules', { returnObjects: true });
@@ -59,16 +53,11 @@ const ManualPage: React.FC = () => {
       <div className="manual-beginner-viewport">
         <div className="manual-beginner-container">
           
-          {/* --- 헤더 (타이틀 + 언어 토글) --- */}
+          {/* --- 헤더 --- */}
           <div className="manual-header">
             <h1 className="manual-title" data-text={t('title')}>
               {t('title')}
             </h1>
-
-            {/* ✅ 네온 CRT 테마 언어 토글 버튼 */}
-            <button className="language-toggle neon-toggle" onClick={toggleLanguage}>
-              {i18n.language === 'ko' ? 'EN' : 'KO'}
-            </button>
           </div>
           
           {/* --- 메인 콘텐츠 영역 (클릭 시 페이지 전환) --- */}

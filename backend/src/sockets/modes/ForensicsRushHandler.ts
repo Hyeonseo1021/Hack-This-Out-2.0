@@ -2,6 +2,7 @@
 import { Server, Socket } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
+import User from '../../models/User';
 import { submitAnswer, getUserProgress } from '../../services/forensicsRush/ForensicsEngine';
 import { endArenaProcedure, endArenaImmediately } from '../utils/endArenaProcedure';
 import { cancelScheduledEnd } from '../arenaHandlers';
@@ -91,6 +92,15 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
       // ✅ 모든 문제 완료 처리
       if (result.allCompleted) {
         console.log(`✅ User ${userId} completed all questions`);
+
+        // 🎯 다른 플레이어들에게 완료 알림
+        const userDoc = await User.findById(userId).select('username');
+        io.to(arenaId).emit('forensics:player-completed', {
+          userId: String(userId),
+          username: userDoc?.username || 'Unknown',
+          score: result.totalScore
+        });
+        console.log(`   📢 Broadcasted player completion to room ${arenaId}`);
 
         // ✅ completionTime 계산 (게임 시작부터 완료까지의 초 단위 시간)
         const arenaDoc = arena as any;

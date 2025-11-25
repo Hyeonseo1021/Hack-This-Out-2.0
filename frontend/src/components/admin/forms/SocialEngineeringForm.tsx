@@ -4,9 +4,15 @@ import '../../../assets/scss/admin/forms/SocialEngineeringForm.scss';
 
 interface AvailableTechnique {
   id: string;
-  name: string;
+  name: {
+    ko: string;
+    en: string;
+  };
   type: 'PRETEXTING' | 'AUTHORITY' | 'URGENCY' | 'RECIPROCITY' | 'LIKING';
-  description: string;
+  description: {
+    ko: string;
+    en: string;
+  };
   suspicionImpact: number;
   effectiveness: number;
 }
@@ -14,8 +20,14 @@ interface AvailableTechnique {
 interface SocialEngineeringData {
   scenarioType: 'IT_HELPDESK' | 'FINANCE_SPEARPHISHING' | 'CEO_IMPERSONATION';
   objective: {
-    title: string;
-    description: string;
+    title: {
+      ko: string;
+      en: string;
+    };
+    description: {
+      ko: string;
+      en: string;
+    };
     targetInformation: string[];
   };
   aiTarget: {
@@ -70,9 +82,9 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
         ...data.availableTechniques,
         {
           id: `tech_${Date.now()}`,
-          name: '',
+          name: { ko: '', en: '' },
           type: 'PRETEXTING',
-          description: '',
+          description: { ko: '', en: '' },
           suspicionImpact: 10,
           effectiveness: 5
         }
@@ -117,32 +129,74 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
           </select>
         </div>
 
-        <div className="form-field">
-          <label>목표 제목 *</label>
-          <input
-            type="text"
-            placeholder="예: VPN 접속 정보 획득"
-            value={data.objective.title}
-            onChange={e => onChange({
-              ...data,
-              objective: { ...data.objective, title: e.target.value }
-            })}
-            required
-          />
+        {/* Objective Title - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            목표 제목 (Objective Title) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <input
+                type="text"
+                placeholder="예: VPN 접속 정보 획득"
+                value={data.objective.title.ko}
+                onChange={e => onChange({
+                  ...data,
+                  objective: { ...data.objective, title: { ...data.objective.title, ko: e.target.value } }
+                })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <input
+                type="text"
+                placeholder="Ex: Obtain VPN Access Information"
+                value={data.objective.title.en}
+                onChange={e => onChange({
+                  ...data,
+                  objective: { ...data.objective, title: { ...data.objective.title, en: e.target.value } }
+                })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="form-field">
-          <label>목표 설명 *</label>
-          <textarea
-            rows={2}
-            placeholder="예: IT 헬프데스크 직원으로부터 VPN 서버 주소와 접속 방법을 얻어내세요."
-            value={data.objective.description}
-            onChange={e => onChange({
-              ...data,
-              objective: { ...data.objective, description: e.target.value }
-            })}
-            required
-          />
+        {/* Objective Description - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            목표 설명 (Objective Description) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <textarea
+                rows={2}
+                placeholder="예: IT 헬프데스크 직원으로부터 VPN 서버 주소와 접속 방법을 얻어내세요."
+                value={data.objective.description.ko}
+                onChange={e => onChange({
+                  ...data,
+                  objective: { ...data.objective, description: { ...data.objective.description, ko: e.target.value } }
+                })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <textarea
+                rows={2}
+                placeholder="Ex: Obtain VPN server address and access method from IT helpdesk staff."
+                value={data.objective.description.en}
+                onChange={e => onChange({
+                  ...data,
+                  objective: { ...data.objective, description: { ...data.objective.description, en: e.target.value } }
+                })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
         <div className="form-field">
@@ -370,25 +424,43 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
         {data.availableTechniques.map((tech, idx) => (
           <div key={idx} className="technique-card">
             <div className="technique-header">
-              <span>🎯 Technique {idx + 1}: {tech.name || '(이름 없음)'}</span>
+              <span>🎯 Technique {idx + 1}: {typeof tech.name === 'object' ? (tech.name.ko || tech.name.en || '(이름 없음)') : (tech.name || '(이름 없음)')}</span>
               <button type="button" onClick={() => removeTechnique(idx)}>
                 <FaTrash />
               </button>
             </div>
 
             <div className="technique-inputs">
-              <div className="input-row-2">
-                <div className="input-group">
-                  <label>테크닉 이름 *</label>
-                  <input
-                    type="text"
-                    placeholder="예: 신입 사원 위장"
-                    value={tech.name}
-                    onChange={e => updateTechnique(idx, 'name', e.target.value)}
-                    required
-                  />
+              {/* Technique Name - Bilingual */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                  테크닉 이름 (Technique Name) *
+                </label>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="예: 신입 사원 위장"
+                      value={tech.name?.ko || ''}
+                      onChange={e => updateTechnique(idx, 'name', { ...tech.name, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: New Employee Disguise"
+                      value={tech.name?.en || ''}
+                      onChange={e => updateTechnique(idx, 'name', { ...tech.name, en: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
+              </div>
 
+              <div className="input-row-2">
                 <div className="input-group">
                   <label>타입 *</label>
                   <select
@@ -405,15 +477,33 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 </div>
               </div>
 
-              <div className="input-group">
-                <label>설명 *</label>
-                <input
-                  type="text"
-                  placeholder="예: 신입 직원인 척하며 도움을 요청"
-                  value={tech.description}
-                  onChange={e => updateTechnique(idx, 'description', e.target.value)}
-                  required
-                />
+              {/* Technique Description - Bilingual */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                  설명 (Description) *
+                </label>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="예: 신입 직원인 척하며 도움을 요청"
+                      value={tech.description?.ko || ''}
+                      onChange={e => updateTechnique(idx, 'description', { ...tech.description, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Pretend to be a new employee and request help"
+                      value={tech.description?.en || ''}
+                      onChange={e => updateTechnique(idx, 'description', { ...tech.description, en: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="input-row-2">

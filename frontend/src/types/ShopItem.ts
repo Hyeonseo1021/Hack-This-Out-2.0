@@ -1,7 +1,7 @@
 export interface ShopItem {
   _id: string;
-  name: string;
-  description: string;
+  name: { ko: string; en: string } | string;
+  description: { ko: string; en: string } | string;
   price: number;
   icon: string;
   imageUrl?: string;

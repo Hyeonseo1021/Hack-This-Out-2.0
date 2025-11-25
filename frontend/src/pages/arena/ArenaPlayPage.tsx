@@ -1,6 +1,7 @@
 // src/pages/arena/ArenaPlayPage.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import socket from '../../utils/socket';
 import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
@@ -36,6 +37,7 @@ type ArenaUpdatePayload = {
 const ArenaPlayPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [hostId, setHostId] = useState<string | null>(null);
@@ -63,26 +65,22 @@ const ArenaPlayPage: React.FC = () => {
 
   // Mode 이름 변환 헬퍼
   const getModeName = (mode: string) => {
-    const names: Record<string, string> = {
-      'TERMINAL_HACKING_RACE': 'Terminal Race',
-      'VULNERABILITY_SCANNER_RACE': 'Vulnerability Scanner Race',
-      'FORENSICS_RUSH': 'Forensics Rush',
-      'SOCIAL_ENGINEERING_CHALLENGE': 'Social Engineering'
-    };
-    return names[mode] || mode;
+    const modeKey = `modes.${mode}.title`;
+    const translated = t(modeKey);
+    return translated !== modeKey ? translated : mode;
   };
 
   const getParticipantStatus = (p: Participant) => {
-    if (p.hasLeft) return { text: 'Left', color: '#666' };
+    if (p.hasLeft) return { text: t('play.left'), color: '#666' };
 
     if (status === 'waiting') {
       return p.isReady
-        ? { text: 'Ready', color: '#00ff88' }
-        : { text: 'Waiting', color: '#ff9500' };
+        ? { text: t('ready'), color: '#00ff88' }
+        : { text: t('waiting'), color: '#ff9500' };
     }
 
     if (status === 'started') {
-      return { text: 'Active', color: '#00d4ff' };
+      return { text: t('play.active'), color: '#00d4ff' };
     }
 
     return { text: '', color: '#666' };
@@ -111,7 +109,7 @@ const ArenaPlayPage: React.FC = () => {
 
       if (effect?.hintCount) {
         setAvailableHints(prev => prev + effect.hintCount);
-        toast.success(`💡 힌트 ${effect.hintCount}개를 획득했습니다!`);
+        toast.success(t('toast.hintGained', { count: effect.hintCount }));
       }
 
       if (effect?.freezeSeconds) {
@@ -123,7 +121,7 @@ const ArenaPlayPage: React.FC = () => {
             itemType: 'time_extension',
             value: effect.freezeSeconds
           });
-          toast.success(`⏰ ${effect.freezeSeconds}초 동안 시간이 연장됩니다!`);
+          toast.success(t('toast.timeExtended', { seconds: effect.freezeSeconds }));
         }
       }
 
@@ -140,7 +138,7 @@ const ArenaPlayPage: React.FC = () => {
         }
         // 클라이언트 로컬 버프도 추가 (UI 표시용)
         addBuff({ type: 'score_boost', value: effect.scoreBoost });
-        toast.success(`🚀 점수 ${effect.scoreBoost}% 증가 효과 적용!`);
+        toast.success(t('toast.scoreBoostApplied', { percent: effect.scoreBoost }));
       }
 
       if (effect?.invincibleSeconds) {
@@ -155,7 +153,7 @@ const ArenaPlayPage: React.FC = () => {
         }
         // 클라이언트 로컬 버프도 추가 (UI 표시용)
         addBuff({ type: 'invincible', value: effect.invincibleSeconds });
-        toast.success(`🛡️ ${effect.invincibleSeconds}초 동안 무적 상태!`);
+        toast.success(t('toast.invincible', { seconds: effect.invincibleSeconds }));
       }
 
       // UI 업데이트
@@ -168,7 +166,7 @@ const ArenaPlayPage: React.FC = () => {
       }).filter(Boolean));
 
     } catch (err: any) {
-      toast.error(err?.response?.data?.msg ?? '아이템 사용에 실패했습니다.');
+      toast.error(err?.response?.data?.msg ?? t('toast.itemUseFailed'));
     } finally {
       setUsingItemId(null);
     }
@@ -379,7 +377,7 @@ const ArenaPlayPage: React.FC = () => {
       console.log('⏰ [ArenaPlayPage] arena:personal-time-extended received:', data);
       if (data.userId === currentUserId) {
         setPersonalEndAt(new Date(data.personalEndTime));
-        toast.success(`⏰ 시간이 ${data.value}초 연장되었습니다!`);
+        toast.success(t('toast.timeExtended', { seconds: data.value }));
       }
     };
 
@@ -427,7 +425,7 @@ const ArenaPlayPage: React.FC = () => {
       return (
         <div className="loading-state">
           <div className="loading-spinner"></div>
-          <p>Loading game mode...</p>
+          <p>{t('play.loadingGameMode')}</p>
         </div>
       );
     }
@@ -462,7 +460,7 @@ const ArenaPlayPage: React.FC = () => {
         console.error('❌ Unknown game mode:', mode);
         return (
           <div className="error-state">
-            <h2>Unknown Game Mode</h2>
+            <h2>{t('play.unknownGameMode')}</h2>
             <p>{mode}</p>
           </div>
         );
@@ -490,14 +488,14 @@ const ArenaPlayPage: React.FC = () => {
                 {mm}:{String(ss).padStart(2, '0')}
               </div>
               <div className="timer-label">
-                Remaining
+                {t('play.remaining')}
               </div>
             </div>
 
             <button
               className="sidebar-toggle"
               onClick={() => setShowSidebar(!showSidebar)}
-              title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
+              title={showSidebar ? t('play.hideSidebar') : t('play.showSidebar')}
             >
               {showSidebar ? '☰' : '☰'}
             </button>
@@ -512,6 +510,7 @@ const ArenaPlayPage: React.FC = () => {
             socket={socket}
             arenaId={arenaId}
             userId={currentUserId || undefined}
+            gameMode={mode || undefined}
           />
         )}
 
@@ -530,7 +529,7 @@ const ArenaPlayPage: React.FC = () => {
               {/* 참가자 목록 */}
               <div className="sidebar-section">
                 <div className="section-header">
-                  <h3>Players</h3>
+                  <h3>{t('play.players')}</h3>
                   <span className="player-count">{activeCount}/{participants.length}</span>
                 </div>
                 
@@ -583,15 +582,15 @@ const ArenaPlayPage: React.FC = () => {
               {/* 게임 정보 */}
               <div className="sidebar-section">
                 <div className="section-header">
-                  <h3>Info</h3>
+                  <h3>{t('play.info')}</h3>
                 </div>
                 <div className="info-grid">
                   <div className="info-item">
-                    <label>Start Time</label>
-                    <span>{startAt ? new Date(startAt).toLocaleTimeString() : 'Pending'}</span>
+                    <label>{t('play.startTime')}</label>
+                    <span>{startAt ? new Date(startAt).toLocaleTimeString() : t('play.pending')}</span>
                   </div>
                   <div className="info-item">
-                    <label>Duration</label>
+                    <label>{t('play.duration')}</label>
                     <span>{endAt && startAt ? `${Math.round((endAt.getTime() - startAt.getTime()) / 60000)}min` : '---'}</span>
                   </div>
                 </div>
@@ -601,24 +600,31 @@ const ArenaPlayPage: React.FC = () => {
               {status === 'started' && (
                 <div className="sidebar-section">
                   <div className="section-header">
-                    <h3>Inventory</h3>
+                    <h3>{t('play.inventory')}</h3>
                     {inventoryItems.length > 0 && (
                       <span className="inventory-count">{inventoryItems.length}</span>
                     )}
                   </div>
                   {loadingInventory ? (
-                    <div className="inventory-loading">Loading...</div>
+                    <div className="inventory-loading">{t('loading')}</div>
                   ) : inventoryItems.length === 0 ? (
-                    <div className="inventory-empty">No items</div>
+                    <div className="inventory-empty">{t('play.noItems')}</div>
                   ) : (
                     <div className="inventory-items-list">
-                      {inventoryItems.map((invItem) => (
+                      {inventoryItems.map((invItem) => {
+                        // 다국어 지원: name이 객체인 경우 현재 언어로 선택
+                        const lang = i18n.language as 'ko' | 'en';
+                        const itemName = typeof invItem.item.name === 'object'
+                          ? (invItem.item.name as any)[lang] || (invItem.item.name as any).ko || (invItem.item.name as any).en
+                          : invItem.item.name;
+
+                        return (
                         <div key={invItem._id} className="inventory-item-card">
                           <div className="item-icon">
                             {invItem.item.imageUrl ? (
                               <img
                                 src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001'}${invItem.item.imageUrl}`}
-                                alt={invItem.item.name}
+                                alt={itemName}
                                 className="item-image"
                               />
                             ) : (
@@ -626,7 +632,7 @@ const ArenaPlayPage: React.FC = () => {
                             )}
                           </div>
                           <div className="item-details">
-                            <div className="item-name">{invItem.item.name}</div>
+                            <div className="item-name">{itemName}</div>
                             <div className="item-quantity">×{invItem.quantity}</div>
                           </div>
                           <button
@@ -634,10 +640,11 @@ const ArenaPlayPage: React.FC = () => {
                             onClick={() => handleUseItem(invItem._id, invItem)}
                             disabled={usingItemId === invItem._id}
                           >
-                            {usingItemId === invItem._id ? '...' : 'Use'}
+                            {usingItemId === invItem._id ? '...' : t('play.use')}
                           </button>
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>

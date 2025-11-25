@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { GameMode, assignBatchArenaExp } from './expCalculator';
+import { GameMode as CoinGameMode, assignBatchArenaCoin, isFirstScenarioCompletion } from './coinCalculator';
 
 // 진행 중인 유예 타이머 추적
 const graceTimers = new Map<string, NodeJS.Timeout>();
@@ -356,6 +357,82 @@ async function finalizeArena(arenaId: string, io: Server) {
     } catch (error) {
       console.error('❌ [finalizeArena] Error assigning experience:', error);
       // 경험치 부여 실패는 게임 종료를 막지 않음
+    }
+
+    // 💰 HTO 코인 계산 및 부여
+    console.log('\n💰 [finalizeArena] Calculating and assigning HTO coins...');
+    try {
+      // 모든 참가자를 점수 순으로 정렬하여 순위 부여
+      const rankedProgress = await ArenaProgress.find({ arena: arenaId })
+        .sort({
+          completed: -1,  // 완료한 사람 우선
+          score: -1,      // 점수 높은 순
+          submittedAt: 1  // 빠른 제출 시간 우선
+        })
+        .lean();
+
+      // 중복 유저 제거
+      const uniqueProgress = rankedProgress.reduce((acc: any[], progress: any) => {
+        const userId = progress.user.toString();
+        if (!acc.find(p => p.user.toString() === userId)) {
+          acc.push(progress);
+        }
+        return acc;
+      }, []);
+
+      // 점수가 0 이하인 플레이어는 코인 부여하지 않음
+      const qualifiedProgress = uniqueProgress.filter(progress => {
+        const score = progress.score || 0;
+        if (score <= 0) {
+          console.log(`❌ [finalizeArena] User ${progress.user} excluded from coins (score: ${score})`);
+          return false;
+        }
+        return true;
+      });
+
+      console.log(`🏆 [finalizeArena] Qualified for coins: ${qualifiedProgress.length}/${uniqueProgress.length} players`);
+
+      // 각 플레이어의 첫 클리어 여부 확인 및 코인 데이터 준비
+      const coinData = await Promise.all(
+        qualifiedProgress.map(async (progress, index) => {
+          const userId = progress.user.toString();
+          const isFirstClear = await isFirstScenarioCompletion(userId, arena.scenarioId.toString());
+
+          return {
+            userId,
+            rank: index + 1,
+            score: progress.score || 0,
+            completionTime: progress.completionTime || undefined,
+            isFirstClear
+          };
+        })
+      );
+
+      // GameMode 변환 (CoinGameMode로)
+      const coinGameMode = arena.mode as CoinGameMode;
+
+      // 일괄 코인 부여
+      const coinResults = await assignBatchArenaCoin(coinData, coinGameMode);
+
+      // ArenaProgress에 코인 정보 저장
+      for (const result of coinResults) {
+        await ArenaProgress.updateOne(
+          { arena: arenaId, user: result.userId },
+          {
+            $set: {
+              coinsEarned: result.coinResult.totalCoin
+            }
+          }
+        );
+
+        const userData = coinData.find(d => d.userId === result.userId);
+        console.log(`   💰 User ${result.userId}: Rank ${userData?.rank} → +${result.coinResult.totalCoin} HTO (Base: ${result.coinResult.baseCoin}, Rank: +${result.coinResult.rankBonus}, Score: +${result.coinResult.scoreBonus}, Time: +${result.coinResult.timeBonus}${userData?.isFirstClear ? `, 🎉 First Clear: +${result.coinResult.firstClearBonus}` : ''})`);
+      }
+
+      console.log('💰 [finalizeArena] Coin assignment completed\n');
+    } catch (error) {
+      console.error('❌ [finalizeArena] Error assigning coins:', error);
+      // 코인 부여 실패는 게임 종료를 막지 않음
     }
 
     // 모든 클라이언트에게 게임 종료 알림
