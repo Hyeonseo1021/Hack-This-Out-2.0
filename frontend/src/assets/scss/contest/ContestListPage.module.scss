@@ -9,6 +9,7 @@
   margin: 0 auto;
   overflow: hidden;
   border-radius: clamp(16px, 2vw, 24px);
+  background: #000000;
 
   /* Machine Detail 과 동일한 네온 + CRT + 블러 백그라운드 */
   @include background_set;
@@ -36,7 +37,7 @@
     /* 🔹 Contest Banner (좌측) — 수정 없음 */
     .contest_banner {
       flex-grow: 1;
-      background: rgba(8, 20, 30, 0.38);
+      background: rgba(8, 20, 30, 0.25);
       border: 1.4px solid rgba(139, 243, 255, 0.25);
       border-radius: clamp(16px, 2vw, 24px);
       backdrop-filter: blur(20px);
@@ -60,10 +61,10 @@
       min-height: clamp(250px, 28vh, 400px);
 
       border-radius: clamp(16px, 2vw, 24px);
-      background: rgba(8, 20, 30, 0.45);
-      border: 1.5px solid rgba(139, 243, 255, 0.28);
-      box-shadow: 0 0 20px rgba(139, 243, 255, 0.1);
-      backdrop-filter: blur(22px);
+      background: var(--color-layout);
+      border: 1px solid var(--blue-200);
+      box-shadow: none;
+      backdrop-filter: none;
 
       display: flex;
       flex-direction: column;
@@ -73,61 +74,44 @@
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: all 0.3s ease;
+      transition: all 0.3s ease-in-out;
 
       @media (max-width: 1024px) {
         display: none;
       }
 
-      /* CRT 라인 효과 */
-      &::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: repeating-linear-gradient(
-          180deg,
-          rgba(255,255,255,0.04) 0px,
-          rgba(255,255,255,0.02) 1px,
-          transparent 2px
-        );
-        opacity: 0.1;
-        pointer-events: none;
-      }
-
       &:hover {
-        background: rgba(139, 243, 255, 0.12);
-        transform: translateY(-4px);
-        box-shadow: 0 0 16px rgba(139, 243, 255, 0.4);
-        border-color: rgba(139, 243, 255, 0.55);
+        background: var(--blue-400);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border: 1px solid transparent;
       }
 
       .machine {
         font-size: clamp(2.6rem, 4vw, 3.2rem);
-        color: #8BF3FF;
+        color: var(--color-white);
         margin-bottom: clamp(12px, 2vw, 16px);
-        transition: 0.25s ease;
+        transition: transform 0.3s ease-in-out;
       }
 
       .plus {
         font-size: clamp(1.8rem, 3vw, 2.4rem);
-        color: #EFFFFF;
+        color: var(--color-white);
         margin-bottom: clamp(8px, 2vw, 12px);
-        transition: 0.25s ease;
+        transition: transform 0.3s ease-in-out;
       }
 
       .register_text {
         font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-        color: #EFFFFF;
+        color: var(--color-white);
         font-weight: 700;
-        text-shadow: 0 0 10px rgba(139,243,255,0.4);
-        transition: 0.25s ease;
+        transition: transform 0.3s ease-in-out;
       }
 
       &:hover .machine,
       &:hover .plus,
       &:hover .register_text {
-        color: white !important;
-        transform: translateY(-2px);
+        color: var(--color-white);
       }
     }
   }
