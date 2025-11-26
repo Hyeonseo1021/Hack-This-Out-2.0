@@ -20,8 +20,8 @@ export interface ContestDetail {
   description: string;
   contestExp: number;
   machines: Machine[];
-  startTime: string;
-  endTime: string;
+  startTime: Date;
+  endTime: Date;
   isActive: boolean;
 }
 

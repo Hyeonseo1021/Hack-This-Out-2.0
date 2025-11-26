@@ -19,12 +19,12 @@
   color: var(--white);
   font-weight: 600;
 
-  background: rgba(8, 20, 30, 0.38);
+  background: var(--color-layout);
   border-radius: clamp(16px, 2vw, 24px);
-  border: 1.5px solid rgba(139, 243, 255, 0.28);
-  box-shadow: 0 0 28px rgba(139, 243, 255, 0.15);
+  border: 1px solid var(--blue-200);
+  box-shadow: none;
   overflow: hidden;
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
 
   /* CRT 스캔 라인 */
   &::before {
