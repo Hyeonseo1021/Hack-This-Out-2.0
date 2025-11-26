@@ -39,16 +39,21 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
 
   const { addBuff, setAvailableHints, setIsTimeFrozen } = usePlayContext();
 
+  // 다국어 텍스트 처리 헬퍼
+  const getText = (value: string | { ko: string; en: string }): string => {
+    if (typeof value === 'string') return value;
+    return value.ko || value.en || '';
+  };
+
   // 🎮 게임 모드별로 사용 가능한 효과 정의
   const isItemUsableInMode = (itemEffect: InventoryItemData['item']['effect']): boolean => {
     if (!gameMode || !isInGame) return true; // 게임 외에서는 모든 아이템 표시
 
     // 각 게임 모드별 사용 가능한 효과
     const modeEffects: Record<string, string[]> = {
-      'TERMINAL_HACKING_RACE': ['hintCount', 'freezeSeconds', 'scoreBoost'],
-      'VULNERABILITY_SCANNER_RACE': ['hintCount', 'scoreBoost'], // 힌트, 점수 부스트만
-      'FORENSICS_RUSH': ['hintCount', 'freezeSeconds', 'scoreBoost'],
-      'SOCIAL_ENGINEERING_CHALLENGE': ['scoreBoost', 'invincibleSeconds'],
+      'TERMINAL_HACKING_RACE': ['freezeSeconds', 'scoreBoost'],
+      'VULNERABILITY_SCANNER_RACE': ['hintCount', 'scoreBoost', 'invincibleSeconds', 'freezeSeconds'],
+      'FORENSICS_RUSH': ['hintCount', 'freezeSeconds', 'invincibleSeconds', 'scoreBoost'],
     };
 
     const allowedEffects = modeEffects[gameMode] || [];
@@ -101,8 +106,7 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
         if (socket && arenaId && userId) {
           socket.emit('arena:use-item', {
             arenaId,
-            userId,
-            itemType: 'time_freeze',
+            itemType: 'time_extension',  // ✅ time_freeze -> time_extension (서버 아이템 타입과 일치)
             value: effect.freezeSeconds
           });
           toast.success(`⏰ ${effect.freezeSeconds}초 동안 시간이 연장됩니다!`);
@@ -120,18 +124,36 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
       }
 
       if (effect?.scoreBoost) {
-        addBuff({ type: 'score_boost', value: effect.scoreBoost });
-        toast.success(`🚀 점수 ${effect.scoreBoost}% 증가 효과 적용!`);
+        // Arena 모드에서는 서버에 소켓 이벤트 전송
+        if (socket && arenaId && userId) {
+          socket.emit('arena:use-item', {
+            arenaId,
+            itemType: 'score_boost',
+            value: effect.scoreBoost,
+            duration: 120 // 기본 2분
+          });
+          toast.success(`🚀 점수 ${effect.scoreBoost}% 증가 효과 적용! (2분)`);
+        } else {
+          // Machine/Contest 모드에서는 로컬 처리
+          addBuff({ type: 'score_boost', value: effect.scoreBoost });
+          toast.success(`🚀 점수 ${effect.scoreBoost}% 증가 효과 적용!`);
+        }
       }
 
       if (effect?.invincibleSeconds) {
-        addBuff({ type: 'invincible', value: effect.invincibleSeconds, expiresAt: Date.now() + effect.invincibleSeconds * 1000 });
-        toast.success(`🛡️ ${effect.invincibleSeconds}초 동안 무적 상태!`);
-
-        // 무적 해제
-        setTimeout(() => {
-          // removeBuff('invincible')는 PlayContext에 추가 필요
-        }, effect.invincibleSeconds * 1000);
+        // Arena 모드에서는 서버에 소켓 이벤트 전송
+        if (socket && arenaId && userId) {
+          socket.emit('arena:use-item', {
+            arenaId,
+            itemType: 'invincible',
+            value: effect.invincibleSeconds
+          });
+          toast.success(`🛡️ ${effect.invincibleSeconds}초 동안 무적 상태!`);
+        } else {
+          // Machine/Contest 모드에서는 로컬 처리
+          addBuff({ type: 'invincible', value: effect.invincibleSeconds, expiresAt: Date.now() + effect.invincibleSeconds * 1000 });
+          toast.success(`🛡️ ${effect.invincibleSeconds}초 동안 무적 상태!`);
+        }
       }
 
       // UI 업데이트
@@ -167,13 +189,13 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
                 {invItem.item.imageUrl && (
                   <img
                     src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001'}${invItem.item.imageUrl}`}
-                    alt={invItem.item.name}
+                    alt={getText(invItem.item.name)}
                     style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }}
                   />
                 )}
                 <div className="item-info">
-                  <h3>{invItem.item.icon} {invItem.item.name}</h3>
-                  <p>{invItem.item.description}</p>
+                  <h3>{invItem.item.icon} {getText(invItem.item.name)}</h3>
+                  <p>{getText(invItem.item.description)}</p>
                   <span>보유: {invItem.quantity}개</span>
 
                   {isInGame && (

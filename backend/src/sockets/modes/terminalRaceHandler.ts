@@ -120,38 +120,69 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
       // 5. 진행 상황 업데이트 (명령어 성공)
       const updatePayload: any = {};
       let boostedScore = 0;
+      let stageActuallyAdvanced = false;
 
-      if (result.progressDelta && result.progressDelta > 0) {
+      // ✅ 스테이지 진행 여부 먼저 확인 (중복 점수 방지)
+      if (result.advanceStage) {
+        const currentStage = currentProgress?.stage || 0;
+        const scenario = arena.scenarioId as any;
+        const totalStages = scenario?.data?.totalStages || 0;
+
+        // ✅ 현재 스테이지가 이미 완료된 경우 점수 부여하지 않음
+        const expectedStage = currentStage + 1;
+
+        // 엔진에서 계산한 스테이지와 실제 DB 스테이지가 일치하는지 확인
+        if (currentStage < totalStages) {
+          const newStage = currentStage + 1;
+          console.log(`🎯 Stage advancement: ${currentStage} → ${newStage}`);
+          updatePayload.$set = { stage: newStage };
+          stageActuallyAdvanced = true;
+
+          if (newStage >= totalStages) {
+            console.log('🏆 All stages completed!');
+            updatePayload.$set.completed = true;
+          }
+        } else {
+          console.log(`⚠️ [DUPLICATE PREVENTION] Stage already at max (${currentStage}/${totalStages}), ignoring advancement`);
+        }
+      }
+
+      // ✅ 점수는 스테이지가 실제로 진행되었을 때만 부여 (중복 점수 악용 방지)
+      if (result.progressDelta && result.progressDelta > 0 && stageActuallyAdvanced) {
         // ✅ 점수 부스트 적용
         const activeBuffs = getActiveBuffs(arena, String(userId));
         boostedScore = applyScoreBoost(result.progressDelta, activeBuffs);
-        updatePayload.$inc = { score: boostedScore };
+        if (!updatePayload.$inc) updatePayload.$inc = {};
+        updatePayload.$inc.score = boostedScore;
 
         // 부스트가 적용되었는지 로그
         if (boostedScore !== result.progressDelta) {
           console.log(`🚀 Score boost applied: ${result.progressDelta} → ${boostedScore}`);
         }
+      } else if (result.progressDelta && result.progressDelta > 0 && !stageActuallyAdvanced) {
+        console.log(`⚠️ [DUPLICATE PREVENTION] Score gain blocked: stage did not advance`);
       }
-      
-      if (result.advanceStage) {
-        const currentStage = currentProgress?.stage || 0;
-        const newStage = currentStage + 1;
-        
-        console.log(`🎯 Stage advancement: ${currentStage} → ${newStage}`);
-        updatePayload.$set = { stage: newStage };
-        
-        const scenario = arena.scenarioId as any;
-        const totalStages = scenario?.data?.totalStages || 0;
-        
-        if (newStage >= totalStages) {
-          console.log('🏆 All stages completed!');
-          updatePayload.$set.completed = true;
-        }
-      }
-      
+
       if (result.flagFound) {
         if (!updatePayload.$set) updatePayload.$set = {};
         updatePayload.$set.completed = true;
+      }
+
+      // ✅ 업데이트할 내용이 없으면 (중복 시도) 현재 상태만 반환
+      if (!updatePayload.$set && !updatePayload.$inc) {
+        console.log('⚠️ [DUPLICATE PREVENTION] No updates to apply, returning current state');
+        socket.emit('terminal:result', {
+          userId: String(userId),
+          command,
+          message: result.message,
+          scoreGain: 0, // 중복이므로 점수 0
+          baseScore: 0,
+          stageAdvanced: false,
+          currentStage: currentProgress?.stage || 0,
+          totalScore: currentProgress?.score || 0,
+          completed: currentProgress?.completed || false
+        });
+        return;
       }
 
       console.log('📝 Update Payload:', JSON.stringify(updatePayload, null, 2));
@@ -176,16 +207,16 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         userId: String(userId),
         command,
         message: result.message,
-        scoreGain: boostedScore || result.progressDelta || 0, // 부스트 적용된 점수
-        baseScore: result.progressDelta || 0, // 기본 점수
-        stageAdvanced: result.advanceStage || false,
+        scoreGain: stageActuallyAdvanced ? (boostedScore || result.progressDelta || 0) : 0, // ✅ 실제 진행 시에만 점수
+        baseScore: stageActuallyAdvanced ? (result.progressDelta || 0) : 0, // ✅ 실제 진행 시에만 점수
+        stageAdvanced: stageActuallyAdvanced, // ✅ 실제 진행 여부
         currentStage: progressDoc.stage,
         totalScore: progressDoc.score,
         completed: progressDoc.completed
       });
 
       // 8. 다른 참가자들에게 진행 상황 브로드캐스트 (스테이지 진행/완료 시에만)
-      if (result.advanceStage || progressDoc.completed) {
+      if (stageActuallyAdvanced || progressDoc.completed) {
         console.log('📤 [terminal:execute] Broadcasting participant update');
         
         // ✅ socket.broadcast로 자기 자신 제외하고 전송

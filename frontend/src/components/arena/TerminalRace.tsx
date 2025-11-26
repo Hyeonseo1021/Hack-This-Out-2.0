@@ -80,6 +80,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const [currentScore, setCurrentScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [graceTimeRemaining, setGraceTimeRemaining] = useState<number | null>(null);
+  const [totalGraceTime, setTotalGraceTime] = useState<number | null>(null);
   const [lastScoreGain, setLastScoreGain] = useState(0);
 
   const logContainerRef = useRef<HTMLDivElement>(null);
@@ -211,7 +212,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       newLogs.push({
         id: logCounter.current++,
         text: hasBoost
-          ? `[+${data.baseScore} POINTS → +${data.scoreGain} POINTS 🚀]`
+          ? `[+${data.scoreGain} POINTS]`
           : `[+${data.scoreGain} POINTS]`,
         type: 'score'
       });
@@ -273,10 +274,11 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         { id: logCounter.current++, text: '', type: 'output' }
       ]);
 
+      setTotalGraceTime(data.graceSec);
       setGraceTimeRemaining(data.graceSec);
       graceIntervalRef.current = setInterval(() => {
         setGraceTimeRemaining(prev => {
-          if (prev === null || prev <= 1) {
+          if (prev === null || prev <= 0) {
             if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
             return null;
           }
@@ -431,9 +433,9 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
                   {currentScore} points
                   {lastScoreGain > 0 && <span className="score-popup">+{lastScoreGain}</span>}
                 </span>
-                {graceTimeRemaining !== null && !isCompleted && (
+                {graceTimeRemaining !== null && totalGraceTime !== null && !isCompleted && (
                   <span className="stat-item warning-stat">
-                    {graceTimeRemaining}s
+                    {Math.floor(graceTimeRemaining / 60)}:{String(graceTimeRemaining % 60).padStart(2, '0')}/{Math.floor(totalGraceTime / 60)}:{String(totalGraceTime % 60).padStart(2, '0')}
                   </span>
                 )}
               </>

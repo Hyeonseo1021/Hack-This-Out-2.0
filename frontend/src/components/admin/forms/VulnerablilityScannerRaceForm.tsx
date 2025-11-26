@@ -10,7 +10,6 @@ interface Hint {
     ko: string;
     en: string;
   };
-  cost: number;
 }
 
 interface Vulnerability {
@@ -40,7 +39,7 @@ interface Vulnerability {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   basePoints: number;
   category: string;
-  hintIds: string[];
+  hintIds?: string[];
 }
 
 interface VulnerabilityScannerRaceData {
@@ -56,10 +55,9 @@ interface VulnerabilityScannerRaceData {
   };
   features: string[];
   vulnerabilities: Vulnerability[];
-  hints: Hint[];
+  hints?: Hint[];
   scoring: {
     invalidSubmissionPenalty: number;
-    graceTimeSeconds?: number;
   };
   totalVulnerabilities: number;
 }
@@ -92,8 +90,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         vulnerabilities: data.vulnerabilities || [],
         hints: data.hints || [],
         scoring: data.scoring || {
-          invalidSubmissionPenalty: 5,
-          graceTimeSeconds: 60
+          invalidSubmissionPenalty: 5
         },
         totalVulnerabilities: data.vulnerabilities?.length || 0
       };
@@ -173,6 +170,49 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         i === index ? { ...v, validation: { ...v.validation, [field]: value } } : v
       )
     });
+  };
+
+  // 힌트 추가
+  const addHint = (vulnId: string) => {
+    const existingHints = (data.hints || []).filter(h => h.vulnId === vulnId);
+    const nextLevel = (existingHints.length + 1) as 1 | 2 | 3;
+    if (nextLevel > 3) return; // 최대 3개
+
+    onChange({
+      ...data,
+      hints: [
+        ...(data.hints || []),
+        {
+          hintId: `hint_${vulnId}_${nextLevel}_${Date.now()}`,
+          vulnId,
+          level: nextLevel,
+          text: { ko: '', en: '' }
+        }
+      ]
+    });
+  };
+
+  // 힌트 삭제
+  const removeHint = (hintId: string) => {
+    onChange({
+      ...data,
+      hints: (data.hints || []).filter(h => h.hintId !== hintId)
+    });
+  };
+
+  // 힌트 업데이트
+  const updateHint = (hintId: string, field: 'ko' | 'en', value: string) => {
+    onChange({
+      ...data,
+      hints: (data.hints || []).map(h =>
+        h.hintId === hintId ? { ...h, text: { ...h.text, [field]: value } } : h
+      )
+    });
+  };
+
+  // 특정 취약점의 힌트 가져오기
+  const getHintsForVuln = (vulnId: string) => {
+    return (data.hints || []).filter(h => h.vulnId === vulnId).sort((a, b) => a.level - b.level);
   };
 
   return (
@@ -581,47 +621,103 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         )}
       </div>
 
+      {/* 힌트 설정 */}
+      {data.vulnerabilities && data.vulnerabilities.length > 0 && (
+        <div className="form-section">
+          <h4>💡 힌트 설정 (선택사항)</h4>
+          <p className="section-description">
+            각 취약점에 대해 최대 3개의 힌트를 설정할 수 있습니다. 플레이어가 힌트 아이템을 사용하면 순서대로 공개됩니다.
+          </p>
+
+          {data.vulnerabilities.map((vuln) => {
+            const vulnHints = getHintsForVuln(vuln.vulnId);
+            const vulnName = typeof vuln.vulnName === 'object'
+              ? (vuln.vulnName.ko || vuln.vulnName.en || vuln.vulnId)
+              : (vuln.vulnName || vuln.vulnId);
+
+            return (
+              <div key={vuln.vulnId} className="hint-vuln-card">
+                <div className="hint-vuln-header">
+                  <span className="vuln-name">🎯 {vulnName}</span>
+                  <span className="hint-count">{vulnHints.length}/3 힌트</span>
+                  {vulnHints.length < 3 && (
+                    <button
+                      type="button"
+                      className="add-hint-btn"
+                      onClick={() => addHint(vuln.vulnId)}
+                    >
+                      <FaPlus /> 힌트 추가
+                    </button>
+                  )}
+                </div>
+
+                {vulnHints.length > 0 && (
+                  <div className="hints-list">
+                    {vulnHints.map((hint) => (
+                      <div key={hint.hintId} className="hint-item">
+                        <div className="hint-level-badge">Hint {hint.level}</div>
+                        <div className="hint-inputs">
+                          <div className="hint-input-row">
+                            <label>한글</label>
+                            <input
+                              type="text"
+                              placeholder="이 취약점은 로그인 폼에서 발생합니다..."
+                              value={hint.text.ko}
+                              onChange={e => updateHint(hint.hintId, 'ko', e.target.value)}
+                            />
+                          </div>
+                          <div className="hint-input-row">
+                            <label>English</label>
+                            <input
+                              type="text"
+                              placeholder="This vulnerability occurs in the login form..."
+                              value={hint.text.en}
+                              onChange={e => updateHint(hint.hintId, 'en', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="remove-hint-btn"
+                          onClick={() => removeHint(hint.hintId)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {vulnHints.length === 0 && (
+                  <div className="no-hints">
+                    <span>힌트 없음</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 점수 시스템 */}
       <div className="form-section">
         <h4>점수 시스템</h4>
-        <div className="form-grid-2">
-          <div className="form-field">
-            <label>오답 페널티 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.invalidSubmissionPenalty || 5}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  invalidSubmissionPenalty: Number(e.target.value),
-                  graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
-                }
-              })}
-              required
-            />
-            <small>오답 시 감점 (무적 아이템으로 방어 가능)</small>
-          </div>
-
-          <div className="form-field">
-            <label>유예시간 (초) *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.graceTimeSeconds || 60}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
-                  graceTimeSeconds: Number(e.target.value)
-                }
-              })}
-              required
-            />
-            <small>첫 완주자 발생 후 다른 플레이어들에게 주어지는 시간</small>
-          </div>
+        <div className="form-field">
+          <label>오답 페널티 *</label>
+          <input
+            type="number"
+            min={0}
+            value={data.scoring?.invalidSubmissionPenalty || 5}
+            onChange={e => onChange({
+              ...data,
+              scoring: {
+                ...data.scoring,
+                invalidSubmissionPenalty: Number(e.target.value)
+              }
+            })}
+            required
+          />
+          <small>오답 시 감점 (무적 아이템으로 방어 가능)</small>
         </div>
 
         <div className="info-box">
@@ -630,6 +726,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
             <li>각 취약점마다 설정한 기본 점수만 획득합니다</li>
             <li>점수 부스트 아이템을 사용하면 점수가 증가합니다 (예: 20% 부스트)</li>
             <li>오답 제출 시 페널티가 적용되지만, 무적 아이템으로 방어할 수 있습니다</li>
+            <li>유예시간은 남은 시간의 1/2로 자동 계산됩니다 (최소 30초, 최대 5분)</li>
           </ul>
         </div>
       </div>

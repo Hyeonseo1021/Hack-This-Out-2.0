@@ -1,4 +1,10 @@
 {
+  "battle": {
+    "title": "BATTLE",
+    "contests": "CONTESTS",
+    "arena": "ARENA",
+    "systemReady": "SYSTEM READY"
+  },
   "landing": {
     "title": "HACK THIS OUT",
     "subtitle": "Cybersecurity Training Platform",

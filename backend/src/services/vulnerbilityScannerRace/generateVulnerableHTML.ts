@@ -33,21 +33,12 @@ ${index + 1}. ${v.vulnType} (${v.severity || 'MEDIUM'})
 `)
       .join('\n');
 
-    // Extract bilingual fields
-    const targetName = typeof scenario.data.targetName === 'object'
-      ? scenario.data.targetName.en || scenario.data.targetName.ko
-      : scenario.data.targetName || 'Practice Web App';
-
-    const targetDescription = typeof scenario.data.targetDescription === 'object'
-      ? scenario.data.targetDescription.en || scenario.data.targetDescription.ko
-      : scenario.data.targetDescription || 'A web application with intentional vulnerabilities';
-
     const prompt = `
 You are a cybersecurity educator. Create a single, self-contained HTML file for a vulnerable web application training scenario.
 
 **Target Application Details:**
-- Name: ${targetName}
-- Description: ${targetDescription}
+- Name: ${scenario.data.targetName || 'Practice Web App'}
+- Description: ${scenario.data.targetDescription || 'A web application with intentional vulnerabilities'}
 - Theme: ${scenario.data.htmlTemplate?.theme || 'login'} (e.g., login portal, online shop, blog, social network)
 - Difficulty: ${scenario.difficulty}
 
@@ -64,11 +55,9 @@ ${vulnsDescription}
    - Include navigation, headers, footers
    - Responsive design
 
-3. **All Features Visible at Once**:
-   - ALL features (login form, search bar, profile section, etc.) must be visible on the same page simultaneously
-   - DO NOT hide features behind login or navigation - everything should be accessible immediately
-   - DO NOT require completing one vulnerability to access another
-   - Use a dashboard-style layout where all interactive elements are visible at once
+3. **Functional Pages**:
+   - Create multiple sections/pages within the single HTML
+   - Use JavaScript to show/hide sections (SPA-like behavior)
 
 4. **Vulnerability Implementation**:
    - Each vulnerability should be realistic and exploitable
@@ -187,11 +176,7 @@ OUTPUT THE HTML NOW (start with <!DOCTYPE html>):
 
 function generateFallbackHTML(scenario: any): string {
   const vulns = scenario.data.vulnerabilities || [];
-
-  // Extract bilingual targetName
-  const targetName = typeof scenario.data.targetName === 'object'
-    ? scenario.data.targetName.en || scenario.data.targetName.ko
-    : scenario.data.targetName || 'Practice Web App';
+  const targetName = scenario.data.targetName || 'Practice Web App';
 
   return `<!DOCTYPE html>
 <html lang="en">

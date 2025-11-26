@@ -49,29 +49,20 @@ export interface VulnerabilityScannerRaceData {
     };
     
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-    basePoints: number;                 
-    category: string;                   
-    hintIds: string[];                  
+    basePoints: number;
+    category: string;
+    hintIds?: string[];
   }[];
-  
-  hints: {
-    hintId: string;                
-    vulnId: string;                    
-    level: 1 | 2 | 3;                 
-    text: string;                       
-    cost: number;                     
+
+  hints?: {
+    hintId: string;
+    vulnId: string;
+    level: 1 | 2 | 3;
+    text: string | { ko: string; en: string };
   }[];
-  
+
   scoring: {
-    firstBloodBonus: number;           
-    speedBonusThresholds: {
-      under3min: number;                
-      under5min: number;                
-      under7min: number;                
-    };
-    comboMultiplier: number;           
-    invalidSubmissionPenalty: number;   
-    graceTimeSeconds?: number;          
+    invalidSubmissionPenalty: number;
   };
 
   totalVulnerabilities: number;         
@@ -239,9 +230,9 @@ export const MODE_CONFIGS: Record<string, ModeConfiguration> = {
     maxPlayers: 2,
     defaultTime: 600,
     difficulty: {
-      EASY: { time: 600, description: '쉬운 취약점 (SQLi, XSS), 명확한 힌트' },
-      MEDIUM: { time: 600, description: '중급 취약점 (IDOR, CSRF), 일부 힌트' },
-      HARD: { time: 600, description: '고급 취약점 (Command Injection, XXE), 최소 힌트' }
+      EASY: { time: 600, description: '쉬운 취약점 (SQLi, XSS)' },
+      MEDIUM: { time: 600, description: '중급 취약점 (IDOR, CSRF)' },
+      HARD: { time: 600, description: '고급 취약점 (Command Injection, XXE)' }
     }
   },
   FORENSICS_RUSH: {

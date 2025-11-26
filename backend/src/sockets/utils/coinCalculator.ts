@@ -128,6 +128,8 @@ export async function isFirstScenarioCompletion(
     scenarioId: string,
     currentArenaId?: string
 ): Promise<boolean> {
+    console.log(`      📋 [isFirstScenarioCompletion] Checking userId: ${userId}, scenarioId: ${scenarioId}, currentArenaId: ${currentArenaId}`);
+
     // Find all ENDED arenas with this scenario (exclude current arena)
     const query: any = {
         scenarioId,
@@ -142,11 +144,15 @@ export async function isFirstScenarioCompletion(
         .select('_id')
         .lean();
 
+    console.log(`      📋 [isFirstScenarioCompletion] Found ${previousArenas.length} previous ended arenas with this scenario`);
+
     if (previousArenas.length === 0) {
+        console.log(`      📋 [isFirstScenarioCompletion] No previous arenas → isFirstClear = true`);
         return true; // No previous arenas with this scenario
     }
 
     const arenaIds = previousArenas.map(a => a._id);
+    console.log(`      📋 [isFirstScenarioCompletion] Previous arena IDs: ${arenaIds.join(', ')}`);
 
     // Check if user has completed any of these arenas before
     const userCompletions = await ArenaProgress.countDocuments({
@@ -155,8 +161,12 @@ export async function isFirstScenarioCompletion(
         completed: true
     });
 
+    console.log(`      📋 [isFirstScenarioCompletion] User completions in previous arenas: ${userCompletions}`);
+
     // First completion if count is 0
-    return userCompletions === 0;
+    const result = userCompletions === 0;
+    console.log(`      📋 [isFirstScenarioCompletion] Result: isFirstClear = ${result}`);
+    return result;
 }
 
 /**

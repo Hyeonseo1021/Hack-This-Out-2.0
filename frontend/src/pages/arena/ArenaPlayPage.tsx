@@ -64,6 +64,32 @@ const ArenaPlayPage: React.FC = () => {
 
   const { addBuff, setAvailableHints, setIsTimeFrozen } = usePlayContext();
 
+  // 게임 모드별로 사용 가능한 아이템 필터링
+  const isItemUsableInMode = (itemEffect: any): boolean => {
+    if (!mode || status !== 'started') return true;
+
+    const modeEffects: Record<string, string[]> = {
+      'TERMINAL_HACKING_RACE': ['freezeSeconds', 'scoreBoost'],
+      'VULNERABILITY_SCANNER_RACE': ['hintCount', 'scoreBoost', 'invincibleSeconds', 'freezeSeconds'],
+      'FORENSICS_RUSH': ['hintCount', 'freezeSeconds', 'invincibleSeconds', 'scoreBoost'],
+    };
+
+    const allowedEffects = modeEffects[mode] || [];
+    if (!itemEffect) return false;
+
+    return !!(
+      (itemEffect.hintCount && allowedEffects.includes('hintCount')) ||
+      (itemEffect.freezeSeconds && allowedEffects.includes('freezeSeconds')) ||
+      (itemEffect.scoreBoost && allowedEffects.includes('scoreBoost')) ||
+      (itemEffect.invincibleSeconds && allowedEffects.includes('invincibleSeconds'))
+    );
+  };
+
+  // 필터링된 인벤토리 아이템
+  const filteredInventoryItems = inventoryItems.filter(invItem =>
+    isItemUsableInMode(invItem.item?.effect)
+  );
+
   // Mode 이름 변환 헬퍼
   const getModeName = (mode: string) => {
     const modeKey = `modes.${mode}.title`;
@@ -602,17 +628,17 @@ const ArenaPlayPage: React.FC = () => {
                 <div className="sidebar-section">
                   <div className="section-header">
                     <h3>{t('play.inventory')}</h3>
-                    {inventoryItems.length > 0 && (
-                      <span className="inventory-count">{inventoryItems.length}</span>
+                    {filteredInventoryItems.length > 0 && (
+                      <span className="inventory-count">{filteredInventoryItems.length}</span>
                     )}
                   </div>
                   {loadingInventory ? (
                     <div className="inventory-loading">{t('loading')}</div>
-                  ) : inventoryItems.length === 0 ? (
+                  ) : filteredInventoryItems.length === 0 ? (
                     <div className="inventory-empty">{t('play.noItems')}</div>
                   ) : (
                     <div className="inventory-items-list">
-                      {inventoryItems.map((invItem) => {
+                      {filteredInventoryItems.map((invItem) => {
                         // 다국어 지원: name이 객체인 경우 현재 언어로 선택
                         const lang = i18n.language as 'ko' | 'en';
                         const itemName = typeof invItem.item.name === 'object'

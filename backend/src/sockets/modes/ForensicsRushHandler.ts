@@ -130,22 +130,48 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         // ✅ 첫 번째 완료자 처리
         if (!arena.winner) {
           console.log(`🏆 First completion detected: ${userId}`);
-          
+
           arena.winner = userId;
           arena.firstSolvedAt = new Date();
           await arena.save();
-          
-          const GRACE_PERIOD_SECONDS = 180; // 3분
-          
+
+          // ✅ 혼자 플레이 중이면 즉시 종료
+          const activeParticipants = arena.participants.filter((p: any) => !p.hasLeft);
+          if (activeParticipants.length === 1) {
+            console.log('🏁 [ForensicsRush] Solo play, ending immediately');
+            await endArenaImmediately(arenaId, io);
+            return;
+          }
+
+          // ✅ 남은 시간의 1/2 계산 (endArenaProcedure.ts와 동일한 로직)
+          const timeLimitMs = (arena.timeLimit || 600) * 1000; // 기본 10분
+          const elapsedMs = Date.now() - new Date(arena.startTime || Date.now()).getTime();
+          const remainingMs = Math.max(0, timeLimitMs - elapsedMs);
+
+          // 남은 시간의 1/2 계산, 최소 30초, 최대 5분
+          const calculatedGraceMs = Math.floor(remainingMs / 2);
+          const MIN_GRACE_MS = 30000;  // 30초
+          const MAX_GRACE_MS = 300000; // 5분
+          const graceMs = Math.min(remainingMs, Math.max(MIN_GRACE_MS, Math.min(MAX_GRACE_MS, calculatedGraceMs)));
+          const gracePeriodSeconds = Math.floor(graceMs / 1000);
+
+          console.log(`⏱️ [ForensicsRush] Time calculation:
+            - Time limit: ${arena.timeLimit}s
+            - Elapsed: ${Math.floor(elapsedMs / 1000)}s
+            - Remaining: ${Math.floor(remainingMs / 1000)}s
+            - Grace period: ${gracePeriodSeconds}s (${Math.floor(remainingMs / 2000)}s calculated, clamped to 30-300s)`);
+
           // ✅ 올바른 이벤트 이름: arena:grace-period-started
           io.to(arenaId).emit('arena:grace-period-started', {
-            gracePeriodSeconds: GRACE_PERIOD_SECONDS,
+            gracePeriodSeconds: gracePeriodSeconds,
+            graceMs: graceMs,
+            graceSec: gracePeriodSeconds,
             firstWinner: String(userId),
-            message: `${userId} completed all questions first! ${GRACE_PERIOD_SECONDS} seconds remaining for others...`
+            message: `${userId} completed all questions first! ${gracePeriodSeconds} seconds remaining for others...`
           });
-          
-          console.log(`⏳ Grace period started: ${GRACE_PERIOD_SECONDS}s`);
-          
+
+          console.log(`⏳ Grace period started: ${gracePeriodSeconds}s`);
+
           // 기존 타이머 정리
           if (gracePeriodTimers.has(arenaId)) {
             clearTimeout(gracePeriodTimers.get(arenaId)!);
@@ -155,9 +181,9 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
             clearInterval(gracePeriodIntervals.get(arenaId)!);
             gracePeriodIntervals.delete(arenaId);
           }
-          
+
           // ✅ 유예 시간 카운트다운 (매초마다 업데이트)
-          let remainingSeconds = GRACE_PERIOD_SECONDS;
+          let remainingSeconds = gracePeriodSeconds;
           const countdownInterval = setInterval(() => {
             remainingSeconds--;
             
@@ -191,8 +217,8 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
             } catch (error) {
               console.error('❌ [ForensicsRush] Error ending arena:', error);
             }
-          }, GRACE_PERIOD_SECONDS * 1000);
-          
+          }, graceMs);
+
           gracePeriodTimers.set(arenaId, endTimer);
           
         } else {

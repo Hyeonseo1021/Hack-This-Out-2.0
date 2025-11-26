@@ -72,8 +72,24 @@ export async function endArenaProcedure(arenaId: string, io: Server) {
 
     console.log(`⚙️ Settings: endOnFirstSolve=${endOnFirstSolve}`);
 
-    // endOnFirstSolve가 false면 바로 종료하지 않음
+    // endOnFirstSolve가 false인 경우에도 특정 조건에서는 종료 처리
     if (!endOnFirstSolve) {
+      // ✅ 활성 참가자 수 확인
+      const activeParticipants = arena.participants.filter((p: any) => !p.hasLeft);
+      const activeCount = activeParticipants.length;
+
+      // ✅ 모든 참가자의 완료 여부 확인
+      const allCompleted = await checkAllParticipantsCompleted(arenaId);
+
+      console.log(`📊 Active participants: ${activeCount}, All completed: ${allCompleted}`);
+
+      // 혼자 플레이 중이거나 모든 참가자가 완료한 경우 즉시 종료
+      if (activeCount === 1 || allCompleted) {
+        console.log('🏁 Solo play or all completed, ending immediately');
+        await endArenaImmediately(arenaId, io);
+        return;
+      }
+
       console.log('⏸️ endOnFirstSolve is false, waiting for time limit or all complete');
       return;
     }
@@ -412,10 +428,12 @@ async function finalizeArena(arenaId: string, io: Server) {
       console.log(`🏆 [finalizeArena] Qualified for coins: ${qualifiedProgress.length}/${uniqueProgress.length} players`);
 
       // 각 플레이어의 첫 클리어 여부 확인 및 코인 데이터 준비
+      console.log(`🔍 [finalizeArena] Checking first clear for scenarioId: ${arena.scenarioId}, arenaId: ${arenaId}`);
       const coinData = await Promise.all(
         qualifiedProgress.map(async (progress, index) => {
           const userId = progress.user.toString();
           const isFirstClear = await isFirstScenarioCompletion(userId, arena.scenarioId.toString(), arenaId);
+          console.log(`   🔍 User ${userId}: isFirstClear = ${isFirstClear}`);
 
           return {
             userId,

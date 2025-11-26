@@ -15,12 +15,15 @@ import { endArenaProcedure, endArenaImmediately } from '../utils/endArenaProcedu
 // 유예 시간 타이머 저장
 const graceTimers = new Map<string, NodeJS.Timeout>();
 
+// ✅ 중복 처리 방지를 위한 Map (Race Condition 방지)
+const processingSubmissions = new Map<string, boolean>();
+
 /**
  * 🔍 Vulnerability Scanner Race Socket Handlers
  */
 
 export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Socket) => {
-  
+
   /**
    * 취약점 제출
    */
@@ -35,7 +38,7 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
     parameter: string;
     payload: string;
   }) => {
-    
+
     const arenaId = (socket as any).arenaId;
     const userId = (socket as any).userId;
 
@@ -46,6 +49,16 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       socket.emit('scannerRace:error', { message: 'Invalid request' });
       return;
     }
+
+    // ✅ 중복 처리 방지 (Race Condition 방지)
+    const userKey = `${arenaId}-${userId}`;
+    if (processingSubmissions.has(userKey)) {
+      console.log('⏭️ [scannerRace:submit] Already processing a submission for this user');
+      return;
+    }
+
+    // 처리 시작 표시
+    processingSubmissions.set(userKey, true);
 
     try {
       // 1. 제출 처리
@@ -195,6 +208,13 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       socket.emit('scannerRace:error', {
         message: 'Error processing submission'
       });
+    } finally {
+      // ✅ 처리 완료 후 플래그 제거 (약간의 딜레이로 연속 요청 방지)
+      const userKey = `${arenaId}-${userId}`;
+      setTimeout(() => {
+        processingSubmissions.delete(userKey);
+        console.log('🔓 [scannerRace:submit] Released lock for user');
+      }, 500);
     }
   });
 

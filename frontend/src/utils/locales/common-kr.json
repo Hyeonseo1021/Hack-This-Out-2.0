@@ -1,4 +1,10 @@
 {
+  "battle": {
+    "title": "배틀",
+    "contests": "대회",
+    "arena": "아레나",
+    "systemReady": "시스템 준비 완료"
+  },
   "landing": {
     "title": "HACK THIS OUT",
     "subtitle": "사이버 보안 트레이닝 플랫폼",

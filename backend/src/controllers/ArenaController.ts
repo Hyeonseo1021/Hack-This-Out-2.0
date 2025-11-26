@@ -102,7 +102,8 @@ export const createArena = async (req: Request, res: Response): Promise<void> =>
       participants: [{ user: userId, isReady: false, hasLeft: false }],
       status: 'waiting',
       settings: {
-        endOnFirstSolve: mode === 'VULNERABILITY_SCANNER_RACE' ? true : false
+        // 터미널 레이스와 스캐너 레이스 모두 유예시간 사용
+        endOnFirstSolve: mode === 'VULNERABILITY_SCANNER_RACE' || mode === 'TERMINAL_HACKING_RACE' ? true : false
         // graceMs는 더 이상 사용하지 않음 - 동적 계산으로 변경됨
       }
     });

@@ -83,6 +83,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [selectedEvidenceFile, setSelectedEvidenceFile] = useState<EvidenceFile | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [score, setScore] = useState(0);
+  const [scoreChange, setScoreChange] = useState<number | null>(null);
   const [questionsCorrect, setQuestionsCorrect] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,6 +99,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   // 🎯 타이머 관련 state
   const [_gameTimeRemaining, setGameTimeRemaining] = useState<number | null>(null);
   const [gracePeriodRemaining, setGracePeriodRemaining] = useState<number | null>(null);
+  const [totalGracePeriod, setTotalGracePeriod] = useState<number | null>(null);
   const [firstWinner, setFirstWinner] = useState<string | null>(null);
   const gameTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const gracePeriodIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -160,30 +162,31 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   }, [arena._id, socket, isLoading]);
 
   // ✅ 유예 시간 시작 핸들러
-  const handleGracePeriodStarted = useCallback((data: { 
-    gracePeriodSeconds: number; 
+  const handleGracePeriodStarted = useCallback((data: {
+    gracePeriodSeconds: number;
     firstWinner: string;
     message: string;
   }) => {
     console.log('⏰ [ForensicsRush] Grace period started:', data);
-    
+
+    setTotalGracePeriod(data.gracePeriodSeconds);
     setGracePeriodRemaining(data.gracePeriodSeconds);
     setFirstWinner(data.firstWinner);
-    
+
     // 기존 타이머 정리
     if (gameTimerIntervalRef.current) {
       clearInterval(gameTimerIntervalRef.current);
       gameTimerIntervalRef.current = null;
     }
-    
+
     // 유예 시간 타이머 시작
     if (gracePeriodIntervalRef.current) {
       clearInterval(gracePeriodIntervalRef.current);
     }
-    
+
     gracePeriodIntervalRef.current = setInterval(() => {
       setGracePeriodRemaining((prev) => {
-        if (prev === null || prev <= 1) {
+        if (prev === null || prev <= 0) {
           if (gracePeriodIntervalRef.current) {
             clearInterval(gracePeriodIntervalRef.current);
             gracePeriodIntervalRef.current = null;
@@ -375,12 +378,18 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       setIsSubmitting(false);
       
       if (data.correct) {
-        setFeedback({ 
-          type: 'success', 
-          message: `${data.message} ${data.attempts === 1 ? '🎯 First try!' : ''}` 
+        setFeedback({
+          type: 'success',
+          message: `${data.message} ${data.attempts === 1 ? '🎯 First try!' : ''}`
         });
         setUserAnswer('');
-        
+
+        // 점수 변화 표시
+        if (data.points > 0) {
+          setScoreChange(data.points);
+          setTimeout(() => setScoreChange(null), 1500);
+        }
+
         setScore(data.totalScore);
         setQuestionsCorrect(data.questionsCorrect);
         
@@ -409,11 +418,20 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
         
         setTimeout(() => setFeedback(null), 3000);
       } else {
-        setFeedback({ 
-          type: 'error', 
-          message: data.message 
+        setFeedback({
+          type: 'error',
+          message: data.message
         });
-        
+
+        // 점수 감소 표시 (penalty가 있으면)
+        if (data.penalty > 0) {
+          setScoreChange(-data.penalty);
+          setTimeout(() => setScoreChange(null), 1500);
+        }
+
+        // 틀렸을 때도 점수 업데이트
+        setScore(data.totalScore);
+
         setAnsweredQuestions(prev => {
           const exists = prev.find(q => q.questionId === data.questionId);
           if (exists) {
@@ -684,15 +702,15 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
               </div>
 
               {/* 유예 시간 또는 게임 종료 메시지 */}
-              {gracePeriodRemaining !== null && firstWinner ? (
+              {gracePeriodRemaining !== null && totalGracePeriod !== null && firstWinner ? (
                 <>
                   <div className="message-line">
                     <span className="prompt">$</span> ./check_deadline.sh
                   </div>
                   <div className="output-line warning">
                     {firstWinner === currentUserId
-                      ? `[PRIORITY] Awaiting field reports from remaining agents... (T-${gracePeriodRemaining}s)`
-                      : `[ALERT] Evidence submission deadline: T-${gracePeriodRemaining}s`
+                      ? `[PRIORITY] Awaiting field reports from remaining agents... (T-${Math.floor(gracePeriodRemaining / 60)}:${String(gracePeriodRemaining % 60).padStart(2, '0')}/${Math.floor(totalGracePeriod / 60)}:${String(totalGracePeriod % 60).padStart(2, '0')})`
+                      : `[ALERT] Evidence submission deadline: T-${Math.floor(gracePeriodRemaining / 60)}:${String(gracePeriodRemaining % 60).padStart(2, '0')}/${Math.floor(totalGracePeriod / 60)}:${String(totalGracePeriod % 60).padStart(2, '0')}`
                     }
                   </div>
                 </>
@@ -729,39 +747,6 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
   return (
     <div className="forensics-rush-container">
-      {/* ✅ 아이템 사용 알림 */}
-      {itemNotifications.length > 0 && (
-        <div style={{
-          position: 'fixed',
-          top: '80px',
-          right: '20px',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-          maxWidth: '400px'
-        }}>
-          {itemNotifications.map((notification) => (
-            <div
-              key={notification.id}
-              style={{
-                backgroundColor: 'rgba(0, 245, 255, 0.1)',
-                border: '1px solid rgba(0, 245, 255, 0.3)',
-                padding: '12px 16px',
-                borderRadius: '4px',
-                color: '#00f5ff',
-                fontFamily: 'monospace',
-                fontSize: '13px',
-                boxShadow: '0 4px 12px rgba(0, 245, 255, 0.2)',
-                animation: 'slideInRight 0.3s ease-out'
-              }}
-            >
-              {notification.message}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* 헤더 */}
       <div className="forensics-header">
         <div className="header-left">
@@ -776,11 +761,29 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
             <span className="case-date">DATE: {scenario.date}</span>
           </div>
         </div>
+
+        {/* 아이템 사용 알림 - 헤더 중앙 */}
+        {itemNotifications.length > 0 && (
+          <div className="header-center-notification">
+            {itemNotifications.slice(-1).map((notification) => (
+              <div key={notification.id} className="item-notification">
+                {notification.message}
+              </div>
+            ))}
+          </div>
+        )}
         
         <div className="header-right">
-          <div className="stat-card">
+          <div className={`stat-card ${scoreChange !== null ? (scoreChange > 0 ? 'score-up' : 'score-down') : ''}`}>
             <div className="stat-label">Score</div>
-            <div className="stat-value">{score}</div>
+            <div className="stat-value">
+              {score}
+              {scoreChange !== null && (
+                <span className={`score-change ${scoreChange > 0 ? 'positive' : 'negative'}`}>
+                  {scoreChange > 0 ? '+' : ''}{scoreChange}
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="stat-card">
@@ -789,10 +792,10 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           </div>
 
           {/* ✅ 유예 시간만 표시 (ForensicsRush는 시간 제한 없음) */}
-          {gracePeriodRemaining !== null && (
+          {gracePeriodRemaining !== null && totalGracePeriod !== null && (
             <div className="stat-card grace-card">
               <div className="stat-label">DEADLINE</div>
-              <div className="stat-value warning">{gracePeriodRemaining}s</div>
+              <div className="stat-value warning">{Math.floor(gracePeriodRemaining / 60)}:{String(gracePeriodRemaining % 60).padStart(2, '0')}/{Math.floor(totalGracePeriod / 60)}:{String(totalGracePeriod % 60).padStart(2, '0')}</div>
             </div>
           )}
           

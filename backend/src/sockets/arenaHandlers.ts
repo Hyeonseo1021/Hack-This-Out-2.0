@@ -74,9 +74,15 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
   // ✅ 모드별 핸들러 등록
   registerTerminalRaceHandlers(io, socket);
 
-  // 1. 방 참가 (arena:join)
+  // 1. 방 참가 (arena:join) - ✅ 최초 연결 시에만 userId 설정
   socket.on('arena:join', async ({ arenaId, userId }) => {
     try {
+      // ✅ 보안: 이미 userId가 설정되어 있으면 변경 불가 (스푸핑 방지)
+      const existingUserId = (socket as any).userId;
+      if (existingUserId && existingUserId !== String(userId)) {
+        return socket.emit('arena:join-failed', { reason: '잘못된 요청입니다.' });
+      }
+
       const uid = String(userId);
       (socket as any).userId = uid;
       (socket as any).arenaId = String(arenaId);
@@ -183,12 +189,20 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 2. 준비 (arena:ready)
+  // 2. 준비 (arena:ready) - ✅ userId는 소켓에서 가져옴
   socket.on('arena:ready', async ({
     arenaId,
-    userId,
     ready,
-  }: { arenaId: string; userId: string; ready: boolean }) => {
+  }: { arenaId: string; ready: boolean }) => {
+    // ✅ 보안: userId는 소켓에서 가져옴 (스푸핑 방지)
+    const uid = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증
+    if (!uid || arenaId !== socketArenaId) {
+      return socket.emit('arena:ready-failed', { reason: '잘못된 요청입니다.' });
+    }
+
     try {
       const arena = await Arena.findById(arenaId);
       if (!arena) return;
@@ -196,8 +210,6 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (arena.status !== 'waiting') {
         return socket.emit('arena:ready-failed', { reason: '대기 중에만 준비를 변경할 수 있습니다.' });
       }
-
-      const uid = String(userId);
       const p = arena.participants.find(x => String((x.user as any)?._id ?? x.user) === uid && !x.hasLeft);
       if (!p) {
         return socket.emit('arena:ready-failed', { reason: '참가자가 아닙니다.' });
@@ -231,8 +243,17 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 3. 시작 (arena:start)
-  socket.on('arena:start', async ({ arenaId, userId }) => {
+  // 3. 시작 (arena:start) - ✅ userId는 소켓에서 가져옴
+  socket.on('arena:start', async ({ arenaId }: { arenaId: string }) => {
+    // ✅ 보안: userId는 소켓에서 가져옴 (스푸핑 방지)
+    const userId = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증
+    if (!userId || arenaId !== socketArenaId) {
+      return socket.emit('arena:start-failed', { reason: '잘못된 요청입니다.' });
+    }
+
     try {
       const arena = await Arena.findById(arenaId).populate('scenarioId');
       if (!arena) return;
@@ -346,8 +367,17 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 4. 나가기 (arena:leave)
-  socket.on('arena:leave', async ({ arenaId, userId }) => {
+  // 4. 나가기 (arena:leave) - ✅ userId는 소켓에서 가져옴
+  socket.on('arena:leave', async ({ arenaId }: { arenaId: string }) => {
+    // ✅ 보안: userId는 소켓에서 가져옴 (스푸핑 방지)
+    const userId = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증
+    if (!userId || arenaId !== socketArenaId) {
+      return;
+    }
+
     try {
       const arena = await Arena.findById(arenaId);
       if (!arena) return;
@@ -460,9 +490,19 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 5. 종료 (arena:end)
+  // 5. 종료 (arena:end) - ✅ 호스트만 강제 종료 가능
   socket.on('arena:end', async ({ arenaId }) => {
+    const userId = (socket as any).userId;
+
     try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) return;
+
+      // ✅ 보안: 호스트만 강제 종료 가능
+      if (String(arena.host) !== userId) {
+        return socket.emit('arena:end-failed', { reason: '호스트만 게임을 종료할 수 있습니다.' });
+      }
+
       await endArenaProcedure(arenaId, io);
     } catch (e) {
       console.error('[arena:end] error:', e);
@@ -728,8 +768,39 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
   
-  // 9. [추가] 아이템 사용 (arena:use-item)
-  socket.on('arena:use-item', async ({ arenaId, userId, itemType, value, duration }: { arenaId: string, userId: string, itemType: string, value: number, duration?: number }) => {
+  // 9. [추가] 아이템 사용 (arena:use-item) - ✅ 보안 강화
+  socket.on('arena:use-item', async ({ arenaId, itemType, value, duration }: { arenaId: string, itemType: string, value: number, duration?: number }) => {
+    // ✅ 보안: userId는 반드시 소켓에서 가져옴 (스푸핑 방지)
+    const userId = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증 (다른 방에 영향 주는 것 방지)
+    if (arenaId !== socketArenaId) {
+      return socket.emit('arena:use-item-failed', { reason: '잘못된 요청입니다.' });
+    }
+
+    // ✅ 보안: 아이템 값 범위 제한 (악용 방지)
+    const ITEM_LIMITS = {
+      time_extension: { maxValue: 300, maxDuration: 0 },      // 최대 5분 연장
+      time_freeze: { maxValue: 60, maxDuration: 0 },          // 최대 1분 정지
+      score_boost: { maxValue: 50, maxDuration: 300 },        // 최대 50% 부스트, 5분
+      invincible: { maxValue: 120, maxDuration: 0 }           // 최대 2분 무적
+    };
+
+    const limits = ITEM_LIMITS[itemType as keyof typeof ITEM_LIMITS];
+    if (!limits) {
+      return socket.emit('arena:use-item-failed', { reason: '알 수 없는 아이템입니다.' });
+    }
+
+    // ✅ 보안: 값 범위 검증
+    if (value <= 0 || value > limits.maxValue) {
+      return socket.emit('arena:use-item-failed', { reason: '잘못된 아이템 값입니다.' });
+    }
+
+    if (duration !== undefined && limits.maxDuration > 0 && duration > limits.maxDuration) {
+      return socket.emit('arena:use-item-failed', { reason: '잘못된 지속 시간입니다.' });
+    }
+
     try {
       const arena = await Arena.findById(arenaId);
       if (!arena) return;
