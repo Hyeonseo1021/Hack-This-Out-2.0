@@ -64,9 +64,11 @@ ${vulnsDescription}
    - Include navigation, headers, footers
    - Responsive design
 
-3. **Functional Pages**:
-   - Create multiple sections/pages within the single HTML
-   - Use JavaScript to show/hide sections (SPA-like behavior)
+3. **All Features Visible at Once**:
+   - ALL features (login form, search bar, profile section, etc.) must be visible on the same page simultaneously
+   - DO NOT hide features behind login or navigation - everything should be accessible immediately
+   - DO NOT require completing one vulnerability to access another
+   - Use a dashboard-style layout where all interactive elements are visible at once
 
 4. **Vulnerability Implementation**:
    - Each vulnerability should be realistic and exploitable

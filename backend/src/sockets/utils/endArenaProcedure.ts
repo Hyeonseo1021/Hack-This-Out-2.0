@@ -415,7 +415,7 @@ async function finalizeArena(arenaId: string, io: Server) {
       const coinData = await Promise.all(
         qualifiedProgress.map(async (progress, index) => {
           const userId = progress.user.toString();
-          const isFirstClear = await isFirstScenarioCompletion(userId, arena.scenarioId.toString());
+          const isFirstClear = await isFirstScenarioCompletion(userId, arena.scenarioId.toString(), arenaId);
 
           return {
             userId,

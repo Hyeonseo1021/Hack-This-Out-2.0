@@ -94,7 +94,14 @@ const ArenaSchema = new mongoose.Schema({
         }]
       }],
       targetUrl: String,          // 타겟 웹 애플리케이션 URL (HARD/EXPERT)
-      targetDescription: String,  // 타겟 설명
+      targetName: {               // 타겟 이름 (다국어)
+        ko: String,
+        en: String
+      },
+      targetDescription: {        // 타겟 설명 (다국어)
+        ko: String,
+        en: String
+      },
       hints: [{
         vulnId: String,
         hintLevel: Number,        // 1, 2, 3

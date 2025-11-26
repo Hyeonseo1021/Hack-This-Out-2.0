@@ -42,10 +42,10 @@ interface CoinCalculationResult {
 
 // Game mode base coins (based on difficulty)
 const GAME_MODE_BASE_COINS: Record<GameMode, number> = {
-    [GameMode.TERMINAL_RACE]: 2,           // Easy
-    [GameMode.SOCIAL_ENGINEERING]: 3,      // Normal
-    [GameMode.VULNERABILITY_SCANNER]: 3,   // Normal
-    [GameMode.FORENSICS_RUSH]: 5           // Very Hard
+    [GameMode.TERMINAL_RACE]: 1,           // Easy
+    [GameMode.SOCIAL_ENGINEERING]: 1,      // Normal
+    [GameMode.VULNERABILITY_SCANNER]: 2,   // Normal
+    [GameMode.FORENSICS_RUSH]: 3           // Very Hard
 };
 
 /**
@@ -68,54 +68,49 @@ export function calculateArenaCoin(params: CoinCalculationParams): CoinCalculati
         };
     }
 
+    // ✅ If not first clear of this scenario, no coins are awarded
+    if (!isFirstClear) {
+        return {
+            baseCoin: 0,
+            rankBonus: 0,
+            scoreBonus: 0,
+            timeBonus: 0,
+            firstClearBonus: 0,
+            totalCoin: 0
+        };
+    }
+
     // 1. Base coins by game mode
     const baseCoin = GAME_MODE_BASE_COINS[gameMode] || 2;
 
-    // 2. Rank bonus
+    // 2. Rank bonus (only top 3 get bonus)
     let rankBonus = 0;
     if (rank === 1) {
-        rankBonus = 5;  // 1st place: +5 HTO
+        rankBonus = 2;  // 1st place: +2 HTO
     } else if (rank === 2) {
-        rankBonus = 3;  // 2nd place: +3 HTO
-    } else if (rank === 3) {
-        rankBonus = 2;  // 3rd place: +2 HTO
-    } else if (rank <= 5) {
-        rankBonus = 1;  // 4th-5th place: +1 HTO
+        rankBonus = 1;  // 2nd place: +1 HTO
     }
+    // 3rd place and below: no rank bonus
 
-    // 3. Score bonus
+    // 3. Score bonus (only perfect score gets bonus)
     let scoreBonus = 0;
     if (score >= 100) {
-        scoreBonus = 3;  // Perfect score: +3 HTO
-    } else if (score >= 90) {
-        scoreBonus = 2;  // 90+: +2 HTO
-    } else if (score >= 80) {
-        scoreBonus = 1;  // 80+: +1 HTO
+        scoreBonus = 1;  // Perfect score: +1 HTO
     }
 
-    // 4. Time bonus (fast completion)
-    let timeBonus = 0;
-    if (completionTime && completionTime > 0) {
-        // Within 3 minutes (180s): +2 HTO
-        // Within 5 minutes (300s): +1 HTO
-        if (completionTime <= 180) {
-            timeBonus = 2;
-        } else if (completionTime <= 300) {
-            timeBonus = 1;
-        }
-    }
+    // 4. Time bonus removed - no time bonus
 
     // 5. First clear bonus (only for first completion of this scenario)
-    const firstClearBonus = isFirstClear ? (baseCoin * 2) : 0; // 2x base coin for first clear
+    const firstClearBonus = isFirstClear ? baseCoin : 0; // 1x base coin for first clear
 
     // 6. Calculate total coins
-    const totalCoin = baseCoin + rankBonus + scoreBonus + timeBonus + firstClearBonus;
+    const totalCoin = baseCoin + rankBonus + scoreBonus + firstClearBonus;
 
     return {
         baseCoin,
         rankBonus,
         scoreBonus,
-        timeBonus,
+        timeBonus: 0,
         firstClearBonus,
         totalCoin
     };
@@ -125,22 +120,33 @@ export function calculateArenaCoin(params: CoinCalculationParams): CoinCalculati
  * Check if this is the user's first completion of the scenario
  * @param userId User ID
  * @param scenarioId Scenario ID
+ * @param currentArenaId Current arena ID to exclude from check
  * @returns True if this is the first completion
  */
 export async function isFirstScenarioCompletion(
     userId: string,
-    scenarioId: string
+    scenarioId: string,
+    currentArenaId?: string
 ): Promise<boolean> {
-    // Find all arenas with this scenario where user completed
-    const previousCompletions = await Arena.find({ scenarioId })
+    // Find all ENDED arenas with this scenario (exclude current arena)
+    const query: any = {
+        scenarioId,
+        status: 'ended'  // Only check ended arenas
+    };
+
+    if (currentArenaId) {
+        query._id = { $ne: currentArenaId };  // Exclude current arena
+    }
+
+    const previousArenas = await Arena.find(query)
         .select('_id')
         .lean();
 
-    if (previousCompletions.length === 0) {
-        return true; // No arenas with this scenario exist yet
+    if (previousArenas.length === 0) {
+        return true; // No previous arenas with this scenario
     }
 
-    const arenaIds = previousCompletions.map(a => a._id);
+    const arenaIds = previousArenas.map(a => a._id);
 
     // Check if user has completed any of these arenas before
     const userCompletions = await ArenaProgress.countDocuments({
