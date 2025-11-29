@@ -66,8 +66,8 @@
 
         .register-machine {
             min-width: min(28vh, 300px);
-            max-width: 300px;
-            height: clamp(250px, 28vh, 400px);
+            max-width: 340px;
+            height: clamp(300px, 28vh, 400px);
             border-radius: clamp(16px, 2vw, 24px);
             border: 1.5px solid rgba(139, 243, 255, 0.3);
             display: flex;

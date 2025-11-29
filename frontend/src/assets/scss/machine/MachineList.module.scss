@@ -14,6 +14,7 @@
   border: 1.5px solid rgba(139, 243, 255, 0.3);
   box-shadow: 0 0 25px rgba(139, 243, 255, 0.08);
   padding: clamp(16px, 3vw, 32px);
+  padding-top: clamp(12px, 2vw, 20px);
   color: var(--white);
   font-family: 'VT323', monospace;
   overflow-y: hidden;
