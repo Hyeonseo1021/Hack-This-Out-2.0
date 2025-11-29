@@ -3,6 +3,9 @@ import { useTranslation } from "react-i18next";
 import "../../assets/scss/Shop/Roulette.scss";
 import { spinRoulette, getRouletteItems } from "../../api/axiosShop";
 
+// API URL에서 base URL 추출
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+
 interface RouletteProps {
   balance: number;
   setBalance: React.Dispatch<React.SetStateAction<number>>;
@@ -168,7 +171,7 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
                   style={{ transform: `rotate(${(360 / rouletteItems.length) * index}deg)` }}
                 >
                   <img
-                    src={`http://localhost:5000${item.icon}`}
+                    src={`${API_BASE_URL}${item.icon}`}
                     alt={itemName}
                     className="roulette-item-img"
                     onError={(e) => {

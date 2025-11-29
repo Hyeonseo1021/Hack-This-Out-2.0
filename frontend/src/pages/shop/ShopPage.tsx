@@ -18,6 +18,9 @@ import {
   getInventory,
 } from "../../api/axiosShop";
 
+// API URL에서 base URL 추출 (예: http://localhost:5000/api -> http://localhost:5000)
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+
 type ShopItem = {
   _id: string;
   name: string | { ko: string; en: string };
@@ -186,7 +189,7 @@ const ShopPage: React.FC = () => {
                   return (
                   <div className="shop-item-card" key={item._id}>
                     <img
-                      src={`http://localhost:5000${item.icon || (item as any).imageUrl || ''}`}
+                      src={`${API_BASE_URL}${item.icon || (item as any).imageUrl || ''}`}
                       className="shop-item-card__icon"
                       alt={itemName}
                       onError={(e) => {
@@ -240,7 +243,7 @@ const ShopPage: React.FC = () => {
                       return (
                       <div className="shop-inventory-card" key={inv._id}>
                         <img
-                          src={`http://localhost:5000${inv.item.icon || (inv.item as any).imageUrl || ''}`}
+                          src={`${API_BASE_URL}${inv.item.icon || (inv.item as any).imageUrl || ''}`}
                           className="shop-inventory-card__icon"
                           alt={itemName}
                           onError={(e) => {

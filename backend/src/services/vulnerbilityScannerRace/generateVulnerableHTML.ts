@@ -33,98 +33,140 @@ ${index + 1}. ${v.vulnType} (${v.severity || 'MEDIUM'})
 `)
       .join('\n');
 
-    const prompt = `
-You are a cybersecurity educator. Create a single, self-contained HTML file for a vulnerable web application training scenario.
+    // 테마 목록
+    const themeDetails: Record<string, { style: string; features: string }> = {
+      'bank': {
+        style: 'Corporate blue theme, serious financial look, security badges',
+        features: 'Account balance display, transfer forms, transaction history'
+      },
+      'shopping': {
+        style: 'Modern e-commerce, product cards, shopping cart icon',
+        features: 'Product search, cart, checkout form, user reviews'
+      },
+      'social': {
+        style: 'Social media vibes, user avatars, feed layout',
+        features: 'Posts, comments, friend search, profile settings'
+      },
+      'gaming': {
+        style: 'Dark theme with neon accents, gamer aesthetic',
+        features: 'Leaderboards, player profiles, in-game currency'
+      },
+      'healthcare': {
+        style: 'Clean medical theme, trust-inspiring design',
+        features: 'Patient records, appointment booking, prescription history'
+      },
+      'corporate': {
+        style: 'Professional business portal, minimalist design',
+        features: 'Employee directory, document upload, internal messaging'
+      },
+      'cafe': {
+        style: 'Warm colors, cozy aesthetic, menu display',
+        features: 'Online ordering, loyalty points, reservation form'
+      },
+      'streaming': {
+        style: 'Dark theme, video thumbnails, playlist layout',
+        features: 'Video search, user playlists, subscription management'
+      },
+      'login': {
+        style: 'Simple centered login form, gradient background',
+        features: 'Login form, forgot password, remember me'
+      }
+    };
 
-**Target Application Details:**
-- Name: ${scenario.data.targetName || 'Practice Web App'}
+    const theme = scenario.data.htmlTemplate?.theme || 'login';
+    const themeInfo = themeDetails[theme] || themeDetails['login'];
+
+    const prompt = `
+You are creating a REALISTIC vulnerable web application for cybersecurity training.
+
+**Application Theme: ${theme.toUpperCase()}**
+- Visual Style: ${themeInfo.style}
+- Key Features: ${themeInfo.features}
+- App Name: ${scenario.data.targetName || 'Practice Web App'}
 - Description: ${scenario.data.targetDescription || 'A web application with intentional vulnerabilities'}
-- Theme: ${scenario.data.htmlTemplate?.theme || 'login'} (e.g., login portal, online shop, blog, social network)
-- Difficulty: ${scenario.difficulty}
 
 **Vulnerabilities to Include:**
 ${vulnsDescription}
 
-**Requirements:**
+**REQUIREMENTS:**
 
-1. **Single HTML File**: All CSS and JavaScript must be inline (no external files)
+1. **Realistic Design**:
+   - Make it look like a REAL ${theme} website (not a training demo)
+   - Use modern CSS (gradients, shadows, animations)
+   - Include proper branding, logo placeholder, navigation
+   - Add realistic placeholder content and data
 
-2. **Realistic UI**:
-   - Professional, modern design (use CSS Grid/Flexbox, gradients, shadows)
-   - Don't make vulnerabilities obvious
-   - Include navigation, headers, footers
-   - Responsive design
+2. **Hacking Success Feedback** (VERY IMPORTANT):
+   When a vulnerability is successfully exploited, show a DRAMATIC "hacked" effect:
+   - Screen glitch/flicker animation
+   - Show leaked data dramatically (e.g., database dump, admin access)
+   - Display success message like "ACCESS GRANTED" or "DATABASE EXPOSED"
+   - Make the user FEEL like a real hacker
+   - Example effects: matrix rain, terminal-style output, data scrolling
 
-3. **Functional Pages**:
-   - Create multiple sections/pages within the single HTML
-   - Use JavaScript to show/hide sections (SPA-like behavior)
+   For wrong attempts, just show normal error (e.g., "Invalid credentials")
 
-4. **Vulnerability Implementation**:
-   - Each vulnerability should be realistic and exploitable
-   - **CRITICAL - NO AUTO-TRIGGER**: Vulnerabilities should ONLY be triggered when the user actively submits a form or performs an action (button click, form submit, link click with malicious parameter, etc.)
-   - **DO NOT** trigger vulnerabilities on page load, on DOMContentLoaded, or automatically
-   - **DO NOT** send postMessage on page initialization
-   - **DO NOT** automatically trigger IDOR vulnerabilities when the page loads - user must click a button, submit a form, or change a URL parameter
-   - When successfully exploited BY USER ACTION, send a postMessage to parent with ALL required fields:
-     \`\`\`javascript
-     window.parent.postMessage({
-       type: 'vulnerability_found',
-       vulnId: 'vuln_xxx',        // The vulnerability ID from the scenario
-       vulnType: 'SQLi',           // Type: SQLi, XSS, IDOR, etc.
-       endpoint: '/login',         // The endpoint that was exploited
-       parameter: 'username',      // The actual parameter name that contained the payload
-       payload: usernameValue      // The FULL INPUT VALUE that triggered the vulnerability
-     }, '*');
-     \`\`\`
-   - CRITICAL: You must detect which form field (username/password/query/etc.) contained the exploit
-   - CRITICAL: Send the ENTIRE value of that field as 'payload', not just a pattern
-   - CRITICAL: Send the field name as 'parameter' (e.g., 'username', 'password', 'query')
-   - CRITICAL: Only send postMessage when user ACTIVELY triggers the vulnerability (form submission, button click, changing URL hash, etc.)
-   - Include visual feedback (success messages, data displayed, etc.)
+3. **Single HTML File**: All CSS and JavaScript inline
 
-5. **Simulated Backend**:
-   - Use JavaScript to simulate server responses
-   - Store data in localStorage or variables
-   - Fake database queries with string manipulation
+4. **Vulnerability Detection**:
+   - ON EVERY FORM SUBMISSION, send postMessage:
 
-6. **Security Testing Features**:
-   - Include forms, inputs, search boxes, file uploads (simulated)
-   - Add URL parameters handling (window.location.hash or search params)
-   - DOM manipulation opportunities
+   If SUCCESSFUL exploit:
+   \`\`\`javascript
+   // Show dramatic hacking effect first, then:
+   window.parent.postMessage({
+     type: 'vulnerability_found',
+     vulnId: 'vuln_xxx',
+     vulnType: 'SQLi',
+     endpoint: '/login',
+     parameter: 'username',
+     payload: inputValue
+   }, '*');
+   \`\`\`
 
-**Example Vulnerabilities:**
+   If WRONG attempt:
+   \`\`\`javascript
+   window.parent.postMessage({
+     type: 'vulnerability_attempt',
+     vulnType: 'SQLi',
+     endpoint: '/login',
+     parameter: 'username',
+     payload: inputValue
+   }, '*');
+   \`\`\`
 
-- **SQL Injection**: Check if input contains \`' OR 1=1--\` or similar patterns
-- **XSS**: Check if input contains \`<script>\`, \`<img src=x onerror=>\`, etc., then render it unsafely
-- **IDOR**: Allow accessing other users' data by changing ID in URL/form
-- **CSRF**: Missing token validation in state-changing operations
-- **Path Traversal**: Check for \`../\` in file paths
+5. **NO AUTO-TRIGGER**:
+   - NEVER trigger on page load
+   - ONLY trigger on user actions (form submit, button click)
 
-**CRITICAL INSTRUCTIONS:**
-- Your response MUST start with \`<!DOCTYPE html>\` immediately
-- Do NOT include ANY explanations, comments, or text before or after the HTML
-- Do NOT wrap the HTML in markdown code blocks (\`\`\`html)
-- Return ONLY the complete, valid HTML document
-- The HTML must be self-contained (all CSS and JS inline)
-- Make it look professional and realistic
+6. **Payload Detection Examples**:
+   - SQLi: \`' OR 1=1--\`, \`' OR '1'='1\`, \`admin'--\`
+   - XSS: \`<script>\`, \`<img onerror=\`, \`javascript:\`
+   - IDOR: accessing different user IDs
+   - Path Traversal: "../", "..\\\\"
 
-**IMPORTANT - Navigation Prevention:**
-- Add this script at the end of the <body> to prevent all link navigation:
-  \`\`\`javascript
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('a').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-        });
-      });
-    });
-  </script>
-  \`\`\`
-- All navigation must be handled via JavaScript (showing/hiding sections)
-- NO actual page navigation should occur
+**HACKING SUCCESS EFFECT EXAMPLE:**
+Create a showHackEffect() function that:
+- Creates a full-screen overlay (position:fixed, z-index:9999)
+- Black background (rgba(0,0,0,0.95)) with green text (#0f0)
+- Monospace font, terminal-style appearance
+- Shows animated text like:
+  "[*] Exploiting vulnerability..."
+  "[*] Bypassing authentication..."
+  "[+] ACCESS GRANTED"
+  "[+] Dumping database..."
+  Then display a fake database table with usernames and password hashes
+  "[!] System compromised successfully"
+- Add glitch/flicker CSS animation
+- Auto-remove after 3-4 seconds
 
-OUTPUT THE HTML NOW (start with <!DOCTYPE html>):
+**OUTPUT RULES:**
+- Start with \`<!DOCTYPE html>\` immediately
+- NO markdown, NO explanations
+- Self-contained HTML only
+- Prevent link navigation with JavaScript
+
+OUTPUT THE HTML NOW:
 `;
 
     console.log('🤖 Calling Claude API to generate vulnerable HTML...');
@@ -314,21 +356,28 @@ function generateFallbackHTML(scenario: any): string {
       const sqliPayloads = [expectedPayload, "' OR 1=1--", "' OR '1'='1", "admin'--", "' OR 'a'='a"];
       const isSQLi = sqliPayloads.some(payload => username.includes(payload) || password.includes(payload));
 
+      // Determine which field was used and what value
+      let usedPayload = username || password;
+      let usedParameter = 'username';
+
+      if (username.length > 0) {
+        usedPayload = username;
+        usedParameter = 'username';
+      } else if (password.length > 0) {
+        usedPayload = password;
+        usedParameter = 'password';
+      }
+
       if (isSQLi) {
         resultDiv.className = 'result success';
         resultDiv.innerHTML = '✅ <strong>Login Successful!</strong><br>Welcome, Administrator!<br><small>Query: ' + query + '</small>';
 
-        // Determine which field had the SQLi payload and what it was
-        let usedPayload = '';
-        let usedParameter = sqliVuln.parameter || 'username';
-
-        // Check username field first
+        // Check which field had the SQLi payload
         const foundInUsername = sqliPayloads.find(p => username.includes(p));
         if (foundInUsername) {
           usedPayload = username;
           usedParameter = 'username';
         } else {
-          // Check password field
           const foundInPassword = sqliPayloads.find(p => password.includes(p));
           if (foundInPassword) {
             usedPayload = password;
@@ -336,9 +385,9 @@ function generateFallbackHTML(scenario: any): string {
           }
         }
 
-        console.log('[HTML] Sending postMessage:', { vulnId: sqliVuln.vulnId, parameter: usedParameter, payload: usedPayload });
+        console.log('[HTML] ✅ Vulnerability found! Sending postMessage:', { vulnId: sqliVuln.vulnId, parameter: usedParameter, payload: usedPayload });
 
-        // Notify parent window with correct vulnerability info
+        // Notify parent window - CORRECT submission
         window.parent.postMessage({
           type: 'vulnerability_found',
           vulnId: sqliVuln.vulnId,
@@ -350,6 +399,17 @@ function generateFallbackHTML(scenario: any): string {
       } else {
         resultDiv.className = 'result error';
         resultDiv.innerHTML = '❌ <strong>Login Failed!</strong><br>Invalid credentials.';
+
+        console.log('[HTML] ❌ Wrong submission. Sending postMessage:', { parameter: usedParameter, payload: usedPayload });
+
+        // Notify parent window - WRONG submission (let backend decide)
+        window.parent.postMessage({
+          type: 'vulnerability_attempt',
+          vulnType: 'SQLi',
+          endpoint: sqliVuln.endpoint || '/login',
+          parameter: usedParameter,
+          payload: usedPayload
+        }, '*');
       }
     });
 

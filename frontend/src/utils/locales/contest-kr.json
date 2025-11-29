@@ -1,5 +1,5 @@
 {
-  "title": "대회",
+  "title": "컨테스트",
   "upcoming": "예정",
   "ongoing": "진행 중",
   "ended": "종료",
@@ -14,8 +14,8 @@
   "prize": "상금",
   "difficulty": "난이도",
   "status": "상태",
-  "noContests": "진행 중인 대회가 없습니다",
-  "loading": "대회 로딩 중...",
+  "noContests": "진행 중인 컨테스트가 없습니다",
+  "loading": "컨테스트 로딩 중...",
   "details": {
     "overview": "개요",
     "rules": "규칙",
@@ -28,8 +28,8 @@
     "currentParticipants": "현재 참가자",
     "registerNow": "지금 등록",
     "alreadyRegistered": "등록되었습니다",
-    "contestFull": "대회가 마감되었습니다",
-    "contestEnded": "대회가 종료되었습니다"
+    "contestFull": "컨테스트가 마감되었습니다",
+    "contestEnded": "컨테스트가 종료되었습니다"
   },
   "play": {
     "timeRemaining": "남은 시간",
@@ -42,8 +42,8 @@
     "leaderboard": "실시간 순위표"
   },
   "register": {
-    "title": "새 대회 생성",
-    "contestName": "대회 이름",
+    "title": "새 컨테스트 생성",
+    "contestName": "컨테스트 이름",
     "description": "설명",
     "startTime": "시작 시간",
     "endTime": "종료 시간",
@@ -55,7 +55,7 @@
     "prize": "상금",
     "challenges": "문제",
     "selectChallenges": "문제 선택",
-    "submit": "대회 생성",
+    "submit": "컨테스트 생성",
     "submitting": "생성 중..."
   }
 }

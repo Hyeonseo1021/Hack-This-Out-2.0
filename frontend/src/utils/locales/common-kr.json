@@ -1,7 +1,7 @@
 {
   "battle": {
     "title": "배틀",
-    "contests": "대회",
+    "contests": "컨테스트",
     "arena": "아레나",
     "systemReady": "시스템 준비 완료"
   },
@@ -17,8 +17,8 @@
         "desc": "다양한 취약한 머신으로 해킹 스킬을 향상시키세요"
       },
       "contests": {
-        "title": "CTF 대회",
-        "desc": "실시간 캡처 더 플래그 대회에서 경쟁하세요"
+        "title": "CTF 컨테스트",
+        "desc": "실시간 캡처 더 플래그 컨테스트에서 경쟁하세요"
       },
       "arenas": {
         "title": "팀 아레나",
@@ -46,14 +46,14 @@
     "tabs": {
       "overall": "전체",
       "machines": "머신",
-      "contests": "대회",
+      "contests": "컨테스트",
       "arenas": "아레나"
     }
   },
   "nav": {
     "home": "홈",
     "machines": "머신",
-    "contests": "대회",
+    "contests": "컨테스트",
     "arenas": "아레나",
     "shop": "상점",
     "leaderboard": "리더보드",

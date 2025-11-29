@@ -162,12 +162,18 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
             - Grace period: ${gracePeriodSeconds}s (${Math.floor(remainingMs / 2000)}s calculated, clamped to 30-300s)`);
 
           // ✅ 올바른 이벤트 이름: arena:grace-period-started
+          const graceMin = Math.floor(gracePeriodSeconds / 60);
+          const graceSecRemainder = gracePeriodSeconds % 60;
+          const graceTimeFormatted = graceMin > 0
+            ? `${graceMin}:${String(graceSecRemainder).padStart(2, '0')}`
+            : `${gracePeriodSeconds}s`;
+
           io.to(arenaId).emit('arena:grace-period-started', {
             gracePeriodSeconds: gracePeriodSeconds,
             graceMs: graceMs,
             graceSec: gracePeriodSeconds,
             firstWinner: String(userId),
-            message: `${userId} completed all questions first! ${gracePeriodSeconds} seconds remaining for others...`
+            message: `First player completed! You have ${graceTimeFormatted} to finish.`
           });
 
           console.log(`⏳ Grace period started: ${gracePeriodSeconds}s`);

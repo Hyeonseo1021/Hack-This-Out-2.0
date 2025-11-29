@@ -254,9 +254,14 @@ export const buyShopItem = async (req: Request, res: Response): Promise<void> =>
 
     await session.commitTransaction();
 
+    // 다국어 이름 처리
+    const itemName = typeof finalItem.name === 'object'
+      ? (finalItem.name as any).ko || (finalItem.name as any).en
+      : finalItem.name;
+
     res.status(200).json({
       message: 'OK',
-      msg: `${finalItem.name}을(를) 획득했습니다!`,
+      msg: `${itemName}을(를) 획득했습니다!`,
       updatedBalance: user.htoCoin,
       acquiredItem: {
         id: finalItem._id,

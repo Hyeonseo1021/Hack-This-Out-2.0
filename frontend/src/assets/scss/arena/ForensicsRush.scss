@@ -157,7 +157,6 @@
         border-left: 4px solid #ff9800;
         padding: 0.6rem 1.4rem;
         color: #ffd54f;
-        font-family: 'Courier New', monospace;
         font-size: 0.8rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -170,7 +169,6 @@
         position: relative;
 
         &::before {
-          content: '⚡';
           margin-right: 0.5rem;
         }
       }

@@ -242,10 +242,17 @@ const ArenaRoomPage: React.FC = () => {
       setChatMessages(prev => [...prev, payload]);
     });
 
-    socket.on('arena:notify', (payload: { type: 'system', message: string }) => {
+    socket.on('arena:notify', (payload: { type: 'system', message: string | { ko: string; en: string } }) => {
       console.log('📢 [ArenaRoomPage] arena:notify received:', payload);
+      // 다국어 메시지 지원
+      const lang = i18n.language as 'ko' | 'en';
+      const messageText = typeof payload.message === 'object'
+        ? (payload.message[lang] || payload.message.en || payload.message.ko)
+        : payload.message;
+
       setChatMessages(prev => [...prev, {
-        ...payload,
+        type: payload.type,
+        message: messageText,
         senderName: 'SYSTEM',
         timestamp: new Date().toISOString()
       }]);

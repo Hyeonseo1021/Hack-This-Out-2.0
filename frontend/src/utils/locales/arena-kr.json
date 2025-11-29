@@ -42,7 +42,7 @@
       "desc": "증거를 분석하고 범인을 찾아내라",
       "players": "2-8명"
     },
-    "SOCIAL_ENGINEERING_CHALLENGE": {
+    "SOCIAL_ENGINEERING": {
       "title": "소셜 엔지니어링",
       "desc": "AI를 속여 정보를 빼내는 심리전",
       "players": "1-4명"
@@ -99,7 +99,7 @@
     "hint": "힌트",
     "timeExtension": "시간 연장",
     "scoreBoost": "점수 부스트",
-    "shield": "보호막",
+    "shield": "패널티 실드",
     "user": "유저",
     "unknown": "알 수 없음",
     "vulnerableApp": "취약한 애플리케이션",
@@ -144,5 +144,27 @@
     "itemUseFailed": "아이템 사용에 실패했습니다.",
     "vulnerabilityFound": "🎯 {{message}} (+{{points}} pts)",
     "incorrectReport": "❌ {{message}}"
+  },
+  "social": {
+    "loading": "미션 브리핑 로딩 중...",
+    "missionTitle": "정보 획득 미션",
+    "missionDesc": "대상으로부터 민감한 정보를 획득하세요.",
+    "turns": "턴",
+    "infoExtracted": "획득 정보",
+    "suspicion": "의심도",
+    "online": "온라인",
+    "inputPlaceholder": "메시지를 입력하세요...",
+    "missionComplete": "미션 완료!",
+    "missionFailed": "미션 실패",
+    "infoExtractedNotice": "정보 획득!",
+    "success": "미션 성공!",
+    "failed": "미션 실패",
+    "successMessage": "목표 정보를 모두 획득했습니다!",
+    "failSuspicion": "의심을 너무 많이 받았습니다.",
+    "failTurns": "턴이 모두 소진되었습니다.",
+    "failMessage": "미션에 실패했습니다.",
+    "score": "점수",
+    "turnsUsed": "사용 턴",
+    "finalSuspicion": "최종 의심도"
   }
 }

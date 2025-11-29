@@ -7,6 +7,7 @@ import { terminalProcessCommand } from '../services/terminalRace/terminalEngine'
 import { registerTerminalRaceHandlers, initializeTerminalRace } from './modes/terminalRaceHandler';
 import { initializeScannerRace } from './modes/VulnerablilityScannerHandler';
 import { initializeForensicsRush } from './modes/ForensicsRushHandler';
+import { registerSocialEngineeringHandlers } from './modes/SocialEngineeringHandler';
 
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const endTimers = new Map<string, NodeJS.Timeout>();
@@ -73,6 +74,7 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
   // ✅ 모드별 핸들러 등록
   registerTerminalRaceHandlers(io, socket);
+  registerSocialEngineeringHandlers(io, socket);
 
   // 1. 방 참가 (arena:join) - ✅ 최초 연결 시에만 userId 설정
   socket.on('arena:join', async ({ arenaId, userId }) => {
@@ -160,7 +162,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (user) {
         io.to(arenaId).emit('arena:notify', {
           type: 'system',
-          message: `${user.username}님이 입장했습니다.`
+          message: {
+            ko: `${user.username}님이 입장했습니다.`,
+            en: `${user.username} has joined.`
+          }
         });
       }
 
@@ -397,7 +402,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (user) {
         io.to(arenaId).emit('arena:notify', {
           type: 'system',
-          message: `${user.username}님이 퇴장했습니다.`
+          message: {
+            ko: `${user.username}님이 퇴장했습니다.`,
+            en: `${user.username} has left.`
+          }
         });
       }
 
@@ -428,7 +436,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
               
               io.to(arenaId).emit('arena:notify', {
                 type: 'system',
-                message: `호스트가 변경되었습니다.`
+                message: {
+                  ko: '호스트가 변경되었습니다.',
+                  en: 'The host has changed.'
+                }
               });
             } else {
               // 남은 사람이 없으면 방 자동 삭제
@@ -552,7 +563,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
           if (user) {
             io.to(arenaId).emit('arena:notify', {
               type: 'system',
-              message: `${user.username}님이 연결이 끊어졌습니다.`
+              message: {
+                ko: `${user.username}님이 연결이 끊어졌습니다.`,
+                en: `${user.username} has disconnected.`
+              }
             });
           }
 
@@ -588,7 +602,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
           if (user) {
             io.to(arenaId).emit('arena:notify', {
               type: 'system',
-              message: `${user.username}님이 연결이 끊어졌습니다.`
+              message: {
+                ko: `${user.username}님이 연결이 끊어졌습니다.`,
+                en: `${user.username} has disconnected.`
+              }
             });
           }
 
@@ -759,7 +776,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (kickedUser) {
         io.to(arenaId).emit('arena:notify', {
           type: 'system',
-          message: `${kickedUser.username}님이 방장에 의해 강퇴당했습니다.`
+          message: {
+            ko: `${kickedUser.username}님이 방장에 의해 강퇴당했습니다.`,
+            en: `${kickedUser.username} has been kicked by the host.`
+          }
         });
       }
 
@@ -858,7 +878,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
             username,
             itemType,
             value,
-            message: `${username}님이 시간 연장권을 사용했습니다! (+${value}초)`
+            message: {
+              ko: `${username}님이 시간 연장권을 사용했습니다! (+${value}초)`,
+              en: `${username} used a Time Extension! (+${value} sec)`
+            }
           });
         }
       } else if (itemType === 'score_boost' && value > 0) {
@@ -898,7 +921,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
             username,
             itemType,
             value,
-            message: `${username}님이 점수 부스트를 사용했습니다! (+${value}% 점수)`
+            message: {
+              ko: `${username}님이 점수 부스트를 사용했습니다! (+${value}% 점수)`,
+              en: `${username} used a Score Boost! (+${value}% score)`
+            }
           });
         }
       } else if (itemType === 'invincible' && value > 0) {
@@ -937,7 +963,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
             username,
             itemType,
             value,
-            message: `${username}님이 무적권을 사용했습니다! (${value}초 동안 패널티 무시)`
+            message: {
+              ko: `${username}님이 무적권을 사용했습니다! (${value}초 동안 패널티 무시)`,
+              en: `${username} used Invincibility! (Ignoring penalties for ${value} sec)`
+            }
           });
         }
       }

@@ -75,10 +75,10 @@ const modes = [
   },
   {
     id: 'SOCIAL_ENGINEERING_CHALLENGE',
-    title: 'Social Engineering',
+    title: 'Social Engineering (Coming Soon)',
     desc: { ko: 'AI를 속여 정보를 빼내는 심리전', en: 'A psychological battle to extract info from AI' },
     players: { ko: '1-4명', en: '1-4 players' },
-    description: { ko: '소셜 엔지니어링 기법을 활용하여 정보를 획득하는 챌린지 모드입니다.', en: 'A challenge mode where you obtain information using social engineering techniques.' },
+    description: { ko: '이 모드는 곧 출시됩니다!', en: 'This mode will be available soon!' },
     objective: { ko: '다양한 소셜 엔지니어링 기법으로 목표 정보를 획득하세요.', en: 'Obtain target information using various social engineering techniques.' },
     rules: {
       ko: [
@@ -94,7 +94,8 @@ const modes = [
         'The player with the highest score wins'
       ]
     },
-    tutorialPath: '/tutorial/arena/social'
+    tutorialPath: '/tutorial/arena/social',
+    disabled: true
   },
 ];
 
@@ -130,8 +131,9 @@ const ModeExplain: React.FC = () => {
                 {modes.map(mode => (
                   <div
                     key={mode.id}
-                    className={`mode-card ${selectedMode === mode.id ? 'selected' : ''}`}
-                    onClick={() => handleModeSelect(mode.id)}
+                    className={`mode-card ${selectedMode === mode.id ? 'selected' : ''} ${(mode as any).disabled ? 'disabled' : ''}`}
+                    onClick={() => !(mode as any).disabled && handleModeSelect(mode.id)}
+                    style={(mode as any).disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   >
                     <h3 className="mode-title">{mode.title}</h3>
                     <p className="mode-desc">{mode.desc[language]}</p>

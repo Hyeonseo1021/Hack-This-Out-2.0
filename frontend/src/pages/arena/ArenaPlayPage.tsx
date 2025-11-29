@@ -10,6 +10,7 @@ import '../../assets/scss/arena/ArenaPlayPage.scss';
 import TerminalRace from '../../components/arena/TerminalRace';
 import ForensicsRush from '../../components/arena/ForensicsRush';
 import VulnerabilityScannerRace from '../../components/arena/VulnerabilityScannerRace';
+// SocialEngineering - Coming Soon
 import ActivityFeed from '../../components/arena/ActivityFeed';
 import InventoryModal from '../../components/inventory/InventoryModal';
 import { PlayProvider, usePlayContext } from '../../contexts/PlayContext';
@@ -58,11 +59,16 @@ const ArenaPlayPage: React.FC = () => {
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [usingItemId, setUsingItemId] = useState<string | null>(null);
 
+  // ✅ Grace period 상태 (전역적으로 관리)
+  const [gracePeriodActive, setGracePeriodActive] = useState(false);
+  const [gracePeriodRemaining, setGracePeriodRemaining] = useState(0);
+  const gracePeriodIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const joinedRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const navigatedRef = useRef(false);
 
-  const { addBuff, setAvailableHints, setIsTimeFrozen } = usePlayContext();
+  const { addBuff, setAvailableHints } = usePlayContext();
 
   // 게임 모드별로 사용 가능한 아이템 필터링
   const isItemUsableInMode = (itemEffect: any): boolean => {
@@ -72,6 +78,7 @@ const ArenaPlayPage: React.FC = () => {
       'TERMINAL_HACKING_RACE': ['freezeSeconds', 'scoreBoost'],
       'VULNERABILITY_SCANNER_RACE': ['hintCount', 'scoreBoost', 'invincibleSeconds', 'freezeSeconds'],
       'FORENSICS_RUSH': ['hintCount', 'freezeSeconds', 'invincibleSeconds', 'scoreBoost'],
+      'SOCIAL_ENGINEERING': ['hintCount', 'scoreBoost'],
     };
 
     const allowedEffects = modeEffects[mode] || [];
@@ -368,19 +375,28 @@ const ArenaPlayPage: React.FC = () => {
       }
     };
 
-    // ✅ 아이템 사용 알림 핸들러
-    const handleItemUsed = (data: { userId: string; username: string; itemType: string; value: number; message: string }) => {
-      console.log('🎁 [ArenaPlayPage] arena:item-used received:', data);
-
-      // 아이템 타입별 아이콘 매핑
-      const itemIcon = (data.itemType === 'time_extension' || data.itemType === 'time_freeze') ? '⏰' : '🎁';
-
+    // 아이템 사용 알림 핸들러
+    const handleItemUsed = (data: { userId: string; username: string; itemType: string; value: number; message: string | { ko: string; en: string } }) => {
       // 참가자 옆에 아이콘 표시 (3초간)
+      let itemIcon = '🎁';
+      if (data.itemType === 'time_extension') itemIcon = '⏰';
+      else if (data.itemType === 'score_boost') itemIcon = '🚀';
+      else if (data.itemType === 'invincible') itemIcon = '🛡️';
+
       setItemUsageMap(prev => {
         const newMap = new Map(prev);
         newMap.set(data.userId, itemIcon);
         return newMap;
       });
+
+      // 다국어 메시지 처리
+      const lang = i18n.language as 'ko' | 'en';
+      const messageText = typeof data.message === 'object'
+        ? (data.message[lang] || data.message.en || data.message.ko)
+        : data.message;
+
+      // 모든 아이템 사용 알림 표시
+      toast.info(messageText, { position: 'top-center', autoClose: 3000 });
 
       // 3초 후 아이콘 제거
       setTimeout(() => {
@@ -408,32 +424,73 @@ const ArenaPlayPage: React.FC = () => {
       }
     };
 
+    // ✅ 유예 시간 시작 핸들러 (모든 플레이어에게 브로드캐스트됨)
+    const handleGracePeriodStarted = (data: { graceMs: number; graceSec: number; message: string }) => {
+      console.log('⏳ [ArenaPlayPage] arena:grace-period-started received:', data);
+
+      setGracePeriodActive(true);
+      setGracePeriodRemaining(data.graceSec);
+
+      // 기존 인터벌 정리
+      if (gracePeriodIntervalRef.current) {
+        clearInterval(gracePeriodIntervalRef.current);
+      }
+
+      // 1초마다 카운트다운
+      gracePeriodIntervalRef.current = setInterval(() => {
+        setGracePeriodRemaining(prev => {
+          if (prev <= 1) {
+            if (gracePeriodIntervalRef.current) {
+              clearInterval(gracePeriodIntervalRef.current);
+              gracePeriodIntervalRef.current = null;
+            }
+            setGracePeriodActive(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // 토스트 알림
+      toast.info(data.message || t('play.gracePeriodStarted'), {
+        position: 'top-center',
+        autoClose: 5000,
+      });
+    };
+
     socket.on('arena:update', handleUpdate);
     socket.on('arena:start', handleStart);
     socket.on('arena:deleted', handleDeleted);
     socket.on('arena:join-failed', handleJoinFailed);
-    socket.on('arena:ended', handleEnded); // ✅ 추가
-    socket.on('arena:redirect-to-results', handleRedirectToResults); // ✅ 추가
-    socket.on('arena:item-used', handleItemUsed); // ✅ 아이템 사용 알림
-    socket.on('arena:use-item-failed', handleItemUseFailed); // ✅ 아이템 사용 실패
-    socket.on('arena:personal-time-extended', handlePersonalTimeExtended); // ✅ 개인 타이머 연장
+    socket.on('arena:ended', handleEnded);
+    socket.on('arena:redirect-to-results', handleRedirectToResults);
+    socket.on('arena:item-used', handleItemUsed);
+    socket.on('arena:use-item-failed', handleItemUseFailed);
+    socket.on('arena:personal-time-extended', handlePersonalTimeExtended);
+    socket.on('arena:grace-period-started', handleGracePeriodStarted); // ✅ 유예 시간 시작
 
     return () => {
       if (currentUserId && arenaId && !navigatedRef.current) {
         console.log('👋 [ArenaPlayPage] Emitting arena:leave...');
         socket.emit('arena:leave', { arenaId, userId: currentUserId });
       }
+      // ✅ Grace period interval 정리
+      if (gracePeriodIntervalRef.current) {
+        clearInterval(gracePeriodIntervalRef.current);
+        gracePeriodIntervalRef.current = null;
+      }
       socket.off('arena:update', handleUpdate);
       socket.off('arena:start', handleStart);
       socket.off('arena:deleted', handleDeleted);
       socket.off('arena:join-failed', handleJoinFailed);
-      socket.off('arena:ended', handleEnded); // ✅ 추가
-      socket.off('arena:redirect-to-results', handleRedirectToResults); // ✅ 추가
-      socket.off('arena:item-used', handleItemUsed); // ✅ 아이템 사용 알림
-      socket.off('arena:use-item-failed', handleItemUseFailed); // ✅ 아이템 사용 실패
-      socket.off('arena:personal-time-extended', handlePersonalTimeExtended); // ✅ 개인 타이머 연장
+      socket.off('arena:ended', handleEnded);
+      socket.off('arena:redirect-to-results', handleRedirectToResults);
+      socket.off('arena:item-used', handleItemUsed);
+      socket.off('arena:use-item-failed', handleItemUseFailed);
+      socket.off('arena:personal-time-extended', handlePersonalTimeExtended);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted); // ✅ 유예 시간 시작
     };
-  }, [arenaId, currentUserId, navigate]);
+  }, [arenaId, currentUserId, navigate, t]);
 
   // 게임 시작 시 인벤토리 로드
   useEffect(() => {
@@ -483,6 +540,24 @@ const ArenaPlayPage: React.FC = () => {
         console.log('🔎 Loading Forensics Rush component...');
         return <ForensicsRush arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
 
+      case 'SOCIAL_ENGINEERING':
+        console.log('🎭 Social Engineering - Coming Soon');
+        return (
+          <div className="coming-soon-state" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: '#888',
+            fontSize: '1.5rem'
+          }}>
+            <h2>{i18n.language === 'ko' ? '소셜 엔지니어링' : 'Social Engineering'}</h2>
+            <p style={{ fontSize: '3rem', margin: '20px 0' }}>Coming Soon</p>
+            <p>{i18n.language === 'ko' ? '이 모드는 곧 출시됩니다!' : 'This mode will be available soon!'}</p>
+          </div>
+        );
+
       default:
         console.error('❌ Unknown game mode:', mode);
         return (
@@ -510,6 +585,19 @@ const ArenaPlayPage: React.FC = () => {
           </div>
           
           <div className="header-right">
+            {/* ✅ Grace Period 표시 */}
+            {gracePeriodActive && (
+              <div className="grace-period-display">
+                <div className="grace-icon">⏳</div>
+                <div className="grace-info">
+                  <div className="grace-label">GRACE PERIOD</div>
+                  <div className="grace-time">
+                    {Math.floor(gracePeriodRemaining / 60)}:{String(gracePeriodRemaining % 60).padStart(2, '0')}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="timer-display">
               <div className="timer-value">
                 {mm}:{String(ss).padStart(2, '0')}

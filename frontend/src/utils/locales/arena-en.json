@@ -42,7 +42,7 @@
       "desc": "Analyze evidence and find the criminal",
       "players": "2-8 players"
     },
-    "SOCIAL_ENGINEERING_CHALLENGE": {
+    "SOCIAL_ENGINEERING": {
       "title": "Social Engineering",
       "desc": "A psychological battle to deceive AI and extract information",
       "players": "1-4 players"
@@ -144,5 +144,27 @@
     "itemUseFailed": "Failed to use item.",
     "vulnerabilityFound": "🎯 Vulnerability found! (+{{points}} pts)",
     "incorrectReport": "❌ Incorrect vulnerability report"
+  },
+  "social": {
+    "loading": "Loading mission briefing...",
+    "missionTitle": "Information Extraction Mission",
+    "missionDesc": "Extract sensitive information from the target.",
+    "turns": "Turns",
+    "infoExtracted": "Info Extracted",
+    "suspicion": "Suspicion",
+    "online": "Online",
+    "inputPlaceholder": "Type your message...",
+    "missionComplete": "Mission Complete!",
+    "missionFailed": "Mission Failed",
+    "infoExtractedNotice": "Info Extracted!",
+    "success": "Mission Success!",
+    "failed": "Mission Failed",
+    "successMessage": "All target information has been extracted!",
+    "failSuspicion": "You raised too much suspicion.",
+    "failTurns": "All turns have been exhausted.",
+    "failMessage": "Mission failed.",
+    "score": "Score",
+    "turnsUsed": "Turns Used",
+    "finalSuspicion": "Final Suspicion"
   }
 }

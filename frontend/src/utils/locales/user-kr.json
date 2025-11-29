@@ -46,7 +46,7 @@
     "logout": "로그아웃",
     "stats": {
       "machinesSolved": "해결한 머신",
-      "contestsParticipated": "참가한 대회",
+      "contestsParticipated": "참가한 컨테스트",
       "arenasCompleted": "완료한 아레나",
       "totalScore": "총 점수",
       "averageRank": "평균 순위",

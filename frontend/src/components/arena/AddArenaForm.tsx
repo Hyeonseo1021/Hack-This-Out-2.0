@@ -37,10 +37,11 @@ const AddArenaForm: React.FC = () => {
       players: t('modes.FORENSICS_RUSH.players')
     },
     {
-      id: 'SOCIAL_ENGINEERING_CHALLENGE',
-      title: t('modes.SOCIAL_ENGINEERING_CHALLENGE.title'),
-      desc: t('modes.SOCIAL_ENGINEERING_CHALLENGE.desc'),
-      players: t('modes.SOCIAL_ENGINEERING_CHALLENGE.players')
+      id: 'SOCIAL_ENGINEERING',
+      title: t('modes.SOCIAL_ENGINEERING.title') + ' (Coming Soon)',
+      desc: t('modes.SOCIAL_ENGINEERING.desc'),
+      players: t('modes.SOCIAL_ENGINEERING.players'),
+      disabled: true  // Coming Soon
     },
   ];
 
@@ -63,7 +64,7 @@ const AddArenaForm: React.FC = () => {
     // 모드별 참가자 수 자동 설정
     if (mode === 'VULNERABILITY_SCANNER_RACE') {
       setFormData(prev => ({ ...prev, maxParticipants: 2 }));
-    } else if (mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
+    } else if (mode === 'SOCIAL_ENGINEERING') {
       setFormData(prev => ({ ...prev, maxParticipants: Math.min(prev.maxParticipants, 4) }));
     }
   };
@@ -86,7 +87,7 @@ const AddArenaForm: React.FC = () => {
       return;
     }
 
-    if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE' && formData.maxParticipants > 4) {
+    if (formData.mode === 'SOCIAL_ENGINEERING' && formData.maxParticipants > 4) {
       setError(t('errors.socialEngOnly4'));
       return;
     }
@@ -109,7 +110,7 @@ const AddArenaForm: React.FC = () => {
     if (formData.mode === 'VULNERABILITY_SCANNER_RACE') {
       return { min: 2, max: 2 };
     }
-    if (formData.mode === 'SOCIAL_ENGINEERING_CHALLENGE') {
+    if (formData.mode === 'SOCIAL_ENGINEERING') {
       return { min: 1, max: 4 };
     }
     return { min: 2, max: 8 };
@@ -192,8 +193,9 @@ const AddArenaForm: React.FC = () => {
               {modes.map(mode => (
                 <div
                   key={mode.id}
-                  className={`mode-card ${formData.mode === mode.id ? 'selected' : ''}`}
-                  onClick={() => handleModeSelect(mode.id)}
+                  className={`mode-card ${formData.mode === mode.id ? 'selected' : ''} ${(mode as any).disabled ? 'disabled' : ''}`}
+                  onClick={() => !(mode as any).disabled && handleModeSelect(mode.id)}
+                  style={(mode as any).disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                 >
                   <h3 className="mode-title">{mode.title}</h3>
                   <p className="mode-desc">{mode.desc}</p>

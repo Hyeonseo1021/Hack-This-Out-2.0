@@ -2,13 +2,44 @@ import { Server, Socket } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { terminalProcessCommand } from '../../services/terminalRace/terminalEngine';
-import { endArenaImmediately, endArenaProcedure } from '../utils/endArenaProcedure';
+import { endArenaImmediately, endArenaProcedure, getGraceInfo } from '../utils/endArenaProcedure';
 
 // 유예 시간 타이머 저장
 const graceTimers = new Map<string, NodeJS.Timeout>();
 
 // ✅ 중복 처리 방지를 위한 Map
 const processingCommands = new Map<string, boolean>();
+
+/**
+ * ⏱️ 시간 보너스 계산
+ * - 빠른 완료 시 추가 점수 부여
+ * - 기준: timeLimit의 50% 이내 완료 시 최대 보너스
+ */
+function calculateTimeBonus(
+  startTime: Date,
+  completedAt: Date,
+  timeLimit: number // 초 단위
+): number {
+  const elapsedSec = Math.floor((completedAt.getTime() - startTime.getTime()) / 1000);
+  const halfTimeLimit = timeLimit / 2;
+
+  // 시간 제한의 50% 이내 완료 시 최대 보너스 (50점)
+  // 50% ~ 100% 사이는 선형 감소
+  // 100% 초과 시 보너스 없음
+
+  const MAX_TIME_BONUS = 50;
+
+  if (elapsedSec <= halfTimeLimit) {
+    // 50% 이내 완료: 최대 보너스
+    return MAX_TIME_BONUS;
+  } else if (elapsedSec <= timeLimit) {
+    // 50% ~ 100%: 선형 감소
+    const remainingRatio = (timeLimit - elapsedSec) / halfTimeLimit;
+    return Math.floor(MAX_TIME_BONUS * remainingRatio);
+  }
+
+  return 0; // 시간 초과
+}
 
 // ✅ Helper: 활성 버프 가져오기
 const getActiveBuffs = (arena: any, userId: string) => {
@@ -147,8 +178,8 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         }
       }
 
-      // ✅ 점수는 스테이지가 실제로 진행되었을 때만 부여 (중복 점수 악용 방지)
-      if (result.progressDelta && result.progressDelta > 0 && stageActuallyAdvanced) {
+      // ✅ 점수 부여: progressDelta > 0이면 점수 부여 (스테이지 진행 여부와 무관)
+      if (result.progressDelta && result.progressDelta > 0) {
         // ✅ 점수 부스트 적용
         const activeBuffs = getActiveBuffs(arena, String(userId));
         boostedScore = applyScoreBoost(result.progressDelta, activeBuffs);
@@ -159,8 +190,6 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         if (boostedScore !== result.progressDelta) {
           console.log(`🚀 Score boost applied: ${result.progressDelta} → ${boostedScore}`);
         }
-      } else if (result.progressDelta && result.progressDelta > 0 && !stageActuallyAdvanced) {
-        console.log(`⚠️ [DUPLICATE PREVENTION] Score gain blocked: stage did not advance`);
       }
 
       if (result.flagFound) {
@@ -207,16 +236,16 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         userId: String(userId),
         command,
         message: result.message,
-        scoreGain: stageActuallyAdvanced ? (boostedScore || result.progressDelta || 0) : 0, // ✅ 실제 진행 시에만 점수
-        baseScore: stageActuallyAdvanced ? (result.progressDelta || 0) : 0, // ✅ 실제 진행 시에만 점수
-        stageAdvanced: stageActuallyAdvanced, // ✅ 실제 진행 여부
+        scoreGain: boostedScore || result.progressDelta || 0, // ✅ progressDelta가 있으면 점수 부여
+        baseScore: result.progressDelta || 0,
+        stageAdvanced: stageActuallyAdvanced,
         currentStage: progressDoc.stage,
         totalScore: progressDoc.score,
         completed: progressDoc.completed
       });
 
-      // 8. 다른 참가자들에게 진행 상황 브로드캐스트 (스테이지 진행/완료 시에만)
-      if (stageActuallyAdvanced || progressDoc.completed) {
+      // 8. 다른 참가자들에게 진행 상황 브로드캐스트 (점수 변경/스테이지 진행/완료 시)
+      if (boostedScore > 0 || stageActuallyAdvanced || progressDoc.completed) {
         console.log('📤 [terminal:execute] Broadcasting participant update');
         
         // ✅ socket.broadcast로 자기 자신 제외하고 전송
@@ -237,11 +266,50 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         console.log(`🏆 First winner: ${userId}`);
 
         const submittedAt = new Date();
-        await ArenaProgress.updateOne({ _id: progressDoc._id }, { $set: { submittedAt } });
+        const startTime = arena.startTime ? new Date(arena.startTime) : submittedAt;
+        const timeLimit = arena.timeLimit || 600; // 기본 10분
+
+        // ✅ 시간 보너스 계산 및 적용
+        const timeBonus = calculateTimeBonus(startTime, submittedAt, timeLimit);
+        console.log(`⏱️ [TerminalRace] Time bonus for first completer: +${timeBonus} points`);
+
+        await ArenaProgress.updateOne(
+          { _id: progressDoc._id },
+          {
+            $set: { submittedAt },
+            $inc: {
+              score: timeBonus,
+              'terminalRace.timeBonusPoints': timeBonus
+            }
+          }
+        );
 
         arena.winner = userId;
         arena.firstSolvedAt = submittedAt;
         await arena.save();
+
+        // ✅ 시간 보너스가 적용된 점수로 업데이트 브로드캐스트
+        const updatedScore = progressDoc.score + timeBonus;
+        socket.emit('terminal:result', {
+          userId: String(userId),
+          command: 'TIME_BONUS',
+          message: { ko: `시간 보너스 +${timeBonus}점!`, en: `Time bonus +${timeBonus} points!` },
+          scoreGain: timeBonus,
+          stageAdvanced: false,
+          currentStage: progressDoc.stage,
+          totalScore: updatedScore,
+          completed: true
+        });
+
+        // 다른 참가자들에게도 알림
+        socket.to(effectiveArenaId).emit('participant:update', {
+          userId: String(userId),
+          progress: {
+            score: updatedScore,
+            stage: progressDoc.stage,
+            completed: true
+          }
+        });
 
         console.log(`⏳ [TerminalRace] Calling endArenaProcedure for dynamic grace period`);
 
@@ -251,12 +319,50 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         if (timer) {
           graceTimers.set(effectiveArenaId, timer);
         }
-        
+
       } else if (progressDoc.completed && arena.winner) {
         console.log(`✅ Player ${userId} completed during grace period`);
-        
+
         const submittedAt = new Date();
-        await ArenaProgress.updateOne({ _id: progressDoc._id }, { $set: { submittedAt } });
+        const startTime = arena.startTime ? new Date(arena.startTime) : submittedAt;
+        const timeLimit = arena.timeLimit || 600;
+
+        // ✅ Grace period 중 완주자에게도 시간 보너스 적용
+        const timeBonus = calculateTimeBonus(startTime, submittedAt, timeLimit);
+        console.log(`⏱️ [TerminalRace] Time bonus for player ${userId}: +${timeBonus} points`);
+
+        await ArenaProgress.updateOne(
+          { _id: progressDoc._id },
+          {
+            $set: { submittedAt },
+            $inc: {
+              score: timeBonus,
+              'terminalRace.timeBonusPoints': timeBonus
+            }
+          }
+        );
+
+        // ✅ 시간 보너스가 적용된 점수로 업데이트 브로드캐스트
+        const updatedScore = progressDoc.score + timeBonus;
+        socket.emit('terminal:result', {
+          userId: String(userId),
+          command: 'TIME_BONUS',
+          message: { ko: `시간 보너스 +${timeBonus}점!`, en: `Time bonus +${timeBonus} points!` },
+          scoreGain: timeBonus,
+          stageAdvanced: false,
+          currentStage: progressDoc.stage,
+          totalScore: updatedScore,
+          completed: true
+        });
+
+        socket.to(effectiveArenaId).emit('participant:update', {
+          userId: String(userId),
+          progress: {
+            score: updatedScore,
+            stage: progressDoc.stage,
+            completed: true
+          }
+        });
         
         const allProgress = await ArenaProgress.find({ arena: effectiveArenaId });
         const activeParticipants = arena.participants.filter((p: any) => !p.hasLeft);
@@ -295,27 +401,34 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
   socket.on('terminal:get-progress', async ({ arenaId }: { arenaId: string }) => {
     const userId = (socket as any).userId;
     console.log('📡 [terminal:get-progress]', { arenaId, userId });
-    
+
     if (!arenaId || !userId) return;
 
     try {
       const arena = await Arena.findById(arenaId).select('scenarioId').populate('scenarioId');
       const scenario = arena?.scenarioId as any;
       const totalStages = scenario?.data?.totalStages || scenario?.data?.stages?.length || 0;
-      
+
       const progressDoc = await ArenaProgress.findOne({ arena: arenaId, user: userId }).lean();
-      
+
+      // ✅ 유예시간 정보 조회
+      const graceInfoData = getGraceInfo(arenaId);
+
       console.log('📊 Progress:', {
         stage: progressDoc?.stage || 0,
         score: progressDoc?.score || 0,
-        completed: progressDoc?.completed || false
+        completed: progressDoc?.completed || false,
+        graceInfo: graceInfoData
       });
 
       socket.emit('terminal:progress-data', {
         stage: progressDoc?.stage || 0,
         score: progressDoc?.score || 0,
         completed: progressDoc?.completed || false,
-        totalStages: totalStages
+        totalStages: totalStages,
+        // ✅ 유예시간 정보 추가
+        graceTimeRemaining: graceInfoData?.remainingSec || null,
+        totalGraceTime: graceInfoData?.totalSec || null
       });
     } catch (e) {
       console.error('[terminal:get-progress] error:', e);
@@ -323,7 +436,9 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         stage: 0,
         score: 0,
         completed: false,
-        totalStages: 0
+        totalStages: 0,
+        graceTimeRemaining: null,
+        totalGraceTime: null
       });
     }
   });

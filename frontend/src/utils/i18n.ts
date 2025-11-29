@@ -25,6 +25,9 @@ import userKR from './locales/user-kr.json';
 import commonEN from './locales/common-en.json';
 import commonKR from './locales/common-kr.json';
 
+// localStorage에서 저장된 언어 불러오기, 없으면 'ko' 기본값
+const savedLanguage = localStorage.getItem('language') || 'ko';
+
 i18n
   .use(initReactI18next)
   .init({
@@ -50,7 +53,7 @@ i18n
         common: commonKR
       }
     },
-    lng: 'ko',          // 기본 언어를 한국어로 설정
+    lng: savedLanguage,  // localStorage에서 불러온 언어 사용
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false

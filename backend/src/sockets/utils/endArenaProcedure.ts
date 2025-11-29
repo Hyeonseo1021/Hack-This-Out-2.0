@@ -9,6 +9,27 @@ import { GameMode as CoinGameMode, assignBatchArenaCoin, isFirstScenarioCompleti
 // 진행 중인 유예 타이머 추적
 const graceTimers = new Map<string, NodeJS.Timeout>();
 
+// 유예시간 정보 저장 (arenaId -> { startedAt, totalSec })
+const graceInfo = new Map<string, { startedAt: number; totalSec: number }>();
+
+/**
+ * ✅ 유예시간 정보 조회 (새로고침 시 복원용)
+ */
+export function getGraceInfo(arenaId: string): { remainingSec: number; totalSec: number } | null {
+  const info = graceInfo.get(arenaId);
+  if (!info) return null;
+
+  const elapsed = Math.floor((Date.now() - info.startedAt) / 1000);
+  const remainingSec = Math.max(0, info.totalSec - elapsed);
+
+  if (remainingSec <= 0) {
+    graceInfo.delete(arenaId);
+    return null;
+  }
+
+  return { remainingSec, totalSec: info.totalSec };
+}
+
 /**
  * ✅ 모든 참가자가 완료했는지 확인
  */
@@ -124,16 +145,27 @@ export async function endArenaProcedure(arenaId: string, io: Server) {
     console.log(`⏳ Starting grace period: ${graceMs}ms (${Math.floor(graceMs / 1000)}s)`);
 
     // 모든 참가자에게 유예 시간 알림
+    const graceSec = Math.floor(graceMs / 1000);
+    const graceMin = Math.floor(graceSec / 60);
+    const graceSecRemainder = graceSec % 60;
+    const graceTimeFormatted = graceMin > 0
+      ? `${graceMin}:${String(graceSecRemainder).padStart(2, '0')}`
+      : `${graceSec}s`;
+
+    // ✅ 유예시간 정보 저장 (새로고침 복원용)
+    graceInfo.set(arenaId, { startedAt: Date.now(), totalSec: graceSec });
+
     io.to(arenaId).emit('arena:grace-period-started', {
       graceMs,
-      graceSec: Math.floor(graceMs / 1000),
-      message: `First player completed! You have ${Math.floor(graceMs / 1000)} seconds to finish.`
+      graceSec,
+      message: `First player completed! You have ${graceTimeFormatted} to finish.`
     });
 
     // 유예 타이머 설정
     const timer = setTimeout(async () => {
       console.log(`⏰ [Grace Timer] Grace period ended for arena: ${arenaId}`);
       graceTimers.delete(arenaId);
+      graceInfo.delete(arenaId); // ✅ 유예시간 정보도 삭제
       await finalizeArena(arenaId, io);
     }, graceMs);
 

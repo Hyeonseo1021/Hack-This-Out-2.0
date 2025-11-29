@@ -40,6 +40,7 @@ const Profile: React.FC = () => {
     const toggleLanguage = () => {
         const newLang = i18n.language === 'ko' ? 'en' : 'ko';
         i18n.changeLanguage(newLang);
+        localStorage.setItem('language', newLang);  // 언어 설정 저장
     };
 
     const handleLogout = async () => {

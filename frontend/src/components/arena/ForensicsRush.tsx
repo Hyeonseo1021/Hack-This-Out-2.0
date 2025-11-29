@@ -262,38 +262,50 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     });
   }, []);
 
-  // ✅ 아이템 사용 알림 핸들러
-  const handleItemUsed = useCallback((data: { userId: string; itemType: string; username?: string }) => {
-    console.log('🎁 [ForensicsRush] Item used:', data);
+  // 아이템 사용 알림 핸들러
+  const handleItemUsed = useCallback((data: {
+    userId: string;
+    itemType: string;
+    username?: string;
+    value?: number;
+    message?: string | { ko: string; en: string }
+  }) => {
+    // 백엔드 메시지 사용
+    if (data.message) {
+      const msg = typeof data.message === 'object'
+        ? (i18n.language === 'ko' ? data.message.ko : data.message.en)
+        : data.message;
 
+      const notification = {
+        id: notificationIdCounter.current++,
+        message: msg,
+        timestamp: new Date()
+      };
+
+      setItemNotifications(prev => [...prev, notification]);
+
+      setTimeout(() => {
+        setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
+      }, 5000);
+      return;
+    }
+
+    // 레거시 처리
     const username = data.username || getUsernameById(data.userId);
     const isMe = data.userId === currentUserId;
-
-    let itemEmoji = '🎁';
-    let itemName = t('game.user');
+    let itemName = 'item';
 
     switch (data.itemType) {
-      case 'hint':
-        itemEmoji = '💡';
-        itemName = t('game.hint');
-        break;
+      case 'hint': itemName = t('game.hint'); break;
       case 'time_freeze':
-        itemEmoji = '⏰';
-        itemName = t('game.timeExtension');
-        break;
-      case 'score_boost':
-        itemEmoji = '🚀';
-        itemName = t('game.scoreBoost');
-        break;
-      case 'invincible':
-        itemEmoji = '🛡️';
-        itemName = t('game.shield');
-        break;
+      case 'time_extension': itemName = t('game.timeExtension'); break;
+      case 'score_boost': itemName = t('game.scoreBoost'); break;
+      case 'invincible': itemName = t('game.shield'); break;
     }
 
     const message = isMe
-      ? `[SYSTEM] You used ${itemEmoji} ${itemName}`
-      : `[SYSTEM] ${username} used ${itemEmoji} ${itemName}`;
+      ? `You used ${itemName}`
+      : `${username} used ${itemName}`;
 
     const notification = {
       id: notificationIdCounter.current++,
@@ -303,11 +315,10 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
 
     setItemNotifications(prev => [...prev, notification]);
 
-    // 5초 후 자동 제거
     setTimeout(() => {
       setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
     }, 5000);
-  }, [currentUserId, getUsernameById]);
+  }, [currentUserId, getUsernameById, i18n.language, t]);
 
   // 소켓 이벤트 핸들러
   useEffect(() => {

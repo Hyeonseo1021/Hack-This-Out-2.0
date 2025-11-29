@@ -11,7 +11,7 @@ import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
 import TerminalRaceForm from '../../components/admin/forms/TerminalRaceForm';
 import ForensicsRushForm from '../../components/admin/forms/ForensicsRushForm';
-import SocialEngineeringForm from '../../components/admin/forms/SocialEngineeringForm';
+// SocialEngineeringForm - Coming Soon
 import VulnerabilityScannerRaceForm from '../../components/admin/forms/VulnerablilityScannerRaceForm';
 import { FaEdit, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import '../../assets/scss/admin/ScenariosManagement.scss';
@@ -82,7 +82,7 @@ const getInitialData = (mode: string) => {
         totalQuestions: 0
       };
 
-    case 'SOCIAL_ENGINEERING_CHALLENGE':
+    case 'SOCIAL_ENGINEERING':
       return {
         scenarioType: 'IT_HELPDESK',
         objective: {
@@ -344,7 +344,7 @@ const ScenariosManagement: React.FC = () => {
         }
         break;
 
-      case 'SOCIAL_ENGINEERING_CHALLENGE':
+      case 'SOCIAL_ENGINEERING':
         if (!form.data.objective?.title?.ko?.trim() || !form.data.objective?.title?.en?.trim()) {
           alert('Objective title is required in both Korean and English');
           return false;
@@ -448,7 +448,7 @@ const ScenariosManagement: React.FC = () => {
       TERMINAL_HACKING_RACE: '',
       VULNERABILITY_SCANNER_RACE: '',
       FORENSICS_RUSH: '',
-      SOCIAL_ENGINEERING_CHALLENGE: ''
+      SOCIAL_ENGINEERING: ''
     };
     return icons[mode] || '';
   };
@@ -458,7 +458,7 @@ const ScenariosManagement: React.FC = () => {
       TERMINAL_HACKING_RACE: 'Terminal Race',
       VULNERABILITY_SCANNER_RACE: 'Vulnerability Scanner Race',
       FORENSICS_RUSH: 'Forensics Rush',
-      SOCIAL_ENGINEERING_CHALLENGE: 'Social Engineering'
+      SOCIAL_ENGINEERING: 'Social Engineering'
     };
     return names[mode] || mode;
   };
@@ -473,7 +473,7 @@ const ScenariosManagement: React.FC = () => {
         return `${scenario.data.vulnerabilities?.length || 0} vulnerabilities`;
       case 'FORENSICS_RUSH':
         return `${scenario.data.questions?.length || 0} questions`;
-      case 'SOCIAL_ENGINEERING_CHALLENGE':
+      case 'SOCIAL_ENGINEERING':
         return `${scenario.data.availableTechniques?.length || 0} techniques`;
       default:
         return '-';
@@ -506,7 +506,7 @@ const ScenariosManagement: React.FC = () => {
                     <option value="TERMINAL_HACKING_RACE">Terminal Hacking Race</option>
                     <option value="VULNERABILITY_SCANNER_RACE">Vulnerability Scanner Race</option>
                     <option value="FORENSICS_RUSH">Forensics Rush</option>
-                    <option value="SOCIAL_ENGINEERING_CHALLENGE">Social Engineering</option>
+                    <option value="SOCIAL_ENGINEERING" disabled>Social Engineering (Coming Soon)</option>
                   </select>
                 </div>
 
@@ -652,11 +652,12 @@ const ScenariosManagement: React.FC = () => {
                 />
               )}
 
-              {form.mode === 'SOCIAL_ENGINEERING_CHALLENGE' && (
-                <SocialEngineeringForm
-                  data={form.data}
-                  onChange={(data) => setForm(f => ({ ...f, data }))}
-                />
+              {form.mode === 'SOCIAL_ENGINEERING' && (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
+                  <h3>Social Engineering</h3>
+                  <p style={{ fontSize: '2rem', margin: '20px 0' }}>Coming Soon</p>
+                  <p>This mode will be available in a future update.</p>
+                </div>
               )}
             </div>
 
@@ -682,7 +683,7 @@ const ScenariosManagement: React.FC = () => {
             <option value="TERMINAL_HACKING_RACE">Terminal Race</option>
             <option value="VULNERABILITY_SCANNER_RACE">Vulnerability Scanner Race</option>
             <option value="FORENSICS_RUSH">Forensics Rush</option>
-            <option value="SOCIAL_ENGINEERING_CHALLENGE">Social Engineering</option>
+            <option value="SOCIAL_ENGINEERING">Social Engineering</option>
           </select>
 
           <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)}>

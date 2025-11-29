@@ -18,7 +18,7 @@ interface AvailableTechnique {
 }
 
 interface SocialEngineeringData {
-  scenarioType: 'IT_HELPDESK' | 'FINANCE_SPEARPHISHING' | 'CEO_IMPERSONATION';
+  scenarioType: string; // 자유롭게 입력 가능
   objective: {
     title: {
       ko: string;
@@ -72,10 +72,31 @@ interface Props {
   onChange: (data: SocialEngineeringData) => void;
 }
 
+// 프리셋 시나리오 타입들
+const SCENARIO_PRESETS = [
+  { id: 'IT_HELPDESK', label: 'IT 헬프데스크 / IT Helpdesk', difficulty: 'Beginner / 초급' },
+  { id: 'FINANCE_SPEARPHISHING', label: '재무팀 스피어피싱 / Finance Spearphishing', difficulty: 'Intermediate / 중급' },
+  { id: 'CEO_IMPERSONATION', label: 'CEO 사칭 / CEO Impersonation', difficulty: 'Advanced / 고급' },
+  { id: 'HR_PHISHING', label: '인사팀 피싱 / HR Phishing', difficulty: 'Intermediate / 중급' },
+  { id: 'VENDOR_IMPERSONATION', label: '거래처 위장 / Vendor Impersonation', difficulty: 'Intermediate / 중급' },
+  { id: 'TECH_SUPPORT_SCAM', label: '기술지원 사기 / Tech Support Scam', difficulty: 'Beginner / 초급' },
+  { id: 'PHYSICAL_TAILGATING', label: '물리적 침입 / Physical Tailgating', difficulty: 'Advanced / 고급' },
+  { id: 'PHONE_VISHING', label: '보이스피싱 / Voice Phishing', difficulty: 'Intermediate / 중급' },
+  { id: 'INSIDER_THREAT', label: '내부자 위협 / Insider Threat', difficulty: 'Advanced / 고급' },
+  { id: 'SUPPLY_CHAIN', label: '공급망 공격 / Supply Chain Attack', difficulty: 'Advanced / 고급' },
+  { id: 'CUSTOM', label: '커스텀 / Custom (직접 입력)', difficulty: '-' },
+];
+
 const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
   const [isJsonMode, setIsJsonMode] = React.useState(false);
   const [jsonInput, setJsonInput] = React.useState('');
   const [jsonError, setJsonError] = React.useState('');
+  const [isCustomType, setIsCustomType] = React.useState(
+    !SCENARIO_PRESETS.some(p => p.id === data.scenarioType && p.id !== 'CUSTOM')
+  );
+  const [customTypeValue, setCustomTypeValue] = React.useState(
+    !SCENARIO_PRESETS.some(p => p.id === data.scenarioType && p.id !== 'CUSTOM') ? data.scenarioType : ''
+  );
 
   const handleJsonImport = () => {
     try {
@@ -83,9 +104,9 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
       onChange(parsed);
       setJsonError('');
       setIsJsonMode(false);
-      alert('✅ JSON 데이터가 성공적으로 가져와졌습니다!');
+      alert('JSON data imported successfully / JSON 데이터가 성공적으로 가져와졌습니다.');
     } catch (err) {
-      setJsonError('❌ JSON 형식이 올바르지 않습니다: ' + (err as Error).message);
+      setJsonError('Invalid JSON format / JSON 형식이 올바르지 않습니다: ' + (err as Error).message);
     }
   };
 
@@ -132,19 +153,19 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
   return (
     <div className="social-engineering-form">
       <div className="form-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3>💬 Social Engineering Challenge 시나리오</h3>
+        <h3>Social Engineering Challenge Scenario / 시나리오</h3>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button type="button" onClick={() => setIsJsonMode(!isJsonMode)} className="btn-add">
-            {isJsonMode ? '📝 폼 모드' : '📋 JSON 모드'}
+            {isJsonMode ? 'Form Mode / 폼 모드' : 'JSON Mode / JSON 모드'}
           </button>
           {isJsonMode && (
             <button type="button" onClick={handleJsonImport} className="btn-add" style={{ background: '#28a745' }}>
-              ✅ JSON 가져오기
+              Import JSON / JSON 가져오기
             </button>
           )}
           {!isJsonMode && (
             <button type="button" onClick={handleJsonExport} className="btn-add" style={{ background: '#007bff' }}>
-              📤 JSON 내보내기
+              Export JSON / JSON 내보내기
             </button>
           )}
         </div>
@@ -153,7 +174,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
       {isJsonMode ? (
         <div style={{ padding: '20px' }}>
           <label style={{ display: 'block', marginBottom: '10px', fontWeight: 600 }}>
-            JSON 데이터 입력
+            JSON Data Input / JSON 데이터 입력
           </label>
           <textarea
             value={jsonInput}
@@ -190,25 +211,56 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
         <>
           {/* 시나리오 타입 & 목표 */}
           <div className="form-section">
-        <h4>🎯 시나리오 설정</h4>
-        
+        <h4>Scenario Settings / 시나리오 설정</h4>
+
         <div className="form-field">
-          <label>시나리오 타입 *</label>
+          <label>Scenario Type / 시나리오 타입 *</label>
           <select
-            value={data.scenarioType}
-            onChange={e => onChange({ ...data, scenarioType: e.target.value as any })}
+            value={isCustomType ? 'CUSTOM' : data.scenarioType}
+            onChange={e => {
+              const value = e.target.value;
+              if (value === 'CUSTOM') {
+                setIsCustomType(true);
+                setCustomTypeValue('');
+                onChange({ ...data, scenarioType: '' });
+              } else {
+                setIsCustomType(false);
+                setCustomTypeValue('');
+                onChange({ ...data, scenarioType: value });
+              }
+            }}
             required
           >
-            <option value="IT_HELPDESK">💻 IT 헬프데스크 공격 (초급)</option>
-            <option value="FINANCE_SPEARPHISHING">💰 재무팀 스피어피싱 (중급)</option>
-            <option value="CEO_IMPERSONATION">👔 CEO 사칭 (고급)</option>
+            {SCENARIO_PRESETS.map(preset => (
+              <option key={preset.id} value={preset.id}>
+                {preset.label} {preset.difficulty !== '-' ? `(${preset.difficulty})` : ''}
+              </option>
+            ))}
           </select>
         </div>
+
+        {isCustomType && (
+          <div className="form-field">
+            <label>Custom Scenario Type Name / 커스텀 시나리오 타입 이름 *</label>
+            <input
+              type="text"
+              placeholder="Ex: MEDICAL_RECORDS_THEFT, CLOUD_CREDENTIALS, SOCIAL_MEDIA_HIJACK"
+              value={customTypeValue}
+              onChange={e => {
+                const value = e.target.value.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+                setCustomTypeValue(value);
+                onChange({ ...data, scenarioType: value });
+              }}
+              required
+            />
+            <small>Only uppercase letters and underscores allowed / 영문 대문자와 언더스코어(_)만 사용 가능합니다. Ex: BANK_ACCOUNT_PHISHING</small>
+          </div>
+        )}
 
         {/* Objective Title - Bilingual */}
         <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
           <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
-            목표 제목 (Objective Title) *
+            Objective Title / 목표 제목 *
           </label>
           <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ display: 'grid', gap: '4px' }}>
@@ -243,7 +295,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
         {/* Objective Description - Bilingual */}
         <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
           <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
-            목표 설명 (Objective Description) *
+            Objective Description / 목표 설명 *
           </label>
           <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ display: 'grid', gap: '4px' }}>
@@ -276,10 +328,10 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
         </div>
 
         <div className="form-field">
-          <label>획득해야 할 정보 목록 (쉼표로 구분) *</label>
+          <label>Target Information List / 획득해야 할 정보 목록 (comma separated / 쉼표로 구분) *</label>
           <input
             type="text"
-            placeholder="예: VPN 서버 주소, 기본 계정 정보, 원격 접속 방법"
+            placeholder="Ex: VPN server address, Default credentials, Remote access method"
             value={data.objective.targetInformation.join(', ')}
             onChange={e => onChange({
               ...data,
@@ -290,20 +342,20 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
             })}
             required
           />
-          <small>플레이어가 획득해야 하는 구체적인 정보들</small>
+          <small>Specific information the player needs to obtain / 플레이어가 획득해야 하는 구체적인 정보들</small>
         </div>
       </div>
 
           {/* AI 타겟 설정 */}
           <div className="form-section">
-        <h4>🤖 AI 타겟 (대화 상대)</h4>
+        <h4>AI Target / AI 타겟 (Conversation Partner / 대화 상대)</h4>
 
         <div className="form-grid-3">
           <div className="form-field">
-            <label>이름 *</label>
+            <label>Name / 이름 *</label>
             <input
               type="text"
-              placeholder="예: 김민수"
+              placeholder="Ex: John Smith / 김민수"
               value={data.aiTarget.name}
               onChange={e => onChange({
                 ...data,
@@ -314,10 +366,10 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
           </div>
 
           <div className="form-field">
-            <label>직책 *</label>
+            <label>Role / 직책 *</label>
             <input
               type="text"
-              placeholder="예: IT 헬프데스크 매니저"
+              placeholder="Ex: IT Helpdesk Manager"
               value={data.aiTarget.role}
               onChange={e => onChange({
                 ...data,
@@ -328,10 +380,10 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
           </div>
 
           <div className="form-field">
-            <label>부서 *</label>
+            <label>Department / 부서 *</label>
             <input
               type="text"
-              placeholder="예: IT 운영팀"
+              placeholder="Ex: IT Operations"
               value={data.aiTarget.department}
               onChange={e => onChange({
                 ...data,
@@ -343,10 +395,10 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
         </div>
 
         <div className="form-subsection">
-          <h5>성격 설정 (1-10)</h5>
+          <h5>Personality Settings / 성격 설정 (1-10)</h5>
           <div className="form-grid-4">
             <div className="form-field">
-              <label>친절도 *</label>
+              <label>Helpfulness / 친절도 *</label>
               <input
                 type="number"
                 min={1}
@@ -364,11 +416,11 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 })}
                 required
               />
-              <small>높을수록 협조적</small>
+              <small>Higher = more cooperative / 높을수록 협조적</small>
             </div>
 
             <div className="form-field">
-              <label>보안 인식 *</label>
+              <label>Security Awareness / 보안 인식 *</label>
               <input
                 type="number"
                 min={1}
@@ -386,11 +438,11 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 })}
                 required
               />
-              <small>높을수록 경계심 많음</small>
+              <small>Higher = more cautious / 높을수록 경계심 많음</small>
             </div>
 
             <div className="form-field">
-              <label>권위 존중 *</label>
+              <label>Authority Respect / 권위 존중 *</label>
               <input
                 type="number"
                 min={1}
@@ -408,11 +460,11 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 })}
                 required
               />
-              <small>높을수록 상급자에 약함</small>
+              <small>Higher = weaker to superiors / 높을수록 상급자에 약함</small>
             </div>
 
             <div className="form-field">
-              <label>회의감 *</label>
+              <label>Skepticism / 회의감 *</label>
               <input
                 type="number"
                 min={1}
@@ -430,13 +482,13 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 })}
                 required
               />
-              <small>높을수록 의심 많음</small>
+              <small>Higher = more suspicious / 높을수록 의심 많음</small>
             </div>
           </div>
         </div>
 
         <div className="form-field">
-          <label>의심 한계치 (%) *</label>
+          <label>Suspicion Threshold / 의심 한계치 (%) *</label>
           <input
             type="number"
             min={10}
@@ -448,14 +500,14 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
             })}
             required
           />
-          <small>Easy: 70%, Medium: 50%, Hard: 30% - 이 수치를 넘으면 차단됨</small>
+          <small>Easy: 70%, Medium: 50%, Hard: 30% - Blocked if exceeded / 이 수치를 넘으면 차단됨</small>
         </div>
 
         <div className="form-field">
-          <label>AI가 알고 있는 정보 (쉼표로 구분) *</label>
+          <label>Known Information / AI가 알고 있는 정보 (comma separated / 쉼표로 구분) *</label>
           <input
             type="text"
-            placeholder="예: VPN 서버는 vpn.company.com, 기본 포트는 1194"
+            placeholder="Ex: VPN server is vpn.company.com, Default port is 1194"
             value={data.aiTarget.knownInfo.join(', ')}
             onChange={e => onChange({
               ...data,
@@ -466,14 +518,14 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
             })}
             required
           />
-          <small>AI가 공개할 수 있는 정보</small>
+          <small>Information AI can reveal / AI가 공개할 수 있는 정보</small>
         </div>
 
         <div className="form-field">
-          <label>비밀 정보 (절대 공개 금지, 쉼표로 구분) *</label>
+          <label>Secret Information / 비밀 정보 (never reveal / 절대 공개 금지, comma separated / 쉼표로 구분) *</label>
           <input
             type="text"
-            placeholder="예: 관리자 계정 비밀번호, VPN 마스터 키"
+            placeholder="Ex: Admin password, VPN master key"
             value={data.aiTarget.secretInfo.join(', ')}
             onChange={e => onChange({
               ...data,
@@ -484,23 +536,23 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
             })}
             required
           />
-          <small>AI가 절대 공개하면 안 되는 정보</small>
+          <small>Information AI must never reveal / AI가 절대 공개하면 안 되는 정보</small>
         </div>
       </div>
 
       {/* 사회공학 테크닉 */}
       <div className="form-section">
         <div className="section-header">
-          <h4>🎭 사용 가능한 테크닉 ({data.availableTechniques.length})</h4>
+          <h4>Available Techniques / 사용 가능한 테크닉 ({data.availableTechniques.length})</h4>
           <button type="button" onClick={addTechnique} className="btn-add">
-            <FaPlus /> 추가
+            <FaPlus /> Add / 추가
           </button>
         </div>
 
         {data.availableTechniques.map((tech, idx) => (
           <div key={idx} className="technique-card">
             <div className="technique-header">
-              <span>🎯 Technique {idx + 1}: {typeof tech.name === 'object' ? (tech.name.ko || tech.name.en || '(이름 없음)') : (tech.name || '(이름 없음)')}</span>
+              <span>Technique {idx + 1}: {typeof tech.name === 'object' ? (tech.name.ko || tech.name.en || '(이름 없음)') : (tech.name || '(이름 없음)')}</span>
               <button type="button" onClick={() => removeTechnique(idx)}>
                 <FaTrash />
               </button>
@@ -510,7 +562,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
               {/* Technique Name - Bilingual */}
               <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
-                  테크닉 이름 (Technique Name) *
+                  Technique Name / 테크닉 이름 *
                 </label>
                 <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
                   <div style={{ display: 'grid', gap: '4px' }}>
@@ -538,17 +590,17 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
 
               <div className="input-row-2">
                 <div className="input-group">
-                  <label>타입 *</label>
+                  <label>Type / 타입 *</label>
                   <select
                     value={tech.type}
                     onChange={e => updateTechnique(idx, 'type', e.target.value)}
                     required
                   >
-                    <option value="PRETEXTING">🎭 Pretexting (가짜 신분)</option>
-                    <option value="AUTHORITY">👔 Authority (권위 이용)</option>
-                    <option value="URGENCY">⏰ Urgency (긴급성 조성)</option>
-                    <option value="RECIPROCITY">🤝 Reciprocity (호의 이용)</option>
-                    <option value="LIKING">😊 Liking (동질감 형성)</option>
+                    <option value="PRETEXTING">Pretexting / 가짜 신분</option>
+                    <option value="AUTHORITY">Authority / 권위 이용</option>
+                    <option value="URGENCY">Urgency / 긴급성 조성</option>
+                    <option value="RECIPROCITY">Reciprocity / 호의 이용</option>
+                    <option value="LIKING">Liking / 동질감 형성</option>
                   </select>
                 </div>
               </div>
@@ -556,7 +608,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
               {/* Technique Description - Bilingual */}
               <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
-                  설명 (Description) *
+                  Description / 설명 *
                 </label>
                 <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
                   <div style={{ display: 'grid', gap: '4px' }}>
@@ -584,7 +636,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
 
               <div className="input-row-2">
                 <div className="input-group">
-                  <label>의심도 증가량 (%) *</label>
+                  <label>Suspicion Increase / 의심도 증가량 (%) *</label>
                   <input
                     type="number"
                     min={0}
@@ -593,11 +645,11 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                     onChange={e => updateTechnique(idx, 'suspicionImpact', Number(e.target.value))}
                     required
                   />
-                  <small>낮을수록 안전한 테크닉</small>
+                  <small>Lower = safer technique / 낮을수록 안전한 테크닉</small>
                 </div>
 
                 <div className="input-group">
-                  <label>효과도 (1-10) *</label>
+                  <label>Effectiveness / 효과도 (1-10) *</label>
                   <input
                     type="number"
                     min={1}
@@ -606,7 +658,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                     onChange={e => updateTechnique(idx, 'effectiveness', Number(e.target.value))}
                     required
                   />
-                  <small>높을수록 정보 획득 가능성 증가</small>
+                  <small>Higher = better info extraction / 높을수록 정보 획득 가능성 증가</small>
                 </div>
               </div>
             </div>
@@ -616,10 +668,10 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
 
       {/* 대화 규칙 */}
       <div className="form-section">
-        <h4>💬 대화 규칙</h4>
+        <h4>Conversation Rules / 대화 규칙</h4>
         <div className="form-grid-3">
           <div className="form-field">
-            <label>최대 턴 수 *</label>
+            <label>Max Turns / 최대 턴 수 *</label>
             <input
               type="number"
               min={5}
@@ -634,11 +686,11 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
               })}
               required
             />
-            <small>대화 가능한 최대 횟수</small>
+            <small>Maximum conversation turns / 대화 가능한 최대 횟수</small>
           </div>
 
           <div className="form-field">
-            <label>턴 제한 시간 (초, 선택)</label>
+            <label>Turn Time Limit / 턴 제한 시간 (sec / 초, optional / 선택)</label>
             <input
               type="number"
               min={0}
@@ -651,15 +703,15 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 }
               })}
             />
-            <small>0 = 무제한</small>
+            <small>0 = unlimited / 무제한</small>
           </div>
         </div>
 
         <div className="form-field">
-          <label>의심도 경고 레벨 (쉼표로 구분) *</label>
+          <label>Warning Thresholds / 의심도 경고 레벨 (comma separated / 쉼표로 구분) *</label>
           <input
             type="text"
-            placeholder="예: 30, 60, 90"
+            placeholder="Ex: 30, 60, 90"
             value={data.conversationRules.warningThresholds.join(', ')}
             onChange={e => onChange({
               ...data,
@@ -670,16 +722,16 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
             })}
             required
           />
-          <small>의심도가 이 수치에 도달하면 경고 표시</small>
+          <small>Warning shown when suspicion reaches these levels / 의심도가 이 수치에 도달하면 경고 표시</small>
         </div>
       </div>
 
       {/* 점수 시스템 */}
       <div className="form-section">
-        <h4>🏆 점수 시스템</h4>
-        
+        <h4>Scoring System / 점수 시스템</h4>
+
         <div className="form-field">
-          <label>목표 달성 점수 *</label>
+          <label>Objective Complete Score / 목표 달성 점수 *</label>
           <input
             type="number"
             min={0}
@@ -693,10 +745,10 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
         </div>
 
         <div className="form-subsection">
-          <h5>턴 효율성 보너스</h5>
+          <h5>Turn Efficiency Bonus / 턴 효율성 보너스</h5>
           <div className="form-grid-2">
             <div className="form-field">
-              <label>최대 보너스 *</label>
+              <label>Max Bonus / 최대 보너스 *</label>
               <input
                 type="number"
                 min={0}
@@ -716,7 +768,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
             </div>
 
             <div className="form-field">
-              <label>최적 턴 수 *</label>
+              <label>Optimal Turns / 최적 턴 수 *</label>
               <input
                 type="number"
                 min={1}
@@ -733,16 +785,16 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 })}
                 required
               />
-              <small>이 턴 수 이하로 완료하면 최대 보너스</small>
+              <small>Max bonus if completed within this turn count / 이 턴 수 이하로 완료하면 최대 보너스</small>
             </div>
           </div>
         </div>
 
         <div className="form-subsection">
-          <h5>의심도 관리 보너스</h5>
+          <h5>Suspicion Management Bonus / 의심도 관리 보너스</h5>
           <div className="form-grid-2">
             <div className="form-field">
-              <label>보너스 점수 *</label>
+              <label>Bonus Points / 보너스 점수 *</label>
               <input
                 type="number"
                 min={0}
@@ -762,7 +814,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
             </div>
 
             <div className="form-field">
-              <label>의심도 한계치 (%) *</label>
+              <label>Suspicion Threshold / 의심도 한계치 (%) *</label>
               <input
                 type="number"
                 min={0}
@@ -780,15 +832,15 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
                 })}
                 required
               />
-              <small>이 수치 이하 유지 시 보너스</small>
+              <small>Bonus if suspicion stays below this / 이 수치 이하 유지 시 보너스</small>
             </div>
           </div>
         </div>
 
         <div className="form-subsection">
-          <h5>자연스러움 보너스</h5>
+          <h5>Naturalness Bonus / 자연스러움 보너스</h5>
           <div className="form-field">
-            <label>최대 점수 *</label>
+            <label>Max Points / 최대 점수 *</label>
             <input
               type="number"
               min={0}
@@ -808,10 +860,10 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
           </div>
 
           <div className="form-field">
-            <label>평가 기준 (쉼표로 구분) *</label>
+            <label>Evaluation Criteria / 평가 기준 (comma separated / 쉼표로 구분) *</label>
             <input
               type="text"
-              placeholder="예: 대화 흐름, 자연스러운 질문, 상황에 맞는 반응"
+              placeholder="Ex: Conversation flow, Natural questions, Contextual responses"
               value={data.scoring.naturalnessBonus.evaluationCriteria.join(', ')}
               onChange={e => onChange({
                 ...data,
@@ -825,7 +877,7 @@ const SocialEngineeringForm: React.FC<Props> = ({ data, onChange }) => {
               })}
               required
             />
-            <small>AI가 평가할 기준들</small>
+            <small>Criteria for AI to evaluate / AI가 평가할 기준들</small>
           </div>
         </div>
       </div>

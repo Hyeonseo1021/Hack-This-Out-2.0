@@ -41,6 +41,8 @@ interface ProgressData {
   completed: boolean;
   prompt?: string | { ko: string; en: string };
   totalStages?: number;
+  graceTimeRemaining?: number | null;
+  totalGraceTime?: number | null;
 }
 
 interface PromptData {
@@ -124,7 +126,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   }, [socket, arena._id]);
 
   const handleProgressData = useCallback((data: ProgressData) => {
-    const { stage, score, completed, totalStages: total } = data;
+    const { stage, score, completed, totalStages: total, graceTimeRemaining, totalGraceTime } = data;
 
     setCurrentStage(stage);
     setCurrentScore(score);
@@ -143,6 +145,39 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         { id: logCounter.current++, text: '[SUCCESS] MISSION ACCOMPLISHED', type: 'success' },
         { id: logCounter.current++, text: `[INFO] Final Score: ${score} points`, type: 'success' }
       );
+    }
+
+    // ✅ 유예시간 복원 (새로고침 시)
+    if (graceTimeRemaining && totalGraceTime && !completed) {
+      const graceMin = Math.floor(graceTimeRemaining / 60);
+      const graceSecRemainder = graceTimeRemaining % 60;
+      const graceTimeFormatted = graceMin > 0
+        ? `${graceMin}:${String(graceSecRemainder).padStart(2, '0')}`
+        : `${graceTimeRemaining}s`;
+
+      initialLogs.push(
+        { id: logCounter.current++, text: '', type: 'output' },
+        { id: logCounter.current++, text: `[WARNING] First player completed! You have ${graceTimeFormatted} to finish.`, type: 'error' },
+        { id: logCounter.current++, text: '', type: 'output' }
+      );
+
+      setTotalGraceTime(totalGraceTime);
+      setGraceTimeRemaining(graceTimeRemaining);
+
+      // 기존 타이머 정리
+      if (graceIntervalRef.current) {
+        clearInterval(graceIntervalRef.current);
+      }
+
+      graceIntervalRef.current = setInterval(() => {
+        setGraceTimeRemaining(prev => {
+          if (prev === null || prev <= 0) {
+            if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
 
     setLogs(initialLogs);
@@ -315,17 +350,22 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
-  const handleItemUsed = useCallback((data: { userId: string; username: string; itemType: string; value: number; message: string }) => {
-    console.log('[TerminalRace] arena:item-used received:', data);
+  const handleItemUsed = useCallback((data: {
+    userId: string;
+    username: string;
+    itemType: string;
+    value: number;
+    message: string | { ko: string; en: string }
+  }) => {
+    const msg = typeof data.message === 'object'
+      ? (i18n.language === 'ko' ? data.message.ko : data.message.en)
+      : data.message;
 
-    // 터미널에 아이템 사용 알림 표시
     setLogs(prev => [
       ...prev,
-      { id: logCounter.current++, text: '', type: 'output' },
-      { id: logCounter.current++, text: `[ITEM] ${data.message}`, type: 'system' },
-      { id: logCounter.current++, text: '', type: 'output' }
+      { id: logCounter.current++, text: `[SYSTEM] ${msg}`, type: 'system' }
     ]);
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
+import { useTranslation } from 'react-i18next';
 import '../../assets/scss/arena/ActivityFeed.scss';
 
 type Participant = {
@@ -44,17 +45,29 @@ interface FeedEntry {
   isMe: boolean;
 }
 
-const ActivityFeed: React.FC<ActivityFeedProps> = ({ 
-  socket, 
-  currentUserId, 
+const ActivityFeed: React.FC<ActivityFeedProps> = ({
+  socket,
+  currentUserId,
   participants
 }) => {
+  const { i18n } = useTranslation();
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const feedCounter = useRef(0);
   const feedEndRef = useRef<HTMLDivElement>(null);
   const listenersRegisteredRef = useRef(false);
   const participantsRef = useRef(participants);
   const lastStageRef = useRef<Map<string, number>>(new Map()); // ✅ 스테이지 변화 감지용
+
+  // 다국어 객체에서 현재 언어에 맞는 문자열 추출
+  const getLocalizedString = (value: any): string => {
+    if (!value) return 'Unknown';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      const lang = i18n.language as 'ko' | 'en';
+      return value[lang] || value.en || value.ko || 'Unknown';
+    }
+    return String(value);
+  };
 
   // participants를 ref로 유지하여 최신 값 참조
   useEffect(() => {
@@ -230,6 +243,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
       const username = getUsernameById(data.userId);
       const isMe = data.userId === currentUserId;
 
+      // vulnName이 다국어 객체일 수 있으므로 처리
+      const vulnName = getLocalizedString(data.vulnName) || 'a vulnerability';
+
       // basePoints가 있으면 기본 점수, 없으면 points (부스트 적용된 점수) 사용
       const displayPoints = data.basePoints || data.points;
       const hasBoost = data.basePoints && data.points > data.basePoints;
@@ -238,8 +254,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         id: feedCounter.current++,
         userId: data.userId,
         text: hasBoost
-          ? `${username} found ${data.vulnName || 'a vulnerability'} (+${displayPoints} pts → ${data.points} pts 🚀)`
-          : `${username} found ${data.vulnName || 'a vulnerability'} (+${displayPoints} pts)`,
+          ? `${username} found ${vulnName} (+${displayPoints} pts → ${data.points} pts)`
+          : `${username} found ${vulnName} (+${displayPoints} pts)`,
         type: data.isFirstBlood ? 'first_blood' : 'vuln_found',
         timestamp: new Date(),
         isMe
