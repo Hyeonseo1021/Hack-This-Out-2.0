@@ -69,25 +69,26 @@
             max-width: 300px;
             height: clamp(250px, 28vh, 400px);
             border-radius: clamp(16px, 2vw, 24px);
-            border: 1px solid var(--blue-200);
+            border: 1.5px solid rgba(139, 243, 255, 0.3);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
-            background: var(--color-background-transparent);
+            background: radial-gradient(circle at 50% 50%, #06121a 0%, #02070d 100%);
             transition: all 0.3s ease-in-out;
             cursor: pointer;
+            box-shadow: 0 0 40px rgba(139, 243, 255, 0.1);
 
             @media (max-width: 1024px) {
                 display: none;
             }
 
             &:hover {
-                background: var(--blue-400);
+                background: rgba(139, 243, 255, 0.08);
                 transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-                border: 1px solid transparent;
+                box-shadow: 0 0 20px rgba(139, 243, 255, 0.3);
+                border: 1.5px solid rgba(139, 243, 255, 0.5);
 
                 .machine,
                 .plus,

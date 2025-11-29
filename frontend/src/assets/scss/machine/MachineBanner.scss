@@ -46,12 +46,12 @@
 
     .banner-slide {
       padding: clamp(20px, 2vw, 36px);
-      height: clamp(250px, 28vh, 400px);
+      height: clamp(280px, 32vh, 420px);
       background: var(--bg-glass);
       backdrop-filter: blur(14px);
       border-radius: inherit;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
       @include flex_center;
       transition: all 0.4s ease-in-out;
 
@@ -153,17 +153,15 @@
           }
         }
 
-        /* ✅ 수정된 부분 시작 */
         .rating-box {
           grid-column: 2;
-          grid-row: 3.1; /* 안정적인 위치로 조정 */
+          grid-row: 4;
           display: flex;
           align-items: center;
           gap: 10px;
           color: var(--mint);
-          margin-top: -23px; /* 위로 살짝 이동 */
           z-index: 2;
-          transition: transform 0.25s ease, margin 0.25s ease;
+          transition: transform 0.25s ease;
 
           .rating-text {
             font-size: clamp(1.2rem, 2vw, 1.4rem);
@@ -173,7 +171,7 @@
 
         .go-to-machine-btn {
           grid-column: 3;
-          grid-row: 3.1; /* 같은 라인으로 이동 */
+          grid-row: 4;
           justify-self: center;
           background: transparent;
           color: var(--mint);
@@ -186,7 +184,6 @@
           cursor: pointer;
           transition: all 0.25s ease;
           box-shadow: 0 0 10px rgba(139, 243, 255, 0.15);
-          margin-top: -30px; /* 위로 이동 */
           z-index: 2;
 
           &:hover {
@@ -195,7 +192,6 @@
             transform: translateY(-6px);
           }
         }
-        /* ✅ 수정된 부분 끝 */
       }
     }
   }
