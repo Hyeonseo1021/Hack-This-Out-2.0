@@ -186,9 +186,10 @@
           border-radius: 6px;
 
           font-family: var(--font-display);
-          font-size: clamp(1rem, 1.4vw, 1.2rem);
+          font-size: clamp(0.85rem, 1.2vw, 1rem);
 
-          padding: clamp(8px, 1.4vh, 12px) clamp(20px, 2.8vw, 30px);
+          padding: clamp(6px, 1vh, 10px) clamp(12px, 2vw, 20px);
+          white-space: nowrap;
 
           cursor: pointer;
           transition: 0.25s ease;
