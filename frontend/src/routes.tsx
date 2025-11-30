@@ -37,7 +37,6 @@ const ArenasManagement = lazy(() => import('./pages/admin/ArenasManagement'));
 const TutorialPage = lazy(() => import('./pages/TutorialPage'));
 const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const ManualPage = lazy(() => import('./pages/ManualPage'));
-const ModeExplain = lazy(() => import('./pages/arena/ModeExplain'));
 const BattlePage = lazy(() => import('./pages/battle/BattlePage'));
 const ArenaPage = lazy(() => import('./pages/arena/ArenaPage'));
 const CreateArenaPage = lazy(() => import('./pages/arena/CreateArenaPage'));
@@ -90,14 +89,6 @@ const routes: RouteObject[] = [
         element: (
           <ProtectedRoute>               
             <PlayPage />                    
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'machinep',
-        element: (
-          <ProtectedRoute>
-            <ModeExplain />
           </ProtectedRoute>
         ),
       },
