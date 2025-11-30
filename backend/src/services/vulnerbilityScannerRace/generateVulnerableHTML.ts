@@ -22,16 +22,47 @@ export async function generateVulnerableHTML(scenario: any): Promise<string> {
       apiKey: process.env.ANTHROPIC_API_KEY,
     });
 
+    // 취약점 타입별 필요한 UI 요소 매핑
+    const vulnTypeToUI: Record<string, string> = {
+      'SQLi': 'Login form with username and password fields',
+      'SQL Injection': 'Login form with username and password fields',
+      'XSS': 'Search bar or input field that displays user input back on the page',
+      'Cross-Site Scripting (XSS)': 'Search bar or input field that displays user input back on the page',
+      'CSRF': 'Settings form or action button (transfer, change password, etc.)',
+      'IDOR': 'User profile page with ID parameter in URL or hidden field',
+      'Path Traversal': 'File download link or file viewer with filename parameter',
+      'Command Injection': 'System utility input (ping tool, DNS lookup, etc.)',
+      'Auth Bypass': 'Login form with authentication check',
+      'Authentication Bypass': 'Login form with authentication check',
+      'Info Disclosure': 'Page with hidden comments, debug info, or exposed config',
+      'Information Disclosure': 'Page with hidden comments, debug info, or exposed config',
+      'File Upload': 'File upload form with file type validation',
+      'XXE': 'XML file upload or XML input textarea',
+      'SSRF': 'URL input field (image fetcher, URL preview, webhook config)',
+      'Deserialization': 'Cookie-based session or data import functionality',
+      'Insecure Deserialization': 'Cookie-based session or data import functionality',
+    };
+
     const vulnsDescription = scenario.data.vulnerabilities
-      .map((v: any, index: number) => `
-${index + 1}. ${v.vulnType} (${v.severity || 'MEDIUM'})
+      .map((v: any, index: number) => {
+        const vulnName = typeof v.vulnName === 'object' ? v.vulnName.en : (v.vulnName || v.vulnType);
+        const requiredUI = vulnTypeToUI[v.vulnType] || 'Appropriate input field';
+        return `
+${index + 1}. ${v.vulnType} - "${vulnName}" (${v.difficulty || 'MEDIUM'})
+   - vulnId: ${v.vulnId}
    - Endpoint: ${v.endpoint || '/'}
    - Parameter: ${v.parameter || 'N/A'}
-   - Trigger: ${v.validation?.expectedPayload || 'any input'}
-   - Description: ${v.description || 'No description'}
-   - vulnId: ${v.vulnId}
-`)
+   - Trigger Payload: ${v.validation?.expectedPayload || 'any input'}
+   - **REQUIRED UI ELEMENT**: ${requiredUI}
+   - This vulnerability MUST have a working ${v.parameter} input field!`;
+      })
       .join('\n');
+
+    // 시나리오에서 features 가져오기
+    const scenarioFeatures = scenario.data.features || [];
+    const featuresDescription = scenarioFeatures.length > 0 
+      ? scenarioFeatures.join(', ')
+      : 'Login form, search functionality';
 
     // 테마 목록
     const themeDetails: Record<string, { style: string; features: string }> = {
@@ -73,119 +104,117 @@ ${index + 1}. ${v.vulnType} (${v.severity || 'MEDIUM'})
       }
     };
 
-    const theme = scenario.data.htmlTemplate?.theme || 'login';
-    const themeInfo = themeDetails[theme] || themeDetails['login'];
+    const theme = scenario.data.htmlTemplate?.theme || scenario.data.theme || 'shopping';
+    const themeInfo = themeDetails[theme] || themeDetails['shopping'];
+
+    // targetName과 targetDescription이 객체일 수 있음 (다국어 지원)
+    const targetName = typeof scenario.data.targetName === 'object' 
+      ? scenario.data.targetName.en 
+      : (scenario.data.targetName || 'Practice Web App');
+    const targetDescription = typeof scenario.data.targetDescription === 'object'
+      ? scenario.data.targetDescription.en
+      : (scenario.data.targetDescription || 'A web application with intentional vulnerabilities');
 
     const prompt = `
-You are creating a REALISTIC vulnerable web application for cybersecurity training.
+You are an expert web developer creating a REALISTIC, FULLY FUNCTIONAL vulnerable web application for cybersecurity training.
 
-**Application Theme: ${theme.toUpperCase()}**
+**Application Info:**
+- Theme: ${theme.toUpperCase()}
 - Visual Style: ${themeInfo.style}
-- Key Features: ${themeInfo.features}
-- App Name: ${scenario.data.targetName || 'Practice Web App'}
-- Description: ${scenario.data.targetDescription || 'A web application with intentional vulnerabilities'}
+- App Name: ${targetName}
+- Description: ${targetDescription}
 
-**Vulnerabilities to Include:**
+**REQUIRED FEATURES (MUST INCLUDE ALL AND MAKE FUNCTIONAL):**
+${featuresDescription}
+
+**Vulnerabilities to Implement:**
 ${vulnsDescription}
 
-**REQUIREMENTS:**
+=== CRITICAL REQUIREMENTS ===
 
-1. **Realistic Design**:
-   - Make it look like a REAL ${theme} website (not a training demo)
-   - Use modern CSS (gradients, shadows, animations)
-   - Include proper branding, logo placeholder, navigation
-   - Add realistic placeholder content and data
+**1. REALISTIC VISUAL DESIGN (NOT a simple demo!):**
+- Header with logo, navigation menu, user account icon
+- Proper color scheme matching ${theme} theme
+- Footer with copyright, links
+- Multiple sections/panels on the page
+- Product cards, banners, or relevant content for ${theme}
+- Hover effects, transitions, box shadows
+- At least 300+ lines of HTML/CSS/JS
+- Make it look like a PRODUCTION website, not a homework assignment
 
-2. **Hacking Success Feedback** (VERY IMPORTANT):
-   When a vulnerability is successfully exploited, show a DRAMATIC "hacked" effect:
-   - Screen glitch/flicker animation
-   - Show leaked data dramatically (e.g., database dump, admin access)
-   - Display success message like "ACCESS GRANTED" or "DATABASE EXPOSED"
-   - Make the user FEEL like a real hacker
-   - Example effects: matrix rain, terminal-style output, data scrolling
+**2. EVERY INPUT MUST BE FUNCTIONAL:**
+- Login form: Shows success/error message on submit
+- Search bar: MUST have a search button or Enter key handler, displays "Search results for: [query]" 
+- All buttons must have click handlers
+- All forms must have submit handlers
+- NO dead links - use "#" with preventDefault or show modal
 
-   For wrong attempts, just show normal error (e.g., "Invalid credentials")
+**3. IMPORTANT - DO NOT VALIDATE IN HTML:**
+The HTML should NOT try to validate if the payload is correct. ALL submissions should be sent to the backend for validation.
 
-3. **Single HTML File**: All CSS and JavaScript inline
+For ALL form submissions:
+\`\`\`javascript
+// DO NOT check if payload is correct in HTML!
+// Just show "Checking..." and send to backend
+resultDiv.innerHTML = '⏳ Checking...';
+resultDiv.style.cssText = 'background:#e7f3ff;color:#0066cc;padding:15px;border-radius:6px;';
 
-4. **Vulnerability Detection**:
-   - ON EVERY FORM SUBMISSION, send postMessage:
+// ALWAYS send as vulnerability_attempt - backend will validate
+window.parent.postMessage({
+  type: 'vulnerability_attempt',
+  vulnType: 'SQLi',  // or 'XSS', etc.
+  vulnId: 'EXACT_VULN_ID_FROM_ABOVE',
+  endpoint: '/login',
+  parameter: 'username',
+  payload: inputValue
+}, '*');
+\`\`\`
 
-   If SUCCESSFUL exploit:
-   \`\`\`javascript
-   // Show dramatic hacking effect first, then:
-   window.parent.postMessage({
-     type: 'vulnerability_found',
-     vulnId: 'vuln_xxx',
-     vulnType: 'SQLi',
-     endpoint: '/login',
-     parameter: 'username',
-     payload: inputValue
-   }, '*');
-   \`\`\`
+**4. DO NOT INCLUDE showHackEffect function:**
+Do NOT show any "SYSTEM COMPROMISED" or hacking animations. The parent page will handle success/failure feedback.
 
-   If WRONG attempt:
-   \`\`\`javascript
-   window.parent.postMessage({
-     type: 'vulnerability_attempt',
-     vulnType: 'SQLi',
-     endpoint: '/login',
-     parameter: 'username',
-     payload: inputValue
-   }, '*');
-   \`\`\`
+**5. postMessage FORMAT:**
+ALWAYS use type: 'vulnerability_attempt' - the backend will determine if it's correct
+{ type: 'vulnerability_attempt', vulnId: '[EXACT_VULN_ID]', vulnType: '...', endpoint: '...', parameter: '...', payload: '...' }
 
-5. **NO AUTO-TRIGGER**:
-   - NEVER trigger on page load
-   - ONLY trigger on user actions (form submit, button click)
+**7. PREVENT NAVIGATION:**
+\`\`\`javascript
+document.querySelectorAll('a').forEach(a => a.addEventListener('click', e => { e.preventDefault(); }));
+\`\`\`
 
-6. **Payload Detection Examples**:
-   - SQLi: \`' OR 1=1--\`, \`' OR '1'='1\`, \`admin'--\`
-   - XSS: \`<script>\`, \`<img onerror=\`, \`javascript:\`
-   - IDOR: accessing different user IDs
-   - Path Traversal: "../", "..\\\\"
+=== OUTPUT FORMAT ===
+- Output ONLY valid HTML starting with <!DOCTYPE html>
+- Single file with inline CSS and JavaScript
+- NO markdown, NO explanations, NO comments outside the HTML
+- Minimum 300 lines of code
 
-**HACKING SUCCESS EFFECT EXAMPLE:**
-Create a showHackEffect() function that:
-- Creates a full-screen overlay (position:fixed, z-index:9999)
-- Black background (rgba(0,0,0,0.95)) with green text (#0f0)
-- Monospace font, terminal-style appearance
-- Shows animated text like:
-  "[*] Exploiting vulnerability..."
-  "[*] Bypassing authentication..."
-  "[+] ACCESS GRANTED"
-  "[+] Dumping database..."
-  Then display a fake database table with usernames and password hashes
-  "[!] System compromised successfully"
-- Add glitch/flicker CSS animation
-- Auto-remove after 3-4 seconds
-
-**OUTPUT RULES:**
-- Start with \`<!DOCTYPE html>\` immediately
-- NO markdown, NO explanations
-- Self-contained HTML only
-- Prevent link navigation with JavaScript
-
-OUTPUT THE HTML NOW:
+Generate the complete HTML now:
 `;
 
     console.log('🤖 Calling Claude API to generate vulnerable HTML...');
 
     const message = await anthropic.messages.create({
       model: 'claude-3-5-haiku-20241022',
-      max_tokens: 5000, 
-      temperature: 0.7,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+      max_tokens: 8000, 
+      temperature: 0.5,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        },
+        {
+          role: 'assistant',
+          content: '<!DOCTYPE html>'
+        }
+      ]
     });
 
-    let html = '';
+    // Prefill로 '<!DOCTYPE html>'을 이미 시작했으므로 앞에 붙여줌
+    let html = '<!DOCTYPE html>';
     if (message.content && message.content.length > 0) {
       const textContent = message.content[0];
       if (textContent.type === 'text') {
-        html = textContent.text;
+        html += textContent.text;
       }
     }
 
@@ -351,11 +380,6 @@ function generateFallbackHTML(scenario: any): string {
       // Vulnerable SQL query simulation
       const query = "SELECT * FROM users WHERE username='" + username + "' AND password='" + password + "'";
 
-      // Check for SQL Injection - use scenario's expected payload
-      const expectedPayload = sqliVuln.validation?.expectedPayload || "' OR 1=1--";
-      const sqliPayloads = [expectedPayload, "' OR 1=1--", "' OR '1'='1", "admin'--", "' OR 'a'='a"];
-      const isSQLi = sqliPayloads.some(payload => username.includes(payload) || password.includes(payload));
-
       // Determine which field was used and what value
       let usedPayload = username || password;
       let usedParameter = 'username';
@@ -368,48 +392,58 @@ function generateFallbackHTML(scenario: any): string {
         usedParameter = 'password';
       }
 
-      if (isSQLi) {
-        resultDiv.className = 'result success';
-        resultDiv.innerHTML = '✅ <strong>Login Successful!</strong><br>Welcome, Administrator!<br><small>Query: ' + query + '</small>';
+      // ✅ HTML에서는 검증하지 않고 항상 백엔드에 전송
+      // 백엔드에서 expectedPayload와 비교하여 정확히 검증
+      resultDiv.className = 'result';
+      resultDiv.innerHTML = '⏳ <strong>Checking...</strong>';
+      resultDiv.style.display = 'block';
+      resultDiv.style.background = '#e7f3ff';
+      resultDiv.style.color = '#0066cc';
+      resultDiv.style.border = '1px solid #b3d9ff';
 
-        // Check which field had the SQLi payload
-        const foundInUsername = sqliPayloads.find(p => username.includes(p));
-        if (foundInUsername) {
-          usedPayload = username;
-          usedParameter = 'username';
+      console.log('[HTML] 📤 Sending submission to backend for validation:', { parameter: usedParameter, payload: usedPayload });
+
+      // 항상 vulnerability_attempt로 전송 - 백엔드가 판단
+      window.parent.postMessage({
+        type: 'vulnerability_attempt',
+        vulnType: sqliVuln.vulnType,
+        endpoint: sqliVuln.endpoint || '/login',
+        parameter: usedParameter,
+        payload: usedPayload
+      }, '*');
+
+      // 2초 후 메시지 숨김 (결과는 상위 페이지 toast에서 표시)
+      setTimeout(function() {
+        resultDiv.style.display = 'none';
+      }, 2000);
+    });
+
+    // 상위 페이지에서 결과 메시지 받기
+    window.addEventListener('message', function(event) {
+      const resultDiv = document.getElementById('result');
+      if (!resultDiv) return;
+
+      if (event.data.type === 'submission_result') {
+        if (event.data.success) {
+          resultDiv.className = 'result success';
+          resultDiv.innerHTML = '✅ <strong>Correct!</strong> ' + (event.data.message || '');
+          resultDiv.style.display = 'block';
+          resultDiv.style.background = '#d4edda';
+          resultDiv.style.color = '#155724';
+          resultDiv.style.border = '1px solid #c3e6cb';
         } else {
-          const foundInPassword = sqliPayloads.find(p => password.includes(p));
-          if (foundInPassword) {
-            usedPayload = password;
-            usedParameter = 'password';
-          }
+          resultDiv.className = 'result error';
+          resultDiv.innerHTML = '❌ <strong>Incorrect</strong> ' + (event.data.message || '');
+          resultDiv.style.display = 'block';
+          resultDiv.style.background = '#f8d7da';
+          resultDiv.style.color = '#721c24';
+          resultDiv.style.border = '1px solid #f5c6cb';
         }
 
-        console.log('[HTML] ✅ Vulnerability found! Sending postMessage:', { vulnId: sqliVuln.vulnId, parameter: usedParameter, payload: usedPayload });
-
-        // Notify parent window - CORRECT submission
-        window.parent.postMessage({
-          type: 'vulnerability_found',
-          vulnId: sqliVuln.vulnId,
-          vulnType: sqliVuln.vulnType,
-          endpoint: sqliVuln.endpoint,
-          parameter: usedParameter,
-          payload: usedPayload
-        }, '*');
-      } else {
-        resultDiv.className = 'result error';
-        resultDiv.innerHTML = '❌ <strong>Login Failed!</strong><br>Invalid credentials.';
-
-        console.log('[HTML] ❌ Wrong submission. Sending postMessage:', { parameter: usedParameter, payload: usedPayload });
-
-        // Notify parent window - WRONG submission (let backend decide)
-        window.parent.postMessage({
-          type: 'vulnerability_attempt',
-          vulnType: 'SQLi',
-          endpoint: sqliVuln.endpoint || '/login',
-          parameter: usedParameter,
-          payload: usedPayload
-        }, '*');
+        // 3초 후 메시지 숨김
+        setTimeout(function() {
+          resultDiv.style.display = 'none';
+        }, 3000);
       }
     });
 

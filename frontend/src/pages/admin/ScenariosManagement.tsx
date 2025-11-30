@@ -67,6 +67,8 @@ const getInitialData = (mode: string) => {
     case 'FORENSICS_RUSH':
       return {
         scenario: {
+          title: { ko: '', en: '' },
+          description: { ko: '', en: '' },
           incidentType: 'ransomware',
           date: '',
           context: { ko: '', en: '' }

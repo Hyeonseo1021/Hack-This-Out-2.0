@@ -79,8 +79,8 @@ interface GameOverData {
 const SocialEngineering: React.FC<SocialEngineeringProps> = ({
   arena,
   socket,
-  currentUserId,
-  scenario: propScenario
+  currentUserId: _currentUserId,
+  scenario: _propScenario
 }) => {
   const { t, i18n } = useTranslation('arena');
 
@@ -111,6 +111,7 @@ const SocialEngineering: React.FC<SocialEngineeringProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isInitializedRef = useRef(false);
+  const isCompletedRef = useRef(false); // ✅ 완료 여부 추적용 ref
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -190,6 +191,9 @@ const SocialEngineering: React.FC<SocialEngineeringProps> = ({
 
     const handleGameOver = (data: GameOverData) => {
       setGameOver(data);
+      if (data.success) {
+        isCompletedRef.current = true; // ✅ 완료 시 ref 업데이트
+      }
     };
 
     const handleError = (data: { msg: string }) => {
@@ -211,11 +215,31 @@ const SocialEngineering: React.FC<SocialEngineeringProps> = ({
       }
     };
 
+    // ✅ 유예시간 시작 핸들러 (이미 완료한 사람은 제외)
+    const handleGracePeriodStarted = (data: { graceSec: number; message: string }) => {
+      // 이미 완료한 사용자는 경고 표시하지 않음
+      if (isCompletedRef.current) return;
+
+      const graceMin = Math.floor(data.graceSec / 60);
+      const graceSec = data.graceSec % 60;
+      const timeStr = graceMin > 0
+        ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
+        : `${graceSec}s`;
+
+      // 시스템 메시지로 채팅창에 표시
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `⚠️ [SYSTEM] GRACE PERIOD STARTED: Another player has completed the challenge! Time remaining: ${timeStr}`,
+        timestamp: new Date(),
+      }]);
+    };
+
     socket.on('social:init-data', handleInitData);
     socket.on('social:response', handleResponse);
     socket.on('social:game-over', handleGameOver);
     socket.on('social:error', handleError);
     socket.on('social:progress-data', handleProgressData);
+    socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
     return () => {
       socket.off('social:init-data', handleInitData);
@@ -223,6 +247,7 @@ const SocialEngineering: React.FC<SocialEngineeringProps> = ({
       socket.off('social:game-over', handleGameOver);
       socket.off('social:error', handleError);
       socket.off('social:progress-data', handleProgressData);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
   }, [socket]);
 

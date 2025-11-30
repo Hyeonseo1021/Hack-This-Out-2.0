@@ -35,7 +35,7 @@ const AddMachineForm: React.FC = () => {
   if (!authUserContext) {
     throw new Error('AddMachineForm must be used within an AuthUserProvider');
   }
-  const { currentUser } = authUserContext;
+  const { currentUser: _currentUser } = authUserContext;
   const availableSkills = ['Web', 'Network', 'Crypto', 'Reversing', 'Pwn', 'Forensics', 'Cloud', 'AI'];
 
   const [formData, setFormData] = useState<MachineFormData>({

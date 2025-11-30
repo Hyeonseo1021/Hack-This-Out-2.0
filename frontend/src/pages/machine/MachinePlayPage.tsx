@@ -55,7 +55,7 @@ const MachinePlayPage: React.FC = () => {
     downloadStatus,
     submitStatus,
     setSubmitStatus,
-    clearBuffs,
+    clearBuffs: _clearBuffs,
   } = usePlayContext();
 
   // Ref to the container for scrolling and class manipulation

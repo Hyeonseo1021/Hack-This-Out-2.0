@@ -172,6 +172,7 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
             gracePeriodSeconds: gracePeriodSeconds,
             graceMs: graceMs,
             graceSec: gracePeriodSeconds,
+            totalGraceSec: gracePeriodSeconds,
             firstWinner: String(userId),
             message: `First player completed! You have ${graceTimeFormatted} to finish.`
           });
@@ -373,20 +374,21 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         return;
       }
 
-      const scenario = arena.scenarioId as any;
-      const scenarioData = scenario.data;
+      const scenarioDoc = arena.scenarioId as any;
+      const scenarioData = scenarioDoc.data;
 
+      // 공통 title/description을 우선 사용하고, data.scenario 내부 값을 fallback으로 사용
       socket.emit('forensics:scenario-data', {
         scenario: {
-          title: scenarioData.scenario.title,
-          description: scenarioData.scenario.description,
-          incidentType: scenarioData.scenario.incidentType,
-          date: scenarioData.scenario.date,
-          context: scenarioData.scenario.context
+          title: scenarioDoc.title || scenarioData.scenario?.title || scenarioData.scenario?.incidentType,
+          description: scenarioDoc.description || scenarioData.scenario?.description || '',
+          incidentType: scenarioData.scenario?.incidentType || 'unknown',
+          date: scenarioData.scenario?.date || '',
+          context: scenarioData.scenario?.context || ''
         },
         evidenceFiles: scenarioData.evidenceFiles || [],
         availableTools: scenarioData.availableTools || [],
-        totalQuestions: scenarioData.totalQuestions || scenarioData.questions.length
+        totalQuestions: scenarioData.totalQuestions || scenarioData.questions?.length || 0
       });
 
       console.log('📤 [forensics:get-scenario] Sent scenario data to client');

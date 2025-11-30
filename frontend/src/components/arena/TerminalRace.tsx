@@ -81,8 +81,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const [totalStages, setTotalStages] = useState(0);
   const [currentScore, setCurrentScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [graceTimeRemaining, setGraceTimeRemaining] = useState<number | null>(null);
-  const [totalGraceTime, setTotalGraceTime] = useState<number | null>(null);
   const [lastScoreGain, setLastScoreGain] = useState(0);
 
   const logContainerRef = useRef<HTMLDivElement>(null);
@@ -90,7 +88,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const isInitializedRef = useRef(false);
   const isCompletedRef = useRef(false);
-  const graceIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const lastProcessedCommandRef = useRef<string>('');
   const lastPromptStageRef = useRef<number>(-1);
@@ -126,7 +123,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   }, [socket, arena._id]);
 
   const handleProgressData = useCallback((data: ProgressData) => {
-    const { stage, score, completed, totalStages: total, graceTimeRemaining, totalGraceTime } = data;
+    const { stage, score, completed, totalStages: total } = data;
 
     setCurrentStage(stage);
     setCurrentScore(score);
@@ -147,38 +144,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       );
     }
 
-    // ✅ 유예시간 복원 (새로고침 시)
-    if (graceTimeRemaining && totalGraceTime && !completed) {
-      const graceMin = Math.floor(graceTimeRemaining / 60);
-      const graceSecRemainder = graceTimeRemaining % 60;
-      const graceTimeFormatted = graceMin > 0
-        ? `${graceMin}:${String(graceSecRemainder).padStart(2, '0')}`
-        : `${graceTimeRemaining}s`;
-
-      initialLogs.push(
-        { id: logCounter.current++, text: '', type: 'output' },
-        { id: logCounter.current++, text: `[WARNING] First player completed! You have ${graceTimeFormatted} to finish.`, type: 'error' },
-        { id: logCounter.current++, text: '', type: 'output' }
-      );
-
-      setTotalGraceTime(totalGraceTime);
-      setGraceTimeRemaining(graceTimeRemaining);
-
-      // 기존 타이머 정리
-      if (graceIntervalRef.current) {
-        clearInterval(graceIntervalRef.current);
-      }
-
-      graceIntervalRef.current = setInterval(() => {
-        setGraceTimeRemaining(prev => {
-          if (prev === null || prev <= 0) {
-            if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    // 유예시간은 ArenaPlayPage 헤더에서 통합 관리
 
     setLogs(initialLogs);
     setIsLoading(false);
@@ -295,33 +261,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     }, 100);
   }, [currentUserId, socket, arena._id]);
 
-  const handleGracePeriodStarted = useCallback((data: { graceMs: number; graceSec: number; message: string }) => {
-    if (graceIntervalRef.current) {
-      clearInterval(graceIntervalRef.current);
-      graceIntervalRef.current = null;
-    }
-
-    if (!isCompletedRef.current) {
-      setLogs(prev => [
-        ...prev,
-        { id: logCounter.current++, text: '', type: 'output' },
-        { id: logCounter.current++, text: `[WARNING] ${data.message}`, type: 'error' },
-        { id: logCounter.current++, text: '', type: 'output' }
-      ]);
-
-      setTotalGraceTime(data.graceSec);
-      setGraceTimeRemaining(data.graceSec);
-      graceIntervalRef.current = setInterval(() => {
-        setGraceTimeRemaining(prev => {
-          if (prev === null || prev <= 0) {
-            if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-  }, []);
+  // 유예시간은 ArenaPlayPage 헤더에서 통합 관리
 
   const arenaEndedRef = useRef(false);
 
@@ -329,7 +269,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     if (arenaEndedRef.current) return;
     arenaEndedRef.current = true;
 
-    if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
     setLogs(prev => [
       ...prev,
       { id: logCounter.current++, text: '', type: 'output' },
@@ -337,7 +276,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       { id: logCounter.current++, text: `[INFO] ${data.message}`, type: 'system' },
       { id: logCounter.current++, text: '', type: 'output' }
     ]);
-    setGraceTimeRemaining(null);
   }, []);
 
   const handleRedirectToResults = useCallback((data: { redirectUrl: string }) => {
@@ -367,42 +305,64 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     ]);
   }, [i18n.language]);
 
+  // ✅ 유예시간 시작 핸들러 - 터미널에 경고 로그 표시 (이미 완료한 사람은 제외)
+  const handleGracePeriodStarted = useCallback((data: { graceSec: number; message: string }) => {
+    // 이미 완료한 사용자는 경고 표시하지 않음
+    if (isCompletedRef.current) return;
+
+    const graceMin = Math.floor(data.graceSec / 60);
+    const graceSec = data.graceSec % 60;
+    const timeStr = graceMin > 0
+      ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
+      : `${graceSec}s`;
+
+    setLogs(prev => [
+      ...prev,
+      { id: logCounter.current++, text: '', type: 'output' },
+      { id: logCounter.current++, text: '╔════════════════════════════════════════════════╗', type: 'error' },
+      { id: logCounter.current++, text: '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
+      { id: logCounter.current++, text: `║  Another player has completed the challenge!   ║`, type: 'error' },
+      { id: logCounter.current++, text: `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
+      { id: logCounter.current++, text: '╚════════════════════════════════════════════════╝', type: 'error' },
+      { id: logCounter.current++, text: '', type: 'output' }
+    ]);
+  }, []);
+
   useEffect(() => {
 
     socket.off('terminal:progress-data');
     socket.off('terminal:prompt-data');
     socket.off('terminal:result');
     socket.off('terminal:error');
-    socket.off('arena:grace-period-started');
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
     socket.off('arena:item-used');
+    // arena:grace-period-started는 ArenaPlayPage와 공유하므로 특정 핸들러만 제거
+    socket.off('arena:grace-period-started', handleGracePeriodStarted);
 
     socket.on('terminal:progress-data', handleProgressData);
     socket.on('terminal:prompt-data', handlePromptData);
     socket.on('terminal:result', handleTerminalResult);
     socket.on('terminal:error', handleTerminalError);
-    socket.on('arena:grace-period-started', handleGracePeriodStarted);
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('arena:item-used', handleItemUsed);
-
+    socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
     return () => {
-      if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
       arenaEndedRef.current = false;
 
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);
       socket.off('terminal:result', handleTerminalResult);
       socket.off('terminal:error', handleTerminalError);
-      socket.off('arena:grace-period-started', handleGracePeriodStarted);
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('arena:item-used', handleItemUsed);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
   }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError,
-      handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleItemUsed]);
+      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleGracePeriodStarted]);
 
   useEffect(() => {
     if (logContainerRef.current) {
@@ -473,11 +433,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
                   {currentScore} points
                   {lastScoreGain > 0 && <span className="score-popup">+{lastScoreGain}</span>}
                 </span>
-                {graceTimeRemaining !== null && totalGraceTime !== null && !isCompleted && (
-                  <span className="stat-item warning-stat">
-                    {Math.floor(graceTimeRemaining / 60)}:{String(graceTimeRemaining % 60).padStart(2, '0')}/{Math.floor(totalGraceTime / 60)}:{String(totalGraceTime % 60).padStart(2, '0')}
-                  </span>
-                )}
               </>
             )}
           </div>

@@ -155,6 +155,13 @@
       align-items: center;
       gap: 1rem;
 
+      // 타이머 섹션 (유예시간 또는 기존시간 - 둘 중 하나만 표시)
+      .timer-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
       // ✅ Grace Period 표시 스타일
       .grace-period-display {
         display: flex;
@@ -188,9 +195,13 @@
             font-size: 1.1rem;
             font-weight: 900;
             color: #ff9500;
-            font-family: 'Courier New', monospace;
             letter-spacing: 2px;
             text-shadow: 0 0 10px rgba(255, 165, 0, 0.6);
+
+            .grace-total {
+              font-size: 0.85rem;
+              color: rgba(255, 165, 0, 0.6);
+            }
           }
         }
       }
@@ -220,19 +231,17 @@
         gap: 0.1rem;
 
         .timer-value {
-          font-size: 1.3rem;
+          font-size: 1rem;
           font-weight: 900;
           color: #00f6ff;
-          font-family: 'Courier New', monospace;
           letter-spacing: 2px;
           text-shadow: 0 0 10px rgba(0, 246, 255, 0.6);
         }
 
         .timer-label {
-          font-size: 0.65rem;
+          font-size: 0.7rem;
           color: rgba(255, 255, 255, 0.5);
           text-transform: uppercase;
-          font-family: 'Courier New', monospace;
           font-weight: 700;
           letter-spacing: 1.5px;
         }

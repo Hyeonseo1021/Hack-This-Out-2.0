@@ -6,7 +6,8 @@
       "Bash(cat:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(dir \"c:\\Users\\김현서\\Documents\\GitHub\\Hack-This-Out-2.0\\backend\\src\")"
     ],
     "deny": [],
     "ask": []

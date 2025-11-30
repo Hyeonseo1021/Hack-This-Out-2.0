@@ -76,6 +76,7 @@
   },
   "play": {
     "remaining": "남은 시간",
+    "originalTime": "기존 시간",
     "players": "플레이어",
     "info": "정보",
     "startTime": "시작 시간",
@@ -134,7 +135,18 @@
     "showHints": "힌트 보기",
     "useHint": "힌트 사용",
     "noHints": "힌트 없음",
-    "denied": "거부됨"
+    "denied": "거부됨",
+    "investigationSummary": "수사 요약",
+    "case": "사건",
+    "incident": "사건 유형",
+    "questionsSolved": "해결한 문제",
+    "totalScore": "총 점수",
+    "teamStatus": "팀 현황",
+    "completed": "완료",
+    "inProgress": "진행 중",
+    "gameOver": "게임 종료",
+    "allAgentsSubmitted": "모든 요원이 보고서를 제출했습니다. 최종 결과 준비 중...",
+    "awaitingReports": "나머지 요원들의 현장 보고서를 기다리는 중..."
   },
   "toast": {
     "hintGained": "💡 힌트 {{count}}개를 획득했습니다!",

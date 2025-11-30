@@ -76,6 +76,7 @@
   },
   "play": {
     "remaining": "Remaining",
+    "originalTime": "Original Time",
     "players": "Players",
     "info": "Info",
     "startTime": "Start Time",
@@ -134,7 +135,18 @@
     "showHints": "SHOW HINTS",
     "useHint": "USE HINT",
     "noHints": "NO HINTS",
-    "denied": "DENIED"
+    "denied": "DENIED",
+    "investigationSummary": "INVESTIGATION SUMMARY",
+    "case": "Case",
+    "incident": "Incident",
+    "questionsSolved": "Questions Solved",
+    "totalScore": "Total Score",
+    "teamStatus": "TEAM STATUS",
+    "completed": "COMPLETED",
+    "inProgress": "IN PROGRESS",
+    "gameOver": "GAME OVER",
+    "allAgentsSubmitted": "All agents have submitted their reports. Preparing final results...",
+    "awaitingReports": "Awaiting field reports from remaining agents..."
   },
   "toast": {
     "hintGained": "💡 Gained {{count}} hint(s)!",

@@ -23,8 +23,16 @@ const LeaderBoardPage: React.FC = () => {
           getMyRank()
         ]);
 
-        setLeaderboard(leaderboardData || []);
-        setMyRank(myRankData || null);
+        // ✅ 백엔드 응답 형식에 맞게 데이터 추출
+        setLeaderboard(leaderboardData?.users || []);
+        setMyRank({
+          _id: myRankData?.user?._id || null,
+          myUsername: myRankData?.user?.username || 'Guest',
+          myLevel: myRankData?.user?.level || 1,
+          myExp: myRankData?.user?.exp || 0,
+          myRank: myRankData?.myRank || null,
+          myAvatar: myRankData?.user?.avatar || null
+        });
       } catch (err: any) {
         console.error('❌ Error fetching leaderboard:', err);
         setError(err?.response?.data?.message || 'Failed to load leaderboard');

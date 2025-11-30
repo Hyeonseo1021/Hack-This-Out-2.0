@@ -46,7 +46,8 @@ const ManualPage: React.FC = () => {
     }
   };
 
-  const currentDialogData = dialogs[currentDialog];
+  // Reserved for future use
+  // const currentDialogData = dialogs[currentDialog];
 
   return (
     <Main>

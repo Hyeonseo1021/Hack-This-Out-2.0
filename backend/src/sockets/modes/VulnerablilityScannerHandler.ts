@@ -10,10 +10,7 @@ import {
   getGameState
 } from '../../services/vulnerbilityScannerRace/vulnerabilityScannerEngine';
 import { generateVulnerableHTML } from '../../services/vulnerbilityScannerRace/generateVulnerableHTML';
-import { endArenaProcedure, endArenaImmediately } from '../utils/endArenaProcedure';
-
-// 유예 시간 타이머 저장
-const graceTimers = new Map<string, NodeJS.Timeout>();
+import { endArenaProcedure, endArenaImmediately, isGracePeriodActive } from '../utils/endArenaProcedure';
 
 // ✅ 중복 처리 방지를 위한 Map (Race Condition 방지)
 const processingSubmissions = new Map<string, boolean>();
@@ -206,14 +203,10 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
           })
         });
 
-        // ✅ endArenaProcedure를 호출하여 동적 유예시간 계산
-        const timer = await endArenaProcedure(arenaId, io);
+        // ✅ endArenaProcedure를 호출하여 동적 유예시간 계산 (내부에서 타이머 관리)
+        await endArenaProcedure(arenaId, io);
 
-        if (timer) {
-          graceTimers.set(arenaId, timer);
-        }
-
-      } else if (hadWinnerBefore) {
+      } else if (hadWinnerBefore && isGracePeriodActive(arenaId)) {
         // grace period 중에 취약점 제출이 발생한 경우
         // 현재 유저가 이번에 완주했는지 확인
         const currentUserCompleted = completers.some(
@@ -252,13 +245,7 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
           // ✅ 모든 활성 참가자가 완주했을 때만 즉시 종료
           if (completers.length >= activeParticipants.length) {
             console.log('🎉 [ScannerRace] All completed! Ending immediately');
-
-            if (graceTimers.has(arenaId)) {
-              clearTimeout(graceTimers.get(arenaId)!);
-              graceTimers.delete(arenaId);
-              console.log('⏹️ [ScannerRace] Grace timer cancelled');
-            }
-
+            // endArenaImmediately 내부에서 graceTimer를 정리함
             await endArenaImmediately(arenaId, io);
           }
         } else {

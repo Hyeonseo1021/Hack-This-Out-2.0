@@ -2,10 +2,7 @@ import { Server, Socket } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { terminalProcessCommand } from '../../services/terminalRace/terminalEngine';
-import { endArenaImmediately, endArenaProcedure, getGraceInfo } from '../utils/endArenaProcedure';
-
-// 유예 시간 타이머 저장
-const graceTimers = new Map<string, NodeJS.Timeout>();
+import { endArenaImmediately, endArenaProcedure, getGraceInfo, isGracePeriodActive } from '../utils/endArenaProcedure';
 
 // ✅ 중복 처리 방지를 위한 Map
 const processingCommands = new Map<string, boolean>();
@@ -313,14 +310,10 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
 
         console.log(`⏳ [TerminalRace] Calling endArenaProcedure for dynamic grace period`);
 
-        // ✅ endArenaProcedure를 호출하여 동적 유예시간 계산
-        const timer = await endArenaProcedure(effectiveArenaId, io);
+        // ✅ endArenaProcedure를 호출하여 동적 유예시간 계산 (내부에서 타이머 관리)
+        await endArenaProcedure(effectiveArenaId, io);
 
-        if (timer) {
-          graceTimers.set(effectiveArenaId, timer);
-        }
-
-      } else if (progressDoc.completed && arena.winner) {
+      } else if (progressDoc.completed && arena.winner && isGracePeriodActive(effectiveArenaId)) {
         console.log(`✅ Player ${userId} completed during grace period`);
 
         const submittedAt = new Date();
@@ -372,13 +365,7 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
         
         if (completedCount >= activeParticipants.length) {
           console.log('🎉 All completed! Ending immediately');
-          
-          if (graceTimers.has(effectiveArenaId)) {
-            clearTimeout(graceTimers.get(effectiveArenaId)!);
-            graceTimers.delete(effectiveArenaId);
-            console.log('⏹️ Grace timer cancelled');
-          }
-          
+          // endArenaImmediately 내부에서 graceTimer를 정리함
           await endArenaImmediately(effectiveArenaId, io);
         }
       }
@@ -496,13 +483,8 @@ export const registerTerminalRaceHandlers = (io: Server, socket: Socket) => {
       const arena = await Arena.findById(arenaId);
       if (!arena || arena.status === 'ended') return;
       
-      if (graceTimers.has(arenaId)) {
-        clearTimeout(graceTimers.get(arenaId)!);
-        graceTimers.delete(arenaId);
-        console.log('⏹️ Grace timer cancelled');
-      }
-      
       console.log('🏁 Forcing end');
+      // endArenaImmediately 내부에서 graceTimer를 정리함
       await endArenaImmediately(arenaId, io);
     } catch (e) {
       console.error('[arena:end] error:', e);

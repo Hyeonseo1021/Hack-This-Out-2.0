@@ -57,6 +57,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const listenersRegisteredRef = useRef(false);
   const participantsRef = useRef(participants);
   const lastStageRef = useRef<Map<string, number>>(new Map()); // ✅ 스테이지 변화 감지용
+  const completedUsersRef = useRef<Set<string>>(new Set()); // ✅ 완료한 사용자 추적
 
   // 다국어 객체에서 현재 언어에 맞는 문자열 추출
   const getLocalizedString = (value: any): string => {
@@ -104,6 +105,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         
         // 완료한 경우
         if (completed) {
+          completedUsersRef.current.add(uid); // ✅ 완료한 사용자 기록
           initialFeeds.push({
             id: feedCounter.current++,
             userId: uid,
@@ -161,7 +163,6 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
         return;
       }
 
-      const username = getUsernameById(data.userId);
       const isMe = true;
 
       // 명령어 실행만 표시 (점수는 participant:update에서 처리)
@@ -197,8 +198,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
       let entry: { text: string; type: FeedEntry['type'] } | null = null;
 
-      // 🏆 모든 스테이지 완료
-      if (data.progress.completed) {
+      // 🏆 모든 스테이지 완료 (이미 완료 메시지를 보낸 사용자는 제외)
+      if (data.progress.completed && !completedUsersRef.current.has(data.userId)) {
+        completedUsersRef.current.add(data.userId); // ✅ 완료 사용자 기록
         entry = {
           text: `${username} completed all stages! 🏆`,
           type: 'flag'

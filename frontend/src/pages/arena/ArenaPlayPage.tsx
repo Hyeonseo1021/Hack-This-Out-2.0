@@ -62,6 +62,7 @@ const ArenaPlayPage: React.FC = () => {
   // ✅ Grace period 상태 (전역적으로 관리)
   const [gracePeriodActive, setGracePeriodActive] = useState(false);
   const [gracePeriodRemaining, setGracePeriodRemaining] = useState(0);
+  const [totalGracePeriod, setTotalGracePeriod] = useState(0);
   const gracePeriodIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const joinedRef = useRef(false);
@@ -425,11 +426,13 @@ const ArenaPlayPage: React.FC = () => {
     };
 
     // ✅ 유예 시간 시작 핸들러 (모든 플레이어에게 브로드캐스트됨)
-    const handleGracePeriodStarted = (data: { graceMs: number; graceSec: number; message: string }) => {
+    const handleGracePeriodStarted = (data: { graceMs: number; graceSec: number; totalGraceSec?: number; message: string }) => {
       console.log('⏳ [ArenaPlayPage] arena:grace-period-started received:', data);
 
       setGracePeriodActive(true);
       setGracePeriodRemaining(data.graceSec);
+      // totalGraceSec이 있으면 사용, 없으면 graceSec 사용 (최초 시작 시)
+      setTotalGracePeriod(data.totalGraceSec || data.graceSec);
 
       // 기존 인터벌 정리
       if (gracePeriodIntervalRef.current) {
@@ -585,26 +588,36 @@ const ArenaPlayPage: React.FC = () => {
           </div>
           
           <div className="header-right">
-            {/* ✅ Grace Period 표시 */}
-            {gracePeriodActive && (
-              <div className="grace-period-display">
-                <div className="grace-icon">⏳</div>
-                <div className="grace-info">
-                  <div className="grace-label">GRACE PERIOD</div>
-                  <div className="grace-time">
-                    {Math.floor(gracePeriodRemaining / 60)}:{String(gracePeriodRemaining % 60).padStart(2, '0')}
+            {/* 타이머 영역 - 유예시간이 위에, 기존시간이 아래에 */}
+            <div className={`timer-section ${gracePeriodActive ? 'grace-active' : ''}`}>
+              {/* ✅ Grace Period 표시 (활성화 시에만) */}
+              {gracePeriodActive && (
+                <div className="grace-period-display">
+                  <div className="grace-info">
+                    <div className="grace-label">GRACE PERIOD</div>
+                    <div className="grace-time">
+                      {Math.floor(gracePeriodRemaining / 60)}:{String(gracePeriodRemaining % 60).padStart(2, '0')}
+                      {totalGracePeriod > 0 && (
+                        <span className="grace-total">
+                          /{Math.floor(totalGracePeriod / 60)}:{String(totalGracePeriod % 60).padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="timer-display">
-              <div className="timer-value">
-                {mm}:{String(ss).padStart(2, '0')}
-              </div>
-              <div className="timer-label">
-                {t('play.remaining')}
-              </div>
+              {/* 기존 타이머 - 유예시간 활성화 시 숨김 */}
+              {!gracePeriodActive && (
+                <div className="timer-display">
+                  <div className="timer-value">
+                    {mm}:{String(ss).padStart(2, '0')}
+                  </div>
+                  <div className="timer-label">
+                    {t('play.remaining')}
+                  </div>
+                </div>
+              )}
             </div>
 
             <button

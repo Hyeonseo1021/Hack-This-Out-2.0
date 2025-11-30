@@ -95,14 +95,9 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [participantsStatus, setParticipantsStatus] = useState<Map<string, { username: string; completed: boolean; score: number }>>(new Map());
   const isInitializedRef = useRef(false);
   const notificationIdCounter = useRef(0);
+  const isCompletedRef = useRef(false); // ✅ 완료 여부 추적용 ref
 
-  // 🎯 타이머 관련 state
-  const [_gameTimeRemaining, setGameTimeRemaining] = useState<number | null>(null);
-  const [gracePeriodRemaining, setGracePeriodRemaining] = useState<number | null>(null);
-  const [totalGracePeriod, setTotalGracePeriod] = useState<number | null>(null);
-  const [firstWinner, setFirstWinner] = useState<string | null>(null);
-  const gameTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const gracePeriodIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // 유예시간은 ArenaPlayPage 헤더에서 통합 관리
 
   // 사용자 이름 가져오기 헬퍼 함수
   const getUsernameById = useCallback((userId: string): string => {
@@ -161,61 +156,9 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     loadData();
   }, [arena._id, socket, isLoading]);
 
-  // ✅ 유예 시간 시작 핸들러
-  const handleGracePeriodStarted = useCallback((data: {
-    gracePeriodSeconds: number;
-    firstWinner: string;
-    message: string;
-  }) => {
-    console.log('⏰ [ForensicsRush] Grace period started:', data);
-
-    setTotalGracePeriod(data.gracePeriodSeconds);
-    setGracePeriodRemaining(data.gracePeriodSeconds);
-    setFirstWinner(data.firstWinner);
-
-    // 기존 타이머 정리
-    if (gameTimerIntervalRef.current) {
-      clearInterval(gameTimerIntervalRef.current);
-      gameTimerIntervalRef.current = null;
-    }
-
-    // 유예 시간 타이머 시작
-    if (gracePeriodIntervalRef.current) {
-      clearInterval(gracePeriodIntervalRef.current);
-    }
-
-    gracePeriodIntervalRef.current = setInterval(() => {
-      setGracePeriodRemaining((prev) => {
-        if (prev === null || prev <= 0) {
-          if (gracePeriodIntervalRef.current) {
-            clearInterval(gracePeriodIntervalRef.current);
-            gracePeriodIntervalRef.current = null;
-          }
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
-
   // ✅ 게임 종료 핸들러
-  const handleArenaEnded = useCallback((data: { message: string }) => {
-    console.log('🏁 [ForensicsRush] Arena ended:', data);
-    
-    // 모든 타이머 정리
-    if (gameTimerIntervalRef.current) {
-      clearInterval(gameTimerIntervalRef.current);
-      gameTimerIntervalRef.current = null;
-    }
-    if (gracePeriodIntervalRef.current) {
-      clearInterval(gracePeriodIntervalRef.current);
-      gracePeriodIntervalRef.current = null;
-    }
-    
-    setGracePeriodRemaining(null);
-    setGameTimeRemaining(null);
-    
-    // 완료 상태로 설정
+  const handleArenaEnded = useCallback((_data: { message: string }) => {
+    console.log('🏁 [ForensicsRush] Arena ended');
     setAllCompleted(true);
   }, []);
 
@@ -230,18 +173,8 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   // ✅ 모든 참가자 완료 핸들러
   const handleAllCompleted = useCallback((data: { message: string }) => {
     console.log('🎉 [ForensicsRush] All participants completed:', data.message);
-
-    // 유예 기간 타이머 정리
-    if (gracePeriodIntervalRef.current) {
-      clearInterval(gracePeriodIntervalRef.current);
-      gracePeriodIntervalRef.current = null;
-    }
-
-    setGracePeriodRemaining(null);
     setAllCompleted(true);
-
-    // ✅ 리디렉션은 backend에서 arena:redirect-to-results 이벤트로 처리
-    // (endArenaProcedure가 완료된 후 2초 뒤에 전송됨)
+    // 리디렉션은 backend에서 arena:redirect-to-results 이벤트로 처리
   }, []);
 
   // 🎯 다른 플레이어 완료 핸들러
@@ -319,6 +252,31 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
     }, 5000);
   }, [currentUserId, getUsernameById, i18n.language, t]);
+
+  // ✅ 유예시간 시작 핸들러 - 알림 표시 (이미 완료한 사람은 제외)
+  const handleGracePeriodStarted = useCallback((data: { graceSec: number; message: string }) => {
+    // 이미 완료한 사용자는 경고 표시하지 않음
+    if (isCompletedRef.current) return;
+
+    const graceMin = Math.floor(data.graceSec / 60);
+    const graceSec = data.graceSec % 60;
+    const timeStr = graceMin > 0
+      ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
+      : `${graceSec}s`;
+
+    const notification = {
+      id: notificationIdCounter.current++,
+      message: `⚠️ GRACE PERIOD: Another player completed! Time remaining: ${timeStr}`,
+      timestamp: new Date()
+    };
+
+    setItemNotifications(prev => [...prev, notification]);
+
+    // 10초 후 자동 삭제 (중요한 알림이므로 더 오래 표시)
+    setTimeout(() => {
+      setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 10000);
+  }, []);
 
   // 소켓 이벤트 핸들러
   useEffect(() => {
@@ -425,6 +383,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
         if (data.allCompleted) {
           console.log('🎉 [ForensicsRush] All questions completed!');
           setAllCompleted(true);
+          isCompletedRef.current = true; // ✅ 완료 ref도 업데이트
         }
         
         setTimeout(() => setFeedback(null), 3000);
@@ -474,61 +433,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       setTimeout(() => setFeedback(null), 3000);
     };
 
-    // ✅ 게임 상태 핸들러
+    // ✅ 게임 상태 핸들러 (유예시간은 ArenaPlayPage에서 관리)
     const handleGameState = (data: {
-      gameTimeRemaining: number | null;
-      gracePeriodRemaining: number | null;
-      firstWinner: string | null;
       isEnded: boolean;
     }) => {
       console.log('🎮 [ForensicsRush] Game state received:', data);
-      
-      setGameTimeRemaining(data.gameTimeRemaining);
-      setGracePeriodRemaining(data.gracePeriodRemaining);
-      setFirstWinner(data.firstWinner);
-      
+
       if (data.isEnded) {
         setAllCompleted(true);
-      }
-      
-      // 게임 타이머 설정
-      if (data.gameTimeRemaining !== null && data.gameTimeRemaining > 0) {
-        if (gameTimerIntervalRef.current) {
-          clearInterval(gameTimerIntervalRef.current);
-        }
-        
-        gameTimerIntervalRef.current = setInterval(() => {
-          setGameTimeRemaining((prev) => {
-            if (prev === null || prev <= 1) {
-              if (gameTimerIntervalRef.current) {
-                clearInterval(gameTimerIntervalRef.current);
-                gameTimerIntervalRef.current = null;
-              }
-              return null;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-      
-      // 유예 시간 타이머 설정
-      if (data.gracePeriodRemaining !== null && data.gracePeriodRemaining > 0) {
-        if (gracePeriodIntervalRef.current) {
-          clearInterval(gracePeriodIntervalRef.current);
-        }
-        
-        gracePeriodIntervalRef.current = setInterval(() => {
-          setGracePeriodRemaining((prev) => {
-            if (prev === null || prev <= 1) {
-              if (gracePeriodIntervalRef.current) {
-                clearInterval(gracePeriodIntervalRef.current);
-                gracePeriodIntervalRef.current = null;
-              }
-              return null;
-            }
-            return prev - 1;
-          });
-        }, 1000);
       }
     };
 
@@ -539,11 +451,12 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.off('forensics:result');
     socket.off('forensics:error');
     socket.off('forensics:game-state');
-    socket.off('arena:grace-period-started');
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
     socket.off('forensics:all-completed');
     socket.off('arena:item-used');
+    // arena:grace-period-started는 ArenaPlayPage와 공유하므로 특정 핸들러만 제거
+    socket.off('arena:grace-period-started', handleGracePeriodStarted);
 
     socket.on('forensics:scenario-data', handleScenarioData);
     socket.on('forensics:questions-data', handleQuestionsData);
@@ -551,24 +464,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.on('forensics:result', handleResult);
     socket.on('forensics:error', handleError);
     socket.on('forensics:game-state', handleGameState);
-    socket.on('arena:grace-period-started', handleGracePeriodStarted);
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('forensics:all-completed', handleAllCompleted);
     socket.on('forensics:player-completed', handlePlayerCompleted);
     socket.on('arena:item-used', handleItemUsed);
+    socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
     return () => {
-      // ✅ 타이머 정리
-      if (gameTimerIntervalRef.current) {
-        clearInterval(gameTimerIntervalRef.current);
-        gameTimerIntervalRef.current = null;
-      }
-      if (gracePeriodIntervalRef.current) {
-        clearInterval(gracePeriodIntervalRef.current);
-        gracePeriodIntervalRef.current = null;
-      }
-
       // ✅ 이벤트 리스너 제거
       socket.off('forensics:scenario-data', handleScenarioData);
       socket.off('forensics:questions-data', handleQuestionsData);
@@ -576,14 +479,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       socket.off('forensics:result', handleResult);
       socket.off('forensics:error', handleError);
       socket.off('forensics:game-state', handleGameState);
-      socket.off('arena:grace-period-started', handleGracePeriodStarted);
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('forensics:all-completed', handleAllCompleted);
       socket.off('forensics:player-completed', handlePlayerCompleted);
       socket.off('arena:item-used', handleItemUsed);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
-  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleAllCompleted, handlePlayerCompleted, handleItemUsed]);
+  }, [socket, handleArenaEnded, handleRedirectToResults, handleAllCompleted, handlePlayerCompleted, handleItemUsed, handleGracePeriodStarted]);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -677,18 +580,18 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
               </div>
               <div className="output-block">
                 <div className="summary-line">================================================</div>
-                <div className="summary-line">  INVESTIGATION SUMMARY</div>
+                <div className="summary-line">  {t('forensics.investigationSummary')}</div>
                 <div className="summary-line">================================================</div>
                 <div className="summary-line"></div>
                 <div className="summary-line">
-                  Case: {typeof scenario.title === 'object'
-                    ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en
-                    : scenario.title}
+                  {t('forensics.case')}: {typeof scenario.title === 'object'
+                    ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en || scenario.incidentType
+                    : scenario.title || scenario.incidentType}
                 </div>
-                <div className="summary-line">  Incident: {scenario.incidentType}</div>
+                <div className="summary-line">  {t('forensics.incident')}: {scenario.incidentType}</div>
                 <div className="summary-line"></div>
-                <div className="summary-line">  Questions Solved: {questionsCorrect}/{totalQuestions}</div>
-                <div className="summary-line">  Total Score: {score} points</div>
+                <div className="summary-line">  {t('forensics.questionsSolved')}: {questionsCorrect}/{totalQuestions}</div>
+                <div className="summary-line">  {t('forensics.totalScore')}: {score} pts</div>
                 <div className="summary-line"></div>
                 <div className="summary-line">================================================</div>
               </div>
@@ -699,51 +602,39 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
               </div>
               <div className="output-block">
                 <div className="summary-line">================================================</div>
-                <div className="summary-line">  TEAM STATUS</div>
+                <div className="summary-line">  {t('forensics.teamStatus')}</div>
                 <div className="summary-line">================================================</div>
                 {Array.from(participantsStatus.entries()).map(([userId, status]) => (
                   <div key={userId} className="summary-line" style={{
                     color: status.completed ? '#00ff88' : '#ffaa00',
                     paddingLeft: '  '
                   }}>
-                    {status.completed ? '✓' : '○'} {status.username} {userId === currentUserId ? '(YOU)' : ''} - {status.completed ? `COMPLETED (${status.score} pts)` : 'IN PROGRESS'}
+                    {status.completed ? '✓' : '○'} {status.username} {userId === currentUserId ? '(YOU)' : ''} - {status.completed ? `${t('forensics.completed')} (${status.score} pts)` : t('forensics.inProgress')}
                   </div>
                 ))}
                 <div className="summary-line">================================================</div>
               </div>
 
-              {/* 유예 시간 또는 게임 종료 메시지 */}
-              {gracePeriodRemaining !== null && totalGracePeriod !== null && firstWinner ? (
+              {/* 완료 메시지 - 유예시간은 ArenaPlayPage 헤더에서 표시 */}
+              {Array.from(participantsStatus.values()).every(p => p.completed) ? (
+                <>
+                  <div className="message-line">
+                    <span className="prompt">$</span> ./finalize_investigation.sh
+                  </div>
+                  <div className="output-line success game-over-box">
+                    <div className="game-over-title">🏁 {t('forensics.gameOver')} 🏁</div>
+                    <div className="game-over-message">{t('forensics.allAgentsSubmitted')}</div>
+                  </div>
+                </>
+              ) : (
                 <>
                   <div className="message-line">
                     <span className="prompt">$</span> ./check_deadline.sh
                   </div>
                   <div className="output-line warning">
-                    {firstWinner === currentUserId
-                      ? `[PRIORITY] Awaiting field reports from remaining agents... (T-${Math.floor(gracePeriodRemaining / 60)}:${String(gracePeriodRemaining % 60).padStart(2, '0')}/${Math.floor(totalGracePeriod / 60)}:${String(totalGracePeriod % 60).padStart(2, '0')})`
-                      : `[ALERT] Evidence submission deadline: T-${Math.floor(gracePeriodRemaining / 60)}:${String(gracePeriodRemaining % 60).padStart(2, '0')}/${Math.floor(totalGracePeriod / 60)}:${String(totalGracePeriod % 60).padStart(2, '0')}`
-                    }
+                    [PRIORITY] {t('forensics.awaitingReports')}
                   </div>
                 </>
-              ) : (
-                Array.from(participantsStatus.values()).every(p => p.completed) && (
-                  <>
-                    <div className="message-line">
-                      <span className="prompt">$</span> ./finalize_investigation.sh
-                    </div>
-                    <div className="output-line" style={{ color: '#00ff88', fontSize: '1.2em', fontWeight: 'bold', textAlign: 'center', padding: '20px 0' }}>
-                      ╔════════════════════════════════════╗
-                      ║                                    ║
-                      ║         🏁 GAME OVER 🏁           ║
-                      ║                                    ║
-                      ║   All agents have submitted       ║
-                      ║   their reports. Preparing        ║
-                      ║   final results...                ║
-                      ║                                    ║
-                      ╚════════════════════════════════════╝
-                    </div>
-                  </>
-                )
               )}
 
               <div className="message-line">
@@ -802,14 +693,6 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
             <div className="stat-value">{questionsCorrect}/{totalQuestions}</div>
           </div>
 
-          {/* ✅ 유예 시간만 표시 (ForensicsRush는 시간 제한 없음) */}
-          {gracePeriodRemaining !== null && totalGracePeriod !== null && (
-            <div className="stat-card grace-card">
-              <div className="stat-label">DEADLINE</div>
-              <div className="stat-value warning">{Math.floor(gracePeriodRemaining / 60)}:{String(gracePeriodRemaining % 60).padStart(2, '0')}/{Math.floor(totalGracePeriod / 60)}:{String(totalGracePeriod % 60).padStart(2, '0')}</div>
-            </div>
-          )}
-          
           {allCompleted && (
             <div className="completion-badge">
               [{t('forensics.caseClosed').toUpperCase()}]

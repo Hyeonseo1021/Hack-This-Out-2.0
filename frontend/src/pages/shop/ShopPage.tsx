@@ -112,7 +112,7 @@ const ShopPage: React.FC = () => {
   /* -------------------------------------- */
   /* 🎰 룰렛 보상 */
   /* -------------------------------------- */
-  const handleRouletteReward = async (rewardId: string) => {
+  const handleRouletteReward = async (_rewardId: string) => {
     try {
       // 인벤토리 새로고침
       const updatedInventory = await getInventory();

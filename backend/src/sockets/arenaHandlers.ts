@@ -2,7 +2,7 @@ import { Server, Socket } from 'socket.io';
 import Arena from '../models/Arena' // Arena 스키마 import
 import ArenaProgress from '../models/ArenaProgress';
 import User from '../models/User';
-import { endArenaProcedure }  from './utils/endArenaProcedure';
+import { endArenaProcedure, getGraceInfo }  from './utils/endArenaProcedure';
 import { terminalProcessCommand } from '../services/terminalRace/terminalEngine';
 import { registerTerminalRaceHandlers, initializeTerminalRace } from './modes/terminalRaceHandler';
 import { initializeScannerRace } from './modes/VulnerablilityScannerHandler';
@@ -166,6 +166,23 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
             ko: `${user.username}님이 입장했습니다.`,
             en: `${user.username} has joined.`
           }
+        });
+      }
+
+      // ✅ 유예시간 진행 중이면 해당 사용자에게 유예시간 정보 전송
+      const graceInfo = getGraceInfo(arenaId);
+      if (graceInfo && graceInfo.remainingSec > 0) {
+        const graceMin = Math.floor(graceInfo.remainingSec / 60);
+        const graceSecRemainder = graceInfo.remainingSec % 60;
+        const graceTimeFormatted = graceMin > 0
+          ? `${graceMin}:${String(graceSecRemainder).padStart(2, '0')}`
+          : `${graceInfo.remainingSec}s`;
+
+        socket.emit('arena:grace-period-started', {
+          graceMs: graceInfo.remainingSec * 1000,
+          graceSec: graceInfo.remainingSec,
+          totalGraceSec: graceInfo.totalSec,
+          message: `Grace period in progress! ${graceTimeFormatted} remaining.`
         });
       }
 
@@ -896,20 +913,20 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
         if (participantIndex !== -1) {
           if (!arena.participants[participantIndex].activeBuffs) {
-            arena.participants[participantIndex].activeBuffs = [];
+            (arena.participants[participantIndex] as any).activeBuffs = [];
           }
 
           // 기존 score_boost 제거 후 새로 추가
-          arena.participants[participantIndex].activeBuffs = arena.participants[participantIndex].activeBuffs.filter(
+          (arena.participants[participantIndex] as any).activeBuffs = (arena.participants[participantIndex].activeBuffs as any[]).filter(
             (b: any) => b.type !== 'score_boost'
           );
 
-          arena.participants[participantIndex].activeBuffs.push({
+          (arena.participants[participantIndex].activeBuffs as any[]).push({
             type: 'score_boost',
             value,
             startedAt,
             expiresAt
-          } as any);
+          });
 
           await arena.save();
 
@@ -938,15 +955,15 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
         if (participantIndex !== -1) {
           if (!arena.participants[participantIndex].activeBuffs) {
-            arena.participants[participantIndex].activeBuffs = [];
+            (arena.participants[participantIndex] as any).activeBuffs = [];
           }
 
           // 기존 invincible 제거 후 새로 추가
-          arena.participants[participantIndex].activeBuffs = arena.participants[participantIndex].activeBuffs.filter(
+          (arena.participants[participantIndex] as any).activeBuffs = (arena.participants[participantIndex].activeBuffs as any[]).filter(
             (b: any) => b.type !== 'invincible'
           );
 
-          arena.participants[participantIndex].activeBuffs.push({
+          (arena.participants[participantIndex].activeBuffs as any[]).push({
             type: 'invincible',
             value,
             startedAt,

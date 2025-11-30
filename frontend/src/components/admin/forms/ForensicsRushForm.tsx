@@ -33,6 +33,14 @@ interface Question {
 
 interface ForensicsRushData {
   scenario: {
+    title: {
+      ko: string;
+      en: string;
+    };
+    description: {
+      ko: string;
+      en: string;
+    };
     incidentType: 'ransomware' | 'breach' | 'ddos' | 'insider' | 'phishing';
     date: string;
     context: {
@@ -216,9 +224,76 @@ const ForensicsRushForm: React.FC<Props> = ({ data, onChange }) => {
           {/* 사고 시나리오 정보 */}
           <div className="form-section">
         <h4>사고 시나리오</h4>
-        <small style={{ color: '#999', display: 'block', marginBottom: '12px' }}>
-          💡 시나리오 제목과 설명은 상단의 기본 정보에서 입력합니다
-        </small>
+
+        {/* 시나리오 제목 - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            시나리오 제목 *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <input
+                type="text"
+                placeholder="예: 랜섬웨어 감염 사건"
+                value={data.scenario.title?.ko || ''}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, title: { ...data.scenario.title, ko: e.target.value } }
+                })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <input
+                type="text"
+                placeholder="e.g., Ransomware Infection Incident"
+                value={data.scenario.title?.en || ''}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, title: { ...data.scenario.title, en: e.target.value } }
+                })}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 시나리오 설명 - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            시나리오 설명 *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <textarea
+                rows={2}
+                placeholder="시나리오에 대한 간략한 설명"
+                value={data.scenario.description?.ko || ''}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, description: { ...data.scenario.description, ko: e.target.value } }
+                })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <textarea
+                rows={2}
+                placeholder="Brief description of the scenario"
+                value={data.scenario.description?.en || ''}
+                onChange={e => onChange({
+                  ...data,
+                  scenario: { ...data.scenario, description: { ...data.scenario.description, en: e.target.value } }
+                })}
+                required
+              />
+            </div>
+          </div>
+        </div>
 
         <div className="form-grid-2">
           <div className="form-field">

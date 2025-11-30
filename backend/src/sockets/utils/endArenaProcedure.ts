@@ -13,6 +13,13 @@ const graceTimers = new Map<string, NodeJS.Timeout>();
 const graceInfo = new Map<string, { startedAt: number; totalSec: number }>();
 
 /**
+ * ✅ 유예시간 진행 중인지 확인
+ */
+export function isGracePeriodActive(arenaId: string): boolean {
+  return graceTimers.has(arenaId);
+}
+
+/**
  * ✅ 유예시간 정보 조회 (새로고침 시 복원용)
  */
 export function getGraceInfo(arenaId: string): { remainingSec: number; totalSec: number } | null {
@@ -32,17 +39,37 @@ export function getGraceInfo(arenaId: string): { remainingSec: number; totalSec:
 
 /**
  * ✅ 모든 참가자가 완료했는지 확인
+ * - progress.completed 체크 + VulnerabilityScannerRace의 경우 vulnerabilitiesFound 체크
  */
 async function checkAllParticipantsCompleted(arenaId: string): Promise<boolean> {
+  const arena = await Arena.findById(arenaId).populate('scenarioId');
+  if (!arena) return false;
+
   const progressDocs = await ArenaProgress.find({ arena: arenaId });
-  
+
   if (progressDocs.length === 0) return false;
-  
-  // 모든 참가자가 완료했는지 확인
+
+  // VulnerabilityScannerRace 모드인 경우 특별 처리
+  if (arena.mode === 'VULNERABILITY_SCANNER_RACE') {
+    const scenario = arena.scenarioId as any;
+    const totalVulns = scenario?.data?.vulnerabilities?.length || 0;
+
+    if (totalVulns === 0) return false;
+
+    const allCompleted = progressDocs.every((p: any) => {
+      const found = p.vulnerabilityScannerRace?.vulnerabilitiesFound || 0;
+      return found >= totalVulns;
+    });
+
+    console.log(`📊 [checkAllParticipantsCompleted] VulnerabilityScannerRace: ${progressDocs.length} participants, total vulns: ${totalVulns}, all completed: ${allCompleted}`);
+    return allCompleted;
+  }
+
+  // 다른 모드는 progress.completed 체크
   const allCompleted = progressDocs.every(p => p.completed === true);
-  
+
   console.log(`📊 [checkAllParticipantsCompleted] ${progressDocs.length} participants, all completed: ${allCompleted}`);
-  
+
   return allCompleted;
 }
 
@@ -158,6 +185,7 @@ export async function endArenaProcedure(arenaId: string, io: Server) {
     io.to(arenaId).emit('arena:grace-period-started', {
       graceMs,
       graceSec,
+      totalGraceSec: graceSec,
       message: `First player completed! You have ${graceTimeFormatted} to finish.`
     });
 
@@ -260,9 +288,39 @@ async function finalizeArena(arenaId: string, io: Server) {
     const startTime = new Date(arena.startTime);
     const endTime = new Date();
 
+    // 시나리오 조회 (VulnerabilityScannerRace 체크용)
+    const arenaWithScenario = await Arena.findById(arenaId).populate('scenarioId');
+    const scenario = arenaWithScenario?.scenarioId as any;
+
     // 모든 참가자의 진행 상황 조회
     const progressDocs = await ArenaProgress.find({ arena: arenaId });
     console.log(`👥 [finalizeArena] Found ${progressDocs.length} participants`);
+
+    // ✅ VulnerabilityScannerRace 모드인 경우 completed 상태 먼저 업데이트
+    if (arena.mode === 'VULNERABILITY_SCANNER_RACE') {
+      const totalVulns = scenario?.data?.vulnerabilities?.length || 0;
+      console.log(`🔍 [finalizeArena] VulnerabilityScannerRace mode, total vulns: ${totalVulns}`);
+
+      for (const progress of progressDocs) {
+        const found = (progress as any).vulnerabilityScannerRace?.vulnerabilitiesFound || 0;
+        const isCompleted = found >= totalVulns;
+
+        if (isCompleted && !progress.completed) {
+          console.log(`   ✅ Marking user ${progress.user} as completed (${found}/${totalVulns} vulns)`);
+          await ArenaProgress.updateOne(
+            { _id: progress._id },
+            {
+              $set: {
+                completed: true,
+                submittedAt: progress.submittedAt || endTime
+              }
+            }
+          );
+          progress.completed = true;
+          progress.submittedAt = progress.submittedAt || endTime;
+        }
+      }
+    }
 
     // ✅ 각 참가자의 completionTime 계산 및 업데이트
     for (const progress of progressDocs) {
@@ -279,7 +337,7 @@ async function finalizeArena(arenaId: string, io: Server) {
         completionTime = Math.floor(
           (new Date(progress.submittedAt).getTime() - startTime.getTime()) / 1000
         );
-        
+
         console.log(`📊 Calculating completionTime for ${progress.user}:`, {
           submittedAt: new Date(progress.submittedAt).toISOString(),
           startTime: startTime.toISOString(),
@@ -290,7 +348,7 @@ async function finalizeArena(arenaId: string, io: Server) {
         completionTime = Math.floor(
           (endTime.getTime() - startTime.getTime()) / 1000
         );
-        
+
         console.warn(`⚠️ No submittedAt for ${progress.user}, using endTime:`, {
           endTime: endTime.toISOString(),
           completionTime: `${completionTime}s`
@@ -301,14 +359,14 @@ async function finalizeArena(arenaId: string, io: Server) {
       if (completionTime !== null) {
         await ArenaProgress.updateOne(
           { _id: progress._id },
-          { 
-            $set: { 
+          {
+            $set: {
               completionTime,
               submittedAt: progress.submittedAt || endTime
-            } 
+            }
           }
         );
-        
+
         console.log(`   ✅ Updated completionTime for user ${progress.user}: ${completionTime}s`);
       }
     }
