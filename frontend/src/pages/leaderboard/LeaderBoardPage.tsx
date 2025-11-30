@@ -124,7 +124,7 @@ const LeaderBoardPage: React.FC = () => {
             <h2>{t('leaderboard.playerStatus')}</h2>
             <div className="hud-info">
               <p>
-                USERNAME: <span>{myRank?.myUsername || 'Guest'}</span>
+                USER NAME: <span>{myRank?.myUsername || 'Guest'}</span>
               </p>
               <p>
                 LEVEL: <span>{myRank?.myLevel || 1}</span>

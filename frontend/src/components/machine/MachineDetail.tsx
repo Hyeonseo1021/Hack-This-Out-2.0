@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MachineDetail as MachineDetailType } from '../../types/Machine';
 import '../../assets/scss/machine/MachineDetail.scss';
 import Rating from '@mui/material/Rating';
@@ -15,6 +16,7 @@ interface MachineDetailProps {
 }
 
 const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
+  const { t } = useTranslation('machine');
   const navigate = useNavigate();
   const { _id, name, category, description, exp, rating, difficulty } = machineDetail;
 
@@ -33,14 +35,7 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
   };
 
   const getDifficultyLabel = (level: string): string => {
-    const labels: { [key: string]: string } = {
-      'very_easy': 'Very Easy',
-      'easy': 'Easy',
-      'medium': 'Medium',
-      'hard': 'Hard',
-      'very_hard': 'Very Hard'
-    };
-    return labels[level] || 'Unknown';
+    return t(`difficulty_levels.${level}`, 'Unknown');
   };
 
   const displayDifficulty = difficulty?.confirmedLevel || difficulty?.creatorLevel;
@@ -88,14 +83,14 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
             <b>{name.charAt(0).toUpperCase() + name.slice(1)}</b>
           </p>
 
-          <p className='machine-category'><b>Category: </b>{category || 'N/A'}</p>
+          <p className='machine-category'><b>{t('details.category')}: </b>{category || 'N/A'}</p>
 
           {difficulty && displayDifficulty && (
             <div className='machine-difficulty'>
-              <b>Difficulty: </b>
-              <span 
+              <b>{t('details.difficulty')}: </b>
+              <span
                 className='difficulty-badge'
-                style={{ 
+                style={{
                   display: 'inline-block',
                   backgroundColor: getDifficultyColor(displayDifficulty),
                   padding: '4px 12px',
@@ -107,7 +102,7 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
                 }}
               >
                 {getDifficultyLabel(displayDifficulty)}
-                {!difficulty.isConfirmed && ' (Est.)'}
+                {!difficulty.isConfirmed && ` ${t('details.estimated')}`}
               </span>
             </div>
           )}
@@ -133,7 +128,7 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
           </div>
 
           <div className='machine-reward-box'>
-            <p className='text'>Reward</p>
+            <p className='text'>{t('details.reward')}</p>
             <p className='reward-text'>{exp || 0} EXP</p>
           </div>
 
@@ -141,7 +136,7 @@ const MachineDetail: React.FC<MachineDetailProps> = ({ machineDetail }) => {
             className="machine-play-btn"
             onClick={() => navigate(`/machine/${_id}/play`)}
           >
-            Play
+            {t('details.play')}
           </button>
         </div>
 

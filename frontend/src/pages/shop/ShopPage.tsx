@@ -92,20 +92,38 @@ const ShopPage: React.FC = () => {
   const handleBuyItem = async (itemId: string) => {
     try {
       const result = await buyShopItem(itemId);
-      
+
       // 잔액 업데이트
       setBalance(result.updatedBalance);
-      
+
       // 인벤토리 새로고침
       const updatedInventory = await getInventory();
       setInventory(updatedInventory);
-      
-      // 성공 토스트
+
+      // 성공 토스트 (다국어 지원)
       const item = shopItems.find(i => i._id === itemId);
-      showToast(result.msg, item?.icon);
+      const lang = i18n.language as 'ko' | 'en';
+
+      // 획득한 아이템 이름 추출 (랜덤 버프의 경우 result.acquiredItem 사용)
+      const acquiredItemName = result.acquiredItem?.name
+        ? (typeof result.acquiredItem.name === 'object'
+            ? (result.acquiredItem.name as any)[lang] || (result.acquiredItem.name as any).ko
+            : result.acquiredItem.name)
+        : (item?.name
+            ? (typeof item.name === 'object'
+                ? (item.name as any)[lang] || (item.name as any).ko
+                : item.name)
+            : '');
+
+      // 번역된 메시지 사용
+      const successMsg = t('messages.acquired', { itemName: acquiredItemName });
+      showToast(successMsg, item?.icon);
     } catch (error: any) {
       console.error('❌ Failed to buy item:', error);
-      showToast(error?.response?.data?.msg || t('errors.buyFailed') || '구매에 실패했습니다.');
+      // 에러 메시지도 다국어 처리
+      const errorKey = error?.response?.data?.errorKey;
+      const errorMsg = errorKey ? t(`errors.${errorKey}`) : t('errors.buyFailed');
+      showToast(errorMsg);
     }
   };
 
@@ -144,7 +162,7 @@ const ShopPage: React.FC = () => {
     <Main>
       <div className="shop-layout">
         <div className="shop-panel">
-          <h1 className="shop-title">{t("title")}</h1>
+          <h1 className="shop-title" data-text={t("title")}>{t("title")}</h1>
 
           <p className="shop-balance">
             {t("balance")} <strong>{balance} HTO</strong>
@@ -227,53 +245,50 @@ const ShopPage: React.FC = () => {
           {/* INVENTORY */}
           {tab === "inventory" && (
             <div className="shop-inventory-wrapper">
-              <div className="shop-inventory-scroll-area">
-                {inventory.length === 0 ? (
-                  <div className="shop-inventory-empty">
-                    {t("inventory.empty")}
-                  </div>
-                ) : (
-                  <div className="shop-inventory-list">
-                    {inventory.map((inv) => {
-                      // 다국어 지원: name과 description이 객체인 경우 현재 언어로 선택
-                      const lang = i18n.language as 'ko' | 'en';
-                      const itemName = typeof inv.item.name === 'object' ? (inv.item.name as any)[lang] || (inv.item.name as any).ko || (inv.item.name as any).en : inv.item.name;
-                      const itemDesc = typeof inv.item.description === 'object' ? (inv.item.description as any)[lang] || (inv.item.description as any).ko || (inv.item.description as any).en : inv.item.description;
+              {inventory.length === 0 ? (
+                <div className="shop-inventory-empty">
+                  {t("inventory.empty")}
+                </div>
+              ) : (
+                <div className="shop-inventory-list">
+                  {inventory.map((inv) => {
+                    // 다국어 지원: name과 description이 객체인 경우 현재 언어로 선택
+                    const lang = i18n.language as 'ko' | 'en';
+                    const itemName = typeof inv.item.name === 'object' ? (inv.item.name as any)[lang] || (inv.item.name as any).ko || (inv.item.name as any).en : inv.item.name;
+                    const itemDesc = typeof inv.item.description === 'object' ? (inv.item.description as any)[lang] || (inv.item.description as any).ko || (inv.item.description as any).en : inv.item.description;
 
-                      return (
-                      <div className="shop-inventory-card" key={inv._id}>
-                        <img
-                          src={`${API_BASE_URL}${inv.item.icon || (inv.item as any).imageUrl || ''}`}
-                          className="shop-inventory-card__icon"
-                          alt={itemName}
-                          onError={(e) => {
-                            e.currentTarget.src = '/img/default-item.png';
-                          }}
-                        />
+                    return (
+                    <div className="shop-inventory-card" key={inv._id}>
+                      <img
+                        src={`${API_BASE_URL}${inv.item.icon || (inv.item as any).imageUrl || ''}`}
+                        className="shop-inventory-card__icon"
+                        alt={itemName}
+                        onError={(e) => {
+                          e.currentTarget.src = '/img/default-item.png';
+                        }}
+                      />
 
-                        <div className="shop-inventory-card__body">
-                          <h3 className="shop-inventory-card__title">
-                            {itemName}
-                          </h3>
-                          <p className="shop-inventory-card__count">x{inv.quantity}</p>
-                          <p className="shop-inventory-card__desc">
-                            {itemDesc}
-                          </p>
-                          <p className="shop-inventory-card__note" style={{
-                            fontSize: '0.85rem',
-                            color: '#94a3b8',
-                            marginTop: '0.5rem',
-                            fontStyle: 'italic'
-                          }}>
-                            💡 {t("inventory.useInArena", { defaultValue: "아이템은 Arena 플레이 중에 사용할 수 있습니다" })}
-                          </p>
-                        </div>
+                      <div className="shop-inventory-card__body">
+                        <h3 className="shop-inventory-card__title">
+                          {itemName}
+                        </h3>
+                        <p className="shop-inventory-card__count">x{inv.quantity}</p>
+                        <p className="shop-inventory-card__desc">
+                          {itemDesc}
+                        </p>
+                        <p className="shop-inventory-card__note" style={{
+                          fontSize: '0.85rem',
+                          color: '#94a3b8',
+                          marginTop: '0.5rem',
+                          fontStyle: 'italic'
+                        }}>
+                        </p>
                       </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                    </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

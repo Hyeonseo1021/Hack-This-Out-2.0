@@ -51,7 +51,7 @@
      =============================*/
   .vpn-title,
   .vpn-desc {
-    font-family: "Orbitron", monospace !important;
+    font-family: var(--font-display) !important;
     color: var(--white);
     text-shadow: 0 0 4px var(--mint-glow);
   }
@@ -154,7 +154,7 @@
   
   label.download-label,
   label.download-label * {
-    font-family: "Orbitron", monospace !important;
+    font-family: var(--font-display) !important;
     color: var(--white) !important;
     text-shadow: 0 0 4px var(--mint-glow);
     letter-spacing: 0.5px;

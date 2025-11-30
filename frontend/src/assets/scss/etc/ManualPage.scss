@@ -108,7 +108,7 @@ $color-bubble: #ffffff;
 /* === 언어 토글 (네온 CRT 스타일) === */
 .neon-toggle {
   position: relative;
-  font-family: 'Orbitron', 'VT323', monospace;
+  font-family: var(--font-display);
   font-size: 1rem;
   color: #00eaff;
   background: transparent;
@@ -209,7 +209,7 @@ $color-bubble: #ffffff;
   padding: clamp(18px, 2vh, 28px) clamp(25px, 3vw, 40px);
   width: 100%;
   color: #cfd8dc;
-  font-family: 'VT323', monospace;
+  font-family: var(--font-display);
   box-shadow: 0 0 20px rgba(0, 225, 255, 0.4);
 
   // 꼬리
@@ -299,7 +299,7 @@ $color-bubble: #ffffff;
 
 // 클릭 안내 텍스트
 .cyber-footer-text {
-  font-family: 'VT323', monospace;
+  font-family: var(--font-display);
   font-size: clamp(1rem, 1.5vw, 1.3rem);
   color: rgba(0, 225, 255, 0.7);
   text-align: center;
@@ -317,7 +317,7 @@ $color-bubble: #ffffff;
   position: relative;
   display: inline-block;
   color: #00eaff;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: clamp(1.6rem, 2.5vw, 2rem);
   font-weight: 600;
   text-shadow: 0 0 3px rgba(0,255,255,0.4), 0 0 6px rgba(255,0,255,0.2);
@@ -328,7 +328,7 @@ $color-bubble: #ffffff;
   position: relative;
   display: inline-block;
   color: #00eaff;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-display);
   font-size: clamp(1.2rem, 1.8vw, 1.5rem);
   line-height: 1.7;
   text-shadow: 0 0 3px rgba(0,255,255,0.4), 0 0 6px rgba(255,0,255,0.2);

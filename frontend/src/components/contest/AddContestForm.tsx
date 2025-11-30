@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createContest } from '../../api/axiosContest';
 import { getActiveMachines } from '../../api/axiosMachine';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +45,7 @@ interface ValidationErrors {
 }
 
 const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
+    const { t } = useTranslation('contest');
     const [formData, setFormData] = useState<FormData>({
         name: '',
         description: '',
@@ -203,18 +205,18 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
         const s = new Date(startTime);
         const e = new Date(endTime);
 
-        if (!name || name.length < 3) errors.name = 'Name must be at least 3 characters.';
-        if (!description) errors.description = 'Description is required.';
-        if (!startTime) errors.startTime = 'Start time required.';
-        else if (s < now) errors.startTime = 'Start cannot be in the past.';
+        if (!name || name.length < 3) errors.name = t('form.errors.nameLength');
+        if (!description) errors.description = t('form.errors.descriptionRequired');
+        if (!startTime) errors.startTime = t('form.errors.startTimeRequired');
+        else if (s < now) errors.startTime = t('form.errors.startTimeInPast');
 
-        if (!endTime) errors.endTime = 'End time required.';
-        else if (e <= s) errors.endTime = 'End must be after start.';
+        if (!endTime) errors.endTime = t('form.errors.endTimeRequired');
+        else if (e <= s) errors.endTime = t('form.errors.endTimeAfterStart');
         else if ((e.getTime() - s.getTime()) / 3600000 < 24)
-            errors.endTime = 'Contest must last at least 24 hours.';
+            errors.endTime = t('form.errors.duration24Hours');
 
-        if (machines.some(m => !m.id)) errors.machines = 'Select valid machines.';
-        if (contestExp < 100) errors.contestExp = 'EXP must be at least 100.';
+        if (machines.some(m => !m.id)) errors.machines = t('form.errors.machinesRequired');
+        if (contestExp < 100) errors.contestExp = t('form.errors.expMinimum');
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
@@ -242,7 +244,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                 onContestAdded(data.contest);
             }
         } catch (err: any) {
-            setValidationErrors({ submit: err.message || 'Failed to create contest' });
+            setValidationErrors({ submit: err.message || t('form.errors.submitFailed') });
         } finally {
             setLoading(false);
         }
@@ -256,12 +258,12 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                 <button className="IconButton" type="button" onClick={() => navigate(-1)}>
                     <IoMdArrowRoundBack style={{ color: 'white', fontSize: "34px" }} />
                 </button>
-                <h2>Add New Contest</h2>
+                <h2>{t('form.title')}</h2>
             </div>
 
             <div className="create-container">
                 <div className="name-container">
-                    <label>Contest Name *</label>
+                    <label>{t('form.contestName')} *</label>
                     <input
                         type="text"
                         name="name"
@@ -273,7 +275,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                 </div>
 
                 <div className="description-container">
-                    <label>Description *</label>
+                    <label>{t('form.description')} *</label>
                     <textarea
                         id="description"
                         name="description"
@@ -287,7 +289,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                 </div>
 
                 <div className="start-time-container">
-                    <label>Start Time *</label>
+                    <label>{t('form.startTime')} *</label>
                     <input
                         type="datetime-local"
                         name="startTime"
@@ -298,7 +300,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                 </div>
 
                 <div className="end-time-container">
-                    <label>End Time *</label>
+                    <label>{t('form.endTime')} *</label>
                     <input
                         type="datetime-local"
                         name="endTime"
@@ -309,7 +311,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                 </div>
 
                 <div className="exp-container">
-                    <label>Reward (EXP) *</label>
+                    <label>{t('form.reward')} *</label>
                     <input
                         type="number"
                         name="contestExp"
@@ -319,7 +321,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                 </div>
 
                 <div className="add-machine-container">
-                    <label>Machines *</label>
+                    <label>{t('form.machines')} *</label>
 
                     {machines.map((machine, index) => (
                         <div key={index} className="machine-field">
@@ -330,7 +332,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                                 onChange={(e) => handleChange(e, index)}
                                 onFocus={() => handleFocus(index)}
                                 onKeyDown={(e) => handleKeyDown(e, index)}
-                                placeholder={`Machine ${index + 1}`}
+                                placeholder={t('form.machinePlaceholder', { index: index + 1 })}
                                 autoComplete="off"
                             />
 
@@ -340,7 +342,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                                     className="delete-machine"
                                     onClick={() => handleDeleteMachineField(index)}
                                 >
-                                    Delete
+                                    {t('form.delete')}
                                 </button>
                             )}
 
@@ -363,12 +365,12 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                     ))}
 
                     <button type="button" className="add-machine-button" onClick={handleAddMachineField}>
-                        Add Machine
+                        {t('form.addMachine')}
                     </button>
                 </div>
 
                 <div className="add-contest-form-button">
-                    <button type="submit">Add Contest</button>
+                    <button type="submit">{t('form.submit')}</button>
                 </div>
             </div>
 

@@ -1,18 +1,17 @@
 @use "../style" as *;
 
 .pre_contest_page {
-  @include background_set;
-  width: 50vw;
-  min-height: 30rem;
+  width: 100%;
+  min-height: 100vh;
   color: var(--white);
-  font-family: 'Orbitron', 'VT323', monospace;
+  font-family: var(--font-display);
   padding: 32px;
   display: flex;
   flex-direction: column;
   gap: 20px;
   justify-content: center;
   align-items: center;
-  background: #000000 !important;
+  background: #000000;
 
   &::-webkit-scrollbar { display: none; }
   scrollbar-width: none;
@@ -79,7 +78,7 @@
 
     .contest_start {
       @include button_color;
-      font-family: 'Orbitron', monospace;
+      font-family: var(--font-display);
       font-weight: 700;
       font-size: 1.2rem;
       width: 160px;
@@ -111,7 +110,7 @@
   text-align: center;
   background-color: rgba(0,0,0,0.85);
   border-radius: 16px;
-  font-family: 'Orbitron', 'VT323', monospace;
+  font-family: var(--font-display);
 
   .contest_warning_title {
     font-size: 1.5rem;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getMyRank } from "../../api/axiosUser";
 import { CurrentUser } from "../../types/CurrentUser";
 import ErrorIcon from "../public/ErrorIcon";
@@ -36,6 +37,7 @@ const StyledBadge = styled(Badge)<StyledBadgeProps>(() => ({
 }));
 
 const UserStats = () => {
+  const { t } = useTranslation('user');
   const [myStats, setMyStats] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ const UserStats = () => {
   if (error) return <ErrorIcon />;
 
   if (!myStats) {
-    return <Box>No data available.</Box>;
+    return <Box>{t('mystats.noData')}</Box>;
   }
 
   const avatarBgColor = avatarBackgroundColors[getAvatarColorIndex(myStats.myUsername || '')];
@@ -99,7 +101,7 @@ const UserStats = () => {
 
   return (
     <Box className="stats-container">
-      <Typography className="stats-header">{myStats?.myUsername}'s Stats</Typography>
+      <Typography className="stats-header">{t('mystats.title', { username: myStats?.myUsername })}</Typography>
 
       <Box className="stats-upper-container">
         {/* === 아바타 영역 === */}
@@ -136,7 +138,7 @@ const UserStats = () => {
             />
             <Box className="progress-text">
               <Typography style={{ fontSize: "1.5rem", fontWeight: "bold" }} component="div" color="var(--color-white)">
-                LVL. {myStats?.myLevel}
+                {t('mystats.level')} {myStats?.myLevel}
               </Typography>
               <Typography variant="h6" component="div" color="var(--color-white)">
                 {Math.round(expPercentage)}%
@@ -144,14 +146,14 @@ const UserStats = () => {
             </Box>
           </Box>
           <Typography className="next-level" variant="h6" component="div">
-            Next Level: {remainExp} EXP
+            {t('mystats.nextLevel', { exp: remainExp })}
           </Typography>
         </Box>
 
         {/* === 랭킹 뱃지 === */}
         <Box className="stats-rank">
           <Avatar src={rankBadges[rankBadge]} className="rank-badge" />
-          <Typography variant="h6">Ranking #{myStats?.myRank}</Typography>
+          <Typography variant="h6">{t('mystats.ranking', { rank: myStats?.myRank })}</Typography>
         </Box>
       </Box>
     </Box>

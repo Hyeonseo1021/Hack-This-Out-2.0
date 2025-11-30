@@ -1,5 +1,4 @@
 // Terminal Race - Authentic Terminal Theme
-@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
 
 .terminal-race-container {
   display: flex;
@@ -189,7 +188,7 @@
     color: #00ff00;
     font-weight: 600;
     letter-spacing: 0.5px;
-    font-family: 'Source Code Pro', monospace;
+    font-family: var(--font-mono);
     text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
   }
 
@@ -271,7 +270,7 @@
     margin-bottom: 4px;
     word-wrap: break-word;
     white-space: pre-wrap;
-    font-family: 'Source Code Pro', monospace;
+    font-family: var(--font-mono);
 
     &.command {
       color: #00ff00;
@@ -377,7 +376,7 @@
     }
 
     .terminal-prompt {
-      font-family: 'Source Code Pro', monospace;
+      font-family: var(--font-mono);
       font-size: 0.95rem;
       font-weight: 600;
       white-space: nowrap;
@@ -405,7 +404,7 @@
       border: none;
       outline: none;
       color: #00ff00;
-      font-family: 'Source Code Pro', monospace;
+      font-family: var(--font-mono);
       font-size: 0.95rem;
       font-weight: 500;
       caret-color: #00ff00;
@@ -426,7 +425,7 @@
     background: transparent;
     border: 2px solid #00ff00;
     color: #00ff00;
-    font-family: 'Source Code Pro', monospace;
+    font-family: var(--font-mono);
     font-size: 0.9rem;
     font-weight: 700;
     text-transform: uppercase;

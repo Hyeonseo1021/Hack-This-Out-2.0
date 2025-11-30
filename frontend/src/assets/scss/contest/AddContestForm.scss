@@ -3,9 +3,10 @@
 @use "../style" as *;
 
 .add-contest-form {
-    @include background_set;
-    font-family: 'Orbitron', sans-serif;
-    backdrop-filter: blur(40px);
+    height: 100vh;
+    width: 100%;
+    font-family: var(--font-display);
+    background: #000000;
     display: flex;
     flex-direction: column;
     padding: 0 32px 32px 32px;
@@ -15,6 +16,7 @@
         &::-webkit-scrollbar {
             display: none;
         }
+        scrollbar-width: none;
     }
 
     /* ------------------------------- */
@@ -30,13 +32,13 @@
         align-items: center;
         gap: 20px;
 
-        background: rgba(8, 20, 30, 0.65);
+        background: rgba(0, 0, 0, 0.85);
         border-bottom: 1px solid rgba(139, 243, 255, 0.22);
         backdrop-filter: blur(12px);
 
         h2 {
             font-size: 2.1rem;
-            color: #e9faff;
+            color: #ffffff;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-shadow: 0 0 12px rgba(139,243,255,0.75);
@@ -45,6 +47,7 @@
         .IconButton {
             width: 52px;
             height: 52px;
+            color: white;
             border-radius: 12px;
             background: rgba(10,30,45,0.7);
             border: 1.4px solid rgba(139,243,255,0.4);
@@ -52,7 +55,7 @@
             align-items: center;
             justify-content: center;
             transition: 0.25s ease;
-            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
 
             &:hover {
                 transform: translateX(-4px) scale(1.06);
@@ -66,13 +69,12 @@
     /* ------------------------------- */
 
     .create-container {
-        padding: 24px 32px;
+        padding: 24px 0;
         flex: 1;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 32px;
-        margin-top: 8px;
-        position: relative; /* ⭐ 버튼 absolute 기준 */
+        gap: 24px 32px;
+        position: relative;
 
         label {
             color: #cfeaff;
@@ -89,15 +91,20 @@
             font-size: 1rem;
             width: 100%;
             border-radius: 12px;
-            background: rgba(20, 30, 45, 0.9);
+            background: rgba(15, 25, 35, 0.9);
             border: 1.4px solid rgba(139,243,255,0.25);
             color: #eaffff;
             outline: none;
             transition: 0.2s ease;
+            box-sizing: border-box;
 
             &:focus {
                 border-color: rgba(139, 243, 255, 0.8);
                 box-shadow: 0 0 12px rgba(139,243,255,0.6);
+            }
+
+            &::placeholder {
+                color: rgba(200, 230, 255, 0.4);
             }
         }
 
@@ -107,7 +114,7 @@
         }
 
         .description-container {
-            grid-column: 2 span;
+            grid-column: 1 / -1;
         }
 
         /* Machine field rows */
@@ -125,7 +132,7 @@
                     margin-left: 12px;
                     border: none;
                     cursor: pointer;
-                    font-family: Orbitron;
+                    font-family: var(--font-display);
 
                     &:hover {
                         background: rgba(255, 110, 110, 0.85);
@@ -165,7 +172,7 @@
                 color: #eaffff;
                 border-radius: 14px;
                 cursor: pointer;
-                font-family: Orbitron;
+                font-family: var(--font-display);
                 transition: 0.25s;
 
                 &:hover {
@@ -176,27 +183,30 @@
             }
         }
 
-        /* ⭐⭐⭐ Submit button 자연스럽게 아래로 이동하는 버전 ⭐⭐⭐ */
+        /* ✅ Submit Button */
         .add-contest-form-button {
-            position: absolute;  
-            bottom: -20px;  
-            right: 0;
-            transform: translateY(100%);
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-bottom: 40px;
 
-            button {
-                padding: 1rem 2rem;
+            button[type="submit"] {
+                padding: 1rem 2.5rem;
                 font-size: 1.15rem;
-                border-radius: 16px;
-                background: rgba(8, 20, 30, 0.8);
+                border-radius: 14px;
+                background: linear-gradient(135deg, rgba(139, 243, 255, 0.2), rgba(100, 200, 255, 0.15));
                 border: 1.6px solid rgba(139,243,255,0.5);
                 color: #eaffff;
                 cursor: pointer;
+                font-family: var(--font-display);
+                font-weight: 600;
                 transition: 0.25s ease;
-                font-family: Orbitron;
 
                 &:hover {
-                    transform: translateY(-3px) scale(1.05);
-                    box-shadow: 0 0 16px rgba(139,243,255,0.9);
+                    transform: translateY(-3px) scale(1.02);
+                    box-shadow: 0 0 20px rgba(139,243,255,0.7);
+                    background: linear-gradient(135deg, rgba(139, 243, 255, 0.3), rgba(100, 200, 255, 0.25));
                 }
             }
         }
@@ -213,5 +223,32 @@
     .error-input {
         border-color: #ff6f6f !important;
         box-shadow: 0 0 12px rgba(255,100,100,0.4) !important;
+    }
+}
+
+/* ------------------------------- */
+/* 📱 Responsive */
+/* ------------------------------- */
+@media (max-width: 900px) {
+    .add-contest-form {
+        padding: 0 20px 20px 20px;
+
+        .create-container {
+            grid-template-columns: 1fr;
+            gap: 20px;
+
+            .description-container {
+                grid-column: 1;
+            }
+
+            .add-machine-container {
+                grid-column: 1;
+            }
+
+            .add-contest-form-button {
+                grid-column: 1;
+                justify-content: center;
+            }
+        }
     }
 }

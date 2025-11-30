@@ -7,7 +7,7 @@
   flex-direction: column;
   padding: 1rem 2rem 2rem 2rem;
   color: var(--color-white);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   overflow: hidden;
   min-height: 0;
 
@@ -38,7 +38,7 @@
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
-      font-family: 'Orbitron', sans-serif;
+      font-family: var(--font-display);
 
       &:hover {
         background: rgba(0, 255, 255, 0.15);
@@ -95,7 +95,7 @@
       text-align: center;
       border-bottom: 1px solid rgba(0, 255, 255, 0.1);
       white-space: nowrap;
-      font-family: 'Orbitron', sans-serif;
+      font-family: var(--font-display);
     }
 
     thead {
@@ -190,7 +190,7 @@
     font-size: 1.1rem;
     padding: 2rem;
     font-style: italic;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
   }
 
   /* ===== Responsive ===== */

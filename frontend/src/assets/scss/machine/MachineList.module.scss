@@ -16,7 +16,7 @@
   padding: clamp(16px, 3vw, 32px);
   padding-top: clamp(12px, 2vw, 20px);
   color: var(--white);
-  font-family: 'VT323', monospace;
+  font-family: var(--font-display);
   overflow-y: hidden;
   position: relative;
   backdrop-filter: blur(8px);
@@ -36,7 +36,7 @@
   }
 
   .machine_list_title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(2rem, 3vw, 2.5rem);
     color: var(--mint);
     text-shadow: 0 0 10px var(--mint);
@@ -70,7 +70,7 @@
         color: var(--mint);
         text-shadow: 0 0 8px var(--mint);
         padding: 1rem;
-        font-family: 'VT323', monospace;
+        font-family: var(--font-display);
       }
     }
 
@@ -177,7 +177,7 @@
       border: 1px solid var(--mint);
       background: transparent;
       color: var(--mint);
-      font-family: 'VT323', monospace;
+      font-family: var(--font-display);
     }
   }
 }
@@ -193,7 +193,7 @@
   width: 40px;
   height: 40px;
   font-size: 0.9rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   border: 1.5px solid var(--mint);
   background: transparent;
   color: var(--mint);
@@ -212,7 +212,7 @@
   background: transparent;
   color: var(--mint);
   border-radius: 8px;
-  font-family: 'VT323', monospace;
+  font-family: var(--font-display);
   font-size: 1.2rem;
   cursor: pointer;
   transition: 0.25s ease;

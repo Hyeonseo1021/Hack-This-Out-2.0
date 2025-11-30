@@ -6,7 +6,7 @@
   border-radius: 12px;
   background: rgba(0,0,0,0.6);
   color: #fff;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: var(--font-main);
 
   .guide-toggle {
     background: transparent;
@@ -20,5 +20,65 @@
   .guide-content {
     animation: fadeIn 0.3s ease;
     line-height: 1.6;
+  }
+}
+
+/* ============================
+    RESPONSIVE STYLES
+============================ */
+
+/* 1024px 이하 (태블릿/작은 랩탑) */
+@media (max-width: 1024px) {
+  .shop-guide {
+    margin: 16px 0;
+    padding: 14px;
+
+    .guide-toggle {
+      font-size: 0.95rem;
+    }
+
+    .guide-content {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  }
+}
+
+/* 768px 이하 (태블릿) */
+@media (max-width: 768px) {
+  .shop-guide {
+    margin: 14px 0;
+    padding: 12px;
+    border-radius: 10px;
+
+    .guide-toggle {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .guide-content {
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+  }
+}
+
+/* 480px 이하 (모바일) */
+@media (max-width: 480px) {
+  .shop-guide {
+    margin: 12px 0;
+    padding: 10px;
+    border-radius: 8px;
+    border-width: 1.5px;
+
+    .guide-toggle {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .guide-content {
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
   }
 }

@@ -51,7 +51,7 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
         setIsLoading(false);
       } catch (err: any) {
         console.error("❌ 룰렛 아이템 로드 실패:", err);
-        showToast(err?.response?.data?.msg || "룰렛 아이템을 불러오는데 실패했습니다.");
+        showToast(t("errors.loadFailed"));
         setIsLoading(false);
       }
     };
@@ -79,9 +79,9 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
       const selectedIndex = rouletteItems.findIndex(item => item.id === result.rewardId);
 
       if (selectedIndex === -1) {
-        showToast("오류가 발생했습니다.");
+        showToast(t("errors.rouletteFailed"));
         setIsRolling(false);
-        setBalance(prev => prev + 5); // 실패 시 코인 환불
+        setBalance(prev => prev + 5);
         return;
       }
 
@@ -128,9 +128,9 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
 
     } catch (err: any) {
       console.error("❌ 룰렛 오류:", err);
-      showToast(err?.response?.data?.msg || "룰렛 실행 중 오류가 발생했습니다.");
+      showToast(t("errors.rouletteFailed"));
       setIsRolling(false);
-      setBalance(prev => prev + 5); // 오류 시 코인 환불
+      setBalance(prev => prev + 5);
     }
   };
 
@@ -145,7 +145,7 @@ const Roulette: React.FC<RouletteProps> = ({ balance, setBalance, onReward, show
   if (rouletteItems.length === 0) {
     return (
       <div className="roulette-container">
-        <div className="roulette-error">룰렛 아이템이 설정되지 않았습니다.</div>
+        <div className="roulette-error">{t("roulette.noItems")}</div>
       </div>
     );
   }

@@ -8,7 +8,18 @@
   },
   "buttons": {
     "buy": "Buy",
-    "use": "Use"
+    "use": "Use",
+    "notEnough": "Not Enough"
+  },
+  "messages": {
+    "acquired": "Acquired {{itemName}}!"
+  },
+  "errors": {
+    "loadFailed": "Failed to load data.",
+    "buyFailed": "Purchase failed.",
+    "notEnoughCoin": "Not enough coins.",
+    "notFound": "Item not found.",
+    "rouletteFailed": "An error occurred while spinning the roulette."
   },
   "toast": {
     "noCoin": "Not enough coins! (Need: {{price}} HTO)",
@@ -60,11 +71,12 @@
     "got": "Gained!",
     "rolling": "Spinning...",
     "noCoin": "Not enough coins!",
-    "reward": "Gained {{item}}!"
+    "reward": "Gained {{item}}!",
+    "noItems": "No roulette items have been set up."
   },
   "npc": {
     "intro": {
-      "hello": "Hello! I'm HackCat 🐱",
+      "hello": "Hello! I'm HackCat!",
       "ask": "Press a button to check what you want to know!"
     },
     "faq": {
@@ -77,8 +89,8 @@
         "answer": "Go to the Roulette tab and press START to spin and get rewards."
       },
       "inventory": {
-        "question": "How do I use items in inventory?",
-        "answer": "Go to the Inventory tab and press Use on the item you want to use."
+        "question": "How do I use items?",
+        "answer": "Available items are displayed in your inventory when playing Machines, Contests, or Arena."
       },
       "coin": {
         "question": "How can I get coins?",

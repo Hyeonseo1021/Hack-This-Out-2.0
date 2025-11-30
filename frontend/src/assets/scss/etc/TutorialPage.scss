@@ -1,5 +1,4 @@
 @use "../style" as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
 
 /* ===============================
    기본 레이아웃 (리더보드 스타일)
@@ -14,7 +13,7 @@
   color: #00f6ff;
   display: flex;
   flex-direction: column;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   overflow-x: hidden;
   overflow-y: auto;
   z-index: 1;
@@ -109,7 +108,7 @@
   }
 
   h2 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.8rem;
     color: #00f6ff;
     text-shadow: 0 0 8px #00f6ff, 0 0 16px rgba(0, 246, 255, 0.4);

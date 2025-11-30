@@ -5,6 +5,7 @@
   right: 25px;
   z-index: 9999;
   animation: fadeIn 0.25s ease-out;
+  font-family: var(--font-cyber);
 
   .npc-inner {
     background: rgba(0, 0, 0, 0.82);
@@ -81,6 +82,7 @@
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
+    font-family: var(--font-display);
     transition: 0.2s;
 
     &:hover {
@@ -102,6 +104,7 @@
   color: #000;
   font-size: 22px;
   font-weight: 700;
+  font-family: var(--font-display);
   cursor: pointer;
   z-index: 9999;
   box-shadow: 0 0 12px #00f6ff;

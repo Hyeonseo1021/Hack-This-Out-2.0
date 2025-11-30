@@ -1,5 +1,6 @@
 // src/pages/contest/ContestList.tsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getActiveContests } from '../../api/axiosContest';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../../utils/dateUtils';
@@ -27,6 +28,7 @@ interface ContestsResponse {
 }
 
 const ContestList: React.FC = () => {
+  const { t } = useTranslation('contest');
   const [ongoingContests, setOngoingContests] = useState<Contest[]>([]);
   const [notStartedContests, setNotStartedContests] = useState<Contest[]>([]);
   const [endedContests, setEndedContests] = useState<Contest[]>([]);
@@ -67,7 +69,7 @@ const ContestList: React.FC = () => {
 
   return (
     <div className={styles.contest_list_container}>
-      <h2 className={styles.contest_title}>Contests</h2>
+      <h2 className={styles.contest_title}>{t('title')}</h2>
 
           {/* 탭 */}
       <div className={styles.tabs}>
@@ -79,9 +81,9 @@ const ContestList: React.FC = () => {
             }`}
             onClick={() => setActiveTab(tab as any)}
           >
-            {tab === 'ongoing' && 'Ongoing'}
-            {tab === 'notStarted' && 'Not Started'}
-            {tab === 'ended' && 'Ended'}
+            {tab === 'ongoing' && t('ongoing')}
+            {tab === 'notStarted' && t('notStarted')}
+            {tab === 'ended' && t('ended')}
           </button>
         ))}
       </div>
@@ -91,7 +93,7 @@ const ContestList: React.FC = () => {
         {loading ? (
           <LoadingIcon />
         ) : list.length === 0 ? (
-          <p className={styles.no_contests}>No contests available.</p>
+          <p className={styles.no_contests}>{t('noContests')}</p>
         ) : (
           list.map((item) => (
             <div
@@ -122,9 +124,9 @@ const ContestList: React.FC = () => {
               </div>
 
               <div className={styles.card_info}>
-                <p>📅 Start: {formatDate(item.startTime)}</p>
-                <p>⏳ End: {formatDate(item.endTime)}</p>
-                <p>⭐ Reward: {item.contestExp} EXP</p>
+                <p>📅 {t('start')}: {formatDate(item.startTime)}</p>
+                <p>⏳ {t('end')}: {formatDate(item.endTime)}</p>
+                <p>⭐ {t('reward')}: {item.contestExp} EXP</p>
               </div>
             </div>
           ))

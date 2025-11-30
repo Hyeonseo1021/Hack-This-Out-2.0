@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Carousel from 'react-material-ui-carousel';
 import { ContestBannerItem } from '../../types/Contest';
 import '../../assets/scss/contest/ContestBanner.scss';
@@ -13,6 +14,7 @@ import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
 
 const ContestBanner: React.FC = () => {
+  const { t } = useTranslation('contest');
   const [latestContest, setLatestContest] = useState<ContestBannerItem | null>(null);
   const [startedContest, setStartedContest] = useState<ContestBannerItem | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -51,8 +53,8 @@ const ContestBanner: React.FC = () => {
   }
 
   const contests = [
-    { ...latestContest!, title: 'Latest Contest' },
-    { ...startedContest!, title: 'Ongoing Contest' },
+    { ...latestContest!, title: t('banner.latest') },
+    { ...startedContest!, title: t('banner.ongoing') },
   ];
 
   return (
@@ -95,18 +97,18 @@ const ContestBanner: React.FC = () => {
                 >
                   {contest?.name ? contest.name.charAt(0).toUpperCase() : "?"}
                 </Avatar>
-                <h4><b>{contest?.name ? contest.name.charAt(0).toUpperCase() + contest.name.slice(1) : "Nothing new"}</b></h4>
+                <h4><b>{contest?.name ? contest.name.charAt(0).toUpperCase() + contest.name.slice(1) : t('banner.nothingNew')}</b></h4>
                 {new Date(contest.startTime) > new Date() ? (
-                  <p className='ramaining-time'>Starts in {formatRemainingTime(contest.startTime)}</p>
+                  <p className='ramaining-time'>{t('startsIn')} {formatRemainingTime(contest.startTime)}</p>
                 ) : (
                   contest.endTime ? (
-                    <p className='ramaining-time'>Ends in {formatRemainingTime(contest.endTime)}</p>
+                    <p className='ramaining-time'>{t('endsIn')} {formatRemainingTime(contest.endTime)}</p>
                   ) : (
-                    <p className='ramaining-time'>No participants yet</p> // 또는 'End time not set'
+                    <p className='ramaining-time'>{t('noParticipants')}</p>
                   )
                 )}
                 <div className='contest_reward_box'>
-                  <p className='banner-exp'>Reward</p>
+                  <p className='banner-exp'>{t('reward')}</p>
                   <p className='exp'>{contest.contestExp} EXP</p>
                 </div>
                 <Button
@@ -114,7 +116,7 @@ const ContestBanner: React.FC = () => {
                   variant="contained"
                   onClick={() => navigate(`/contest/${contest._id}`)}
                 >
-                  Go to Contest
+                  {t('goToContest')}
                 </Button>
               </div>
             </Paper>
