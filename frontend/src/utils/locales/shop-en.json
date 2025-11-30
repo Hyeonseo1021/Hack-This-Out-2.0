@@ -8,7 +8,18 @@
   },
   "buttons": {
     "buy": "Buy",
-    "use": "Use"
+    "use": "Use",
+    "notEnough": "Not Enough"
+  },
+  "messages": {
+    "acquired": "Acquired {{itemName}}!"
+  },
+  "errors": {
+    "loadFailed": "Failed to load data.",
+    "buyFailed": "Purchase failed.",
+    "notEnoughCoin": "Not enough coins.",
+    "notFound": "Item not found.",
+    "rouletteFailed": "An error occurred while spinning the roulette."
   },
   "toast": {
     "noCoin": "Not enough coins! (Need: {{price}} HTO)",
@@ -60,7 +71,8 @@
     "got": "Gained!",
     "rolling": "Spinning...",
     "noCoin": "Not enough coins!",
-    "reward": "Gained {{item}}!"
+    "reward": "Gained {{item}}!",
+    "noItems": "No roulette items have been set up."
   },
   "npc": {
     "intro": {

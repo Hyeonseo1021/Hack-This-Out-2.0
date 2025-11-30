@@ -1,5 +1,4 @@
 @use "../style" as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=VT323&display=swap');
 
 .battle-cyber-container.room-variant {
   position: relative;
@@ -7,7 +6,7 @@
   height: 100vh;
   background: radial-gradient(circle at 20% 20%, #02010a, #000);
   color: #eafaff;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -238,7 +237,7 @@
   border-radius: 4px;
   color: #eafaff;
   padding: 8px 12px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.9rem;
   transition: 0.3s ease;
   
@@ -250,7 +249,7 @@
   
   &::placeholder {
     color: #555;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
   }
 
   &:disabled {
@@ -268,7 +267,7 @@
   border-radius: 4px;
   color: #eafaff;
   padding: 8px 12px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.9rem;
   transition: 0.3s ease;
   appearance: none;
@@ -286,7 +285,7 @@
   option {
     background: #02010a;
     color: #eafaff;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
   }
   
   option:disabled {
@@ -336,7 +335,7 @@
     }
 
     .player-slot {
-      font-family: 'VT323', monospace;
+      font-family: var(--font-display);
       font-size: 0.85rem;
       color: #888;
       letter-spacing: 1px;
@@ -382,7 +381,7 @@
       background: transparent;
       border: 1px solid #ff4444;
       color: #ff4444;
-      font-family: 'Orbitron', sans-serif;
+      font-family: var(--font-display);
       text-transform: uppercase;
       letter-spacing: 1px;
       padding: 4px 10px;
@@ -462,7 +461,7 @@
   background: transparent;
   border: 1px solid #00f6ff;
   color: #00f6ff;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   text-transform: uppercase;
   letter-spacing: 2px;
   padding: 12px 28px;
@@ -920,7 +919,7 @@
       line-height: 1.7;
       color: rgba(255, 255, 255, 0.85);
       margin: 0;
-      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+      font-family: var(--font-main);
     }
 
     ul {
@@ -1007,7 +1006,7 @@ $white: #ffffff;
   align-items: center;
   justify-content: center;
   padding: 40px 15px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   position: relative;
   box-sizing: border-box;
 
@@ -1015,7 +1014,7 @@ $white: #ffffff;
     background: transparent;
     border: 1px solid cyan;
     color: cyan;
-    font-family: "Orbitron", sans-serif;
+    font-family: var(--font-display);
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 0.9rem;
@@ -1126,7 +1125,7 @@ $white: #ffffff;
     margin-top: 12px;
     position: relative;
     overflow: hidden;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     box-shadow:
       0 0 30px rgba(0, 229, 255, 0.5),
       0 0 50px rgba(0, 229, 255, 0.3),
@@ -1225,7 +1224,7 @@ $white: #ffffff;
       p {
         font-size: 1.1rem;
         color: rgba(255, 255, 255, 0.4);
-        font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+        font-family: var(--font-main);
       }
     }
   }
@@ -1286,7 +1285,7 @@ $white: #ffffff;
       color: rgba(255, 255, 255, 0.7);
       line-height: 1.6;
       margin: 0 0 14px 0;
-      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+      font-family: var(--font-main);
     }
 
     .mode-players {

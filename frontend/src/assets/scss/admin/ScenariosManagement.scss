@@ -87,7 +87,7 @@
       border-radius: 8px;
       color: #fff;
       font-size: 15px;
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: var(--font-ui);
       transition: all 0.2s ease;
 
       &:hover {

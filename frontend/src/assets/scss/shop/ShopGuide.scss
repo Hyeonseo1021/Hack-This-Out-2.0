@@ -6,7 +6,7 @@
   border-radius: 12px;
   background: rgba(0,0,0,0.6);
   color: #fff;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: var(--font-main);
 
   .guide-toggle {
     background: transparent;

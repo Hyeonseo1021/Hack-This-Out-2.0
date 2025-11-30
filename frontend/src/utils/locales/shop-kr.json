@@ -8,7 +8,18 @@
   },
   "buttons": {
     "buy": "구매",
-    "use": "사용"
+    "use": "사용",
+    "notEnough": "코인 부족"
+  },
+  "messages": {
+    "acquired": "{{itemName}}을(를) 획득했습니다!"
+  },
+  "errors": {
+    "loadFailed": "데이터를 불러오는데 실패했습니다.",
+    "buyFailed": "구매에 실패했습니다.",
+    "notEnoughCoin": "코인이 부족합니다.",
+    "notFound": "아이템을 찾을 수 없습니다.",
+    "rouletteFailed": "룰렛 실행 중 오류가 발생했습니다."
   },
   "toast": {
     "noCoin": "코인이 부족합니다! (필요: {{price}} HTO)",
@@ -60,7 +71,8 @@
     "got": "획득!",
     "rolling": "돌리는 중...",
     "noCoin": "코인이 부족합니다!",
-    "reward": "{{item}} 획득!"
+    "reward": "{{item}} 획득!",
+    "noItems": "룰렛 아이템이 설정되지 않았습니다."
   },
   "npc": {
     "intro": {

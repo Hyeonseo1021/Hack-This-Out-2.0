@@ -1,5 +1,4 @@
 @use "../style" as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=VT323&display=swap');
 
 :root {
   --mint: #8BF3FF;
@@ -21,7 +20,7 @@
 .machine-detail-page,
 .machine-detail-page-review,
 .machine-review {
-  font-family: 'Orbitron', 'VT323', sans-serif !important;
+  font-family: var(--font-display) !important;
 }
 
 
@@ -85,7 +84,7 @@
     box-shadow: 0 0 12px var(--mint-glow);
     transition: all 0.3s ease;
     color: var(--mint);
-    font-family: 'VT323', monospace;
+    font-family: var(--font-display);
     font-size: clamp(3rem, 5vw, 4rem);
 
     &:hover {

@@ -89,9 +89,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const isInitializedRef = useRef(false);
   const isCompletedRef = useRef(false);
 
-  const lastProcessedCommandRef = useRef<string>('');
   const lastPromptStageRef = useRef<number>(-1);
-  const processingRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (isInitializedRef.current) return;
@@ -182,17 +180,9 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
     if (isCompletedRef.current && !data.completed) {
       console.log('[DEBUG] Already completed');
+      setIsSubmitting(false);  // ✅ 완료 상태여도 submitting 해제
       return;
     }
-
-    const commandKey = `${data.command}-${data.message}-${data.scoreGain}`;
-    if (processingRef.current || lastProcessedCommandRef.current === commandKey) {
-      console.log('[DEBUG] Duplicate result detected, ignoring');
-      return;
-    }
-
-    processingRef.current = true;
-    lastProcessedCommandRef.current = commandKey;
 
     const messageText = getBilingualText(data.message);
 
@@ -256,7 +246,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     setIsSubmitting(false);
 
     setTimeout(() => {
-      processingRef.current = false;
       inputRef.current?.focus();
     }, 100);
   }, [currentUserId, socket, arena._id]);

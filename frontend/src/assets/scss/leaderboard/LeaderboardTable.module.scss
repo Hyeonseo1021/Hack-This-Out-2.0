@@ -473,7 +473,7 @@ $glitch-intensity: 25;
   text-align: center;
   color: #00eaff;
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.3);
-  font-family: 'Orbitron', 'Press Start 2P', sans-serif;
+  font-family: var(--font-display);
   font-weight: 700;
   animation: flickerText 2.5s infinite ease-in-out;
   z-index: 3;

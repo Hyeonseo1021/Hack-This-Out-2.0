@@ -9,7 +9,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: 'Orbitron', sans-serif;
   z-index: 1;
 
   /* ⚡ 노이즈 + CRT 라인 효과 */
@@ -67,9 +66,10 @@
     .title-glitch {
       position: relative;
       display: inline-block;
-      font-size: clamp(32px, 3.8vw, 64px);
+      font-size: clamp(4rem, 3.8vw, 64px);
+      font-weight: 700;
       line-height: 1;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       color: #fff;
       text-transform: uppercase;
       text-align: center;
@@ -113,25 +113,6 @@
       position: absolute;
       right: 130px;
       top: 60px;
-
-      .lang-toggle {
-        background: transparent;
-        border: 1px solid cyan;
-        color: cyan;
-        font-family: "Orbitron", sans-serif;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s;
-        text-shadow: 0 0 10px cyan;
-
-        &:hover {
-          background: cyan;
-          color: #000;
-          box-shadow: 0 0 15px cyan, 0 0 25px #00f6ff;
-        }
-      }
     }
   }
 
@@ -168,7 +149,7 @@
   .user-hud, .main-board, .activity-log {
     background: rgba(0, 20, 40, 0.45);
     border: 1px solid rgba(0, 255, 255, 0.4);
-    border-radius: 12px;
+    border-radius: 10px;
     box-shadow: 0 0 30px rgba(0, 255, 255, 0.25);
     backdrop-filter: blur(6px);
     padding: 25px;
@@ -197,13 +178,15 @@
   /* HUD */
   .user-hud {
     h2 {
-      font-size: 1.1rem;
+      font-size: 1.4em;
+      font-family: var(--font-main);
+      font-weight: 700px;
       color: #00f6ff;
       margin-bottom: 10px;
       text-shadow: 0 0 10px #00ffff;
     }
     p {
-      font-family: 'VT323', monospace;
+      font-family: var(--font-display);
       color: #aefcff;
       margin: 6px 0;
     }
@@ -236,12 +219,12 @@
         padding: 14px;
         text-align: center;
         border-bottom: 1px solid rgba(0,255,255,0.2);
-        font-family: 'VT323', monospace;
+        font-family: var(--font-display);
         color: #aefcff;
       }
 
       th {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
         color: #00f6ff;
         text-shadow: 0 0 10px #00ffff;
       }
@@ -281,7 +264,7 @@
       text-shadow: 0 0 10px #00ffff;
     }
     li {
-      font-family: 'VT323', monospace;
+      font-family: var(--font-display);
       font-size: 1rem;
       color: #aefcff;
       margin: 8px 0;

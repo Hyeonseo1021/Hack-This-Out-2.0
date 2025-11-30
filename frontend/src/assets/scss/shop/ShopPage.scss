@@ -1,6 +1,3 @@
-/* ===================================================== */
-/* SHOP PAGE - FULL BLACK BACKGROUND (A안 - HTML 구조 유지) */
-/* ===================================================== */
 
 .shop-layout {
   width: 100%;
@@ -10,17 +7,18 @@
   justify-content: center;
   position: relative;
   background: #000;
+  font-family: var(--font-display);
 }
 
-/* 전체 패널 */
+
 .shop-panel {
   width: 100%;
   max-width: none;
 
   /* 🔥 수정된 핵심 부분 */
-  min-height: auto;                 /* 기존 고정된 min-height 제거 */
-  padding: 60px 60px 140px;         /* 하단 공간 확보 */
-  overflow: hidden;                 /* 아래로 튀어나오는 카드 방지 */
+  min-height: auto;                 
+  padding: 60px 60px 140px;       
+  overflow: hidden;                
 
   border-radius: 0;
   background: rgba(0, 0, 0, 0.92);
@@ -36,12 +34,15 @@
 /* ============================ */
 
 .shop-title {
-  font-size: 3rem;
+  position: relative;
+  color: #e0e0e0;
+  font-size: 3.5rem;
   font-weight: 700;
-  color: #00eaff;
-  text-shadow: 0 0 24px #00eaff;
   text-align: center;
   margin-top: 20px;
+  margin-bottom: 1rem;
+  font-family: var(--font-display);
+  animation: text-flicker 4s linear infinite;
 }
 
 .shop-balance {
@@ -117,6 +118,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: 0.2s;
+    font-family: var(--font-display);
 
     &:hover {
       box-shadow: 0 0 10px #00eaff;
@@ -228,6 +230,7 @@
   color: #9ffaff;
   font-weight: 600;
   cursor: pointer;
+  font-family: var(--font-display);
 
   &:hover {
     background: rgba(0, 255, 255, 0.18);

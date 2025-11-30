@@ -848,7 +848,7 @@
           .message-line {
             color: #00ff88;
             margin-bottom: 0.5rem;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             font-size: 1rem;
 
             .prompt {
@@ -865,7 +865,7 @@
           .output-line {
             color: #ffffff;
             margin-bottom: 0.75rem;
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             font-size: 1rem;
 
             &.success {
@@ -917,13 +917,13 @@
               color: #00ff88;
               line-height: 1.6;
               font-size: 1rem;
-              font-family: 'Courier New', monospace;
+              font-family: var(--font-mono);
             }
 
             .performance-line {
               color: #ffffff;
               margin-bottom: 0.35rem;
-              font-family: 'Courier New', monospace;
+              font-family: var(--font-mono);
 
               .perfect {
                 color: #00ff88;

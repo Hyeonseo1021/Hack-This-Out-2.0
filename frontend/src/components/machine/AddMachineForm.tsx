@@ -195,8 +195,15 @@ const AddMachineForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className='add-machine-form'>
 
-      {/* 상단 기존 헤더 - Back 버튼 제거됨 */}
+      {/* 상단 헤더 */}
       <div className='back-button'>
+        <button
+          className="IconButton"
+          type="button"
+          onClick={() => navigate(-1)}
+        >
+          <IoMdArrowRoundBack />
+        </button>
         <h2>Add New Machine</h2>
       </div>
 

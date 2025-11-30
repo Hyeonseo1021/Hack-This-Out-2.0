@@ -1,5 +1,4 @@
 @use "../style" as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Audiowide&family=VT323&display=swap');
 
 :root {
   --mint: #8BF3FF;
@@ -15,7 +14,7 @@
   width: 100%;
   max-width: 1200px;
   position: relative;
-  font-family: 'Audiowide', sans-serif;
+  font-family: var(--font-cyber);
   color: var(--white);
   font-weight: 600;
 
@@ -179,7 +178,7 @@
     border-radius: 6px;
     color: var(--mint);
     font-size: 1rem;
-    font-family: 'VT323', monospace;
+    font-family: var(--font-display);
     letter-spacing: 1px;
     cursor: pointer;
 

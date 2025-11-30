@@ -2,7 +2,7 @@
    네온 글리치 타이틀
    ======================= */
 .leaderboard-title {
-  font-family: "Orbitron", sans-serif;
+  font-family: var(--font-display);
   font-size: 3rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -156,7 +156,7 @@
     width: 100%;
     text-align: center;
     color: cyan;
-    font-family: "Orbitron", sans-serif;
+    font-family: var(--font-display);
     text-shadow: 0 0 10px cyan;
 
     h2 {

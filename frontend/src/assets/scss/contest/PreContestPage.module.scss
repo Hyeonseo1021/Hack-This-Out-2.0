@@ -5,7 +5,7 @@
   width: 50vw;
   min-height: 30rem;
   color: var(--white);
-  font-family: 'Orbitron', 'VT323', monospace;
+  font-family: var(--font-display);
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -79,7 +79,7 @@
 
     .contest_start {
       @include button_color;
-      font-family: 'Orbitron', monospace;
+      font-family: var(--font-display);
       font-weight: 700;
       font-size: 1.2rem;
       width: 160px;
@@ -111,7 +111,7 @@
   text-align: center;
   background-color: rgba(0,0,0,0.85);
   border-radius: 16px;
-  font-family: 'Orbitron', 'VT323', monospace;
+  font-family: var(--font-display);
 
   .contest_warning_title {
     font-size: 1.5rem;

@@ -117,11 +117,11 @@
   }
 }
 .contest_register * {
-  font-family: "Orbitron", monospace !important;
+  font-family: var(--font-display) !important;
 }
 
 .contest_register .machine,
 .contest_register .plus,
 .contest_register .register_text {
-  font-family: "Orbitron" !important;
+  font-family: var(--font-display) !important;
 }

@@ -4,7 +4,7 @@
 
 .add-contest-form {
     @include background_set;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     backdrop-filter: blur(40px);
     display: flex;
     flex-direction: column;
@@ -52,7 +52,7 @@
             align-items: center;
             justify-content: center;
             transition: 0.25s ease;
-            font-family: 'Orbitron', sans-serif;
+            font-family: var(--font-display);
 
             &:hover {
                 transform: translateX(-4px) scale(1.06);
@@ -125,7 +125,7 @@
                     margin-left: 12px;
                     border: none;
                     cursor: pointer;
-                    font-family: Orbitron;
+                    font-family: var(--font-display);
 
                     &:hover {
                         background: rgba(255, 110, 110, 0.85);
@@ -165,7 +165,7 @@
                 color: #eaffff;
                 border-radius: 14px;
                 cursor: pointer;
-                font-family: Orbitron;
+                font-family: var(--font-display);
                 transition: 0.25s;
 
                 &:hover {
@@ -192,7 +192,7 @@
                 color: #eaffff;
                 cursor: pointer;
                 transition: 0.25s ease;
-                font-family: Orbitron;
+                font-family: var(--font-display);
 
                 &:hover {
                     transform: translateY(-3px) scale(1.05);

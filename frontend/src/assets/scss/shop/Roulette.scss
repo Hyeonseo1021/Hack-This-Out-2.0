@@ -8,6 +8,7 @@
   width: 100%;
   padding-top: 20px;
   padding-bottom: 40px;
+  font-family: var(--font-display);
 
   /* ⭐ ShopPage 레이아웃 침범 방지 */
   position: relative;
@@ -92,6 +93,7 @@
 .roulette-title {
   font-size: 1.4rem;
   margin-bottom: 8px;
+  font-family: var(--font-display);
 }
 
 /* 설명 */
@@ -122,6 +124,7 @@
   cursor: pointer;
   font-weight: 700;
   font-size: 1rem;
+  font-family: var(--font-display);
   transition: 0.2s;
 
   &:hover:not(:disabled) {

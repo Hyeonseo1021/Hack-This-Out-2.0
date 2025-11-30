@@ -1,5 +1,4 @@
 // assets/scss/arena/ArenaPlayPage.scss
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&display=swap');
 
 // Animations
 @keyframes grid-pan {
@@ -36,7 +35,7 @@
   background: radial-gradient(circle at 20% 20%, #02010a, #000);
   color: #fff;
   overflow: hidden;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   position: relative;
 
   // 배경 그리드
@@ -577,7 +576,7 @@
               font-weight: 700;
               cursor: pointer;
               transition: all 0.3s;
-              font-family: 'Orbitron', sans-serif;
+              font-family: var(--font-display);
               letter-spacing: 0.5px;
 
               &:hover:not(:disabled) {

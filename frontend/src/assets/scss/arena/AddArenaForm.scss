@@ -1,5 +1,4 @@
 @use '../style' as *;
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Share+Tech+Mono&display=swap');
 
 // ========================================
 // 색상 팔레트 (하얀색 + 네온 민트)
@@ -32,7 +31,7 @@ $white: #ffffff;
   align-items: center;
   justify-content: center;
   padding: 15px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   position: relative;
   box-sizing: border-box;
 
@@ -138,7 +137,7 @@ $white: #ffffff;
     transition: all 0.25s ease;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     position: relative;
     box-shadow:
       0 0 15px rgba(0, 229, 255, 0.3),
@@ -189,7 +188,7 @@ $white: #ffffff;
       color: #ffffff;
       font-size: 1rem;
       transition: all 0.2s ease;
-      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+      font-family: var(--font-main);
 
       &::placeholder {
         color: rgba(255, 255, 255, 0.4);
@@ -215,7 +214,7 @@ $white: #ffffff;
     .input-hint {
       font-size: 0.8rem;
       color: rgba(255, 255, 255, 0.6);
-      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+      font-family: var(--font-main);
     }
   }
 
@@ -226,7 +225,7 @@ $white: #ffffff;
     border-radius: 0;
     color: #ff8a80;
     font-size: 0.85rem;
-    font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+    font-family: var(--font-main);
   }
 
   .submit-button {
@@ -244,7 +243,7 @@ $white: #ffffff;
     margin-top: 12px;
     position: relative;
     overflow: hidden;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     box-shadow:
       0 0 30px rgba(0, 229, 255, 0.5),
       0 0 50px rgba(0, 229, 255, 0.3),
@@ -338,7 +337,7 @@ $white: #ffffff;
       color: rgba(255, 255, 255, 0.7);
       line-height: 1.6;
       margin: 0 0 14px 0;
-      font-family: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+      font-family: var(--font-main);
     }
 
     .mode-players {

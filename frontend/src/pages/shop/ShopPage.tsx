@@ -92,20 +92,38 @@ const ShopPage: React.FC = () => {
   const handleBuyItem = async (itemId: string) => {
     try {
       const result = await buyShopItem(itemId);
-      
+
       // 잔액 업데이트
       setBalance(result.updatedBalance);
-      
+
       // 인벤토리 새로고침
       const updatedInventory = await getInventory();
       setInventory(updatedInventory);
-      
-      // 성공 토스트
+
+      // 성공 토스트 (다국어 지원)
       const item = shopItems.find(i => i._id === itemId);
-      showToast(result.msg, item?.icon);
+      const lang = i18n.language as 'ko' | 'en';
+
+      // 획득한 아이템 이름 추출 (랜덤 버프의 경우 result.acquiredItem 사용)
+      const acquiredItemName = result.acquiredItem?.name
+        ? (typeof result.acquiredItem.name === 'object'
+            ? (result.acquiredItem.name as any)[lang] || (result.acquiredItem.name as any).ko
+            : result.acquiredItem.name)
+        : (item?.name
+            ? (typeof item.name === 'object'
+                ? (item.name as any)[lang] || (item.name as any).ko
+                : item.name)
+            : '');
+
+      // 번역된 메시지 사용
+      const successMsg = t('messages.acquired', { itemName: acquiredItemName });
+      showToast(successMsg, item?.icon);
     } catch (error: any) {
       console.error('❌ Failed to buy item:', error);
-      showToast(error?.response?.data?.msg || t('errors.buyFailed') || '구매에 실패했습니다.');
+      // 에러 메시지도 다국어 처리
+      const errorKey = error?.response?.data?.errorKey;
+      const errorMsg = errorKey ? t(`errors.${errorKey}`) : t('errors.buyFailed');
+      showToast(errorMsg);
     }
   };
 

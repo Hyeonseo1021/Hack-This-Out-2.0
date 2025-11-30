@@ -1,5 +1,4 @@
 // ArenaPage.scss - Neon CRT Glitch Theme
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Share+Tech+Mono&display=swap');
 
 // ========================================
 // 색상 팔레트 (하얀색 + 네온 민트)
@@ -163,7 +162,7 @@ $white: #ffffff;          // 하얀색
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
 }
 
 // ========================================
@@ -171,7 +170,7 @@ $white: #ffffff;          // 하얀색
 // ========================================
 
 .arena-title {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   font-size: 8rem;
   font-weight: 900;
   color: #ffffff;
@@ -239,7 +238,7 @@ $white: #ffffff;          // 하얀색
   position: relative;
   transition: all 0.3s ease;
   overflow: hidden;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   box-shadow:
     0 0 30px rgba(0, 229, 255, 0.4),
     0 0 60px rgba(0, 229, 255, 0.2),
@@ -359,7 +358,7 @@ $white: #ffffff;          // 하얀색
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 4px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     position: relative;
     text-shadow:
       0 0 10px rgba(0, 229, 255, 0.8),
@@ -516,7 +515,7 @@ $white: #ffffff;          // 하얀색
     background-clip: text;
     font-size: 1.1rem;
     margin-top: 4rem;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     text-transform: uppercase;
     letter-spacing: 3px;
     filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.6));
@@ -535,7 +534,7 @@ $white: #ffffff;          // 하얀색
   border: 2px solid;
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   position: relative;
   overflow: hidden;
 
@@ -604,7 +603,7 @@ $white: #ffffff;          // 하얀색
   position: relative;
   transition: all 0.3s ease;
   overflow: hidden;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
   box-shadow:
     0 0 30px rgba(0, 229, 255, 0.5),
     0 0 50px rgba(0, 229, 255, 0.3),

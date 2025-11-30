@@ -7,6 +7,7 @@
   display: flex;
   justify-content: center;
   padding: 10px 0;
+  font-family: var(--font-display);
 }
 
 .shop-inventory-list {
@@ -52,6 +53,7 @@
   font-size: 1rem; /* 제목 폰트 축소 */
   color: #00eaff;
   margin-bottom: 2px;
+  font-family: var(--font-display);
 }
 
 .shop-inventory-card__count {
@@ -76,6 +78,7 @@
   color: #ffb9f5;
   font-weight: 600;
   font-size: 0.85rem; /* 버튼 폰트 축소 */
+  font-family: var(--font-display);
   cursor: pointer;
   transition: 0.2s;
   &:hover {
