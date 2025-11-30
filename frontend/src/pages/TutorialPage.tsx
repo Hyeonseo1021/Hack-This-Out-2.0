@@ -13,8 +13,9 @@ const TutorialPage: React.FC = () => {
 
   // ✅ 언어 전환 함수
   const handleChangeLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'ko' : 'en'; // ✅ 'ko'로 고정
+    const newLang = i18n.language === 'en' ? 'ko' : 'en';
     i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);  // 언어 설정 저장
 
     // ✅ 글리치 + 빛나는 페이드 효과 트리거
     setIsGlitch(true);

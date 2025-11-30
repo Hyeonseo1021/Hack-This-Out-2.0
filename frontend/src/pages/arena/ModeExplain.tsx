@@ -7,58 +7,95 @@ const modes = [
   {
     id: 'TERMINAL_HACKING_RACE',
     title: 'Terminal Race',
-    desc: '터미널 명령어로 가장 빠르게 해킹',
-    players: '2-8명',
-    description: '터미널 명령어를 활용하여 가장 빠르게 문제를 해결하는 레이스 모드입니다.',
-    objective: '주어진 시스템에서 플래그를 찾거나 특정 작업을 가장 빨리 완료하세요.',
-    rules: [
-      '각 참가자는 동일한 시스템 환경에서 시작합니다',
-      '터미널 명령어만 사용하여 문제를 해결해야 합니다',
-      '가장 먼저 목표를 달성한 플레이어가 승리합니다',
-      '잘못된 명령어 사용 시 페널티가 부여될 수 있습니다'
-    ]
+    desc: { ko: '터미널 명령어로 가장 빠르게 해킹', en: 'Hack fastest using terminal commands' },
+    players: { ko: '2-8명', en: '2-8 players' },
+    description: { ko: '터미널 명령어를 활용하여 가장 빠르게 문제를 해결하는 레이스 모드입니다.', en: 'A race mode where you solve problems fastest using terminal commands.' },
+    objective: { ko: '주어진 시스템에서 플래그를 찾거나 특정 작업을 가장 빨리 완료하세요.', en: 'Find the flag or complete specific tasks as fast as possible.' },
+    rules: {
+      ko: [
+        '각 참가자는 동일한 시스템 환경에서 시작합니다',
+        '터미널 명령어만 사용하여 문제를 해결해야 합니다',
+        '가장 먼저 목표를 달성한 플레이어가 승리합니다',
+        '잘못된 명령어 사용 시 페널티가 부여될 수 있습니다'
+      ],
+      en: [
+        'All participants start in the same system environment',
+        'You must solve problems using only terminal commands',
+        'The first player to achieve the goal wins',
+        'Incorrect commands may result in penalties'
+      ]
+    },
+    tutorialPath: '/tutorial/arena/terminal'
   },
   {
     id: 'VULNERABILITY_SCANNER_RACE',
     title: 'Vulnerability Scanner Race',
-    desc: '웹 애플리케이션의 취약점을 찾아내라',
-    players: '2명',
-    description: '시스템의 취약점을 스캔하고 분석하여 가장 많은 취약점을 찾는 경쟁 모드입니다.',
-    objective: '제한 시간 내에 가장 많은 보안 취약점을 찾아내세요.',
-    rules: [
-      '다양한 스캐닝 도구를 활용할 수 있습니다',
-      '발견한 취약점의 심각도에 따라 점수가 부여됩니다',
-      '잘못된 탐지(False Positive)는 점수에서 차감됩니다',
-      '가장 높은 점수를 획득한 플레이어가 승리합니다'
-    ]
+    desc: { ko: '웹 애플리케이션의 취약점을 찾아내라', en: 'Find vulnerabilities in web applications' },
+    players: { ko: '2명', en: '2 players' },
+    description: { ko: '시스템의 취약점을 스캔하고 분석하여 가장 많은 취약점을 찾는 경쟁 모드입니다.', en: 'A competitive mode where you scan and analyze to find the most vulnerabilities.' },
+    objective: { ko: '제한 시간 내에 가장 많은 보안 취약점을 찾아내세요.', en: 'Find as many security vulnerabilities as possible within the time limit.' },
+    rules: {
+      ko: [
+        '다양한 스캐닝 도구를 활용할 수 있습니다',
+        '발견한 취약점의 심각도에 따라 점수가 부여됩니다',
+        '잘못된 탐지(False Positive)는 점수에서 차감됩니다',
+        '가장 높은 점수를 획득한 플레이어가 승리합니다'
+      ],
+      en: [
+        'You can use various scanning tools',
+        'Points are awarded based on vulnerability severity',
+        'False positives will deduct points',
+        'The player with the highest score wins'
+      ]
+    },
+    tutorialPath: '/tutorial/arena/vulnerability'
   },
   {
     id: 'FORENSICS_RUSH',
     title: 'Forensics Rush',
-    desc: '증거를 분석하고 범인을 찾아내라',
-    players: '2-8명',
-    description: '디지털 포렌식 기술을 활용하여 증거를 찾고 분석하는 모드입니다.',
-    objective: '숨겨진 데이터와 증거를 찾아 사건을 해결하세요.',
-    rules: [
-      '파일 시스템, 네트워크 로그, 메모리 덤프 등을 분석합니다',
-      '각 증거마다 점수가 부여됩니다',
-      '올바른 분석 결과를 제출해야 점수를 획득합니다',
-      '제한 시간 내에 가장 많은 증거를 찾은 플레이어가 승리합니다'
-    ]
+    desc: { ko: '증거를 분석하고 범인을 찾아내라', en: 'Analyze evidence and find the culprit' },
+    players: { ko: '2-8명', en: '2-8 players' },
+    description: { ko: '디지털 포렌식 기술을 활용하여 증거를 찾고 분석하는 모드입니다.', en: 'A mode where you find and analyze evidence using digital forensics.' },
+    objective: { ko: '숨겨진 데이터와 증거를 찾아 사건을 해결하세요.', en: 'Find hidden data and evidence to solve the case.' },
+    rules: {
+      ko: [
+        '파일 시스템, 네트워크 로그, 메모리 덤프 등을 분석합니다',
+        '각 증거마다 점수가 부여됩니다',
+        '올바른 분석 결과를 제출해야 점수를 획득합니다',
+        '제한 시간 내에 가장 많은 증거를 찾은 플레이어가 승리합니다'
+      ],
+      en: [
+        'Analyze file systems, network logs, memory dumps, etc.',
+        'Points are awarded for each piece of evidence',
+        'You must submit correct analysis to earn points',
+        'The player who finds the most evidence within the time limit wins'
+      ]
+    },
+    tutorialPath: '/tutorial/arena/forensics'
   },
   {
     id: 'SOCIAL_ENGINEERING_CHALLENGE',
-    title: 'Social Engineering',
-    desc: 'AI를 속여 정보를 빼내는 심리전',
-    players: '1-4명',
-    description: '소셜 엔지니어링 기법을 활용하여 정보를 획득하는 챌린지 모드입니다.',
-    objective: '다양한 소셜 엔지니어링 기법으로 목표 정보를 획득하세요.',
-    rules: [
-      '이메일 피싱, 프리텍스팅 등 다양한 기법을 사용합니다',
-      '윤리적 해킹 규칙을 준수해야 합니다',
-      '획득한 정보의 중요도에 따라 점수가 부여됩니다',
-      '가장 높은 점수를 획득한 플레이어가 승리합니다'
-    ]
+    title: 'Social Engineering (Coming Soon)',
+    desc: { ko: 'AI를 속여 정보를 빼내는 심리전', en: 'A psychological battle to extract info from AI' },
+    players: { ko: '1-4명', en: '1-4 players' },
+    description: { ko: '이 모드는 곧 출시됩니다!', en: 'This mode will be available soon!' },
+    objective: { ko: '다양한 소셜 엔지니어링 기법으로 목표 정보를 획득하세요.', en: 'Obtain target information using various social engineering techniques.' },
+    rules: {
+      ko: [
+        '이메일 피싱, 프리텍스팅 등 다양한 기법을 사용합니다',
+        '윤리적 해킹 규칙을 준수해야 합니다',
+        '획득한 정보의 중요도에 따라 점수가 부여됩니다',
+        '가장 높은 점수를 획득한 플레이어가 승리합니다'
+      ],
+      en: [
+        'Use various techniques like email phishing, pretexting, etc.',
+        'You must follow ethical hacking rules',
+        'Points are awarded based on the importance of obtained information',
+        'The player with the highest score wins'
+      ]
+    },
+    tutorialPath: '/tutorial/arena/social',
+    disabled: true
   },
 ];
 
@@ -94,12 +131,13 @@ const ModeExplain: React.FC = () => {
                 {modes.map(mode => (
                   <div
                     key={mode.id}
-                    className={`mode-card ${selectedMode === mode.id ? 'selected' : ''}`}
-                    onClick={() => handleModeSelect(mode.id)}
+                    className={`mode-card ${selectedMode === mode.id ? 'selected' : ''} ${(mode as any).disabled ? 'disabled' : ''}`}
+                    onClick={() => !(mode as any).disabled && handleModeSelect(mode.id)}
+                    style={(mode as any).disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   >
                     <h3 className="mode-title">{mode.title}</h3>
-                    <p className="mode-desc">{mode.desc}</p>
-                    <span className="mode-players">{mode.players}</span>
+                    <p className="mode-desc">{mode.desc[language]}</p>
+                    <span className="mode-players">{mode.players[language]}</span>
                   </div>
                 ))}
               </div>
@@ -115,18 +153,18 @@ const ModeExplain: React.FC = () => {
                   <div className="mode-desc-content" style={{ gap: '20px' }}>
                     <div className="mode-desc-objective" style={{ marginBottom: '20px' }}>
                       <h4>{language === "en" ? "Mission Objective" : "미션 목표"}</h4>
-                      <p>{currentMode.objective}</p>
+                      <p>{currentMode.objective[language]}</p>
                     </div>
 
                     <div className="mode-desc-block">
                       <h4>{language === "en" ? "Description" : "설명"}</h4>
-                      <p>{currentMode.description}</p>
+                      <p>{currentMode.description[language]}</p>
                     </div>
 
                     <div className="mode-desc-block">
                       <h4>{language === "en" ? "Rules" : "규칙"}</h4>
                       <ul>
-                        {currentMode.rules.map((rule, index) => (
+                        {currentMode.rules[language].map((rule, index) => (
                           <li key={index}>{rule}</li>
                         ))}
                       </ul>
@@ -136,10 +174,10 @@ const ModeExplain: React.FC = () => {
 
                 <button
                   className="submit-button"
-                  onClick={() => navigate('/arena')}
+                  onClick={() => navigate(currentMode.tutorialPath)}
                   style={{ marginTop: '30px' }}
                 >
-                  <span>{language === "en" ? "Back to Arena" : "아레나로 돌아가기"}</span>
+                  <span>{language === "en" ? "Start Tutorial" : "튜토리얼 시작"}</span>
                 </button>
               </div>
             </div>

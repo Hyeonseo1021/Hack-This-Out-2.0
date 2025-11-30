@@ -96,12 +96,11 @@ const routes: RouteObject[] = [
       {
         path: 'machinep',
         element: (
-        <ProtectedRoute>
-            < ModeExplain />
+          <ProtectedRoute>
+            <ModeExplain />
           </ProtectedRoute>
         ),
       },
-    
       {
         path: 'Manual',
         element: (

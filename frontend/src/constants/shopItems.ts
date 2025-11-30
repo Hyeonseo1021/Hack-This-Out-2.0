@@ -19,8 +19,8 @@ export const SHOP_ITEMS = [
   },
   {
     id: "timestop",
-    name: "시간 정지권",
-    description: "아레나에서 5초 동안 타이머를 정지할 수 있습니다.",
+    name: "시간 연장권",
+    description: "아레나에서 5초 동안 타이머를 연장할 수 있습니다.",
     price: 50,
   },
 ];

@@ -6,14 +6,19 @@ interface Hint {
   hintId: string;
   vulnId: string;
   level: 1 | 2 | 3;
-  text: string;
-  cost: number;
+  text: {
+    ko: string;
+    en: string;
+  };
 }
 
 interface Vulnerability {
   vulnId: string;
   vulnType: string;
-  vulnName: string;
+  vulnName: {
+    ko: string;
+    en: string;
+  };
   endpoint: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   parameter: string;
@@ -34,26 +39,25 @@ interface Vulnerability {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   basePoints: number;
   category: string;
-  hintIds: string[];
+  hintIds?: string[];
 }
 
 interface VulnerabilityScannerRaceData {
+  mode: 'SIMULATED' | 'REAL';
   targetUrl: string;
-  targetName: string;
-  targetDescription: string;
+  targetName: {
+    ko: string;
+    en: string;
+  };
+  targetDescription: {
+    ko: string;
+    en: string;
+  };
   features: string[];
   vulnerabilities: Vulnerability[];
-  hints: Hint[];
+  hints?: Hint[];
   scoring: {
-    firstBloodBonus: number;
-    speedBonusThresholds: {
-      under3min: number;
-      under5min: number;
-      under7min: number;
-    };
-    comboMultiplier: number;
     invalidSubmissionPenalty: number;
-    graceTimeSeconds?: number;
   };
   totalVulnerabilities: number;
 }
@@ -66,10 +70,8 @@ interface Props {
 
 const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficulty = 'EASY' }) => {
 
-  // 난이도 기반 모드 확인
+  // 난이도 기반 모드 확인 (초기값 설정용)
   const isEasyOrMedium = difficulty === 'EASY' || difficulty === 'MEDIUM';
-  const isHardOrExpert = difficulty === 'HARD' || difficulty === 'EXPERT';
-  const currentMode = isEasyOrMedium ? 'SIMULATED (AI Generated)' : 'REAL (Actual URL)';
 
   // 탭 상태 (form: 폼 모드, json: JSON 모드)
   const [editMode, setEditMode] = useState<'form' | 'json'>('form');
@@ -80,6 +82,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
   const switchToJsonMode = () => {
     try {
       const jsonData = {
+        mode: data.mode || (isEasyOrMedium ? 'SIMULATED' : 'REAL'),
         targetUrl: data.targetUrl || '',
         targetName: data.targetName || '',
         targetDescription: data.targetDescription || '',
@@ -87,11 +90,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         vulnerabilities: data.vulnerabilities || [],
         hints: data.hints || [],
         scoring: data.scoring || {
-          firstBloodBonus: 50,
-          speedBonusThresholds: { under3min: 30, under5min: 20, under7min: 10 },
-          comboMultiplier: 5,
-          invalidSubmissionPenalty: 5,
-          graceTimeSeconds: 60
+          invalidSubmissionPenalty: 5
         },
         totalVulnerabilities: data.vulnerabilities?.length || 0
       };
@@ -125,7 +124,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         {
           vulnId: newVulnId,
           vulnType: 'SQLi',
-          vulnName: '',
+          vulnName: { ko: '', en: '' },
           endpoint: '/',
           method: 'POST',
           parameter: '',
@@ -171,6 +170,49 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         i === index ? { ...v, validation: { ...v.validation, [field]: value } } : v
       )
     });
+  };
+
+  // 힌트 추가
+  const addHint = (vulnId: string) => {
+    const existingHints = (data.hints || []).filter(h => h.vulnId === vulnId);
+    const nextLevel = (existingHints.length + 1) as 1 | 2 | 3;
+    if (nextLevel > 3) return; // 최대 3개
+
+    onChange({
+      ...data,
+      hints: [
+        ...(data.hints || []),
+        {
+          hintId: `hint_${vulnId}_${nextLevel}_${Date.now()}`,
+          vulnId,
+          level: nextLevel,
+          text: { ko: '', en: '' }
+        }
+      ]
+    });
+  };
+
+  // 힌트 삭제
+  const removeHint = (hintId: string) => {
+    onChange({
+      ...data,
+      hints: (data.hints || []).filter(h => h.hintId !== hintId)
+    });
+  };
+
+  // 힌트 업데이트
+  const updateHint = (hintId: string, field: 'ko' | 'en', value: string) => {
+    onChange({
+      ...data,
+      hints: (data.hints || []).map(h =>
+        h.hintId === hintId ? { ...h, text: { ...h.text, [field]: value } } : h
+      )
+    });
+  };
+
+  // 특정 취약점의 힌트 가져오기
+  const getHintsForVuln = (vulnId: string) => {
+    return (data.hints || []).filter(h => h.vulnId === vulnId).sort((a, b) => a.level - b.level);
   };
 
   return (
@@ -251,44 +293,91 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
       {/* 폼 편집 모드 */}
       {editMode === 'form' && (
         <>
-          {/* 모드 안내 배너 */}
-          <div className={`mode-indicator ${isEasyOrMedium ? 'simulated' : 'real'}`}>
-            <strong>🎯 Mode: {currentMode}</strong>
-            <p>
-              {isEasyOrMedium
-                ? '✨ AI가 취약한 HTML을 자동 생성합니다. Features 목록을 제공해주세요.'
-                : '🌐 실제 취약한 웹 앱의 URL을 제공해야 합니다. Features는 선택사항입니다.'}
-            </p>
+          {/* 모드 선택 */}
+          <div className="form-section">
+            <h4>🎮 게임 모드 설정</h4>
+            <div className="form-field">
+              <label>모드 (Mode) *</label>
+              <select
+                value={data.mode || 'SIMULATED'}
+                onChange={(e) => onChange({ ...data, mode: e.target.value as 'SIMULATED' | 'REAL' })}
+                required
+              >
+                <option value="SIMULATED">SIMULATED (AI 생성 HTML)</option>
+                <option value="REAL">REAL (실제 URL)</option>
+              </select>
+              <small>
+                {data.mode === 'SIMULATED'
+                  ? '✨ AI가 취약한 HTML을 자동 생성합니다. Features 목록을 제공해주세요.'
+                  : '🌐 실제 취약한 웹 앱의 URL을 제공해야 합니다.'}
+              </small>
+            </div>
           </div>
 
       {/* 타겟 정보 */}
       <div className="form-section">
         <h4>타겟 정보</h4>
 
-        <div className="form-field">
-          <label>타겟 이름 *</label>
-          <input
-            type="text"
-            placeholder="SecureBank Login Portal"
-            value={data.targetName || ''}
-            onChange={e => onChange({ ...data, targetName: e.target.value })}
-            required
-          />
+        {/* Target Name - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            타겟 이름 (Target Name) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <input
+                type="text"
+                placeholder="시큐어뱅크 로그인 포털"
+                value={data.targetName?.ko || ''}
+                onChange={e => onChange({ ...data, targetName: { ...data.targetName, ko: e.target.value } })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <input
+                type="text"
+                placeholder="SecureBank Login Portal"
+                value={data.targetName?.en || ''}
+                onChange={e => onChange({ ...data, targetName: { ...data.targetName, en: e.target.value } })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="form-field">
-          <label>타겟 설명 *</label>
-          <textarea
-            rows={2}
-            placeholder="A vulnerable banking login portal"
-            value={data.targetDescription || ''}
-            onChange={e => onChange({ ...data, targetDescription: e.target.value })}
-            required
-          />
+        {/* Target Description - Bilingual */}
+        <div className="form-field" style={{ border: '1px solid #444', padding: '12px', borderRadius: '6px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+            타겟 설명 (Target Description) *
+          </label>
+          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>한글</label>
+              <textarea
+                rows={2}
+                placeholder="취약한 은행 로그인 포털"
+                value={data.targetDescription?.ko || ''}
+                onChange={e => onChange({ ...data, targetDescription: { ...data.targetDescription, ko: e.target.value } })}
+                required
+              />
+            </div>
+            <div style={{ display: 'grid', gap: '4px' }}>
+              <label style={{ fontSize: '11px', opacity: 0.7 }}>English</label>
+              <textarea
+                rows={2}
+                placeholder="A vulnerable banking login portal"
+                value={data.targetDescription?.en || ''}
+                onChange={e => onChange({ ...data, targetDescription: { ...data.targetDescription, en: e.target.value } })}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        {/* HARD/EXPERT: 실제 URL 필수 */}
-        {isHardOrExpert && (
+        {/* REAL 모드: 실제 URL 필수 */}
+        {data.mode === 'REAL' && (
           <div className="form-field">
             <label>타겟 URL *</label>
             <input
@@ -302,8 +391,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           </div>
         )}
 
-        {/* EASY/MEDIUM: Features 필수 */}
-        {isEasyOrMedium && (
+        {/* SIMULATED 모드: Features 필수 */}
+        {data.mode === 'SIMULATED' && (
           <div className="form-field">
             <label>Features (기능 목록) *</label>
             <textarea
@@ -320,8 +409,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           </div>
         )}
 
-        {/* HARD/EXPERT: Features 선택사항 */}
-        {isHardOrExpert && (
+        {/* REAL 모드: Features 선택사항 */}
+        {data.mode === 'REAL' && (
           <div className="form-field">
             <label>Features (기능 목록)</label>
             <textarea
@@ -351,7 +440,9 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           <div key={idx} className="vulnerability-card">
             <div className="card-header">
               <span>
-                #{idx + 1} {vuln.vulnName || '이름 없음'}
+                #{idx + 1} {typeof vuln.vulnName === 'object'
+                  ? (vuln.vulnName.ko || vuln.vulnName.en || '이름 없음')
+                  : (vuln.vulnName || '이름 없음')}
               </span>
               <button type="button" onClick={() => removeVulnerability(idx)}>
                 <FaTrash />
@@ -359,19 +450,37 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
             </div>
 
             <div className="card-content">
+              {/* Vuln Name - Bilingual */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px', marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
+                  취약점 이름 (Vulnerability Name) *
+                </label>
+                <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="로그인 SQL 인젝션"
+                      value={vuln.vulnName?.ko || ''}
+                      onChange={e => updateVulnerability(idx, 'vulnName', { ...vuln.vulnName, ko: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px' }}>
+                    <label style={{ fontSize: '10px', opacity: 0.7 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Login SQL Injection"
+                      value={vuln.vulnName?.en || ''}
+                      onChange={e => updateVulnerability(idx, 'vulnName', { ...vuln.vulnName, en: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* 기본 정보 */}
               <div className="input-row-2">
-                <div className="input-group">
-                  <label>취약점 이름 *</label>
-                  <input
-                    type="text"
-                    placeholder="Login SQL Injection"
-                    value={vuln.vulnName}
-                    onChange={e => updateVulnerability(idx, 'vulnName', e.target.value)}
-                    required
-                  />
-                </div>
-
                 <div className="input-group">
                   <label>취약점 타입 *</label>
                   <select
@@ -512,174 +621,113 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
         )}
       </div>
 
+      {/* 힌트 설정 */}
+      {data.vulnerabilities && data.vulnerabilities.length > 0 && (
+        <div className="form-section">
+          <h4>💡 힌트 설정 (선택사항)</h4>
+          <p className="section-description">
+            각 취약점에 대해 최대 3개의 힌트를 설정할 수 있습니다. 플레이어가 힌트 아이템을 사용하면 순서대로 공개됩니다.
+          </p>
+
+          {data.vulnerabilities.map((vuln) => {
+            const vulnHints = getHintsForVuln(vuln.vulnId);
+            const vulnName = typeof vuln.vulnName === 'object'
+              ? (vuln.vulnName.ko || vuln.vulnName.en || vuln.vulnId)
+              : (vuln.vulnName || vuln.vulnId);
+
+            return (
+              <div key={vuln.vulnId} className="hint-vuln-card">
+                <div className="hint-vuln-header">
+                  <span className="vuln-name">🎯 {vulnName}</span>
+                  <span className="hint-count">{vulnHints.length}/3 힌트</span>
+                  {vulnHints.length < 3 && (
+                    <button
+                      type="button"
+                      className="add-hint-btn"
+                      onClick={() => addHint(vuln.vulnId)}
+                    >
+                      <FaPlus /> 힌트 추가
+                    </button>
+                  )}
+                </div>
+
+                {vulnHints.length > 0 && (
+                  <div className="hints-list">
+                    {vulnHints.map((hint) => (
+                      <div key={hint.hintId} className="hint-item">
+                        <div className="hint-level-badge">Hint {hint.level}</div>
+                        <div className="hint-inputs">
+                          <div className="hint-input-row">
+                            <label>한글</label>
+                            <input
+                              type="text"
+                              placeholder="이 취약점은 로그인 폼에서 발생합니다..."
+                              value={hint.text.ko}
+                              onChange={e => updateHint(hint.hintId, 'ko', e.target.value)}
+                            />
+                          </div>
+                          <div className="hint-input-row">
+                            <label>English</label>
+                            <input
+                              type="text"
+                              placeholder="This vulnerability occurs in the login form..."
+                              value={hint.text.en}
+                              onChange={e => updateHint(hint.hintId, 'en', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="remove-hint-btn"
+                          onClick={() => removeHint(hint.hintId)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {vulnHints.length === 0 && (
+                  <div className="no-hints">
+                    <span>힌트 없음</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 점수 시스템 */}
       <div className="form-section">
         <h4>점수 시스템</h4>
-        <div className="form-grid-2">
-          <div className="form-field">
-            <label>First Blood 보너스 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.firstBloodBonus || 50}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: Number(e.target.value),
-                  speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
-                  graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
-                }
-              })}
-              required
-            />
-            <small>최초 발견 보너스</small>
-          </div>
-
-          <div className="form-field">
-            <label>오답 페널티 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.invalidSubmissionPenalty || 5}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: Number(e.target.value),
-                  graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
-                }
-              })}
-              required
-            />
-            <small>오답 시 감점</small>
-          </div>
-        </div>
-
-        <div className="form-grid-3">
-          <div className="form-field">
-            <label>3분 이내 보너스 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.speedBonusThresholds?.under3min || 30}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: {
-                    ...data.scoring?.speedBonusThresholds,
-                    under3min: Number(e.target.value),
-                    under5min: data.scoring?.speedBonusThresholds?.under5min || 20,
-                    under7min: data.scoring?.speedBonusThresholds?.under7min || 10
-                  },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
-                }
-              })}
-              required
-            />
-          </div>
-
-          <div className="form-field">
-            <label>5분 이내 보너스 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.speedBonusThresholds?.under5min || 20}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: {
-                    ...data.scoring?.speedBonusThresholds,
-                    under3min: data.scoring?.speedBonusThresholds?.under3min || 30,
-                    under5min: Number(e.target.value),
-                    under7min: data.scoring?.speedBonusThresholds?.under7min || 10
-                  },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
-                }
-              })}
-              required
-            />
-          </div>
-
-          <div className="form-field">
-            <label>7분 이내 보너스 *</label>
-            <input
-              type="number"
-              min={0}
-              value={data.scoring?.speedBonusThresholds?.under7min || 10}
-              onChange={e => onChange({
-                ...data,
-                scoring: {
-                  ...data.scoring,
-                  firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                  speedBonusThresholds: {
-                    ...data.scoring?.speedBonusThresholds,
-                    under3min: data.scoring?.speedBonusThresholds?.under3min || 30,
-                    under5min: data.scoring?.speedBonusThresholds?.under5min || 20,
-                    under7min: Number(e.target.value)
-                  },
-                  comboMultiplier: data.scoring?.comboMultiplier || 5,
-                  invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5
-                }
-              })}
-              required
-            />
-          </div>
-        </div>
-
         <div className="form-field">
-          <label>콤보 배율 *</label>
+          <label>오답 페널티 *</label>
           <input
             type="number"
             min={0}
-            value={data.scoring?.comboMultiplier || 5}
+            value={data.scoring?.invalidSubmissionPenalty || 5}
             onChange={e => onChange({
               ...data,
               scoring: {
                 ...data.scoring,
-                firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                comboMultiplier: Number(e.target.value),
-                invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
-                graceTimeSeconds: data.scoring?.graceTimeSeconds || 60
+                invalidSubmissionPenalty: Number(e.target.value)
               }
             })}
             required
           />
-          <small>1분 내 연속 발견 시 보너스 (개수 × 배율)</small>
+          <small>오답 시 감점 (무적 아이템으로 방어 가능)</small>
         </div>
 
-        <div className="form-field">
-          <label>유예시간 (초) *</label>
-          <input
-            type="number"
-            min={0}
-            value={data.scoring?.graceTimeSeconds || 60}
-            onChange={e => onChange({
-              ...data,
-              scoring: {
-                ...data.scoring,
-                firstBloodBonus: data.scoring?.firstBloodBonus || 50,
-                speedBonusThresholds: data.scoring?.speedBonusThresholds || { under3min: 30, under5min: 20, under7min: 10 },
-                comboMultiplier: data.scoring?.comboMultiplier || 5,
-                invalidSubmissionPenalty: data.scoring?.invalidSubmissionPenalty || 5,
-                graceTimeSeconds: Number(e.target.value)
-              }
-            })}
-            required
-          />
-          <small>첫 완주자 발생 후 다른 플레이어들에게 주어지는 시간</small>
+        <div className="info-box">
+          <strong>점수 시스템 안내</strong>
+          <ul>
+            <li>각 취약점마다 설정한 기본 점수만 획득합니다</li>
+            <li>점수 부스트 아이템을 사용하면 점수가 증가합니다 (예: 20% 부스트)</li>
+            <li>오답 제출 시 페널티가 적용되지만, 무적 아이템으로 방어할 수 있습니다</li>
+            <li>유예시간은 남은 시간의 1/2로 자동 계산됩니다 (최소 30초, 최대 5분)</li>
+          </ul>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../../assets/scss/arena/TerminalRace.scss';
 
 type Participant = {
@@ -16,8 +17,8 @@ interface TerminalRaceProps {
   currentUserId: string | null;
   participants: Participant[];
   scenario?: {
-    title: string;
-    description: string;
+    title: { ko: string; en: string } | string;
+    description: { ko: string; en: string } | string;
     difficulty: string;
   } | null;
 }
@@ -25,8 +26,9 @@ interface TerminalRaceProps {
 interface TerminalResultData {
   userId: string;
   command: string;
-  message: string;
+  message: string | { ko: string; en: string };
   scoreGain?: number;
+  baseScore?: number;
   stageAdvanced?: boolean;
   completed?: boolean;
   currentStage?: number;
@@ -37,12 +39,14 @@ interface ProgressData {
   stage: number;
   score: number;
   completed: boolean;
-  prompt?: string;
+  prompt?: string | { ko: string; en: string };
   totalStages?: number;
+  graceTimeRemaining?: number | null;
+  totalGraceTime?: number | null;
 }
 
 interface PromptData {
-  prompt: string;
+  prompt: string | { ko: string; en: string };
   stage: number;
   totalStages: number;
 }
@@ -60,6 +64,15 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   scenario
 }) => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
+
+  // Helper function to extract bilingual text
+  const getBilingualText = (text: string | { ko: string; en: string } | undefined): string => {
+    if (!text) return '';
+    if (typeof text === 'string') return text;
+    const lang = i18n.language as 'ko' | 'en';
+    return text[lang] || text.ko || text.en;
+  };
   const [command, setCommand] = useState('');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +81,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const [totalStages, setTotalStages] = useState(0);
   const [currentScore, setCurrentScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [graceTimeRemaining, setGraceTimeRemaining] = useState<number | null>(null);
   const [lastScoreGain, setLastScoreGain] = useState(0);
 
   const logContainerRef = useRef<HTMLDivElement>(null);
@@ -76,7 +88,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const isInitializedRef = useRef(false);
   const isCompletedRef = useRef(false);
-  const graceIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const lastProcessedCommandRef = useRef<string>('');
   const lastPromptStageRef = useRef<number>(-1);
@@ -133,6 +144,8 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       );
     }
 
+    // 유예시간은 ArenaPlayPage 헤더에서 통합 관리
+
     setLogs(initialLogs);
     setIsLoading(false);
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -146,10 +159,12 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     }
     lastPromptStageRef.current = data.stage;
 
+    const promptText = getBilingualText(data.prompt);
+
     const newLogs: LogEntry[] = [
       { id: logCounter.current++, text: '', type: 'output' },
       { id: logCounter.current++, text: `[STAGE ${data.stage}/${data.totalStages}]`, type: 'system' },
-      { id: logCounter.current++, text: `${data.prompt}`, type: 'prompt' },
+      { id: logCounter.current++, text: promptText, type: 'prompt' },
       { id: logCounter.current++, text: '', type: 'output' }
     ];
 
@@ -179,20 +194,27 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     processingRef.current = true;
     lastProcessedCommandRef.current = commandKey;
 
+    const messageText = getBilingualText(data.message);
+
     const newLogs: LogEntry[] = [];
     const isDefaultResponse = !data.scoreGain || data.scoreGain === 0;
 
     if (isDefaultResponse) {
-      newLogs.push({ id: logCounter.current++, text: data.message, type: 'output' });
+      newLogs.push({ id: logCounter.current++, text: messageText, type: 'output' });
     } else {
-      newLogs.push({ id: logCounter.current++, text: `[SUCCESS] ${data.message}`, type: 'success' });
+      newLogs.push({ id: logCounter.current++, text: `[SUCCESS] ${messageText}`, type: 'success' });
 
       setLastScoreGain(data.scoreGain || 0);
       setTimeout(() => setLastScoreGain(0), 1500);
 
+      // 부스트 적용 여부 확인
+      const hasBoost = data.baseScore && data.scoreGain && data.scoreGain > data.baseScore;
+
       newLogs.push({
         id: logCounter.current++,
-        text: `[+${data.scoreGain} POINTS]`,
+        text: hasBoost
+          ? `[+${data.scoreGain} POINTS]`
+          : `[+${data.scoreGain} POINTS]`,
         type: 'score'
       });
 
@@ -239,32 +261,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     }, 100);
   }, [currentUserId, socket, arena._id]);
 
-  const handleGracePeriodStarted = useCallback((data: { graceMs: number; graceSec: number; message: string }) => {
-    if (graceIntervalRef.current) {
-      clearInterval(graceIntervalRef.current);
-      graceIntervalRef.current = null;
-    }
-
-    if (!isCompletedRef.current) {
-      setLogs(prev => [
-        ...prev,
-        { id: logCounter.current++, text: '', type: 'output' },
-        { id: logCounter.current++, text: `[WARNING] ${data.message}`, type: 'error' },
-        { id: logCounter.current++, text: '', type: 'output' }
-      ]);
-
-      setGraceTimeRemaining(data.graceSec);
-      graceIntervalRef.current = setInterval(() => {
-        setGraceTimeRemaining(prev => {
-          if (prev === null || prev <= 1) {
-            if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-  }, []);
+  // 유예시간은 ArenaPlayPage 헤더에서 통합 관리
 
   const arenaEndedRef = useRef(false);
 
@@ -272,7 +269,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     if (arenaEndedRef.current) return;
     arenaEndedRef.current = true;
 
-    if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
     setLogs(prev => [
       ...prev,
       { id: logCounter.current++, text: '', type: 'output' },
@@ -280,7 +276,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       { id: logCounter.current++, text: `[INFO] ${data.message}`, type: 'system' },
       { id: logCounter.current++, text: '', type: 'output' }
     ]);
-    setGraceTimeRemaining(null);
   }, []);
 
   const handleRedirectToResults = useCallback((data: { redirectUrl: string }) => {
@@ -293,39 +288,81 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     setTimeout(() => inputRef.current?.focus(), 100);
   }, []);
 
+  const handleItemUsed = useCallback((data: {
+    userId: string;
+    username: string;
+    itemType: string;
+    value: number;
+    message: string | { ko: string; en: string }
+  }) => {
+    const msg = typeof data.message === 'object'
+      ? (i18n.language === 'ko' ? data.message.ko : data.message.en)
+      : data.message;
+
+    setLogs(prev => [
+      ...prev,
+      { id: logCounter.current++, text: `[SYSTEM] ${msg}`, type: 'system' }
+    ]);
+  }, [i18n.language]);
+
+  // ✅ 유예시간 시작 핸들러 - 터미널에 경고 로그 표시 (이미 완료한 사람은 제외)
+  const handleGracePeriodStarted = useCallback((data: { graceSec: number; message: string }) => {
+    // 이미 완료한 사용자는 경고 표시하지 않음
+    if (isCompletedRef.current) return;
+
+    const graceMin = Math.floor(data.graceSec / 60);
+    const graceSec = data.graceSec % 60;
+    const timeStr = graceMin > 0
+      ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
+      : `${graceSec}s`;
+
+    setLogs(prev => [
+      ...prev,
+      { id: logCounter.current++, text: '', type: 'output' },
+      { id: logCounter.current++, text: '╔════════════════════════════════════════════════╗', type: 'error' },
+      { id: logCounter.current++, text: '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
+      { id: logCounter.current++, text: `║  Another player has completed the challenge!   ║`, type: 'error' },
+      { id: logCounter.current++, text: `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
+      { id: logCounter.current++, text: '╚════════════════════════════════════════════════╝', type: 'error' },
+      { id: logCounter.current++, text: '', type: 'output' }
+    ]);
+  }, []);
+
   useEffect(() => {
 
     socket.off('terminal:progress-data');
     socket.off('terminal:prompt-data');
     socket.off('terminal:result');
     socket.off('terminal:error');
-    socket.off('arena:grace-period-started');
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
+    socket.off('arena:item-used');
+    // arena:grace-period-started는 ArenaPlayPage와 공유하므로 특정 핸들러만 제거
+    socket.off('arena:grace-period-started', handleGracePeriodStarted);
 
     socket.on('terminal:progress-data', handleProgressData);
     socket.on('terminal:prompt-data', handlePromptData);
     socket.on('terminal:result', handleTerminalResult);
     socket.on('terminal:error', handleTerminalError);
-    socket.on('arena:grace-period-started', handleGracePeriodStarted);
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
-
+    socket.on('arena:item-used', handleItemUsed);
+    socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
     return () => {
-      if (graceIntervalRef.current) clearInterval(graceIntervalRef.current);
       arenaEndedRef.current = false;
 
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);
       socket.off('terminal:result', handleTerminalResult);
       socket.off('terminal:error', handleTerminalError);
-      socket.off('arena:grace-period-started', handleGracePeriodStarted);
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
+      socket.off('arena:item-used', handleItemUsed);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
   }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError,
-      handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults]);
+      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleGracePeriodStarted]);
 
   useEffect(() => {
     if (logContainerRef.current) {
@@ -356,8 +393,16 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         <div className="scenario-info-bar">
           <div className="scenario-main">
             <div className="scenario-details">
-              <h3 className="scenario-title">{scenario.title}</h3>
-              <p className="scenario-description">{scenario.description}</p>
+              <h3 className="scenario-title">
+                {typeof scenario.title === 'object'
+                  ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en
+                  : scenario.title}
+              </h3>
+              <p className="scenario-description">
+                {typeof scenario.description === 'object'
+                  ? (scenario.description as any)[i18n.language] || (scenario.description as any).ko || (scenario.description as any).en
+                  : scenario.description}
+              </p>
             </div>
           </div>
           <div className="scenario-meta">
@@ -388,11 +433,6 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
                   {currentScore} points
                   {lastScoreGain > 0 && <span className="score-popup">+{lastScoreGain}</span>}
                 </span>
-                {graceTimeRemaining !== null && !isCompleted && (
-                  <span className="stat-item warning-stat">
-                    {graceTimeRemaining}s
-                  </span>
-                )}
               </>
             )}
           </div>
@@ -441,7 +481,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
                   ref={inputRef}
                   type="text"
                   className="terminal-input"
-                  placeholder={isCompleted ? "Mission complete" : "Enter command..."}
+                  placeholder={isCompleted ? t('game.missionComplete') : t('game.enterCommand')}
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSubmitCommand(e as any))}

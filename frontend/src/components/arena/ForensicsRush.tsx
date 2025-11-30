@@ -1,7 +1,9 @@
 // src/components/arena/ForensicsRush.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
-import { useNavigate } from 'react-router-dom'; // ✅ 추가
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { usePlayContext } from '../../contexts/PlayContext'; // ✅ 추가
 import '../../assets/scss/arena/ForensicsRush.scss';
 
 type Participant = {
@@ -20,10 +22,10 @@ interface ForensicsRushProps {
 
 interface Question {
   id: string;
-  question: string;
+  question: { ko: string; en: string } | string;
   type: string;
   points: number;
-  hints: string[];
+  hints: { ko: string[]; en: string[] } | string[];
   difficulty: string;
   relatedFiles: string[];
 }
@@ -44,11 +46,11 @@ interface AnsweredQuestion {
 }
 
 interface ScenarioInfo {
-  title: string;
-  description: string;
+  title: { ko: string; en: string } | string;
+  description: { ko: string; en: string } | string;
   incidentType: string;
   date: string;
-  context: string;
+  context: { ko: string; en: string } | string;
 }
 
 interface ProgressData {
@@ -68,7 +70,9 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   currentUserId,
   participants: _participants
 }) => {
-  const navigate = useNavigate(); // ✅ 추가
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
+  const { availableHints, useHint } = usePlayContext(); // ✅ 힌트 시스템 연동
   const [isLoading, setIsLoading] = useState(true);
   const [scenario, setScenario] = useState<ScenarioInfo | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -79,20 +83,48 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   const [selectedEvidenceFile, setSelectedEvidenceFile] = useState<EvidenceFile | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [score, setScore] = useState(0);
+  const [scoreChange, setScoreChange] = useState<number | null>(null);
   const [questionsCorrect, setQuestionsCorrect] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [showHints, setShowHints] = useState(false);
+  const [unlockedHints, setUnlockedHints] = useState<Set<string>>(new Set()); // ✅ 힌트를 해금한 문제 ID 목록
+  const [hintsVisible, setHintsVisible] = useState(false); // ✅ 현재 힌트 표시 여부 (토글용)
   const [allCompleted, setAllCompleted] = useState(false);
+  const [itemNotifications, setItemNotifications] = useState<Array<{ id: number; message: string; timestamp: Date }>>([]);
+  const [participantsStatus, setParticipantsStatus] = useState<Map<string, { username: string; completed: boolean; score: number }>>(new Map());
   const isInitializedRef = useRef(false);
+  const notificationIdCounter = useRef(0);
+  const isCompletedRef = useRef(false); // ✅ 완료 여부 추적용 ref
 
-  // 🎯 타이머 관련 state
-  const [gameTimeRemaining, setGameTimeRemaining] = useState<number | null>(null);
-  const [gracePeriodRemaining, setGracePeriodRemaining] = useState<number | null>(null);
-  const [firstWinner, setFirstWinner] = useState<string | null>(null);
-  const gameTimerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const gracePeriodIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // 유예시간은 ArenaPlayPage 헤더에서 통합 관리
+
+  // 사용자 이름 가져오기 헬퍼 함수
+  const getUsernameById = useCallback((userId: string): string => {
+    const participant = _participants.find((p) => {
+      const id = typeof p.user === 'string' ? p.user : p.user._id;
+      return id === userId;
+    });
+    if (participant) {
+      return typeof participant.user === 'string' ? t('game.user') : participant.user.username;
+    }
+    return t('game.unknown');
+  }, [_participants, t]);
+
+  // 참가자 초기 상태 설정
+  useEffect(() => {
+    const initialStatus = new Map();
+    _participants.forEach(p => {
+      const userId = typeof p.user === 'string' ? p.user : p.user._id;
+      const username = typeof p.user === 'string' ? t('game.user') : p.user.username;
+      initialStatus.set(userId, {
+        username,
+        completed: false,
+        score: 0
+      });
+    });
+    setParticipantsStatus(initialStatus);
+  }, [_participants]);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -102,7 +134,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       try {
         isInitializedRef.current = true;
         console.log('🔍 [ForensicsRush] Loading data for arena:', arena._id);
-        
+
         socket.emit('forensics:get-scenario', { arenaId: arena._id });
         socket.emit('forensics:get-questions', { arenaId: arena._id });
         socket.emit('forensics:get-progress', { arenaId: arena._id });
@@ -124,60 +156,9 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     loadData();
   }, [arena._id, socket, isLoading]);
 
-  // ✅ 유예 시간 시작 핸들러
-  const handleGracePeriodStarted = useCallback((data: { 
-    gracePeriodSeconds: number; 
-    firstWinner: string;
-    message: string;
-  }) => {
-    console.log('⏰ [ForensicsRush] Grace period started:', data);
-    
-    setGracePeriodRemaining(data.gracePeriodSeconds);
-    setFirstWinner(data.firstWinner);
-    
-    // 기존 타이머 정리
-    if (gameTimerIntervalRef.current) {
-      clearInterval(gameTimerIntervalRef.current);
-      gameTimerIntervalRef.current = null;
-    }
-    
-    // 유예 시간 타이머 시작
-    if (gracePeriodIntervalRef.current) {
-      clearInterval(gracePeriodIntervalRef.current);
-    }
-    
-    gracePeriodIntervalRef.current = setInterval(() => {
-      setGracePeriodRemaining((prev) => {
-        if (prev === null || prev <= 1) {
-          if (gracePeriodIntervalRef.current) {
-            clearInterval(gracePeriodIntervalRef.current);
-            gracePeriodIntervalRef.current = null;
-          }
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
-
   // ✅ 게임 종료 핸들러
-  const handleArenaEnded = useCallback((data: { message: string }) => {
-    console.log('🏁 [ForensicsRush] Arena ended:', data);
-    
-    // 모든 타이머 정리
-    if (gameTimerIntervalRef.current) {
-      clearInterval(gameTimerIntervalRef.current);
-      gameTimerIntervalRef.current = null;
-    }
-    if (gracePeriodIntervalRef.current) {
-      clearInterval(gracePeriodIntervalRef.current);
-      gracePeriodIntervalRef.current = null;
-    }
-    
-    setGracePeriodRemaining(null);
-    setGameTimeRemaining(null);
-    
-    // 완료 상태로 설정
+  const handleArenaEnded = useCallback((_data: { message: string }) => {
+    console.log('🏁 [ForensicsRush] Arena ended');
     setAllCompleted(true);
   }, []);
 
@@ -192,18 +173,109 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   // ✅ 모든 참가자 완료 핸들러
   const handleAllCompleted = useCallback((data: { message: string }) => {
     console.log('🎉 [ForensicsRush] All participants completed:', data.message);
+    setAllCompleted(true);
+    // 리디렉션은 backend에서 arena:redirect-to-results 이벤트로 처리
+  }, []);
 
-    // 유예 기간 타이머 정리
-    if (gracePeriodIntervalRef.current) {
-      clearInterval(gracePeriodIntervalRef.current);
-      gracePeriodIntervalRef.current = null;
+  // 🎯 다른 플레이어 완료 핸들러
+  const handlePlayerCompleted = useCallback((data: {
+    userId: string;
+    username: string;
+    score: number;
+  }) => {
+    console.log('✅ [ForensicsRush] Player completed:', data);
+    setParticipantsStatus(prev => {
+      const newStatus = new Map(prev);
+      newStatus.set(data.userId, {
+        username: data.username,
+        completed: true,
+        score: data.score
+      });
+      return newStatus;
+    });
+  }, []);
+
+  // 아이템 사용 알림 핸들러
+  const handleItemUsed = useCallback((data: {
+    userId: string;
+    itemType: string;
+    username?: string;
+    value?: number;
+    message?: string | { ko: string; en: string }
+  }) => {
+    // 백엔드 메시지 사용
+    if (data.message) {
+      const msg = typeof data.message === 'object'
+        ? (i18n.language === 'ko' ? data.message.ko : data.message.en)
+        : data.message;
+
+      const notification = {
+        id: notificationIdCounter.current++,
+        message: msg,
+        timestamp: new Date()
+      };
+
+      setItemNotifications(prev => [...prev, notification]);
+
+      setTimeout(() => {
+        setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
+      }, 5000);
+      return;
     }
 
-    setGracePeriodRemaining(null);
-    setAllCompleted(true);
+    // 레거시 처리
+    const username = data.username || getUsernameById(data.userId);
+    const isMe = data.userId === currentUserId;
+    let itemName = 'item';
 
-    // ✅ 리디렉션은 backend에서 arena:redirect-to-results 이벤트로 처리
-    // (endArenaProcedure가 완료된 후 2초 뒤에 전송됨)
+    switch (data.itemType) {
+      case 'hint': itemName = t('game.hint'); break;
+      case 'time_freeze':
+      case 'time_extension': itemName = t('game.timeExtension'); break;
+      case 'score_boost': itemName = t('game.scoreBoost'); break;
+      case 'invincible': itemName = t('game.shield'); break;
+    }
+
+    const message = isMe
+      ? `You used ${itemName}`
+      : `${username} used ${itemName}`;
+
+    const notification = {
+      id: notificationIdCounter.current++,
+      message,
+      timestamp: new Date()
+    };
+
+    setItemNotifications(prev => [...prev, notification]);
+
+    setTimeout(() => {
+      setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 5000);
+  }, [currentUserId, getUsernameById, i18n.language, t]);
+
+  // ✅ 유예시간 시작 핸들러 - 알림 표시 (이미 완료한 사람은 제외)
+  const handleGracePeriodStarted = useCallback((data: { graceSec: number; message: string }) => {
+    // 이미 완료한 사용자는 경고 표시하지 않음
+    if (isCompletedRef.current) return;
+
+    const graceMin = Math.floor(data.graceSec / 60);
+    const graceSec = data.graceSec % 60;
+    const timeStr = graceMin > 0
+      ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
+      : `${graceSec}s`;
+
+    const notification = {
+      id: notificationIdCounter.current++,
+      message: `⚠️ GRACE PERIOD: Another player completed! Time remaining: ${timeStr}`,
+      timestamp: new Date()
+    };
+
+    setItemNotifications(prev => [...prev, notification]);
+
+    // 10초 후 자동 삭제 (중요한 알림이므로 더 오래 표시)
+    setTimeout(() => {
+      setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 10000);
   }, []);
 
   // 소켓 이벤트 핸들러
@@ -275,12 +347,18 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       setIsSubmitting(false);
       
       if (data.correct) {
-        setFeedback({ 
-          type: 'success', 
-          message: `${data.message} ${data.attempts === 1 ? '🎯 First try!' : ''}` 
+        setFeedback({
+          type: 'success',
+          message: `${data.message} ${data.attempts === 1 ? '🎯 First try!' : ''}`
         });
         setUserAnswer('');
-        
+
+        // 점수 변화 표시
+        if (data.points > 0) {
+          setScoreChange(data.points);
+          setTimeout(() => setScoreChange(null), 1500);
+        }
+
         setScore(data.totalScore);
         setQuestionsCorrect(data.questionsCorrect);
         
@@ -305,15 +383,25 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
         if (data.allCompleted) {
           console.log('🎉 [ForensicsRush] All questions completed!');
           setAllCompleted(true);
+          isCompletedRef.current = true; // ✅ 완료 ref도 업데이트
         }
         
         setTimeout(() => setFeedback(null), 3000);
       } else {
-        setFeedback({ 
-          type: 'error', 
-          message: data.message 
+        setFeedback({
+          type: 'error',
+          message: data.message
         });
-        
+
+        // 점수 감소 표시 (penalty가 있으면)
+        if (data.penalty > 0) {
+          setScoreChange(-data.penalty);
+          setTimeout(() => setScoreChange(null), 1500);
+        }
+
+        // 틀렸을 때도 점수 업데이트
+        setScore(data.totalScore);
+
         setAnsweredQuestions(prev => {
           const exists = prev.find(q => q.questionId === data.questionId);
           if (exists) {
@@ -345,61 +433,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       setTimeout(() => setFeedback(null), 3000);
     };
 
-    // ✅ 게임 상태 핸들러
+    // ✅ 게임 상태 핸들러 (유예시간은 ArenaPlayPage에서 관리)
     const handleGameState = (data: {
-      gameTimeRemaining: number | null;
-      gracePeriodRemaining: number | null;
-      firstWinner: string | null;
       isEnded: boolean;
     }) => {
       console.log('🎮 [ForensicsRush] Game state received:', data);
-      
-      setGameTimeRemaining(data.gameTimeRemaining);
-      setGracePeriodRemaining(data.gracePeriodRemaining);
-      setFirstWinner(data.firstWinner);
-      
+
       if (data.isEnded) {
         setAllCompleted(true);
-      }
-      
-      // 게임 타이머 설정
-      if (data.gameTimeRemaining !== null && data.gameTimeRemaining > 0) {
-        if (gameTimerIntervalRef.current) {
-          clearInterval(gameTimerIntervalRef.current);
-        }
-        
-        gameTimerIntervalRef.current = setInterval(() => {
-          setGameTimeRemaining((prev) => {
-            if (prev === null || prev <= 1) {
-              if (gameTimerIntervalRef.current) {
-                clearInterval(gameTimerIntervalRef.current);
-                gameTimerIntervalRef.current = null;
-              }
-              return null;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-      
-      // 유예 시간 타이머 설정
-      if (data.gracePeriodRemaining !== null && data.gracePeriodRemaining > 0) {
-        if (gracePeriodIntervalRef.current) {
-          clearInterval(gracePeriodIntervalRef.current);
-        }
-        
-        gracePeriodIntervalRef.current = setInterval(() => {
-          setGracePeriodRemaining((prev) => {
-            if (prev === null || prev <= 1) {
-              if (gracePeriodIntervalRef.current) {
-                clearInterval(gracePeriodIntervalRef.current);
-                gracePeriodIntervalRef.current = null;
-              }
-              return null;
-            }
-            return prev - 1;
-          });
-        }, 1000);
       }
     };
 
@@ -410,10 +451,12 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.off('forensics:result');
     socket.off('forensics:error');
     socket.off('forensics:game-state');
-    socket.off('arena:grace-period-started');
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
     socket.off('forensics:all-completed');
+    socket.off('arena:item-used');
+    // arena:grace-period-started는 ArenaPlayPage와 공유하므로 특정 핸들러만 제거
+    socket.off('arena:grace-period-started', handleGracePeriodStarted);
 
     socket.on('forensics:scenario-data', handleScenarioData);
     socket.on('forensics:questions-data', handleQuestionsData);
@@ -421,22 +464,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.on('forensics:result', handleResult);
     socket.on('forensics:error', handleError);
     socket.on('forensics:game-state', handleGameState);
-    socket.on('arena:grace-period-started', handleGracePeriodStarted);
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('forensics:all-completed', handleAllCompleted);
+    socket.on('forensics:player-completed', handlePlayerCompleted);
+    socket.on('arena:item-used', handleItemUsed);
+    socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
     return () => {
-      // ✅ 타이머 정리
-      if (gameTimerIntervalRef.current) {
-        clearInterval(gameTimerIntervalRef.current);
-        gameTimerIntervalRef.current = null;
-      }
-      if (gracePeriodIntervalRef.current) {
-        clearInterval(gracePeriodIntervalRef.current);
-        gracePeriodIntervalRef.current = null;
-      }
-
       // ✅ 이벤트 리스너 제거
       socket.off('forensics:scenario-data', handleScenarioData);
       socket.off('forensics:questions-data', handleQuestionsData);
@@ -444,12 +479,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       socket.off('forensics:result', handleResult);
       socket.off('forensics:error', handleError);
       socket.off('forensics:game-state', handleGameState);
-      socket.off('arena:grace-period-started', handleGracePeriodStarted);
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('forensics:all-completed', handleAllCompleted);
+      socket.off('forensics:player-completed', handlePlayerCompleted);
+      socket.off('arena:item-used', handleItemUsed);
+      socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
-  }, [socket, handleGracePeriodStarted, handleArenaEnded, handleRedirectToResults, handleAllCompleted]);
+  }, [socket, handleArenaEnded, handleRedirectToResults, handleAllCompleted, handlePlayerCompleted, handleItemUsed, handleGracePeriodStarted]);
 
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -487,12 +524,12 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     ? evidenceFiles.filter(f => currentQuestion.relatedFiles?.includes(f.id))
     : [];
 
-  const formatTime = (seconds: number | null): string => {
-    if (seconds === null) return '--:--';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  // const formatTime = (seconds: number | null): string => {
+  //   if (seconds === null) return '--:--';
+  //   const mins = Math.floor(seconds / 60);
+  //   const secs = seconds % 60;
+  //   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  // };
 
   if (isLoading) {
     return (
@@ -543,28 +580,59 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
               </div>
               <div className="output-block">
                 <div className="summary-line">================================================</div>
-                <div className="summary-line">  INVESTIGATION SUMMARY</div>
+                <div className="summary-line">  {t('forensics.investigationSummary')}</div>
                 <div className="summary-line">================================================</div>
                 <div className="summary-line"></div>
-                <div className="summary-line">  Case: {scenario.title}</div>
-                <div className="summary-line">  Incident: {scenario.incidentType}</div>
+                <div className="summary-line">
+                  {t('forensics.case')}: {typeof scenario.title === 'object'
+                    ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en || scenario.incidentType
+                    : scenario.title || scenario.incidentType}
+                </div>
+                <div className="summary-line">  {t('forensics.incident')}: {scenario.incidentType}</div>
                 <div className="summary-line"></div>
-                <div className="summary-line">  Questions Solved: {questionsCorrect}/{totalQuestions}</div>
-                <div className="summary-line">  Total Score: {score} points</div>
+                <div className="summary-line">  {t('forensics.questionsSolved')}: {questionsCorrect}/{totalQuestions}</div>
+                <div className="summary-line">  {t('forensics.totalScore')}: {score} pts</div>
                 <div className="summary-line"></div>
                 <div className="summary-line">================================================</div>
               </div>
 
-              {gracePeriodRemaining !== null && firstWinner && (
+              {/* 다른 플레이어 상태 표시 */}
+              <div className="message-line">
+                <span className="prompt">$</span> ./check_team_status.sh
+              </div>
+              <div className="output-block">
+                <div className="summary-line">================================================</div>
+                <div className="summary-line">  {t('forensics.teamStatus')}</div>
+                <div className="summary-line">================================================</div>
+                {Array.from(participantsStatus.entries()).map(([userId, status]) => (
+                  <div key={userId} className="summary-line" style={{
+                    color: status.completed ? '#00ff88' : '#ffaa00',
+                    paddingLeft: '  '
+                  }}>
+                    {status.completed ? '✓' : '○'} {status.username} {userId === currentUserId ? '(YOU)' : ''} - {status.completed ? `${t('forensics.completed')} (${status.score} pts)` : t('forensics.inProgress')}
+                  </div>
+                ))}
+                <div className="summary-line">================================================</div>
+              </div>
+
+              {/* 완료 메시지 - 유예시간은 ArenaPlayPage 헤더에서 표시 */}
+              {Array.from(participantsStatus.values()).every(p => p.completed) ? (
                 <>
                   <div className="message-line">
-                    <span className="prompt">$</span> ./check_status.sh
+                    <span className="prompt">$</span> ./finalize_investigation.sh
+                  </div>
+                  <div className="output-line success game-over-box">
+                    <div className="game-over-title">🏁 {t('forensics.gameOver')} 🏁</div>
+                    <div className="game-over-message">{t('forensics.allAgentsSubmitted')}</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="message-line">
+                    <span className="prompt">$</span> ./check_deadline.sh
                   </div>
                   <div className="output-line warning">
-                    {firstWinner === currentUserId
-                      ? "[PRIORITY] Awaiting field reports from remaining agents..."
-                      : `[ALERT] Evidence submission deadline: T-${gracePeriodRemaining}s`
-                    }
+                    [PRIORITY] {t('forensics.awaitingReports')}
                   </div>
                 </>
               )}
@@ -584,18 +652,40 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 헤더 */}
       <div className="forensics-header">
         <div className="header-left">
-          <div className="agency-badge">DIGITAL FORENSICS LAB</div>
-          <h1 className="case-title">{scenario.title}</h1>
+          <div className="agency-badge">{t('forensics.labTitle')}</div>
+          <h1 className="case-title">
+            {typeof scenario.title === 'object'
+              ? (scenario.title as any)[i18n.language] || (scenario.title as any).ko || (scenario.title as any).en
+              : scenario.title}
+          </h1>
           <div className="case-meta">
             <span className="incident-type">[{scenario.incidentType}]</span>
             <span className="case-date">DATE: {scenario.date}</span>
           </div>
         </div>
+
+        {/* 아이템 사용 알림 - 헤더 중앙 */}
+        {itemNotifications.length > 0 && (
+          <div className="header-center-notification">
+            {itemNotifications.slice(-1).map((notification) => (
+              <div key={notification.id} className="item-notification">
+                {notification.message}
+              </div>
+            ))}
+          </div>
+        )}
         
         <div className="header-right">
-          <div className="stat-card">
+          <div className={`stat-card ${scoreChange !== null ? (scoreChange > 0 ? 'score-up' : 'score-down') : ''}`}>
             <div className="stat-label">Score</div>
-            <div className="stat-value">{score}</div>
+            <div className="stat-value">
+              {score}
+              {scoreChange !== null && (
+                <span className={`score-change ${scoreChange > 0 ? 'positive' : 'negative'}`}>
+                  {scoreChange > 0 ? '+' : ''}{scoreChange}
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="stat-card">
@@ -603,17 +693,9 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
             <div className="stat-value">{questionsCorrect}/{totalQuestions}</div>
           </div>
 
-          {/* ✅ 유예 시간만 표시 (ForensicsRush는 시간 제한 없음) */}
-          {gracePeriodRemaining !== null && (
-            <div className="stat-card grace-card">
-              <div className="stat-label">DEADLINE</div>
-              <div className="stat-value warning">{gracePeriodRemaining}s</div>
-            </div>
-          )}
-          
           {allCompleted && (
             <div className="completion-badge">
-              [CASE CLOSED]
+              [{t('forensics.caseClosed').toUpperCase()}]
             </div>
           )}
         </div>
@@ -623,11 +705,19 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       {/* 시나리오 설명 */}
       <div className="scenario-brief">
         <div className="brief-header">
-          <span className="brief-title">CASE BRIEF</span>
-          <span className="classification">CLASSIFIED</span>
+          <span className="brief-title">{t('forensics.caseBrief')}</span>
+          <span className="classification">{t('forensics.classified')}</span>
         </div>
-        <p className="brief-description">{scenario.description}</p>
-        <p className="brief-context">{scenario.context}</p>
+        <p className="brief-description">
+          {typeof scenario.description === 'object'
+            ? (scenario.description as any)[i18n.language] || (scenario.description as any).ko || (scenario.description as any).en
+            : scenario.description}
+        </p>
+        <p className="brief-context">
+          {typeof scenario.context === 'object'
+            ? (scenario.context as any)[i18n.language] || (scenario.context as any).ko || (scenario.context as any).en
+            : scenario.context}
+        </p>
       </div>
 
       {/* 메인 영역 */}
@@ -636,7 +726,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           {/* Evidence 터미널 */}
           <div className="evidence-terminal terminal-window">
             <div className="terminal-header">
-              <div className="terminal-title">EVIDENCE FILES</div>
+              <div className="terminal-title">{t('forensics.evidenceFiles')}</div>
             </div>
             <div className="terminal-body">
               <div className="file-list">
@@ -666,7 +756,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
                     $ cat {selectedEvidenceFile.path}
                   </div>
                   <div className="viewer-toolbar">
-                    <span className="toolbar-label">TOOLS:</span>
+                    <span className="toolbar-label">{t('forensics.tools')}:</span>
                     {availableTools.slice(0, 6).map(tool => (
                       <span key={tool} className="tool-chip">{tool}</span>
                     ))}
@@ -689,9 +779,9 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
 
               {relatedEvidenceFiles.length > 0 && (
                 <div className="hint-box">
-                  <div className="hint-header">[ANALYST NOTE]</div>
+                  <div className="hint-header">[{t('forensics.analystNote').toUpperCase()}]</div>
                   <div className="hint-content">
-                    Related evidence for current investigation:
+                    {t('forensics.relatedEvidence')}:
                     <ul>
                       {relatedEvidenceFiles.map(file => (
                         <li key={file.id}>{file.name}</li>
@@ -706,7 +796,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
           {/* 질문 터미널 */}
           <div className="question-terminal terminal-window">
             <div className="terminal-header">
-              <div className="terminal-title">INVESTIGATION QUERY</div>
+              <div className="terminal-title">{t('forensics.investigationQuery')}</div>
             </div>
             <div className="terminal-body">
               {currentQuestion && (
@@ -720,13 +810,15 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                   </div>
 
                   <div className="question-text">
-                    <span className="prompt">$</span> {currentQuestion.question}
+                    <span className="prompt">$</span> {typeof currentQuestion.question === 'object'
+                      ? (currentQuestion.question as any)[i18n.language] || (currentQuestion.question as any).ko || (currentQuestion.question as any).en
+                      : currentQuestion.question}
                   </div>
 
                   {isAnswered ? (
                     <div className="answered-status">
                       <div className="status-message">
-                        [VERIFIED] Evidence confirmed ({previousAnswer?.attempts || 1} attempt{previousAnswer?.attempts !== 1 ? 's' : ''})
+                        [{t('forensics.verified')}] {t('forensics.evidenceConfirmed')} ({previousAnswer?.attempts || 1} {(previousAnswer?.attempts || 1) !== 1 ? t('forensics.attempts') : t('forensics.attempt')})
                       </div>
                       {currentQuestionIndex < questions.length - 1 && (
                         <button
@@ -735,10 +827,10 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                             setCurrentQuestionIndex(prev => prev + 1);
                             setUserAnswer('');
                             setFeedback(null);
-                            setShowHints(false);
+                            setHintsVisible(false); // ✅ 다음 문제로 이동 시 힌트 숨김 (해금은 유지)
                           }}
                         >
-                          NEXT QUESTION →
+                          {t('forensics.nextQuestion')} →
                         </button>
                       )}
                     </div>
@@ -750,7 +842,7 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           <input
                             type="text"
                             className="terminal-input"
-                            placeholder="Type your answer..."
+                            placeholder={t('game.typeAnswer')}
                             value={userAnswer}
                             onChange={(e) => setUserAnswer(e.target.value)}
                             disabled={isSubmitting || allCompleted}
@@ -764,43 +856,73 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                             className="terminal-button submit"
                             disabled={!userAnswer.trim() || isSubmitting || allCompleted}
                           >
-                            {isSubmitting ? '[ANALYZING...]' : allCompleted ? '[COMPLETE]' : '[SUBMIT]'}
+                            {isSubmitting ? `[${t('forensics.analyzing').toUpperCase()}]` : allCompleted ? `[${t('forensics.complete').toUpperCase()}]` : `[${t('forensics.submit').toUpperCase()}]`}
                           </button>
-                          
+
+                          {/* ✅ 힌트 아이템 사용 버튼 */}
                           <button
                             type="button"
                             className="terminal-button hint"
-                            onClick={() => setShowHints(!showHints)}
-                            disabled={allCompleted}
+                            onClick={() => {
+                              const questionId = currentQuestion?.id;
+                              if (!questionId) return;
+
+                              const isUnlocked = unlockedHints.has(questionId);
+
+                              if (!isUnlocked && availableHints > 0) {
+                                // 힌트 아이템 사용하여 해금
+                                useHint();
+                                setUnlockedHints(prev => new Set(prev).add(questionId));
+                                setHintsVisible(true);
+                              } else if (isUnlocked) {
+                                // 이미 해금된 경우 토글만
+                                setHintsVisible(prev => !prev);
+                              }
+                            }}
+                            disabled={allCompleted || (!unlockedHints.has(currentQuestion?.id || '') && availableHints === 0)}
                           >
-                            {showHints ? '[HIDE HINTS]' : '[SHOW HINTS]'}
+                            {unlockedHints.has(currentQuestion?.id || '')
+                              ? (hintsVisible ? `[${t('forensics.hideHints').toUpperCase()}]` : `[${t('forensics.showHints').toUpperCase()}]`)
+                              : availableHints > 0
+                                ? `[${t('forensics.useHint').toUpperCase()} (${availableHints})]`
+                                : `[${t('forensics.noHints').toUpperCase()}]`
+                            }
                           </button>
                         </div>
                       </form>
 
                       {feedback && (
                         <div className={`terminal-feedback ${feedback.type}`}>
-                          <span className="feedback-icon">{feedback.type === 'success' ? '[MATCH]' : '[DENIED]'}</span>
+                          <span className="feedback-icon">{feedback.type === 'success' ? `[${t('forensics.match').toUpperCase()}]` : `[${t('forensics.denied').toUpperCase()}]`}</span>
                           {feedback.message}
                         </div>
                       )}
 
-                      {showHints && currentQuestion.hints && currentQuestion.hints.length > 0 && (
-                        <div className="hints-terminal">
-                          <div className="hints-header">HINTS:</div>
-                          <ul className="hints-list">
-                            {currentQuestion.hints.map((hint, index) => (
-                              <li key={index}>
-                                <span className="hint-bullet">▸</span> {hint}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      {/* ✅ 힌트 표시 (해금된 문제이고 visible 상태일 때만 표시) */}
+                      {hintsVisible && unlockedHints.has(currentQuestion?.id || '') && currentQuestion.hints && (() => {
+                        // 다국어 지원: hints가 객체인 경우 현재 언어로 선택
+                        const lang = i18n.language as 'ko' | 'en';
+                        const hintsArray = typeof currentQuestion.hints === 'object' && 'ko' in currentQuestion.hints
+                          ? currentQuestion.hints[lang] || currentQuestion.hints.ko || currentQuestion.hints.en
+                          : currentQuestion.hints as string[];
+
+                        return hintsArray && hintsArray.length > 0 ? (
+                          <div className="hints-terminal">
+                            <div className="hints-header">{t('forensics.hints').toUpperCase()} ({t('forensics.unlocked')}):</div>
+                            <ul className="hints-list">
+                              {hintsArray.map((hint: string, index: number) => (
+                                <li key={index}>
+                                  <span className="hint-bullet">▸</span> {hint}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null;
+                      })()}
 
                       {previousAnswer && !previousAnswer.correct && (
                         <div className="attempts-display">
-                          Previous attempts: {previousAnswer.attempts}
+                          {t('forensics.previousAttempts')}: {previousAnswer.attempts}
                         </div>
                       )}
                     </>
@@ -824,9 +946,11 @@ Look for: suspicious patterns, IP addresses, timestamps.`}
                           setCurrentQuestionIndex(index);
                           setUserAnswer('');
                           setFeedback(null);
-                          setShowHints(false);
+                          setHintsVisible(false); // ✅ 문제 변경 시 힌트 숨김 (해금은 유지)
                         }}
-                        title={q.question}
+                        title={typeof q.question === 'object'
+                          ? (q.question as any)[i18n.language] || (q.question as any).ko || (q.question as any).en
+                          : q.question}
                         disabled={allCompleted}
                       >
                         {isCompleted ? 'OK' : `Q${index + 1}`}

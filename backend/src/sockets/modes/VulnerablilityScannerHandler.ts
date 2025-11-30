@@ -10,17 +10,17 @@ import {
   getGameState
 } from '../../services/vulnerbilityScannerRace/vulnerabilityScannerEngine';
 import { generateVulnerableHTML } from '../../services/vulnerbilityScannerRace/generateVulnerableHTML';
-import { endArenaProcedure, endArenaImmediately } from '../utils/endArenaProcedure';
+import { endArenaProcedure, endArenaImmediately, isGracePeriodActive } from '../utils/endArenaProcedure';
 
-// 유예 시간 타이머 저장
-const graceTimers = new Map<string, NodeJS.Timeout>();
+// ✅ 중복 처리 방지를 위한 Map (Race Condition 방지)
+const processingSubmissions = new Map<string, boolean>();
 
 /**
  * 🔍 Vulnerability Scanner Race Socket Handlers
  */
 
 export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Socket) => {
-  
+
   /**
    * 취약점 제출
    */
@@ -35,7 +35,7 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
     parameter: string;
     payload: string;
   }) => {
-    
+
     const arenaId = (socket as any).arenaId;
     const userId = (socket as any).userId;
 
@@ -46,6 +46,16 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       socket.emit('scannerRace:error', { message: 'Invalid request' });
       return;
     }
+
+    // ✅ 중복 처리 방지 (Race Condition 방지)
+    const userKey = `${arenaId}-${userId}`;
+    if (processingSubmissions.has(userKey)) {
+      console.log('⏭️ [scannerRace:submit] Already processing a submission for this user');
+      return;
+    }
+
+    // 처리 시작 표시
+    processingSubmissions.set(userKey, true);
 
     try {
       // 1. 제출 처리
@@ -66,6 +76,35 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
           isCorrect: result.isCorrect,
           pointsAwarded: result.pointsAwarded
         });
+
+        // 🔴 잘못된 제출도 Activity Feed에 표시 (페널티 점수 포함)
+        if (result.pointsAwarded < 0) {
+          io.to(arenaId).emit('scannerRace:invalid-submission', {
+            userId,
+            penalty: Math.abs(result.pointsAwarded),
+            message: result.message
+          });
+
+          // 🔴 페널티 적용 후 점수 업데이트 브로드캐스트
+          const allProgress = await ArenaProgress.find({ arena: arenaId })
+            .select('user score vulnerabilityScannerRace')
+            .populate('user', 'username')
+            .lean();
+
+          io.to(arenaId).emit('scannerRace:scores-update', {
+            scores: allProgress.map((p: any) => {
+              const pUser = p.user as any;
+              return {
+                userId: pUser?._id || pUser,
+                username: pUser?.username || 'Unknown',
+                score: p.score || 0,
+                vulnerabilitiesFound: p.vulnerabilityScannerRace?.vulnerabilitiesFound || 0,
+                firstBloods: p.vulnerabilityScannerRace?.firstBloods || 0
+              };
+            })
+          });
+        }
+
         return;
       }
 
@@ -81,13 +120,14 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       // 3. 현재 플레이어 점수
       const progress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
 
-      // 4. 모든 플레이어에게 발견 알림 브로드캐스트
+      // 4. 모든 플레이어에게 발견 알림 브로드캐스트 (부스트 적용된 점수 표시)
       io.to(arenaId).emit('scannerRace:vulnerability-found', {
         userId,
         vulnType: result.vulnInfo?.vulnType,
         vulnName: result.vulnInfo?.vulnName,
         isFirstBlood: result.isFirstBlood,
-        points: result.pointsAwarded,
+        points: result.pointsAwarded, // 부스트 적용된 최종 점수
+        basePoints: result.breakdown?.basePoints || result.pointsAwarded, // 기본 점수
         currentScore: progress?.score || 0
       });
 
@@ -117,6 +157,11 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       const scenario = arena.scenarioId as any;
       const totalVulns = scenario.data?.vulnerabilities?.length || 0;
 
+      // 🔍 현재 플레이어의 발견 취약점 수 로그
+      const currentProgress = await ArenaProgress.findOne({ arena: arenaId, user: userId });
+      const currentFound = currentProgress?.vulnerabilityScannerRace?.vulnerabilitiesFound || 0;
+      console.log(`🔍 [ScannerRace] User ${userId} found: ${currentFound}/${totalVulns} vulnerabilities`);
+
       // 현재 winner 상태 저장 (checkGameCompletion 호출 전)
       const hadWinnerBefore = !!arena.winner;
 
@@ -136,53 +181,76 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
 
       if (isFirstCompleter) {
         // 첫 완주자 발생! Grace period 시작
-        const graceMs = arena.settings?.graceMs ?? 60000;
-        const graceSec = Math.floor(graceMs / 1000);
+        console.log(`⏳ [ScannerRace] Calling endArenaProcedure for dynamic grace period`);
 
-        console.log(`⏳ [ScannerRace] Starting grace period: ${graceSec}s`);
+        // ✅ 시간 보너스가 적용되었으므로 점수 업데이트 브로드캐스트
+        const updatedProgress = await ArenaProgress.find({ arena: arenaId })
+          .select('user score vulnerabilityScannerRace')
+          .populate('user', 'username')
+          .lean();
 
-        io.to(arenaId).emit('arena:grace-period-started', {
-          graceMs,
-          graceSec,
-          message: `First player completed! You have ${graceSec} seconds to finish.`
+        io.to(arenaId).emit('scannerRace:scores-update', {
+          scores: updatedProgress.map((p: any) => {
+            const pUser = p.user as any;
+            return {
+              userId: pUser?._id || pUser,
+              username: pUser?.username || 'Unknown',
+              score: p.score || 0,
+              vulnerabilitiesFound: p.vulnerabilityScannerRace?.vulnerabilitiesFound || 0,
+              firstBloods: p.vulnerabilityScannerRace?.firstBloods || 0,
+              timeBonusPoints: p.vulnerabilityScannerRace?.timeBonusPoints || 0
+            };
+          })
         });
 
-        const timer = setTimeout(async () => {
-          console.log(`⏰ [ScannerRace] Grace period ended for arena ${arenaId}`);
-          console.log(`🔄 [ScannerRace] Calling endArenaImmediately...`);
-          graceTimers.delete(arenaId);
-          await endArenaImmediately(arenaId, io);
-          console.log(`✅ [ScannerRace] endArenaImmediately completed`);
-        }, graceMs);
+        // ✅ endArenaProcedure를 호출하여 동적 유예시간 계산 (내부에서 타이머 관리)
+        await endArenaProcedure(arenaId, io);
 
-        graceTimers.set(arenaId, timer);
-
-      } else if (hadWinnerBefore || completers.length > 1) {
-        // grace period 중 추가 완주자 또는 이미 winner가 있었던 경우
-        console.log(`✅ [ScannerRace] Player ${userId} completed during grace period`);
-
-        const submittedAt = new Date();
-        await ArenaProgress.updateOne(
-          { arena: arenaId, user: userId },
-          { $set: { completed: true, submittedAt } }
+      } else if (hadWinnerBefore && isGracePeriodActive(arenaId)) {
+        // grace period 중에 취약점 제출이 발생한 경우
+        // 현재 유저가 이번에 완주했는지 확인
+        const currentUserCompleted = completers.some(
+          (c: any) => c.user.toString() === userId.toString()
         );
 
-        // 활성 참가자 수 확인
-        const activeParticipants = arena.participants.filter((p: any) => !p.hasLeft);
-        const completedCount = allProgressForCompletion.filter((p: any) => p.completed).length;
+        if (currentUserCompleted) {
+          console.log(`✅ [ScannerRace] Player ${userId} completed during grace period`);
 
-        console.log(`👥 [ScannerRace] Active: ${activeParticipants.length}, Completers: ${completers.length}`);
+          // checkGameCompletion에서 이미 시간 보너스와 completed 처리를 함
+          // ✅ 시간 보너스가 적용되었으므로 점수 업데이트 브로드캐스트
+          const updatedProgressGrace = await ArenaProgress.find({ arena: arenaId })
+            .select('user score vulnerabilityScannerRace')
+            .populate('user', 'username')
+            .lean();
 
-        if (completers.length >= activeParticipants.length) {
-          console.log('🎉 [ScannerRace] All completed! Ending immediately');
+          io.to(arenaId).emit('scannerRace:scores-update', {
+            scores: updatedProgressGrace.map((p: any) => {
+              const pUser = p.user as any;
+              return {
+                userId: pUser?._id || pUser,
+                username: pUser?.username || 'Unknown',
+                score: p.score || 0,
+                vulnerabilitiesFound: p.vulnerabilityScannerRace?.vulnerabilitiesFound || 0,
+                firstBloods: p.vulnerabilityScannerRace?.firstBloods || 0,
+                timeBonusPoints: p.vulnerabilityScannerRace?.timeBonusPoints || 0
+              };
+            })
+          });
 
-          if (graceTimers.has(arenaId)) {
-            clearTimeout(graceTimers.get(arenaId)!);
-            graceTimers.delete(arenaId);
-            console.log('⏹️ [ScannerRace] Grace timer cancelled');
+          // 활성 참가자 수 확인
+          const activeParticipants = arena.participants.filter((p: any) => !p.hasLeft);
+
+          console.log(`👥 [ScannerRace] Active: ${activeParticipants.length}, Completers: ${completers.length}`);
+
+          // ✅ 모든 활성 참가자가 완주했을 때만 즉시 종료
+          if (completers.length >= activeParticipants.length) {
+            console.log('🎉 [ScannerRace] All completed! Ending immediately');
+            // endArenaImmediately 내부에서 graceTimer를 정리함
+            await endArenaImmediately(arenaId, io);
           }
-
-          await endArenaImmediately(arenaId, io);
+        } else {
+          // 아직 완주하지 않은 유저의 취약점 제출 - 그냥 넘어감
+          console.log(`📝 [ScannerRace] Player ${userId} submitted during grace period but not completed yet`);
         }
       }
 
@@ -191,6 +259,13 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
       socket.emit('scannerRace:error', {
         message: 'Error processing submission'
       });
+    } finally {
+      // ✅ 처리 완료 후 플래그 제거 (약간의 딜레이로 연속 요청 방지)
+      const userKey = `${arenaId}-${userId}`;
+      setTimeout(() => {
+        processingSubmissions.delete(userKey);
+        console.log('🔓 [scannerRace:submit] Released lock for user');
+      }, 500);
     }
   });
 

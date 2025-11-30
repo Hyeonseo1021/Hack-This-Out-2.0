@@ -60,6 +60,19 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: 0
   },
 
+  // 💰 HTO 코인 보상 (게임 종료 시 계산)
+  coinsEarned: {
+    type: Number,
+    default: 0
+  },
+
+  // 🎮 Terminal Hacking Race 전용
+  terminalRace: {
+    timeBonusPoints: { type: Number, default: 0 },      // 시간 보너스 점수
+    commandsExecuted: { type: Number, default: 0 },     // 실행한 명령어 수
+    hintsUsed: { type: Number, default: 0 }             // 사용한 힌트 개수
+  },
+
   // 🔍 Vulnerability Scanner Race 전용 - NEW
   vulnerabilityScannerRace: {
     vulnerabilitiesFound: { type: Number, default: 0 },  // 발견한 취약점 개수
@@ -68,6 +81,7 @@ const ArenaProgressSchema = new mongoose.Schema({
     hintsUsed: { type: Number, default: 0 },            // 사용한 힌트 개수
     speedBonusPoints: { type: Number, default: 0 },     // 속도 보너스 점수
     comboPoints: { type: Number, default: 0 },          // 콤보 보너스 점수
+    timeBonusPoints: { type: Number, default: 0 },      // 시간 보너스 점수
     discoveries: [{
       vulnId: String,              // 취약점 ID
       vulnType: String,            // 취약점 타입

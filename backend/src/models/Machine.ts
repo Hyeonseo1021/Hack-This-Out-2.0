@@ -126,6 +126,16 @@ const MachineSchema = new mongoose.Schema({
         type: [HintSchema],
         default: []
     },
+    hintSettings: {
+        requiresItem: {
+            type: Boolean,
+            default: false  // false: 무료 힌트, true: 힌트권 필요
+        },
+        description: {
+            type: String,
+            default: '힌트를 무료로 사용할 수 있습니다.'
+        }
+    },
     isActive: {
         type: Boolean,
         required: true,

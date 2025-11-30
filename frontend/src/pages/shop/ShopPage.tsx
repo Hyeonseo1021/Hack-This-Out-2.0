@@ -16,13 +16,15 @@ import {
   getShopItems,
   buyShopItem,
   getInventory,
-  useInventoryItem,
 } from "../../api/axiosShop";
+
+// API URL에서 base URL 추출 (예: http://localhost:5000/api -> http://localhost:5000)
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
 
 type ShopItem = {
   _id: string;
-  name: string;
-  description: string;
+  name: string | { ko: string; en: string };
+  description: string | { ko: string; en: string };
   price: number;
   icon: string;
   type: string;
@@ -32,8 +34,8 @@ type InventoryItem = {
   _id: string;
   item: {
     _id: string;
-    name: string;
-    description: string;
+    name: string | { ko: string; en: string };
+    description: string | { ko: string; en: string };
     price: number;
     icon: string;
     type: string;
@@ -108,27 +110,9 @@ const ShopPage: React.FC = () => {
   };
 
   /* -------------------------------------- */
-  /* 🧩 사용 */
-  /* -------------------------------------- */
-  const handleUseItem = async (invId: string) => {
-    try {
-      const result = await useInventoryItem(invId);
-      
-      // 인벤토리 새로고침
-      const updatedInventory = await getInventory();
-      setInventory(updatedInventory);
-      
-      showToast(result.msg);
-    } catch (error: any) {
-      console.error('❌ Failed to use item:', error);
-      showToast(error?.response?.data?.msg || t('errors.useFailed') || '아이템 사용에 실패했습니다.');
-    }
-  };
-
-  /* -------------------------------------- */
   /* 🎰 룰렛 보상 */
   /* -------------------------------------- */
-  const handleRouletteReward = async (rewardId: string) => {
+  const handleRouletteReward = async (_rewardId: string) => {
     try {
       // 인벤토리 새로고침
       const updatedInventory = await getInventory();
@@ -159,23 +143,6 @@ const ShopPage: React.FC = () => {
   return (
     <Main>
       <div className="shop-layout">
-        {/* 🔵 언어 전환 버튼 */}
-        <div className="shop-lang-toggle">
-          <button
-            className={i18n.language === "ko" ? "active" : ""}
-            onClick={() => i18n.changeLanguage("ko")}
-          >
-            KR
-          </button>
-          <span>|</span>
-          <button
-            className={i18n.language === "en" ? "active" : ""}
-            onClick={() => i18n.changeLanguage("en")}
-          >
-            EN
-          </button>
-        </div>
-
         <div className="shop-panel">
           <h1 className="shop-title">{t("title")}</h1>
 
@@ -214,16 +181,17 @@ const ShopPage: React.FC = () => {
                 </div>
               ) : (
                 shopItems.map((item) => {
-                  const translationKey = `items.${item.name}`;
-                  const translatedName = t(`${translationKey}.name`, { defaultValue: item.name });
-                  const translatedDesc = t(`${translationKey}.desc`, { defaultValue: item.description });
+                  // 다국어 지원: name과 description이 객체인 경우 현재 언어로 선택
+                  const lang = i18n.language as 'ko' | 'en';
+                  const itemName = typeof item.name === 'object' ? (item.name as any)[lang] || (item.name as any).ko || (item.name as any).en : item.name;
+                  const itemDesc = typeof item.description === 'object' ? (item.description as any)[lang] || (item.description as any).ko || (item.description as any).en : item.description;
 
                   return (
                   <div className="shop-item-card" key={item._id}>
                     <img
-                      src={`http://localhost:5000${item.icon || (item as any).imageUrl || ''}`}
+                      src={`${API_BASE_URL}${item.icon || (item as any).imageUrl || ''}`}
                       className="shop-item-card__icon"
-                      alt={translatedName}
+                      alt={itemName}
                       onError={(e) => {
                         // 이미지 로드 실패 시 기본 이미지
                         e.currentTarget.src = '/img/default-item.png';
@@ -231,12 +199,12 @@ const ShopPage: React.FC = () => {
                     />
 
                     <div className="shop-item-card__header">
-                      <h3>{translatedName}</h3>
+                      <h3>{itemName}</h3>
                       <span>{item.price} HTO</span>
                     </div>
 
                     <p className="shop-item-card__desc">
-                      {translatedDesc}
+                      {itemDesc}
                     </p>
 
                     <button
@@ -267,16 +235,17 @@ const ShopPage: React.FC = () => {
                 ) : (
                   <div className="shop-inventory-list">
                     {inventory.map((inv) => {
-                      const translationKey = `items.${inv.item.name}`;
-                      const translatedName = t(`${translationKey}.name`, { defaultValue: inv.item.name });
-                      const translatedDesc = t(`${translationKey}.desc`, { defaultValue: inv.item.description });
+                      // 다국어 지원: name과 description이 객체인 경우 현재 언어로 선택
+                      const lang = i18n.language as 'ko' | 'en';
+                      const itemName = typeof inv.item.name === 'object' ? (inv.item.name as any)[lang] || (inv.item.name as any).ko || (inv.item.name as any).en : inv.item.name;
+                      const itemDesc = typeof inv.item.description === 'object' ? (inv.item.description as any)[lang] || (inv.item.description as any).ko || (inv.item.description as any).en : inv.item.description;
 
                       return (
                       <div className="shop-inventory-card" key={inv._id}>
                         <img
-                          src={`http://localhost:5000${inv.item.icon || (inv.item as any).imageUrl || ''}`}
+                          src={`${API_BASE_URL}${inv.item.icon || (inv.item as any).imageUrl || ''}`}
                           className="shop-inventory-card__icon"
-                          alt={translatedName}
+                          alt={itemName}
                           onError={(e) => {
                             e.currentTarget.src = '/img/default-item.png';
                           }}
@@ -284,20 +253,21 @@ const ShopPage: React.FC = () => {
 
                         <div className="shop-inventory-card__body">
                           <h3 className="shop-inventory-card__title">
-                            {translatedName}
+                            {itemName}
                           </h3>
                           <p className="shop-inventory-card__count">x{inv.quantity}</p>
                           <p className="shop-inventory-card__desc">
-                            {translatedDesc}
+                            {itemDesc}
+                          </p>
+                          <p className="shop-inventory-card__note" style={{
+                            fontSize: '0.85rem',
+                            color: '#94a3b8',
+                            marginTop: '0.5rem',
+                            fontStyle: 'italic'
+                          }}>
+                            💡 {t("inventory.useInArena", { defaultValue: "아이템은 Arena 플레이 중에 사용할 수 있습니다" })}
                           </p>
                         </div>
-
-                        <button
-                          className="shop-inventory-card__btn"
-                          onClick={() => handleUseItem(inv._id)}
-                        >
-                          {t("buttons.use")}
-                        </button>
                       </div>
                       );
                     })}

@@ -10,6 +10,24 @@ import manualKR from './locales/manual-kr.json';
 import shopEN from './locales/shop-en.json';
 import shopKR from './locales/shop-kr.json';
 
+import arenaEN from './locales/arena-en.json';
+import arenaKR from './locales/arena-kr.json';
+
+import machineEN from './locales/machine-en.json';
+import machineKR from './locales/machine-kr.json';
+
+import contestEN from './locales/contest-en.json';
+import contestKR from './locales/contest-kr.json';
+
+import userEN from './locales/user-en.json';
+import userKR from './locales/user-kr.json';
+
+import commonEN from './locales/common-en.json';
+import commonKR from './locales/common-kr.json';
+
+// localStorage에서 저장된 언어 불러오기, 없으면 'ko' 기본값
+const savedLanguage = localStorage.getItem('language') || 'ko';
+
 i18n
   .use(initReactI18next)
   .init({
@@ -17,21 +35,31 @@ i18n
       en: {
         tutorial: tutorialEN,
         manual: manualEN,
-        shop: shopEN
+        shop: shopEN,
+        arena: arenaEN,
+        machine: machineEN,
+        contest: contestEN,
+        user: userEN,
+        common: commonEN
       },
       ko: {
         tutorial: tutorialKR,
         manual: manualKR,
-        shop: shopKR
+        shop: shopKR,
+        arena: arenaKR,
+        machine: machineKR,
+        contest: contestKR,
+        user: userKR,
+        common: commonKR
       }
     },
-    lng: 'en',          // 기본 언어
+    lng: savedLanguage,  // localStorage에서 불러온 언어 사용
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false
     },
-    ns: ['tutorial', 'manual', 'shop'], // ← shop 네임스페이스 추가
-    defaultNS: 'tutorial'               // 기본값은 그대로 유지
+    ns: ['tutorial', 'manual', 'shop', 'arena', 'machine', 'contest', 'user', 'common'],
+    defaultNS: 'common'  // 기본 네임스페이스를 common으로 변경
   });
 
 export default i18n;

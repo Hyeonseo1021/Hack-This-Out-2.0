@@ -15,7 +15,7 @@ interface Arena {
   gameMode: string;
   scenario?: {
     _id: string;
-    title: string;
+    title: string | { ko: string; en: string };
     difficulty: string;
     mode: string;
   };
@@ -171,7 +171,7 @@ const ArenasManagement: React.FC = () => {
                     <td>
                       {arena.scenario ? (
                         <div>
-                          <div>{arena.scenario.title}</div>
+                          <div>{typeof arena.scenario.title === 'string' ? arena.scenario.title : arena.scenario.title?.en || arena.scenario.title?.ko}</div>
                           <small>({arena.scenario.difficulty})</small>
                         </div>
                       ) : (
@@ -228,7 +228,7 @@ const ArenasManagement: React.FC = () => {
                 {selectedArena.scenario && (
                   <div className="detail-section">
                     <h3>Scenario</h3>
-                    <p><strong>Title:</strong> {selectedArena.scenario.title}</p>
+                    <p><strong>Title:</strong> {typeof selectedArena.scenario.title === 'string' ? selectedArena.scenario.title : selectedArena.scenario.title?.en || selectedArena.scenario.title?.ko}</p>
                     <p><strong>Difficulty:</strong> {selectedArena.scenario.difficulty}</p>
                   </div>
                 )}

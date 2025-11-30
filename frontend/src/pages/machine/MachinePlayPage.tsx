@@ -11,6 +11,7 @@ import GiveUpButton from '../../components/play/GiveUpButton';
 import StatusIcon from '../../components/play/StatusIcon';
 import Main from '../../components/main/Main';
 import ErrorIcon from '../../components/public/ErrorIcon';
+import InventoryModal from '../../components/inventory/InventoryModal';
 import '../../assets/scss/machine/MachinePlayPage.scss';
 import LoadingIcon from '../../components/public/LoadingIcon';
 import { PlayProvider, usePlayContext } from '../../contexts/PlayContext';
@@ -23,6 +24,10 @@ interface Machine {
   name: string;
   exp: number;
   amiId: string;
+  hintSettings?: {
+    requiresItem: boolean;
+    description: string;
+  };
   // Add other machine properties as needed
 }
 
@@ -42,6 +47,7 @@ const MachinePlayPage: React.FC = () => {
   const [machine, setMachine] = useState<Machine | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showInventory, setShowInventory] = useState<boolean>(false);
 
   const {
     instanceStatus,
@@ -49,6 +55,7 @@ const MachinePlayPage: React.FC = () => {
     downloadStatus,
     submitStatus,
     setSubmitStatus,
+    clearBuffs: _clearBuffs,
   } = usePlayContext();
 
   // Ref to the container for scrolling and class manipulation
@@ -138,12 +145,37 @@ const MachinePlayPage: React.FC = () => {
       <div className={`machine-play-container ${submitStatus === 'flag-success' ? 'flag-success' : ''}`} ref={containerRef}>
         <div className="machine-play-name">
           <h3><b>Now Playing: {machine.name.charAt(0).toUpperCase() + machine.name.slice(1)}</b></h3>
-          <GiveUpButton
-            machineId={machineId || ''}
-            machineName={machine.name}
-            mode="machine"
-          />
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={() => setShowInventory(true)}
+              style={{
+                padding: '8px 16px',
+                background: '#00f5ff',
+                border: 'none',
+                borderRadius: '4px',
+                color: '#000',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '14px',
+              }}
+            >
+              🎒 인벤토리
+            </button>
+            <GiveUpButton
+              machineId={machineId || ''}
+              machineName={machine.name}
+              mode="machine"
+            />
+          </div>
         </div>
+
+        {/* 인벤토리 모달 */}
+        {showInventory && (
+          <InventoryModal
+            onClose={() => setShowInventory(false)}
+            isInGame={instanceStatus === 'running'}
+          />
+        )}
         <div className='download-box'>
           {(instanceStatus === 'running' || instanceStatus === 'pending') ? (
             <>
@@ -169,6 +201,7 @@ const MachinePlayPage: React.FC = () => {
             <GetHints
               machineId={machineId || ''}
               playType="machine"
+              requiresHintItem={machine?.hintSettings?.requiresItem ?? false}
             />
           </div>
         </div>

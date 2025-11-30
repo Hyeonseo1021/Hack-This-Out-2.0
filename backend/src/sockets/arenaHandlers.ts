@@ -2,11 +2,12 @@ import { Server, Socket } from 'socket.io';
 import Arena from '../models/Arena' // Arena 스키마 import
 import ArenaProgress from '../models/ArenaProgress';
 import User from '../models/User';
-import { endArenaProcedure }  from './utils/endArenaProcedure';
+import { endArenaProcedure, getGraceInfo }  from './utils/endArenaProcedure';
 import { terminalProcessCommand } from '../services/terminalRace/terminalEngine';
 import { registerTerminalRaceHandlers, initializeTerminalRace } from './modes/terminalRaceHandler';
 import { initializeScannerRace } from './modes/VulnerablilityScannerHandler';
 import { initializeForensicsRush } from './modes/ForensicsRushHandler';
+import { registerSocialEngineeringHandlers } from './modes/SocialEngineeringHandler';
 
 const dcTimers = new Map<string, NodeJS.Timeout>();
 const endTimers = new Map<string, NodeJS.Timeout>();
@@ -73,10 +74,17 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
 
   // ✅ 모드별 핸들러 등록
   registerTerminalRaceHandlers(io, socket);
+  registerSocialEngineeringHandlers(io, socket);
 
-  // 1. 방 참가 (arena:join)
+  // 1. 방 참가 (arena:join) - ✅ 최초 연결 시에만 userId 설정
   socket.on('arena:join', async ({ arenaId, userId }) => {
     try {
+      // ✅ 보안: 이미 userId가 설정되어 있으면 변경 불가 (스푸핑 방지)
+      const existingUserId = (socket as any).userId;
+      if (existingUserId && existingUserId !== String(userId)) {
+        return socket.emit('arena:join-failed', { reason: '잘못된 요청입니다.' });
+      }
+
       const uid = String(userId);
       (socket as any).userId = uid;
       (socket as any).arenaId = String(arenaId);
@@ -154,7 +162,27 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (user) {
         io.to(arenaId).emit('arena:notify', {
           type: 'system',
-          message: `${user.username}님이 입장했습니다.`
+          message: {
+            ko: `${user.username}님이 입장했습니다.`,
+            en: `${user.username} has joined.`
+          }
+        });
+      }
+
+      // ✅ 유예시간 진행 중이면 해당 사용자에게 유예시간 정보 전송
+      const graceInfo = getGraceInfo(arenaId);
+      if (graceInfo && graceInfo.remainingSec > 0) {
+        const graceMin = Math.floor(graceInfo.remainingSec / 60);
+        const graceSecRemainder = graceInfo.remainingSec % 60;
+        const graceTimeFormatted = graceMin > 0
+          ? `${graceMin}:${String(graceSecRemainder).padStart(2, '0')}`
+          : `${graceInfo.remainingSec}s`;
+
+        socket.emit('arena:grace-period-started', {
+          graceMs: graceInfo.remainingSec * 1000,
+          graceSec: graceInfo.remainingSec,
+          totalGraceSec: graceInfo.totalSec,
+          message: `Grace period in progress! ${graceTimeFormatted} remaining.`
         });
       }
 
@@ -183,12 +211,20 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 2. 준비 (arena:ready)
+  // 2. 준비 (arena:ready) - ✅ userId는 소켓에서 가져옴
   socket.on('arena:ready', async ({
     arenaId,
-    userId,
     ready,
-  }: { arenaId: string; userId: string; ready: boolean }) => {
+  }: { arenaId: string; ready: boolean }) => {
+    // ✅ 보안: userId는 소켓에서 가져옴 (스푸핑 방지)
+    const uid = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증
+    if (!uid || arenaId !== socketArenaId) {
+      return socket.emit('arena:ready-failed', { reason: '잘못된 요청입니다.' });
+    }
+
     try {
       const arena = await Arena.findById(arenaId);
       if (!arena) return;
@@ -196,8 +232,6 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (arena.status !== 'waiting') {
         return socket.emit('arena:ready-failed', { reason: '대기 중에만 준비를 변경할 수 있습니다.' });
       }
-
-      const uid = String(userId);
       const p = arena.participants.find(x => String((x.user as any)?._id ?? x.user) === uid && !x.hasLeft);
       if (!p) {
         return socket.emit('arena:ready-failed', { reason: '참가자가 아닙니다.' });
@@ -231,8 +265,17 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 3. 시작 (arena:start)
-  socket.on('arena:start', async ({ arenaId, userId }) => {
+  // 3. 시작 (arena:start) - ✅ userId는 소켓에서 가져옴
+  socket.on('arena:start', async ({ arenaId }: { arenaId: string }) => {
+    // ✅ 보안: userId는 소켓에서 가져옴 (스푸핑 방지)
+    const userId = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증
+    if (!userId || arenaId !== socketArenaId) {
+      return socket.emit('arena:start-failed', { reason: '잘못된 요청입니다.' });
+    }
+
     try {
       const arena = await Arena.findById(arenaId).populate('scenarioId');
       if (!arena) return;
@@ -265,6 +308,14 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       arena.status = 'started';
       arena.startTime = new Date();
       arena.endTime = new Date(arena.startTime.getTime() + arena.timeLimit * 1000);
+
+      // ✅ 모든 참가자의 personalEndTime 초기화 (전체 endTime과 동일하게 시작)
+      arena.participants.forEach((p: any) => {
+        if (!p.hasLeft) {
+          p.personalEndTime = arena.endTime;
+        }
+      });
+
       await arena.save();
 
       // (2) 모드별 초기화
@@ -338,8 +389,17 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 4. 나가기 (arena:leave)
-  socket.on('arena:leave', async ({ arenaId, userId }) => {
+  // 4. 나가기 (arena:leave) - ✅ userId는 소켓에서 가져옴
+  socket.on('arena:leave', async ({ arenaId }: { arenaId: string }) => {
+    // ✅ 보안: userId는 소켓에서 가져옴 (스푸핑 방지)
+    const userId = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증
+    if (!userId || arenaId !== socketArenaId) {
+      return;
+    }
+
     try {
       const arena = await Arena.findById(arenaId);
       if (!arena) return;
@@ -359,7 +419,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (user) {
         io.to(arenaId).emit('arena:notify', {
           type: 'system',
-          message: `${user.username}님이 퇴장했습니다.`
+          message: {
+            ko: `${user.username}님이 퇴장했습니다.`,
+            en: `${user.username} has left.`
+          }
         });
       }
 
@@ -390,7 +453,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
               
               io.to(arenaId).emit('arena:notify', {
                 type: 'system',
-                message: `호스트가 변경되었습니다.`
+                message: {
+                  ko: '호스트가 변경되었습니다.',
+                  en: 'The host has changed.'
+                }
               });
             } else {
               // 남은 사람이 없으면 방 자동 삭제
@@ -452,9 +518,19 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
 
-  // 5. 종료 (arena:end)
+  // 5. 종료 (arena:end) - ✅ 호스트만 강제 종료 가능
   socket.on('arena:end', async ({ arenaId }) => {
+    const userId = (socket as any).userId;
+
     try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) return;
+
+      // ✅ 보안: 호스트만 강제 종료 가능
+      if (String(arena.host) !== userId) {
+        return socket.emit('arena:end-failed', { reason: '호스트만 게임을 종료할 수 있습니다.' });
+      }
+
       await endArenaProcedure(arenaId, io);
     } catch (e) {
       console.error('[arena:end] error:', e);
@@ -504,7 +580,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
           if (user) {
             io.to(arenaId).emit('arena:notify', {
               type: 'system',
-              message: `${user.username}님이 연결이 끊어졌습니다.`
+              message: {
+                ko: `${user.username}님이 연결이 끊어졌습니다.`,
+                en: `${user.username} has disconnected.`
+              }
             });
           }
 
@@ -540,7 +619,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
           if (user) {
             io.to(arenaId).emit('arena:notify', {
               type: 'system',
-              message: `${user.username}님이 연결이 끊어졌습니다.`
+              message: {
+                ko: `${user.username}님이 연결이 끊어졌습니다.`,
+                en: `${user.username} has disconnected.`
+              }
             });
           }
 
@@ -711,7 +793,10 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
       if (kickedUser) {
         io.to(arenaId).emit('arena:notify', {
           type: 'system',
-          message: `${kickedUser.username}님이 방장에 의해 강퇴당했습니다.`
+          message: {
+            ko: `${kickedUser.username}님이 방장에 의해 강퇴당했습니다.`,
+            en: `${kickedUser.username} has been kicked by the host.`
+          }
         });
       }
 
@@ -720,7 +805,196 @@ export const registerArenaSocketHandlers = (socket: Socket, io: Server) => {
     }
   });
   
-  // 9. [추가] 설정 변경 (arena:settingsChange)
+  // 9. [추가] 아이템 사용 (arena:use-item) - ✅ 보안 강화
+  socket.on('arena:use-item', async ({ arenaId, itemType, value, duration }: { arenaId: string, itemType: string, value: number, duration?: number }) => {
+    // ✅ 보안: userId는 반드시 소켓에서 가져옴 (스푸핑 방지)
+    const userId = (socket as any).userId;
+    const socketArenaId = (socket as any).arenaId;
+
+    // ✅ 보안: arenaId 검증 (다른 방에 영향 주는 것 방지)
+    if (arenaId !== socketArenaId) {
+      return socket.emit('arena:use-item-failed', { reason: '잘못된 요청입니다.' });
+    }
+
+    // ✅ 보안: 아이템 값 범위 제한 (악용 방지)
+    const ITEM_LIMITS = {
+      time_extension: { maxValue: 300, maxDuration: 0 },      // 최대 5분 연장
+      time_freeze: { maxValue: 60, maxDuration: 0 },          // 최대 1분 정지
+      score_boost: { maxValue: 50, maxDuration: 300 },        // 최대 50% 부스트, 5분
+      invincible: { maxValue: 120, maxDuration: 0 }           // 최대 2분 무적
+    };
+
+    const limits = ITEM_LIMITS[itemType as keyof typeof ITEM_LIMITS];
+    if (!limits) {
+      return socket.emit('arena:use-item-failed', { reason: '알 수 없는 아이템입니다.' });
+    }
+
+    // ✅ 보안: 값 범위 검증
+    if (value <= 0 || value > limits.maxValue) {
+      return socket.emit('arena:use-item-failed', { reason: '잘못된 아이템 값입니다.' });
+    }
+
+    if (duration !== undefined && limits.maxDuration > 0 && duration > limits.maxDuration) {
+      return socket.emit('arena:use-item-failed', { reason: '잘못된 지속 시간입니다.' });
+    }
+
+    try {
+      const arena = await Arena.findById(arenaId);
+      if (!arena) return;
+
+      // 게임이 시작된 상태에서만 아이템 사용 가능
+      if (arena.status !== 'started') {
+        return socket.emit('arena:use-item-failed', { reason: '게임 중에만 아이템을 사용할 수 있습니다.' });
+      }
+
+      // 참가자 확인
+      const participant = arena.participants.find(
+        (p: any) => String((p.user as any)?._id ?? p.user) === userId && !p.hasLeft
+      );
+      if (!participant) {
+        return socket.emit('arena:use-item-failed', { reason: '참가자가 아닙니다.' });
+      }
+
+      // 아이템 타입별 처리
+      if ((itemType === 'time_extension' || itemType === 'time_freeze') && value > 0) {
+        // ✅ 유예시간 중인지 확인 (winner가 있고 firstSolvedAt이 설정된 상태)
+        const isGracePeriod = arena.winner && arena.firstSolvedAt;
+
+        // 사용자 이름 가져오기
+        const user = await User.findById(userId).select('username').lean();
+        const username = user?.username || 'Someone';
+
+        if (isGracePeriod) {
+          // ✅ 유예시간 중에는 시간 연장 불가
+          return socket.emit('arena:use-item-failed', {
+            reason: '유예시간 중에는 시간 연장권을 사용할 수 없습니다.'
+          });
+        }
+
+        // ✅ 평상시 - 개인 personalEndTime만 연장 (본인만 영향)
+        const participantIndex = arena.participants.findIndex(
+          (p: any) => String((p.user as any)?._id ?? p.user) === userId
+        );
+
+        if (participantIndex !== -1) {
+          const currentPersonalEndTime = arena.participants[participantIndex].personalEndTime || arena.endTime;
+          const newPersonalEndTime = new Date(currentPersonalEndTime.getTime() + value * 1000);
+          arena.participants[participantIndex].personalEndTime = newPersonalEndTime;
+          await arena.save();
+
+          // 해당 유저에게만 개인 타이머 업데이트 알림
+          socket.emit('arena:personal-time-extended', {
+            userId,
+            personalEndTime: newPersonalEndTime.toISOString(),
+            value
+          });
+
+          // 전체에게 아이템 사용 알림
+          io.to(arenaId).emit('arena:item-used', {
+            userId,
+            username,
+            itemType,
+            value,
+            message: {
+              ko: `${username}님이 시간 연장권을 사용했습니다! (+${value}초)`,
+              en: `${username} used a Time Extension! (+${value} sec)`
+            }
+          });
+        }
+      } else if (itemType === 'score_boost' && value > 0) {
+        // Score boost buff 추가 (value는 % 값, duration은 초 단위)
+        const startedAt = new Date();
+        const durationMs = (duration || 120) * 1000; // 기본값 120초
+        const expiresAt = new Date(startedAt.getTime() + durationMs);
+
+        const participantIndex = arena.participants.findIndex(
+          (p: any) => String((p.user as any)?._id ?? p.user) === userId
+        );
+
+        if (participantIndex !== -1) {
+          if (!arena.participants[participantIndex].activeBuffs) {
+            (arena.participants[participantIndex] as any).activeBuffs = [];
+          }
+
+          // 기존 score_boost 제거 후 새로 추가
+          (arena.participants[participantIndex] as any).activeBuffs = (arena.participants[participantIndex].activeBuffs as any[]).filter(
+            (b: any) => b.type !== 'score_boost'
+          );
+
+          (arena.participants[participantIndex].activeBuffs as any[]).push({
+            type: 'score_boost',
+            value,
+            startedAt,
+            expiresAt
+          });
+
+          await arena.save();
+
+          const user = await User.findById(userId).select('username').lean();
+          const username = user?.username || 'Someone';
+
+          io.to(arenaId).emit('arena:item-used', {
+            userId,
+            username,
+            itemType,
+            value,
+            message: {
+              ko: `${username}님이 점수 부스트를 사용했습니다! (+${value}% 점수)`,
+              en: `${username} used a Score Boost! (+${value}% score)`
+            }
+          });
+        }
+      } else if (itemType === 'invincible' && value > 0) {
+        // Invincible buff 추가
+        const startedAt = new Date();
+        const expiresAt = new Date(startedAt.getTime() + value * 1000); // value는 초 단위
+
+        const participantIndex = arena.participants.findIndex(
+          (p: any) => String((p.user as any)?._id ?? p.user) === userId
+        );
+
+        if (participantIndex !== -1) {
+          if (!arena.participants[participantIndex].activeBuffs) {
+            (arena.participants[participantIndex] as any).activeBuffs = [];
+          }
+
+          // 기존 invincible 제거 후 새로 추가
+          (arena.participants[participantIndex] as any).activeBuffs = (arena.participants[participantIndex].activeBuffs as any[]).filter(
+            (b: any) => b.type !== 'invincible'
+          );
+
+          (arena.participants[participantIndex].activeBuffs as any[]).push({
+            type: 'invincible',
+            value,
+            startedAt,
+            expiresAt
+          } as any);
+
+          await arena.save();
+
+          const user = await User.findById(userId).select('username').lean();
+          const username = user?.username || 'Someone';
+
+          io.to(arenaId).emit('arena:item-used', {
+            userId,
+            username,
+            itemType,
+            value,
+            message: {
+              ko: `${username}님이 무적권을 사용했습니다! (${value}초 동안 패널티 무시)`,
+              en: `${username} used Invincibility! (Ignoring penalties for ${value} sec)`
+            }
+          });
+        }
+      }
+
+    } catch (e) {
+      console.error('[arena:use-item] error:', e);
+      socket.emit('arena:use-item-failed', { reason: '아이템 사용 중 오류가 발생했습니다.' });
+    }
+  });
+
+  // 10. [추가] 설정 변경 (arena:settingsChange)
   socket.on('arena:settingsChange', async ({ newSettings }: { newSettings: { name?: string, maxParticipants?: number } }) => {
     const arenaId = (socket as any).arenaId;
     const hostId = (socket as any).userId;

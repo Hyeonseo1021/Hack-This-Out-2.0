@@ -138,8 +138,8 @@ const ContestDetailPage: React.FC = () => {
     if (!contestDetail) return;
 
     const now = Date.now();
-    const start = contestDetail.startTime.getTime();
-    const end = contestDetail.endTime.getTime();
+    const start = new Date(contestDetail.startTime).getTime();
+    const end = new Date(contestDetail.endTime).getTime();
 
     if (now >= start && now <= end) {
       navigate(`/contest/${contestDetail._id}/pre`);

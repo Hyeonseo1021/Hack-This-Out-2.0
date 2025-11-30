@@ -12,13 +12,19 @@ export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT';
 interface IArenaScenario extends Document {
   mode: ArenaMode;
   difficulty: Difficulty;
-  title: string;
-  description: string;
+  title: {
+    ko: string;
+    en: string;
+  };
+  description: {
+    ko: string;
+    en: string;
+  };
   timeLimit: number;
-  
+
   // 모드별 데이터
   data: any;
-  
+
   isActive: boolean;
   usageCount: number;
   createdAt: Date;
@@ -42,11 +48,26 @@ const ArenaScenarioSchema = new Schema({
     required: true,
     index: true
   },
-  title: { 
-    type: String, 
-    required: true 
+  title: {
+    ko: {
+      type: String,
+      required: true
+    },
+    en: {
+      type: String,
+      required: true
+    }
   },
-  description: String,
+  description: {
+    ko: {
+      type: String,
+      default: ''
+    },
+    en: {
+      type: String,
+      default: ''
+    }
+  },
   timeLimit: { 
     type: Number, 
     default: 600  // 10분

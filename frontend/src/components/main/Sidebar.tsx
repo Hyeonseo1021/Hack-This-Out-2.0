@@ -26,10 +26,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
   // 경로 Active 조건
   // ==================
 
-  // Manual 활성화: /manual + /machinep 포함
+  // Manual 활성화: /manual + /tutorial 포함
   const isManualActive =
     location.pathname.startsWith('/manual') ||
-    location.pathname.startsWith('/machinep');
+    location.pathname.startsWith('/tutorial');
 
   // Machines 활성화: /machine 정확하게만
   const isMachineActive =

@@ -2,6 +2,7 @@
 import { Server, Socket } from 'socket.io';
 import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
+import User from '../../models/User';
 import { submitAnswer, getUserProgress } from '../../services/forensicsRush/ForensicsEngine';
 import { endArenaProcedure, endArenaImmediately } from '../utils/endArenaProcedure';
 import { cancelScheduledEnd } from '../arenaHandlers';
@@ -92,6 +93,15 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
       if (result.allCompleted) {
         console.log(`✅ User ${userId} completed all questions`);
 
+        // 🎯 다른 플레이어들에게 완료 알림
+        const userDoc = await User.findById(userId).select('username');
+        io.to(arenaId).emit('forensics:player-completed', {
+          userId: String(userId),
+          username: userDoc?.username || 'Unknown',
+          score: result.totalScore
+        });
+        console.log(`   📢 Broadcasted player completion to room ${arenaId}`);
+
         // ✅ completionTime 계산 (게임 시작부터 완료까지의 초 단위 시간)
         const arenaDoc = arena as any;
         const startTime = arenaDoc.startTime ? new Date(arenaDoc.startTime).getTime() : Date.now();
@@ -120,22 +130,55 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         // ✅ 첫 번째 완료자 처리
         if (!arena.winner) {
           console.log(`🏆 First completion detected: ${userId}`);
-          
+
           arena.winner = userId;
           arena.firstSolvedAt = new Date();
           await arena.save();
-          
-          const GRACE_PERIOD_SECONDS = 180; // 3분
-          
+
+          // ✅ 혼자 플레이 중이면 즉시 종료
+          const activeParticipants = arena.participants.filter((p: any) => !p.hasLeft);
+          if (activeParticipants.length === 1) {
+            console.log('🏁 [ForensicsRush] Solo play, ending immediately');
+            await endArenaImmediately(arenaId, io);
+            return;
+          }
+
+          // ✅ 남은 시간의 1/2 계산 (endArenaProcedure.ts와 동일한 로직)
+          const timeLimitMs = (arena.timeLimit || 600) * 1000; // 기본 10분
+          const elapsedMs = Date.now() - new Date(arena.startTime || Date.now()).getTime();
+          const remainingMs = Math.max(0, timeLimitMs - elapsedMs);
+
+          // 남은 시간의 1/2 계산, 최소 30초, 최대 5분
+          const calculatedGraceMs = Math.floor(remainingMs / 2);
+          const MIN_GRACE_MS = 30000;  // 30초
+          const MAX_GRACE_MS = 300000; // 5분
+          const graceMs = Math.min(remainingMs, Math.max(MIN_GRACE_MS, Math.min(MAX_GRACE_MS, calculatedGraceMs)));
+          const gracePeriodSeconds = Math.floor(graceMs / 1000);
+
+          console.log(`⏱️ [ForensicsRush] Time calculation:
+            - Time limit: ${arena.timeLimit}s
+            - Elapsed: ${Math.floor(elapsedMs / 1000)}s
+            - Remaining: ${Math.floor(remainingMs / 1000)}s
+            - Grace period: ${gracePeriodSeconds}s (${Math.floor(remainingMs / 2000)}s calculated, clamped to 30-300s)`);
+
           // ✅ 올바른 이벤트 이름: arena:grace-period-started
+          const graceMin = Math.floor(gracePeriodSeconds / 60);
+          const graceSecRemainder = gracePeriodSeconds % 60;
+          const graceTimeFormatted = graceMin > 0
+            ? `${graceMin}:${String(graceSecRemainder).padStart(2, '0')}`
+            : `${gracePeriodSeconds}s`;
+
           io.to(arenaId).emit('arena:grace-period-started', {
-            gracePeriodSeconds: GRACE_PERIOD_SECONDS,
+            gracePeriodSeconds: gracePeriodSeconds,
+            graceMs: graceMs,
+            graceSec: gracePeriodSeconds,
+            totalGraceSec: gracePeriodSeconds,
             firstWinner: String(userId),
-            message: `${userId} completed all questions first! ${GRACE_PERIOD_SECONDS} seconds remaining for others...`
+            message: `First player completed! You have ${graceTimeFormatted} to finish.`
           });
-          
-          console.log(`⏳ Grace period started: ${GRACE_PERIOD_SECONDS}s`);
-          
+
+          console.log(`⏳ Grace period started: ${gracePeriodSeconds}s`);
+
           // 기존 타이머 정리
           if (gracePeriodTimers.has(arenaId)) {
             clearTimeout(gracePeriodTimers.get(arenaId)!);
@@ -145,9 +188,9 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
             clearInterval(gracePeriodIntervals.get(arenaId)!);
             gracePeriodIntervals.delete(arenaId);
           }
-          
+
           // ✅ 유예 시간 카운트다운 (매초마다 업데이트)
-          let remainingSeconds = GRACE_PERIOD_SECONDS;
+          let remainingSeconds = gracePeriodSeconds;
           const countdownInterval = setInterval(() => {
             remainingSeconds--;
             
@@ -181,8 +224,8 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
             } catch (error) {
               console.error('❌ [ForensicsRush] Error ending arena:', error);
             }
-          }, GRACE_PERIOD_SECONDS * 1000);
-          
+          }, graceMs);
+
           gracePeriodTimers.set(arenaId, endTimer);
           
         } else {
@@ -331,20 +374,21 @@ export const registerForensicsRushHandlers = (io: Server, socket: Socket) => {
         return;
       }
 
-      const scenario = arena.scenarioId as any;
-      const scenarioData = scenario.data;
+      const scenarioDoc = arena.scenarioId as any;
+      const scenarioData = scenarioDoc.data;
 
+      // 공통 title/description을 우선 사용하고, data.scenario 내부 값을 fallback으로 사용
       socket.emit('forensics:scenario-data', {
         scenario: {
-          title: scenarioData.scenario.title,
-          description: scenarioData.scenario.description,
-          incidentType: scenarioData.scenario.incidentType,
-          date: scenarioData.scenario.date,
-          context: scenarioData.scenario.context
+          title: scenarioDoc.title || scenarioData.scenario?.title || scenarioData.scenario?.incidentType,
+          description: scenarioDoc.description || scenarioData.scenario?.description || '',
+          incidentType: scenarioData.scenario?.incidentType || 'unknown',
+          date: scenarioData.scenario?.date || '',
+          context: scenarioData.scenario?.context || ''
         },
         evidenceFiles: scenarioData.evidenceFiles || [],
         availableTools: scenarioData.availableTools || [],
-        totalQuestions: scenarioData.totalQuestions || scenarioData.questions.length
+        totalQuestions: scenarioData.totalQuestions || scenarioData.questions?.length || 0
       });
 
       console.log('📤 [forensics:get-scenario] Sent scenario data to client');

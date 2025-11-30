@@ -15,12 +15,19 @@ const ArenaSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     isReady: { type: Boolean, default: false },
     hasLeft: { type: Boolean, default: false },
+    personalEndTime: { type: Date, default: null }, // 개인별 종료 시간 (시간 연장 아이템용)
     progress: {
       score: { type: Number, default: 0 },
       stage: { type: Number, default: 1 },
       flagSubmitted: { type: Boolean, default: false },
       flagTime: { type: Date, default: null }
-    }
+    },
+    activeBuffs: [{
+      type: { type: String, enum: ['score_boost', 'invincible'] },
+      value: Number,
+      startedAt: Date,
+      expiresAt: Date
+    }]
   }],
   maxParticipants: {
     type: Number,
@@ -87,7 +94,14 @@ const ArenaSchema = new mongoose.Schema({
         }]
       }],
       targetUrl: String,          // 타겟 웹 애플리케이션 URL (HARD/EXPERT)
-      targetDescription: String,  // 타겟 설명
+      targetName: {               // 타겟 이름 (다국어)
+        ko: String,
+        en: String
+      },
+      targetDescription: {        // 타겟 설명 (다국어)
+        ko: String,
+        en: String
+      },
       hints: [{
         vulnId: String,
         hintLevel: Number,        // 1, 2, 3

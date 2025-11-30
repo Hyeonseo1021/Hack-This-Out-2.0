@@ -1,0 +1,73 @@
+{
+  "login": {
+    "title": "LOGIN",
+    "username": "Username",
+    "password": "Password",
+    "loginButton": "LOGIN",
+    "loggingIn": "Logging in...",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "errors": {
+      "allFieldsRequired": "All fields are required",
+      "loginFailed": "Login failed"
+    }
+  },
+  "register": {
+    "title": "REGISTER",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "registerButton": "REGISTER",
+    "registering": "Registering...",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "errors": {
+      "allFieldsRequired": "All fields are required",
+      "passwordMismatch": "Passwords do not match",
+      "registerFailed": "Registration failed"
+    }
+  },
+  "mypage": {
+    "title": "MY PAGE",
+    "profile": "Profile",
+    "stats": "Statistics",
+    "achievements": "Achievements",
+    "settings": "Settings",
+    "username": "Username",
+    "email": "Email",
+    "level": "Level",
+    "exp": "Experience",
+    "rank": "Rank",
+    "balance": "HTO Balance",
+    "joined": "Joined",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "logout": "Logout",
+    "stats": {
+      "machinesSolved": "Machines Solved",
+      "contestsParticipated": "Contests Participated",
+      "arenasCompleted": "Arenas Completed",
+      "totalScore": "Total Score",
+      "averageRank": "Average Rank",
+      "winRate": "Win Rate"
+    },
+    "passwordCheck": {
+      "title": "Password Verification",
+      "description": "Please enter your password to continue",
+      "password": "Password",
+      "verify": "Verify",
+      "cancel": "Cancel"
+    },
+    "personalInfo": {
+      "title": "Edit Profile",
+      "username": "Username",
+      "email": "Email",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "save": "Save Changes",
+      "cancel": "Cancel"
+    }
+  }
+}

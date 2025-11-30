@@ -137,7 +137,10 @@ export const getInventory = async (req: Request, res: Response): Promise<void> =
       .populate('item')
       .sort({ acquiredAt: -1 });
 
-    res.status(200).json({ message: 'OK', inventory: items });
+    // ✅ item이 null인 항목 제거 (삭제된 아이템 참조 필터링)
+    const validItems = items.filter(inv => inv.item !== null);
+
+    res.status(200).json({ message: 'OK', inventory: validItems });
   } catch (err) {
     console.error('❌ getInventory error:', err);
     res.status(500).json({ message: 'ERROR', msg: '서버 오류' });
@@ -251,9 +254,14 @@ export const buyShopItem = async (req: Request, res: Response): Promise<void> =>
 
     await session.commitTransaction();
 
+    // 다국어 이름 처리
+    const itemName = typeof finalItem.name === 'object'
+      ? (finalItem.name as any).ko || (finalItem.name as any).en
+      : finalItem.name;
+
     res.status(200).json({
       message: 'OK',
-      msg: `${finalItem.name}을(를) 획득했습니다!`,
+      msg: `${itemName}을(를) 획득했습니다!`,
       updatedBalance: user.htoCoin,
       acquiredItem: {
         id: finalItem._id,
@@ -288,14 +296,42 @@ export const deleteItem = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-/** 🎰 룰렛 돌리기 */
+/** 🎰 룰렛 아이템 목록 조회 */
+export const getRouletteItems = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // roulette.enabled가 true인 아이템만 가져오기
+    const items = await Item.find({ 'roulette.enabled': true })
+      .select('_id name icon imageUrl roulette')
+      .sort({ 'roulette.weight': -1 }); // 가중치 높은 순으로 정렬
+
+    if (items.length === 0) {
+      res.status(404).json({ message: 'ERROR', msg: '룰렛 아이템이 설정되지 않았습니다.' });
+      return;
+    }
+
+    res.status(200).json({
+      message: 'OK',
+      items: items.map(item => ({
+        id: item._id,
+        name: item.name,
+        icon: item.icon || item.imageUrl,
+        weight: item.roulette?.weight || 1
+      }))
+    });
+  } catch (err) {
+    console.error('❌ getRouletteItems error:', err);
+    res.status(500).json({ message: 'ERROR', msg: '서버 오류' });
+  }
+};
+
+/** 🎰 룰렛 돌리기 (DB 기반) */
 export const spinRoulette = async (req: Request, res: Response): Promise<void> => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const userId = res.locals.jwtData?.id;
-    const ROULETTE_COST = 10;
+    const ROULETTE_COST = 5;
 
     if (!userId) {
       await session.abortTransaction();
@@ -313,7 +349,7 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
     // 💰 잔액 확인
     if (user.htoCoin < ROULETTE_COST) {
       await session.abortTransaction();
-      res.status(400).json({ message: 'ERROR', msg: '코인이 부족합니다! (필요: 10 HTO)' });
+      res.status(400).json({ message: 'ERROR', msg: '코인이 부족합니다! (필요: 5 HTO)' });
       return;
     }
 
@@ -321,42 +357,42 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
     user.htoCoin -= ROULETTE_COST;
     await user.save({ session });
 
-    // 🎲 확률 테이블 (프론트엔드와 동일)
-    const ROULETTE_ITEMS = [
-      { id: 'item-hint1', name: '힌트 1회권', weight: 40 },
-      { id: 'item-hint3', name: '힌트 3회권', weight: 25 },
-      { id: 'item-buff', name: '랜덤 버프 패키지', weight: 20 },
-      { id: 'item-timestop', name: '시간 정지권', weight: 15 }
-    ];
+    // 🎲 DB에서 룰렛 아이템 가져오기
+    const rouletteItems = await Item.find({ 'roulette.enabled': true }).session(session);
 
-    // 가중치 기반 랜덤 선택
-    const totalWeight = ROULETTE_ITEMS.reduce((sum, item) => sum + item.weight, 0);
-    const rand = Math.random() * totalWeight;
+    if (rouletteItems.length === 0) {
+      await session.abortTransaction();
+      res.status(404).json({ message: 'ERROR', msg: '룰렛 아이템이 설정되지 않았습니다.' });
+      return;
+    }
+
+    // 가중치 기반 랜덤 선택 (소수점 확률, 합계 = 1)
+    const totalWeight = rouletteItems.reduce((sum, item) => sum + (item.roulette?.weight || 0), 0);
+
+    // 가중치 합계가 1이 아닌 경우 경고
+    if (Math.abs(totalWeight - 1) > 0.001) {
+      console.warn(`⚠️ [Roulette] 가중치 합계가 1이 아닙니다: ${totalWeight}`);
+    }
+
+    const rand = Math.random(); // 0 ~ 1 사이의 랜덤 값
 
     let acc = 0;
-    let selectedItem = ROULETTE_ITEMS[0];
+    let selectedItem = rouletteItems[0];
 
-    for (const item of ROULETTE_ITEMS) {
-      acc += item.weight;
+    for (const item of rouletteItems) {
+      acc += item.roulette?.weight || 0;
       if (rand <= acc) {
         selectedItem = item;
         break;
       }
     }
 
-    // 아이템 이름으로 DB에서 찾기
-    const rewardItem = await Item.findOne({ name: selectedItem.name }).session(session);
-
-    if (!rewardItem) {
-      await session.abortTransaction();
-      res.status(404).json({ message: 'ERROR', msg: '보상 아이템을 찾을 수 없습니다.' });
-      return;
-    }
+    console.log(`🎰 [Roulette] User ${userId} won: ${selectedItem.name} (weight: ${selectedItem.roulette?.weight})`);
 
     // 🎁 인벤토리에 추가
     const existing = await Inventory.findOne({
       user: user._id,
-      item: rewardItem._id,
+      item: selectedItem._id,
     }).session(session);
 
     if (existing) {
@@ -365,7 +401,7 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
     } else {
       await Inventory.create([{
         user: user._id,
-        item: rewardItem._id,
+        item: selectedItem._id,
         quantity: 1,
         acquiredAt: new Date(),
       }], { session });
@@ -375,8 +411,9 @@ export const spinRoulette = async (req: Request, res: Response): Promise<void> =
 
     res.status(200).json({
       message: 'OK',
-      rewardId: selectedItem.id,
+      rewardId: selectedItem._id.toString(),
       rewardName: selectedItem.name,
+      rewardIcon: selectedItem.icon || selectedItem.imageUrl,
       updatedBalance: user.htoCoin,
     });
   } catch (err) {

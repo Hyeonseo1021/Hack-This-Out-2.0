@@ -3,6 +3,34 @@ import Arena from '../../models/Arena';
 import ArenaProgress from '../../models/ArenaProgress';
 import { ForensicsRushData } from '../../types/ArenaScenarioData';
 
+// ✅ Helper: 활성 버프 가져오기
+const getActiveBuffs = (arena: any, userId: string) => {
+  const participant = arena.participants.find(
+    (p: any) => String((p.user as any)?._id ?? p.user) === userId
+  );
+
+  if (!participant || !participant.activeBuffs) return [];
+
+  const now = new Date();
+  return participant.activeBuffs.filter((buff: any) => {
+    return buff.expiresAt && new Date(buff.expiresAt) > now;
+  });
+};
+
+// ✅ Helper: 점수 부스트 적용
+const applyScoreBoost = (baseScore: number, buffs: any[]) => {
+  const scoreBoostBuff = buffs.find((b: any) => b.type === 'score_boost');
+  if (!scoreBoostBuff || !scoreBoostBuff.value) return baseScore;
+
+  const multiplier = 1 + (scoreBoostBuff.value / 100);
+  return Math.floor(baseScore * multiplier);
+};
+
+// ✅ Helper: 무적 상태 체크
+const hasInvincible = (buffs: any[]) => {
+  return buffs.some((b: any) => b.type === 'invincible');
+};
+
 /**
  * 답변 제출 결과 인터페이스
  */
@@ -155,14 +183,28 @@ export const submitAnswer = async (
     ) || false;
 
     // 7. 점수 및 페널티 계산
+    const activeBuffs = getActiveBuffs(arena, userId);
+    const isInvincible = hasInvincible(activeBuffs);
+
     let pointsGained = 0;
     let penalty = 0;
 
     if (isCorrect) {
-      pointsGained = question.points || 10;
+      const basePoints = question.points || 10;
+      // ✅ 점수 부스트 적용
+      pointsGained = applyScoreBoost(basePoints, activeBuffs);
+
+      if (pointsGained !== basePoints) {
+        console.log(`🚀 Score boost applied: ${basePoints} → ${pointsGained}`);
+      }
     } else {
-      // 오답 페널티
-      penalty = scenarioData.scoring.wrongAnswerPenalty || 5;
+      // ✅ 무적 상태면 패널티 무시
+      if (isInvincible) {
+        penalty = 0;
+        console.log(`🛡️ Invincible active: penalty ignored`);
+      } else {
+        penalty = scenarioData.scoring.wrongAnswerPenalty || 5;
+      }
     }
 
     // 8. ArenaProgress 업데이트

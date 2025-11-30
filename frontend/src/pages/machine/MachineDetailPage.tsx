@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, NavigateFunction } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import MachineDetail from '../../components/machine/MachineDetail';
 import Main from '../../components/main/Main';
-import { getActiveMachineDetails, startPlayingMachine } from '../../api/axiosMachine';
+import { getActiveMachineDetails } from '../../api/axiosMachine';
 import { MachineDetail as MachineDetailType } from '../../types/Machine';
 import '../../assets/scss/machine/MachineDetailPage.scss';
 import MachineReviewList from '../../components/machine/MachineReviewList';
@@ -16,7 +16,7 @@ import MachineReviewForm from '../../components/machine/MachineReviewForm';
  */
 const MachineDetailPage: React.FC = () => {
   const { machineId } = useParams<{ machineId: string }>();
-  const navigate: NavigateFunction = useNavigate();
+  // const navigate = useNavigate();
 
   const [machineDetail, setMachineDetail] = useState<MachineDetailType | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -47,17 +47,15 @@ const MachineDetailPage: React.FC = () => {
     fetchMachineDetail();
   }, [machineId]);
 
-  /**
-   * Handles navigation to the play page.
-   */
-  const handlePlay = async () => {
-    if (machineDetail && machineDetail._id) {
-      await startPlayingMachine(machineDetail._id);
-      navigate(`/machine/${machineDetail._id}/play`);
-    } else {
-      alert('Invalid machine details.');
-    }
-  };
+  // handlePlay is reserved for future use
+  // const handlePlay = async () => {
+  //   if (machineDetail && machineDetail._id) {
+  //     await startPlayingMachine(machineDetail._id);
+  //     navigate(`/machine/${machineDetail._id}/play`);
+  //   } else {
+  //     alert('Invalid machine details.');
+  //   }
+  // };
 
   const handleRegisterReview = () => {
     setIsModalOpen(true);

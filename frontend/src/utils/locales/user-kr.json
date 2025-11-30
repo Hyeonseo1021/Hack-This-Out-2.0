@@ -1,0 +1,73 @@
+{
+  "login": {
+    "title": "로그인",
+    "username": "사용자 이름",
+    "password": "비밀번호",
+    "loginButton": "로그인",
+    "loggingIn": "로그인 중...",
+    "noAccount": "계정이 없으신가요?",
+    "signUp": "회원가입",
+    "errors": {
+      "allFieldsRequired": "모든 필드를 입력해주세요",
+      "loginFailed": "로그인에 실패했습니다"
+    }
+  },
+  "register": {
+    "title": "회원가입",
+    "username": "사용자 이름",
+    "email": "이메일",
+    "password": "비밀번호",
+    "confirmPassword": "비밀번호 확인",
+    "registerButton": "가입하기",
+    "registering": "가입 중...",
+    "haveAccount": "이미 계정이 있으신가요?",
+    "signIn": "로그인",
+    "errors": {
+      "allFieldsRequired": "모든 필드를 입력해주세요",
+      "passwordMismatch": "비밀번호가 일치하지 않습니다",
+      "registerFailed": "회원가입에 실패했습니다"
+    }
+  },
+  "mypage": {
+    "title": "마이 페이지",
+    "profile": "프로필",
+    "stats": "통계",
+    "achievements": "업적",
+    "settings": "설정",
+    "username": "사용자 이름",
+    "email": "이메일",
+    "level": "레벨",
+    "exp": "경험치",
+    "rank": "순위",
+    "balance": "HTO 잔액",
+    "joined": "가입일",
+    "editProfile": "프로필 수정",
+    "changePassword": "비밀번호 변경",
+    "logout": "로그아웃",
+    "stats": {
+      "machinesSolved": "해결한 머신",
+      "contestsParticipated": "참가한 컨테스트",
+      "arenasCompleted": "완료한 아레나",
+      "totalScore": "총 점수",
+      "averageRank": "평균 순위",
+      "winRate": "승률"
+    },
+    "passwordCheck": {
+      "title": "비밀번호 확인",
+      "description": "계속하려면 비밀번호를 입력해주세요",
+      "password": "비밀번호",
+      "verify": "확인",
+      "cancel": "취소"
+    },
+    "personalInfo": {
+      "title": "프로필 수정",
+      "username": "사용자 이름",
+      "email": "이메일",
+      "currentPassword": "현재 비밀번호",
+      "newPassword": "새 비밀번호",
+      "confirmPassword": "새 비밀번호 확인",
+      "save": "변경사항 저장",
+      "cancel": "취소"
+    }
+  }
+}

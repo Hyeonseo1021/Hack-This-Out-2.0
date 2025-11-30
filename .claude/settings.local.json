@@ -3,7 +3,11 @@
     "allow": [
       "Bash(cat c:UsersAdministratorDocumentsGitHubHack-This-Out-2.0backend.env 2)",
       "Bash(NUL)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(dir \"c:\\Users\\김현서\\Documents\\GitHub\\Hack-This-Out-2.0\\backend\\src\")"
     ],
     "deny": [],
     "ask": []

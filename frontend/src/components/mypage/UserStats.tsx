@@ -89,7 +89,7 @@ const UserStats = () => {
     };
   };
 
-  const { percentage: expPercentage, remain: remainExp, nextLevelExp } = getLevelProgress(
+  const { percentage: expPercentage, remain: remainExp, nextLevelExp: _nextLevelExp } = getLevelProgress(
     myStats.myLevel || 1,
     myStats.myExp || 0
   );
