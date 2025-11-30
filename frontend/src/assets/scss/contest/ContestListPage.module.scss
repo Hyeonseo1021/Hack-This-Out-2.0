@@ -97,6 +97,7 @@
         .machine,
         .plus,
         .register_text {
+          font-family: var(--font-display);
           color: var(--color-white);
         }
       }
@@ -130,6 +131,7 @@
 
       .register_text {
         font-size: 24px;
+        font-family: var(--font-display);
         font-weight: bold;
         color: var(--color-white);
       }
