@@ -112,6 +112,12 @@
 
           transition: 0.3s;
 
+          img {
+            width: 70%;
+            height: 70%;
+            object-fit: contain;
+          }
+
           &:hover {
             box-shadow: 0 0 28px var(--mint);
             transform: scale(1.04);
