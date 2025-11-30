@@ -99,8 +99,8 @@ const AddArenaForm: React.FC = () => {
         <div className="preview-placeholder">
           <div className="placeholder-icon">▸</div>
           <p className="placeholder-text">
-            게임 모드를 선택하면<br />
-            미리보기가 표시됩니다
+            {t('preview.selectModeMessage')}<br />
+            {t('preview.previewWillShow')}
           </p>
         </div>
       );
@@ -111,26 +111,26 @@ const AddArenaForm: React.FC = () => {
         <div className="preview-terminal-race">
           {/* 게임 흐름 가이드 */}
           <div className="game-flow-guide">
-            <div className="flow-title">게임 진행 흐름</div>
+            <div className="flow-title">{t('preview.gameFlow')}</div>
             <div className="flow-steps">
               <div className="flow-step completed">
                 <span className="step-num">1</span>
-                <span className="step-text">시나리오 확인</span>
+                <span className="step-text">{t('preview.terminal.step1')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step active">
                 <span className="step-num">2</span>
-                <span className="step-text">명령어 입력</span>
+                <span className="step-text">{t('preview.terminal.step2')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step">
                 <span className="step-num">3</span>
-                <span className="step-text">플래그 발견</span>
+                <span className="step-text">{t('preview.terminal.step3')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step">
                 <span className="step-num">4</span>
-                <span className="step-text">제출 완료</span>
+                <span className="step-text">{t('preview.terminal.step4')}</span>
               </div>
             </div>
           </div>
@@ -139,8 +139,8 @@ const AddArenaForm: React.FC = () => {
           <div className="scenario-info-bar">
             <div className="scenario-main">
               <div className="scenario-details">
-                <h3 className="scenario-title">Mission: System Infiltration</h3>
-                <p className="scenario-description">숨겨진 파일에서 플래그를 찾아 제출하세요</p>
+                <h3 className="scenario-title">{t('preview.terminal.missionTitle')}</h3>
+                <p className="scenario-description">{t('preview.terminal.missionDesc')}</p>
               </div>
             </div>
             <div className="scenario-meta">
@@ -165,16 +165,16 @@ const AddArenaForm: React.FC = () => {
               </div>
             </div>
             <div className="terminal-output">
-              <div className="terminal-line system">[SYSTEM] Terminal Race initialized</div>
-              <div className="terminal-line prompt">숨겨진 파일을 찾아 플래그를 제출하세요.</div>
+              <div className="terminal-line system">{t('preview.terminal.systemInit')}</div>
+              <div className="terminal-line prompt">{t('preview.terminal.findFlag')}</div>
               <div className="terminal-line"><span className="command-text">ls -la</span></div>
               <div className="terminal-line output">-rw-r--r--  1 root root  220 .secret</div>
               <div className="terminal-line"><span className="command-text">cat .secret</span></div>
-              <div className="terminal-line success">✓ Flag found! +100 PTS</div>
+              <div className="terminal-line success">{t('preview.terminal.flagFound')}</div>
               {/* 인라인 힌트 */}
               <div className="inline-hint">
                 <span className="hint-icon">💡</span>
-                <span className="hint-text">리눅스 명령어를 입력하세요 (예: ls, cat, cd, grep)</span>
+                <span className="hint-text">{t('preview.terminal.hint')}</span>
               </div>
             </div>
             <div className="terminal-input-area">
@@ -185,9 +185,9 @@ const AddArenaForm: React.FC = () => {
                   <span className="prompt-host">hackthisout</span>
                   <span className="prompt-path">:~$</span>
                 </span>
-                <input className="terminal-input" type="text" placeholder="Enter command..." readOnly />
+                <input className="terminal-input" type="text" placeholder={t('preview.terminal.placeholder')} readOnly />
               </div>
-              <button className="terminal-submit-btn">EXECUTE</button>
+              <button className="terminal-submit-btn">{t('preview.terminal.execute')}</button>
             </div>
           </div>
         </div>
@@ -199,26 +199,26 @@ const AddArenaForm: React.FC = () => {
         <div className="preview-scanner-race">
           {/* 게임 흐름 가이드 */}
           <div className="game-flow-guide">
-            <div className="flow-title">게임 진행 흐름</div>
+            <div className="flow-title">{t('preview.gameFlow')}</div>
             <div className="flow-steps">
               <div className="flow-step completed">
                 <span className="step-num">1</span>
-                <span className="step-text">타겟 분석</span>
+                <span className="step-text">{t('preview.scanner.step1')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step active">
                 <span className="step-num">2</span>
-                <span className="step-text">취약점 발견</span>
+                <span className="step-text">{t('preview.scanner.step2')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step">
                 <span className="step-num">3</span>
-                <span className="step-text">PoC 작성</span>
+                <span className="step-text">{t('preview.scanner.step3')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step">
                 <span className="step-num">4</span>
-                <span className="step-text">제출</span>
+                <span className="step-text">{t('preview.scanner.step4')}</span>
               </div>
             </div>
           </div>
@@ -251,23 +251,22 @@ const AddArenaForm: React.FC = () => {
             <div className="target-container">
               <div className="target-header">
                 <div className="header-title">
-                  <span className="icon">🎯</span>
-                  <h3>TARGET APPLICATION</h3>
-                  <span className="vulns-remaining">0/4 Found</span>
+                  <h3>{t('preview.scanner.targetApp')}</h3>
+                  <span className="vulns-remaining">0/4 {t('preview.scanner.found')}</span>
                 </div>
               </div>
               <div className="target-iframe">
                 <div className="mock-webapp">
                   <div className="webapp-nav">vulnerable-app.hackthisout.io</div>
                   <div className="webapp-content">
-                    <h4>Login Portal</h4>
-                    <input className="mock-input" placeholder="Username" readOnly />
-                    <input className="mock-input" placeholder="Password" type="password" readOnly />
-                    <button className="mock-btn">Sign In</button>
+                    <h4>{t('preview.scanner.loginPortal')}</h4>
+                    <input className="mock-input" placeholder={t('preview.scanner.username')} readOnly />
+                    <input className="mock-input" placeholder={t('preview.scanner.password')} type="password" readOnly />
+                    <button className="mock-btn">{t('preview.scanner.signIn')}</button>
                     {/* 인라인 힌트 */}
                     <div className="inline-hint">
                       <span className="hint-icon">💡</span>
-                      <span className="hint-text">웹 애플리케이션의 취약점을 찾아 PoC 코드를 제출하세요</span>
+                      <span className="hint-text">{t('preview.scanner.hint')}</span>
                     </div>
                   </div>
                 </div>
@@ -278,8 +277,7 @@ const AddArenaForm: React.FC = () => {
             <div className="info-panel">
               <div className="vulnerabilities-section">
                 <div className="section-header">
-                  <span className="icon">⚠️</span>
-                  <h3>VULNERABILITIES</h3>
+                  <h3>{t('preview.scanner.vulnerabilities')}</h3>
                   <span className="count">0/4</span>
                 </div>
                 <div className="vuln-list">
@@ -309,15 +307,14 @@ const AddArenaForm: React.FC = () => {
               {/* 제출 폼 미리보기 */}
               <div className="submit-section">
                 <div className="section-header">
-                  <span className="icon">📝</span>
-                  <h3>SUBMIT VULNERABILITY</h3>
+                  <h3>{t('preview.scanner.submitVuln')}</h3>
                 </div>
                 <div className="submit-form">
                   <select className="form-select" disabled>
-                    <option>Select vulnerability type...</option>
+                    <option>{t('preview.scanner.selectType')}</option>
                   </select>
-                  <input className="form-input-field" placeholder="Enter payload or PoC..." readOnly />
-                  <button className="submit-btn" disabled>SUBMIT</button>
+                  <input className="form-input-field" placeholder={t('preview.scanner.enterPayload')} readOnly />
+                  <button className="submit-btn" disabled>{t('preview.scanner.submit')}</button>
                 </div>
               </div>
             </div>
@@ -331,26 +328,26 @@ const AddArenaForm: React.FC = () => {
         <div className="preview-forensics-rush">
           {/* 게임 흐름 가이드 */}
           <div className="game-flow-guide">
-            <div className="flow-title">게임 진행 흐름</div>
+            <div className="flow-title">{t('preview.gameFlow')}</div>
             <div className="flow-steps">
               <div className="flow-step completed">
                 <span className="step-num">1</span>
-                <span className="step-text">브리핑 확인</span>
+                <span className="step-text">{t('preview.forensics.step1')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step active">
                 <span className="step-num">2</span>
-                <span className="step-text">증거 분석</span>
+                <span className="step-text">{t('preview.forensics.step2')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step">
                 <span className="step-num">3</span>
-                <span className="step-text">질문 답변</span>
+                <span className="step-text">{t('preview.forensics.step3')}</span>
               </div>
               <div className="flow-arrow">→</div>
               <div className="flow-step">
                 <span className="step-num">4</span>
-                <span className="step-text">사건 해결</span>
+                <span className="step-text">{t('preview.forensics.step4')}</span>
               </div>
             </div>
           </div>
@@ -359,9 +356,9 @@ const AddArenaForm: React.FC = () => {
           <div className="forensics-header">
             <div className="header-left">
               <span className="agency-badge">DIGITAL FORENSICS</span>
-              <h2 className="case-title">Incident Response Case</h2>
+              <h2 className="case-title">{t('preview.forensics.caseTitle')}</h2>
               <div className="case-meta">
-                <span className="incident-type">DATA BREACH</span>
+                <span className="incident-type">{t('preview.forensics.dataBreach')}</span>
                 <span className="case-date">Case #2024-1130</span>
               </div>
             </div>
@@ -384,11 +381,11 @@ const AddArenaForm: React.FC = () => {
           {/* 시나리오 브리핑 */}
           <div className="scenario-brief">
             <div className="brief-header">
-              <span className="brief-title">MISSION BRIEFING</span>
-              <span className="classification">CLASSIFIED</span>
+              <span className="brief-title">{t('preview.forensics.missionBriefing')}</span>
+              <span className="classification">{t('preview.forensics.classified')}</span>
             </div>
             <p className="brief-description">
-              귀사 서버가 해킹당했습니다. 제공된 증거를 분석하여 공격자를 추적하고 침입 경로를 파악하세요.
+              {t('preview.forensics.briefDesc')}
             </p>
           </div>
 
@@ -397,7 +394,7 @@ const AddArenaForm: React.FC = () => {
             {/* 증거 터미널 */}
             <div className="terminal-window evidence-terminal">
               <div className="terminal-header">
-                <span className="terminal-title">EVIDENCE FILES</span>
+                <span className="terminal-title">{t('preview.forensics.evidenceFiles')}</span>
               </div>
               <div className="terminal-body">
                 <div className="file-list">
@@ -414,7 +411,7 @@ const AddArenaForm: React.FC = () => {
                   {/* 인라인 힌트 */}
                   <div className="inline-hint">
                     <span className="hint-icon">🔍</span>
-                    <span className="hint-text">증거 파일을 분석하여 질문에 답변하세요</span>
+                    <span className="hint-text">{t('preview.forensics.hint')}</span>
                   </div>
                 </div>
               </div>
@@ -423,7 +420,7 @@ const AddArenaForm: React.FC = () => {
             {/* 질문 터미널 */}
             <div className="terminal-window question-terminal">
               <div className="terminal-header">
-                <span className="terminal-title">INVESTIGATION QUERIES</span>
+                <span className="terminal-title">{t('preview.forensics.investigationQueries')}</span>
               </div>
               <div className="terminal-body">
                 <div className="question-content">
@@ -434,12 +431,12 @@ const AddArenaForm: React.FC = () => {
                   </div>
                   <div className="question-text">
                     <span className="prompt">&gt;</span>
-                    공격자의 IP 주소를 찾으세요
+                    {t('preview.forensics.findAttackerIP')}
                   </div>
                   <div className="answer-terminal">
                     <div className="terminal-input-line">
                       <span className="input-prompt">ANSWER:</span>
-                      <input className="terminal-input" placeholder="Enter your answer..." readOnly />
+                      <input className="terminal-input" placeholder={t('preview.forensics.enterAnswer')} readOnly />
                     </div>
                   </div>
                 </div>

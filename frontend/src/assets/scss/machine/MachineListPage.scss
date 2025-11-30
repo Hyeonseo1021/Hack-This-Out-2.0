@@ -94,6 +94,7 @@
                 .plus,
                 .register_text {
                     color: var(--color-white);
+                    font-family: var(--font-display);
                 }
             }
 
@@ -126,6 +127,7 @@
 
             .register_text {
                 font-size: 24px;
+                font-family: var(--font-display);
                 font-weight: bold;
                 color: var(--color-white);
             }
