@@ -19,12 +19,12 @@
   color: var(--white);
   font-weight: 600;
 
-  background: radial-gradient(circle at 50% 50%, #06121a 0%, var(--bg-dark) 100%);
+  background: var(--color-layout);
   border-radius: clamp(16px, 2vw, 24px);
-  border: 1.5px solid rgba(139, 243, 255, 0.28);
-  box-shadow: 0 0 28px rgba(139, 243, 255, 0.15);
+  border: 1px solid var(--blue-200);
+  box-shadow: none;
   overflow: hidden;
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
 
   /* CRT 스캔 라인 */
   &::before {
@@ -52,7 +52,7 @@
   .banner-slide {
     padding: clamp(20px, 2vw, 36px);
     height: clamp(260px, 28vh, 420px);
-    background: var(--glass-bg);
+    background: transparent;
     border-radius: inherit;
     backdrop-filter: blur(16px);
     position: relative;

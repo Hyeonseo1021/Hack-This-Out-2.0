@@ -78,7 +78,7 @@
 
 /* ===== 좌측: 아바타 ===== */
 .avatar-container {
-  width: clamp(100px, 15vw, 150px);
+  width: clamp(110px, 16vw, 170px);
 
   .MuiAvatar-root {
     border: 1.5px solid var(--mint);
@@ -86,6 +86,7 @@
     transition: all 0.3s ease;
     color: var(--mint);
     font-family: 'VT323', monospace;
+    font-size: clamp(3rem, 5vw, 4rem);
 
     &:hover {
       box-shadow: 0 0 20px var(--mint), 0 0 40px var(--mint-glow);
@@ -101,25 +102,25 @@
   text-shadow: 0 0 6px rgba(139, 243, 255, 0.2);
 
   .machine-name {
-    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
     font-weight: 700;
     color: var(--mint);
     text-shadow: 0 0 10px var(--mint);
     letter-spacing: 1px;
-    margin-bottom: clamp(8px, 2vw, 16px);
+    margin-bottom: clamp(10px, 2vw, 18px);
   }
 
   .machine-category {
-    font-size: clamp(1rem, 2vw, 1.2rem);
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
     color: var(--white);
     opacity: 0.9;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   .description {
-    font-size: clamp(1rem, 2vw, 1.1rem);
+    font-size: clamp(1.05rem, 2.1vw, 1.25rem);
     opacity: 0.8;
-    line-height: 1.4;
+    line-height: 1.5;
   }
 }
 
@@ -164,8 +165,8 @@
     background: rgba(10, 30, 40, 0.5);
     border: 1.5px solid rgba(139, 243, 255, 0.3);
     border-radius: 8px;
-    width: clamp(140px, 15vw, 180px);
-    height: clamp(60px, 8vh, 77px);
+    width: clamp(155px, 17vw, 200px);
+    height: clamp(68px, 9vh, 88px);
     box-shadow: 0 0 16px rgba(139, 243, 255, 0.1);
     text-align: center;
     transition: 0.3s ease-in-out;
@@ -176,13 +177,13 @@
     }
 
     .text {
-      font-size: 1rem;
+      font-size: clamp(1rem, 1.5vw, 1.15rem);
       color: var(--white);
       opacity: 0.9;
     }
 
     .reward-text {
-      font-size: 1.3rem;
+      font-size: clamp(1.4rem, 2vw, 1.6rem);
       color: var(--mint);
       font-weight: 700;
       text-shadow: 0 0 8px var(--mint-glow);
@@ -212,8 +213,8 @@
 }
 
 .machine-play-btn {
-  width: clamp(140px, 15vw, 180px);
-  height: clamp(60px, 8vh, 77px);
+  width: clamp(155px, 17vw, 200px);
+  height: clamp(68px, 9vh, 88px);
   border-radius: 8px;
 
   background: rgba(10, 30, 40, 0.5);
@@ -225,7 +226,7 @@
 
   color: var(--mint);
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: clamp(1.3rem, 2vw, 1.5rem);
   cursor: pointer;
 
   text-shadow: 0 0 10px var(--mint-glow);

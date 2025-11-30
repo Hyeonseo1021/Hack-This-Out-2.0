@@ -8,7 +8,7 @@ import { Avatar } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 
 // 🔥 추가: 고양이 이미지 import
-import whiteCat from '../../assets/img/icon/Hack cat.png';
+import whiteCat from '../../assets/img/icon/Hack_cat.png';
 
 interface MachineDetailProps {
   machineDetail: MachineDetailType;

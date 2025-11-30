@@ -18,7 +18,6 @@ const MachineListPage: React.FC = () => {
                     </div>
                     {/* register-machine */}
                     <div className="register-machine">
-                        {/* <p className="register-text">register machine</p> */}
                         <Link to='/machine/register' className='register-machine'>
                             <div>
                                 <PiComputerTowerBold className='machine' style={{ fontSize: '70px' }} />

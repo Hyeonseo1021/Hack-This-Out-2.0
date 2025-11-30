@@ -1,6 +1,6 @@
 import React from "react";
 import '../../assets/scss/landing/navigation.scss';
-import HTO_LOGO from '../../assets/img/icon/Hack cat.png';
+import HTO_LOGO from '../../assets/img/icon/Hack_cat.png';
 
 const Navigation: React.FC = () => {
 

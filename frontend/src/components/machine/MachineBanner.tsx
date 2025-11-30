@@ -11,7 +11,7 @@ import { ArrowForwardIos, ArrowBackIos } from '@mui/icons-material';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
-import whiteCat from '../../assets/img/icon/Hack cat.png';
+import whiteCat from '../../assets/img/icon/Hack_cat.png';
 
 
 const MachineBanner: React.FC = () => {

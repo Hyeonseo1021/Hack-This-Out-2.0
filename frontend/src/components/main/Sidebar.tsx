@@ -10,7 +10,7 @@ import { GiCrossedSwords } from "react-icons/gi";
 import { FaShop } from 'react-icons/fa6';
 import styles from '../../assets/scss/section/_sidebar.module.scss';
 import logo from "../../assets/img/icon/HTO nud.png";
-import collapsed_logo from '../../assets/img/icon/Hack cat.png';
+import collapsed_logo from '../../assets/img/icon/Hack_cat.png';
 
 interface SidebarProps {
   isCollapsed: boolean;

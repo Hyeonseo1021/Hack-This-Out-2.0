@@ -10,7 +10,7 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
-import CatIcon from '../../assets/img/icon/Hack cat.png';
+import CatIcon from '../../assets/img/icon/Hack_cat.png';
 
 
 interface Machine {
@@ -212,17 +212,6 @@ const MachineList: React.FC = () => {
                   {/* 🔥 GO 버튼 + +/– 버튼 */}
                   <td className={styles.machine_details}>
                     <div className={styles.detail_buttons_wrapper}>
-                      
-                      {/* 아코디언 토글 */}
-                      <button
-                        className={styles.toggle_button}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleAccordion(machine._id);
-                        }}
-                      >
-                        {openRow === machine._id ? '^' : '⌄'}
-                      </button>
 
                       {/* GO! 버튼 */}
                       <button
@@ -233,6 +222,17 @@ const MachineList: React.FC = () => {
                         }}
                       >
                         GO!
+                      </button>
+
+                      {/* 아코디언 토글 */}
+                      <button
+                        className={styles.toggle_button}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleAccordion(machine._id);
+                        }}
+                      >
+                        {openRow === machine._id ? '▲' : '▼'}
                       </button>
 
                     </div>

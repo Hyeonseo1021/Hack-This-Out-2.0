@@ -8,7 +8,9 @@
   --bg-glass: rgba(8, 20, 28, 0.6);
 }
 
-/* ===== 전체 컨테이너 ===== */
+/* =======================================
+   🔷 배너 전체 컨테이너
+======================================= */
 .machine-banner-container {
   width: 100%;
   max-width: 1200px;
@@ -19,7 +21,6 @@
   position: relative;
   overflow: hidden;
 
-  /* 💠 CRT + Glass 질감 */
   background: radial-gradient(circle at 50% 50%, #06121a 0%, var(--bg-dark) 100%);
   border-radius: clamp(16px, 2vw, 24px);
   box-shadow: 0 0 40px rgba(139, 243, 255, 0.1);
@@ -42,11 +43,15 @@
     height: 100%;
     border-radius: inherit;
     border: 1.5px solid rgba(139, 243, 255, 0.3);
-    overflow: hidden;
+    overflow: visible;
 
+    /* =======================================
+       🔷 슬라이드 하나
+    ======================================== */
     .banner-slide {
-      padding: clamp(20px, 2vw, 36px);
-      height: clamp(250px, 28vh, 400px);
+      padding: clamp(16px, 2vw, 24px);  /* 🔥 내부 여백 축소 → 컨텐츠 압축 */
+      height: clamp(300px, 35vh, 450px); /* 배너 높이는 그대로 유지 */
+
       background: var(--bg-glass);
       backdrop-filter: blur(14px);
       border-radius: inherit;
@@ -55,7 +60,7 @@
       @include flex_center;
       transition: all 0.4s ease-in-out;
 
-      /* 💫 살짝 글리치 흔들림 */
+      /* subtle glitch */
       animation: subtleGlitch 4s infinite ease-in-out;
       @keyframes subtleGlitch {
         0%, 100% { transform: translate(0, 0); filter: brightness(1); }
@@ -63,130 +68,161 @@
         50% { transform: translate(0.5px, -0.5px); filter: brightness(1.2); }
       }
 
+      /* =======================================
+         🔷 내부 컨텐츠
+      ======================================== */
       .banner-contents {
         height: 100%;
+        width: min(90%, 1100px);
+
         display: grid;
         align-items: center;
-        width: min(90%, 1100px);
+
+        /* 🔥 핵심: 4행 → 3행으로 압축 */
         grid-template-columns: minmax(120px, 1fr) minmax(200px, 2fr) minmax(120px, 1fr);
-        grid-template-rows: auto 1fr 1fr auto;
-        gap: clamp(8px, 1vw, 16px);
+        grid-template-rows: auto 1fr auto;
+
+        gap: clamp(6px, 0.6vw, 10px);  /* 🔥 행 간 간격 축소 → 컨텐츠 높이 감소 */
+
         position: relative;
 
         h3 {
           grid-column: 1 / -1;
-          font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+          font-size: clamp(1.4rem, 2.8vw, 2rem);
           text-align: center;
           letter-spacing: 1px;
           color: var(--mint);
           text-shadow: 0 0 8px var(--mint);
+          margin: 0;
         }
 
+        /* 아바타 */
         .machine-avatar {
           justify-self: center;
-          grid-row: 2 / 4;
-          width: clamp(80px, 8vw, 120px);
-          height: clamp(80px, 8vw, 120px);
+          grid-row: 2;
+
+          width: clamp(90px, 9vw, 130px);
+          height: clamp(90px, 9vw, 130px);
+
           border: 1.5px solid var(--mint);
           background-color: rgba(139, 243, 255, 0.08);
           box-shadow: 0 0 20px rgba(139, 243, 255, 0.2);
-          transition: all 0.3s ease-in-out;
-          font-size: 2rem;
-          color: var(--mint);
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          transition: 0.3s;
 
           &:hover {
             box-shadow: 0 0 28px var(--mint);
-            transform: scale(1.05);
+            transform: scale(1.04);
           }
         }
 
-        h4 {
+        /* 중앙 정보 */
+        .machine-info-center {
           grid-column: 2;
-          grid-row: 2 / 4;
-          font-size: clamp(1.6rem, 3vw, 2.2rem);
-          color: var(--white);
-          text-shadow: 0 0 10px rgba(139, 243, 255, 0.3);
-          font-weight: 600;
-          transition: text-shadow 0.3s ease;
+          grid-row: 2;
+
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: clamp(4px, 0.6vw, 10px);
+
+          h4 {
+            margin: 0;
+            font-size: clamp(1.8rem, 3.2vw, 2.3rem);
+            color: var(--white);
+            text-shadow: 0 0 10px rgba(139, 243, 255, 0.3);
+          }
+
+          .machine-category {
+            font-size: clamp(1rem, 1.8vw, 1.3rem);
+            color: rgba(139, 243, 255, 0.8);
+          }
         }
 
+        /* 보상 박스 */
         .machine_reward_box {
           grid-column: 3;
-          grid-row: 2 / 4;
+          grid-row: 2;
           justify-self: center;
+
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
+
+          width: min(85%, 200px);
+          height: clamp(70px, 9vh, 85px);
+
           background: rgba(8, 20, 28, 0.6);
           border: 1.5px solid rgba(139, 243, 255, 0.3);
           border-radius: 8px;
-          width: min(80%, 180px);
-          height: 70px;
-          box-shadow: 0 0 10px rgba(139, 243, 255, 0.1);
+          box-shadow: 0 0 10px rgba(139, 243, 255, 0.15);
 
           .banner-exp {
-            color: var(--white);
-            font-size: 1rem;
-          }
-          .exp {
             color: var(--mint);
-            font-size: 1.2rem;
+            font-size: clamp(1.1rem, 1.7vw, 1.3rem);
+          }
+
+          .exp {
+            font-size: clamp(1.3rem, 2vw, 1.5rem);
+            color: var(--mint);
             font-weight: bold;
             text-shadow: 0 0 6px var(--mint);
           }
         }
 
-        /* ✅ 수정된 부분 시작 */
+        /* ⭐⭐⭐ 아래 요소들을 4행 → 3행으로 재배치 ⭐⭐⭐ */
+
         .rating-box {
           grid-column: 2;
-          grid-row: 3.1; /* 안정적인 위치로 조정 */
+          grid-row: 3;
+
           display: flex;
           align-items: center;
           gap: 8px;
-          color: var(--mint);
-          margin-top: -23px; /* 위로 살짝 이동 */
-          z-index: 2;
-          transition: transform 0.25s ease, margin 0.25s ease;
 
           .rating-text {
-            font-size: 1.2rem;
+            font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+            color: var(--mint);
             text-shadow: 0 0 6px var(--mint);
           }
         }
 
         .go-to-machine-btn {
           grid-column: 3;
-          grid-row: 3.1; /* 같은 라인으로 이동 */
+          grid-row: 3;
+
           justify-self: center;
+
+          margin-top: 0;           /* 🔥 버튼이 밑으로 밀리지 않도록 */
           background: transparent;
           color: var(--mint);
+
           border: 1.5px solid var(--mint);
           border-radius: 6px;
-          font-size: 1rem;
+
           font-family: 'VT323', monospace;
-          letter-spacing: 1px;
-          padding: 10px 24px;
-          cursor: pointer;
-          transition: all 0.25s ease;
-          box-shadow: 0 0 10px rgba(139, 243, 255, 0.15);
-          margin-top: -30px; /* 위로 이동 */
-          z-index: 2;
+          font-size: clamp(1rem, 1.4vw, 1.2rem);
+
+          padding: clamp(8px, 1.4vh, 12px) clamp(20px, 2.8vw, 30px);
+
+          transition: 0.25s ease;
 
           &:hover {
             background: rgba(139, 243, 255, 0.08);
             box-shadow: 0 0 20px var(--mint);
-            transform: translateY(-6px);
+            transform: translateY(-4px);
           }
         }
-        /* ✅ 수정된 부분 끝 */
-      }
-    }
-  }
-}
 
-/* ===== 네온 점멸 효과 ===== */
-@keyframes mintPulse {
-  0%, 100% { box-shadow: 0 0 10px var(--mint); }
-  50% { box-shadow: 0 0 25px var(--mint); }
-}
+      } /* banner-contents 끝 */
+
+    } /* banner-slide 끝 */
+
+  } /* carousel 끝 */
+
+} /* container 끝 */

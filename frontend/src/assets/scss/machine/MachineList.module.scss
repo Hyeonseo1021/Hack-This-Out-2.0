@@ -14,6 +14,7 @@
   border: 1.5px solid rgba(139, 243, 255, 0.3);
   box-shadow: 0 0 25px rgba(139, 243, 255, 0.08);
   padding: clamp(16px, 3vw, 32px);
+  padding-top: clamp(12px, 2vw, 20px);
   color: var(--white);
   font-family: 'VT323', monospace;
   overflow-y: hidden;
@@ -182,15 +183,16 @@
 }
 .detail_buttons_wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   gap: 12px;
+  padding-right: 16px;
 }
 
 .toggle_button {
   width: 40px;
   height: 40px;
-  font-size: 1.4rem;
+  font-size: 0.9rem;
   font-family: 'Orbitron', sans-serif;
   border: 1.5px solid var(--mint);
   background: transparent;
@@ -198,6 +200,9 @@
   border-radius: 8px;
   cursor: pointer;
   transition: 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .go_button {

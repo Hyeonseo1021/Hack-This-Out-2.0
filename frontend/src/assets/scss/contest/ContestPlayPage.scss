@@ -23,6 +23,7 @@
   gap: 28px;
   overflow-y: auto;
   color: var(--white);
+  background: #000000 !important;
 
   /* CRT Scanlines */
   &::before {
