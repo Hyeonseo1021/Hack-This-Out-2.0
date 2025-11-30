@@ -44,30 +44,79 @@
     "editProfile": "Edit Profile",
     "changePassword": "Change Password",
     "logout": "Logout",
-    "stats": {
-      "machinesSolved": "Machines Solved",
-      "contestsParticipated": "Contests Participated",
-      "arenasCompleted": "Arenas Completed",
-      "totalScore": "Total Score",
-      "averageRank": "Average Rank",
-      "winRate": "Win Rate"
-    },
     "passwordCheck": {
-      "title": "Password Verification",
-      "description": "Please enter your password to continue",
+      "title": "Confirm Password",
+      "description": "Please enter your password to see your personal information.",
       "password": "Password",
-      "verify": "Verify",
+      "passwordRequired": "Password is required",
+      "verify": "Confirm",
       "cancel": "Cancel"
     },
     "personalInfo": {
       "title": "Edit Profile",
-      "username": "Username",
+      "name": "Name",
+      "id": "ID",
       "email": "Email",
-      "currentPassword": "Current Password",
+      "exp": "EXP",
+      "htoCoin": "HTO Coin",
+      "uploadFile": "Upload File",
+      "change": "Change",
+      "changeName": "Change Name",
+      "newName": "New Name",
+      "changePassword": "Change Password",
+      "oldPassword": "Old Password",
       "newPassword": "New Password",
-      "confirmPassword": "Confirm New Password",
-      "save": "Save Changes",
-      "cancel": "Cancel"
+      "confirmNewPassword": "Confirm New Password",
+      "errors": {
+        "passwordLength": "Password must be at least 8 characters long",
+        "passwordMismatch": "New passwords do not match",
+        "selectFile": "Please select a file to upload."
+      },
+      "success": {
+        "passwordChanged": "Password changed successfully!",
+        "nameChanged": "Name changed successfully!",
+        "avatarChanged": "Avatar changed successfully!"
+      }
+    }
+  },
+  "mystats": {
+    "title": "{{username}}'s Stats",
+    "level": "LVL.",
+    "nextLevel": "Next Level: {{exp}} EXP",
+    "ranking": "Ranking #{{rank}}",
+    "noData": "No data available.",
+    "history": "History",
+    "tabs": {
+      "machine": "Machine",
+      "contest": "Contest",
+      "arena": "Arena"
+    },
+    "machine": {
+      "name": "Machine Name",
+      "exp": "EXP",
+      "time": "Time",
+      "hintsUsed": "Hints Used",
+      "completed": "Completed",
+      "notCompleted": "Not completed",
+      "noHistory": "No machine history."
+    },
+    "contest": {
+      "name": "Contest Name",
+      "start": "Start",
+      "end": "End",
+      "exp": "EXP",
+      "machines": "Machines",
+      "ongoing": "Ongoing",
+      "noHistory": "No contest history."
+    },
+    "arena": {
+      "name": "Arena Name",
+      "mode": "Mode",
+      "endTime": "End Time",
+      "winner": "Winner",
+      "myRank": "My Rank",
+      "expEarned": "EXP Earned",
+      "noHistory": "No arena history available."
     }
   }
 }

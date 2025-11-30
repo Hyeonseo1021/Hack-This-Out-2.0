@@ -1,24 +1,26 @@
 
 .shop-layout {
   width: 100%;
-  min-height: calc(100vh - 70px);
+  height: 100vh;
   padding: 0;
   display: flex;
   justify-content: center;
   position: relative;
   background: #000;
   font-family: var(--font-display);
+  overflow: hidden;
 }
 
 
 .shop-panel {
   width: 100%;
   max-width: none;
+  height: 100%;
+  padding: 20px;
+  overflow-y: auto;
 
-  /* 🔥 수정된 핵심 부분 */
-  min-height: auto;                 
-  padding: 60px 60px 140px;       
-  overflow: hidden;                
+  display: flex;
+  flex-direction: column;
 
   border-radius: 0;
   background: rgba(0, 0, 0, 0.92);
@@ -27,27 +29,94 @@
 
   position: relative;
   z-index: 3;
+
+  /* 스크롤바 스타일링 */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.3);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(0, 255, 255, 0.5);
+    }
+  }
 }
 
 /* ============================ */
-/* SHOP TITLE */
+/* SHOP TITLE - GLITCH EFFECT */
 /* ============================ */
 
 .shop-title {
   position: relative;
-  color: #e0e0e0;
+  display: block;
+  width: 100%;
+  text-align: center;
+  color: #ffffff;
   font-size: 3.5rem;
   font-weight: 700;
-  text-align: center;
-  margin-top: 20px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.2rem;
   font-family: var(--font-display);
-  animation: text-flicker 4s linear infinite;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.6), 0 0 16px rgba(255, 0, 255, 0.3);
+  animation: shop-title-glitch 5s infinite linear alternate;
+
+  &::before,
+  &::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.5;
+    mix-blend-mode: screen;
+  }
+
+  &::before {
+    color: #ff00c8;
+    transform: translate(-2px, 0);
+    animation: shop-glitch-left 4s infinite linear alternate;
+  }
+
+  &::after {
+    color: #00ffff;
+    transform: translate(2px, 0);
+    animation: shop-glitch-right 4s infinite linear alternate;
+  }
+}
+
+@keyframes shop-title-glitch {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  20% { opacity: 0.95; transform: skewX(0.5deg); }
+  40% { opacity: 1; filter: hue-rotate(5deg); }
+  60% { opacity: 0.92; transform: skewX(-0.3deg); }
+  80% { opacity: 1; transform: none; }
+}
+
+@keyframes shop-glitch-left {
+  0% { transform: translate(-2px, 0); opacity: 0.4; }
+  25% { transform: translate(-1px, -1px); opacity: 0.6; }
+  50% { transform: translate(-3px, 1px); opacity: 0.3; }
+  75% { transform: translate(0, -1px); opacity: 0.5; }
+  100% { transform: translate(-1px, 0); opacity: 0.4; }
+}
+
+@keyframes shop-glitch-right {
+  0% { transform: translate(2px, 0); opacity: 0.4; }
+  25% { transform: translate(1px, 1px); opacity: 0.6; }
+  50% { transform: translate(3px, -1px); opacity: 0.3; }
+  75% { transform: translate(0, 1px); opacity: 0.5; }
+  100% { transform: translate(1px, 0); opacity: 0.4; }
 }
 
 .shop-balance {
   margin-top: 10px;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   font-size: 1.2rem;
   color: #dffaff;
   text-align: center;
@@ -58,45 +127,6 @@
   }
 }
 
-/* ============================ */
-/* 언어 전환 버튼 */
-/* ============================ */
-
-.shop-lang-toggle {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  z-index: 40;
-
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  button {
-    background: transparent;
-    border: none;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    color: #a8f6ff;
-    transition: 0.15s;
-
-    &:hover {
-      color: #00eaff;
-      text-shadow: 0 0 6px #00eaff;
-    }
-
-    &.active {
-      color: #00eaff;
-      text-shadow: 0 0 10px #00eaff;
-    }
-  }
-
-  span {
-    color: #77dfff;
-    font-weight: 600;
-  }
-}
 
 /* ============================ */
 /* 탭 버튼 */
@@ -106,7 +136,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 14px;
+  gap: 20px;
   margin-bottom: 35px;
 
   button {
@@ -145,7 +175,7 @@
 /* 카드 고정 */
 .shop-item-card {
   width: 260px;
-  height: 360px;
+  height: 300px;
   padding: 24px;
 
   background: rgba(0, 0, 0, 0.7);
@@ -181,7 +211,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
 
   h3 {
     margin: 0;
@@ -235,5 +265,223 @@
   &:hover {
     background: rgba(0, 255, 255, 0.18);
     box-shadow: 0 0 14px rgba(0, 255, 255, 0.5);
+  }
+}
+
+/* ============================ */
+/* RESPONSIVE STYLES */
+/* ============================ */
+
+/* 1024px 이하 (태블릿/작은 랩탑) */
+@media (max-width: 1024px) {
+  .shop-panel {
+    padding: 50px 40px 30px;
+  }
+
+  .shop-title {
+    font-size: 2.8rem;
+  }
+
+  .shop-balance {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+  }
+
+  .shop-tabs {
+    gap: 10px;
+    margin-bottom: 28px;
+
+    button {
+      padding: 8px 18px;
+      font-size: 0.95rem;
+    }
+  }
+
+  .shop-grid {
+    gap: 28px;
+  }
+
+  .shop-item-card {
+    width: 240px;
+    height: 280px;
+    padding: 20px;
+  }
+
+  .shop-item-card__icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .shop-item-card__header h3 {
+    font-size: 0.95rem;
+  }
+
+  .shop-item-card__header span {
+    font-size: 0.9rem;
+  }
+
+  .shop-item-card__desc {
+    font-size: 0.9rem;
+  }
+}
+
+/* 768px 이하 (태블릿) */
+@media (max-width: 768px) {
+  .shop-layout {
+    height: calc(100vh - 60px);
+  }
+
+  .shop-panel {
+    padding: 40px 24px 24px;
+  }
+
+  .shop-title {
+    font-size: 2.2rem;
+    margin-top: 10px;
+  }
+
+  .shop-balance {
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+
+  .shop-lang-toggle {
+    top: 15px;
+    right: 20px;
+
+    button {
+      font-size: 0.9rem;
+    }
+  }
+
+  .shop-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+
+    button {
+      padding: 8px 14px;
+      font-size: 0.9rem;
+    }
+  }
+
+  .shop-grid {
+    gap: 20px;
+  }
+
+  .shop-item-card {
+    width: 220px;
+    height: 280px;
+    padding: 18px;
+  }
+
+  .shop-item-card__icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .shop-item-card__header {
+    min-height: 42px;
+
+    h3 {
+      font-size: 0.9rem;
+    }
+
+    span {
+      font-size: 0.85rem;
+    }
+  }
+
+  .shop-item-card__desc {
+    font-size: 0.85rem;
+  }
+
+  .shop-item-card__btn {
+    padding: 8px 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* 480px 이하 (모바일) */
+@media (max-width: 480px) {
+  .shop-layout {
+    height: calc(100vh - 56px);
+  }
+
+  .shop-panel {
+    padding: 24px 16px 20px;
+  }
+
+  .shop-title {
+    font-size: 1.8rem;
+    margin-top: 5px;
+  }
+
+  .shop-balance {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .shop-lang-toggle {
+    top: 10px;
+    right: 12px;
+
+    button {
+      font-size: 0.8rem;
+    }
+
+    span {
+      font-size: 0.8rem;
+    }
+  }
+
+  .shop-tabs {
+    gap: 6px;
+    margin-bottom: 20px;
+
+    button {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+    }
+  }
+
+  .shop-grid {
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .shop-item-card {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    min-height: 240px;
+    padding: 16px;
+  }
+
+  .shop-item-card__icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .shop-item-card__header {
+    min-height: 36px;
+
+    h3 {
+      font-size: 0.85rem;
+    }
+
+    span {
+      font-size: 0.8rem;
+    }
+  }
+
+  .shop-item-card__desc {
+    font-size: 0.8rem;
+  }
+
+  .shop-item-card__btn {
+    padding: 8px 0;
+    font-size: 0.85rem;
   }
 }

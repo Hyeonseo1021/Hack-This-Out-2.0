@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../utils/dateUtils';
 import { ContestDetail as ContestDetailType } from '../../types/Contest';
 import styles from '../../assets/scss/contest/ContestDetail.module.scss';
@@ -10,6 +11,7 @@ interface ContestDetailProps {
 }
 
 const ContestDetail: React.FC<ContestDetailProps> = ({ contestDetail }) => {
+  const { t } = useTranslation('contest');
   const { name, contestExp, machines, description, startTime, endTime } = contestDetail;
 
   const avatarColorIndex = getAvatarColorIndex(name);
@@ -43,14 +45,14 @@ const ContestDetail: React.FC<ContestDetailProps> = ({ contestDetail }) => {
         </p>
 
         <p className={styles.time}>
-          <strong>Starts at: </strong> {formatDate(startTime)}
+          <strong>{t('details.startTime')}: </strong> {formatDate(startTime)}
         </p>
         <p className={styles.time}>
-          <strong>Ends at: </strong> {formatDate(endTime)}
+          <strong>{t('details.endTime')}: </strong> {formatDate(endTime)}
         </p>
 
         <p className={styles.reward}>
-          <strong>Reward:</strong> {contestExp} EXP
+          <strong>{t('reward')}:</strong> {contestExp} EXP
         </p>
       </div>
     </div>

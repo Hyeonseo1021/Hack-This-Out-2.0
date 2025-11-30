@@ -1,448 +1,373 @@
+/* frontend/src/assets/scss/machine/AddMachineForm.scss */
+
 @use "../style" as *;
 
-/* ===============================================
-   🔵 ADD MACHINE FORM (HTO CYBER / GLASS THEME)
-================================================= */
 .add-machine-form {
-    @include background_set;
-    
-        padding: 0;
-        padding-top: 20px;
-        box-sizing: border-box;
-    margin-top: -30px !important;
-    .add-machine-form {
-    min-height: 100vh !important;
-    height: auto !important;
-}
-
-
-
-    width: 100% !important;
-    margin-left: 0 !important;
-
-
-    position: relative;
-    backdrop-filter: blur(35px);
-
+    height: 100vh;
+    width: 100%;
+    font-family: var(--font-display);
+    background: #000000;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-
-    overflow: scroll;
-
-    position: relative;
-    backdrop-filter: blur(35px);
-
-    display: flex;
-    flex-direction: column;
-    padding: 0 !important;
-
-    overflow: scroll;
-    scrollbar-width: none;
-
-    background: rgba(10, 20, 30, 0.55);
-    border-radius: 20px;
-    border: 1px solid rgba(137, 234, 255, 0.12);
-
-    box-shadow:
-        0 0 20px rgba(137, 234, 255, 0.06),
-        inset 0 0 15px rgba(137, 234, 255, 0.05);
+    padding: 0 32px 32px 32px;
+    overflow-y: auto;
 
     * {
         &::-webkit-scrollbar {
             display: none;
         }
         scrollbar-width: none;
-        -ms-overflow-style: none;
     }
-
-    /* ===============================================
-       🔹 BACK BUTTON BAR (네온 헤더)
-    ================================================== */
     .back-button {
         position: sticky;
         top: 0;
-        z-index: 100;
-
-        background: rgba(15, 28, 40, 0.85);
-        backdrop-filter: blur(12px);
-
-        padding: 18px 0px;
-        width: 100%;
-
-        border-bottom: 1px solid rgba(137, 234, 255, 0.15);
-
-        box-shadow:
-            0 4px 10px rgba(137, 234, 255, 0.08),
-            inset 0 0 8px rgba(137, 234, 255, 0.04);
-
+        z-index: 50;
+        padding: 20px 0;
         display: flex;
         align-items: center;
-        gap: 24px;
+        gap: 20px;
 
-        &::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: rgba(15, 28, 40, 0.85);
-            z-index: -1;
-        }
+        background: rgba(0, 0, 0, 0.85);
+        border-bottom: 1px solid rgba(139, 243, 255, 0.22);
+        backdrop-filter: blur(12px);
 
         h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: #8feaff;
-            font-size: 2rem;
-            font-weight: 600;
-
-            margin-top: 50;
-            margin-bottom: 0;
-            padding-left: 0;
-            margin-left: 16px;
-
-            text-shadow:
-                0 0 6px rgba(143, 234, 255, 0.9),
-                0 0 14px rgba(143, 234, 255, 0.4);
+            font-size: 2.1rem;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 12px rgba(139, 243, 255, 0.75);
         }
 
         .IconButton {
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 255, 255, 0.08);
-
-            border-radius: 8px;
+            width: 52px;
+            height: 52px;
+            color: white;
+            border-radius: 12px;
+            background: rgba(10, 30, 45, 0.7);
+            border: 1.4px solid rgba(139, 243, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.25s ease;
             cursor: pointer;
 
-            border: 1px solid rgba(137, 234, 255, 0.3);
-
-            transition: 0.25s ease;
-
             &:hover {
-                background: rgba(0, 255, 255, 0.2);
-                transform: translateX(-4px);
-                box-shadow: 0 0 10px rgba(137, 234, 255, 0.5);
+                transform: translateX(-4px) scale(1.06);
+                box-shadow: 0 0 14px rgba(139, 243, 255, 0.55);
             }
         }
     }
 
-    /* ===============================================
-       🔹 FORM LABELS
-    ================================================== */
-    label {
-        font-weight: 600;
-        color: #c9f6ff;
-        text-shadow: 0 0 3px rgba(137, 234, 255, 0.4);
+    /* ------------------------------- */
+    /* ⚠️ Error Message */
+    /* ------------------------------- */
+    .error-message {
+        background: rgba(255, 100, 100, 0.15);
+        border: 1px solid rgba(255, 100, 100, 0.4);
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin: 16px 0;
+        color: #ff8080;
+        font-size: 0.95rem;
     }
 
-    /* ===============================================
-       🔹 INPUT / TEXTAREA / SELECT (Glass Inputs)
-    ================================================== */
-    input,
-    select,
-    textarea {
-        background: rgba(20, 35, 55, 0.45);
-        color: #e7faff;
-
-        border: 1px solid rgba(137, 234, 255, 0.25);
-        border-radius: 10px;
-
-        padding: 0.6rem;
-
-        box-shadow: inset 0 0 6px rgba(137, 234, 255, 0.04);
-
-        transition: all 0.25s ease;
-
-        &:focus {
-            border-color: #8feaff;
-            box-shadow:
-                0 0 10px rgba(137, 234, 255, 0.5),
-                inset 0 0 6px rgba(137, 234, 255, 0.2);
-            outline: none;
-        }
-    }
-
-    /* ===============================================
-       🔹 CREATE CONTAINER (2 COLUMN GRID)
-    ================================================== */
+    /* ------------------------------- */
+    /* 📦 Main Form Layout */
+    /* ------------------------------- */
     .create-container {
-        max-width: 100% !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-
-        padding: 0;
-        margin-left: 0px;
-
+        padding: 24px 0;
+        flex: 1;
         display: grid;
-        grid-template-columns: 1.2fr 0.8fr !important;
-        column-gap: 0px;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px 32px;
+        position: relative;
 
-        align-items: start;
+        /* Common Label Styles */
+        label {
+            color: #cfeaff;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+        }
 
-        /* INPUT FIELD GROUP */
-        > div:not(.difficulty-survey-section) {
-            grid-column: 1;
+        /* Common Input Styles */
+        input,
+        select,
+        textarea {
+            padding: 0.85rem 1rem;
+            font-size: 1rem;
+            width: 100%;
+            border-radius: 12px;
+            background: rgba(15, 25, 35, 0.9);
+            border: 1.4px solid rgba(139, 243, 255, 0.25);
+            color: #eaffff;
+            outline: none;
+            transition: 0.2s ease;
+            box-sizing: border-box;
+
+            &:focus {
+                border-color: rgba(139, 243, 255, 0.8);
+                box-shadow: 0 0 12px rgba(139, 243, 255, 0.6);
+            }
+
+            &::placeholder {
+                color: rgba(200, 230, 255, 0.4);
+            }
+        }
+
+        textarea {
+            resize: none;
+            min-height: 120px;
+        }
+
+        /* ------------------------------- */
+        /* 📋 Input Field Containers */
+        /* ------------------------------- */
+        .name-container,
+        .category-container,
+        .amiId-container,
+        .flag-container,
+        .exp-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 8px;
+        }
 
-            label {
-                font-size: 0.95rem;
-            }
-
-            textarea {
-                min-height: 80px;
-            }
+        .Description-container {
+            grid-column: 1 / 2;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .exp-container input {
-            width: 140px;
+            width: 180px;
         }
 
-        /* RIGHT PANEL */
+        /* ------------------------------- */
+        /* 🎯 Difficulty Survey Section */
+        /* ------------------------------- */
         .difficulty-survey-section {
-            font-family: 'Orbitron', sans-serif;
-            color: #8feaff;
             grid-column: 2;
-            grid-row: 1 / span 20;
+            grid-row: 1 / span 6;
 
             padding: 28px;
-
-            background: rgba(12, 24, 38, 0.5);
+            background: rgba(10, 20, 30, 0.7);
             border-radius: 16px;
-            border: 1px solid rgba(137, 234, 255, 0.18);
+            border: 1px solid rgba(139, 243, 255, 0.2);
 
-            box-shadow:
-                0 0 20px rgba(137, 234, 255, 0.08),
-                inset 0 0 10px rgba(137, 234, 255, 0.05);
-
-        
-
-            transition: all 0.3s ease;
-
-            &:hover {
-                background: rgba(15, 30, 50, 0.55);
-                box-shadow:
-                    0 0 25px rgba(137, 234, 255, 0.15),
-                    inset 0 0 14px rgba(137, 234, 255, 0.08);
-            }
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
 
             h3 {
-                margin: 0 0 20px 0;
+                margin: 0 0 12px 0;
+                font-size: 1.5rem;
                 color: #8feaff;
-                font-family: 'Orbitron', sans-serif;
-                font-size: 1.4rem;
-
-                border-bottom: 2px solid rgba(137, 234, 255, 0.4);
+                font-weight: 700;
+                border-bottom: 2px solid rgba(139, 243, 255, 0.3);
                 padding-bottom: 12px;
-
-                text-shadow:
-                    0 0 6px rgba(143, 234, 255, 0.6),
-                    0 0 14px rgba(143, 234, 255, 0.3);
+                text-shadow: 0 0 10px rgba(139, 243, 255, 0.5);
             }
 
-            > div {
-                margin-bottom: 20px;
+            .difficulty-container,
+            .estimated-time-container,
+            .technical-complexity-container,
+            .required-skills-container {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
 
                 label {
+                    font-size: 0.95rem;
                     color: #d6f8ff;
-                }
-
-                select,
-                input[type="number"] {
-                    background: rgba(20, 35, 55, 0.45);
-                    border: 1px solid rgba(137, 234, 255, 0.25);
-
-                    &:hover {
-                        border-color: rgba(143, 234, 255, 0.4);
-                    }
                 }
             }
 
-            /* CHECKBOX GROUP */
+            /* Skills Checkbox Group */
             .skills-checkbox-group {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 10px;
-                margin-top: 8px;
+                margin-top: 4px;
 
                 label {
-                    background: rgba(255, 255, 255, 0.04);
-                    border: 2px solid rgba(137, 234, 255, 0.15);
-                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 14px;
+                    background: rgba(20, 35, 50, 0.6);
+                    border: 1.5px solid rgba(139, 243, 255, 0.2);
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: 0.2s ease;
+                    font-size: 0.9rem;
 
                     &:hover {
-                        background: rgba(143, 234, 255, 0.15);
-                        border-color: rgba(143, 234, 255, 0.6);
+                        background: rgba(139, 243, 255, 0.1);
+                        border-color: rgba(139, 243, 255, 0.5);
                     }
 
+                    &.skill-selected,
                     &:has(input:checked) {
-                        background: rgba(143, 234, 255, 0.2);
-                        border-color: rgba(143, 234, 255, 0.7);
-                        box-shadow: 0 0 10px rgba(143, 234, 255, 0.4);
+                        background: rgba(139, 243, 255, 0.15);
+                        border-color: rgba(139, 243, 255, 0.6);
+                        box-shadow: 0 0 10px rgba(139, 243, 255, 0.3);
                     }
 
                     input[type="checkbox"] {
-                        border-color: rgba(143, 234, 255, 0.4);
-                        background: rgba(20, 35, 55, 0.45);
+                        width: 18px;
+                        height: 18px;
+                        accent-color: #8feaff;
+                    }
 
-                        &:checked {
-                            background-color: rgba(143, 234, 255, 0.9);
-                            border-color: rgba(143, 234, 255, 1);
-                        }
+                    span {
+                        color: #e0f4ff;
                     }
                 }
             }
-            .difficulty-container,
-.estimated-time-container,
-.technical-complexity-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-}
-
         }
-    
 
-        /* ===============================================
-           🔹 Hints Group
-        ================================================== */
+        /* ------------------------------- */
+        /* 💡 Hints Section */
+        /* ------------------------------- */
         .hint-container {
+            grid-column: 1 / 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
             .key-container {
                 display: flex;
-                gap: 8px;
-                margin-bottom: 8px;
+                align-items: center;
+                gap: 12px;
 
-                input[type="text"],
+                input[type="text"] {
+                    flex: 2;
+                }
+
                 input[type="number"] {
-                    background: rgba(24, 40, 60, 0.45);
-                    border: 1px solid rgba(137, 234, 255, 0.25);
+                    width: 100px;
+                    flex: 0 0 100px;
                 }
 
                 .remove-hint {
-                    background: #c9302c;
-                    border-radius: 6px;
+                    padding: 0.7rem 1rem;
+                    background: rgba(255, 80, 80, 0.7);
+                    border: none;
+                    border-radius: 10px;
+                    color: #fff;
+                    cursor: pointer;
+                    font-family: var(--font-display);
+                    transition: 0.2s ease;
 
                     &:hover {
-                        background: #a02622;
+                        background: rgba(255, 100, 100, 0.9);
+                        transform: translateY(-2px);
+                        box-shadow: 0 0 10px rgba(255, 80, 80, 0.6);
                     }
                 }
             }
 
-            /* ✅ Add Hint 버튼 — 네온 글라스 테마 적용 */
             .add-hint {
-                margin-top: 8px;
-                padding: 0.55rem 1.3rem;
-
-                background: rgba(0, 255, 255, 0.12);
-                border: 1px solid rgba(137, 234, 255, 0.35);
-                border-radius: 10px;
-
-                color: #c9f6ff;
-                font-weight: 600;
-                font-family: 'Orbitron', sans-serif;
-
+                align-self: flex-start;
+                padding: 0.7rem 1.4rem;
+                background: rgba(10, 30, 45, 0.7);
+                border: 1.4px solid rgba(139, 243, 255, 0.4);
+                border-radius: 12px;
+                color: #eaffff;
                 cursor: pointer;
-                transition: all 0.25s ease;
-
-                box-shadow:
-                    0 0 10px rgba(137, 234, 255, 0.15),
-                    inset 0 0 8px rgba(137, 234, 255, 0.08);
-
-                &:hover {
-                    background: rgba(0, 255, 255, 0.22);
-                    border-color: rgba(137, 234, 255, 0.6);
-
-                    box-shadow:
-                        0 0 18px rgba(137, 234, 255, 0.55),
-                        inset 0 0 12px rgba(137, 234, 255, 0.12);
-
-                    transform: translateY(-2px);
-                }
-            }
-        }
-
-        /* ===============================================
-           🔹 Submit Button (네온)
-        ================================================== */
-        .add-machine-form-button {
-            position: fixed;
-            bottom: -125px;
-            right: 65px !important;
-
-            margin-top: 30px;
-
-            button[type="submit"] {
-                padding: 0.75rem 1.5rem;
-
-                background: linear-gradient(
-                    90deg,
-                    #8feaff,
-                    #71d9ff
-                );
-
-                color: #0c1a25;
-                font-weight: bold;
-                border-radius: 10px;
-
-                box-shadow:
-                    0 0 14px rgba(143, 234, 255, 0.6),
-                    0 0 24px rgba(143, 234, 255, 0.35);
-
-                transition: all 0.25s ease;
+                font-family: var(--font-display);
+                transition: 0.25s ease;
 
                 &:hover {
                     transform: translateY(-3px);
-                    box-shadow:
-                        0 0 20px rgba(143, 234, 255, 0.85),
-                        0 0 30px rgba(143, 234, 255, 0.45);
+                    box-shadow: 0 0 14px rgba(139, 243, 255, 0.6);
+                    background: rgba(139, 243, 255, 0.1);
+                }
+            }
+
+            /* Hide the redundant back button in hints */
+            > .IconButton {
+                display: none;
+            }
+        }
+
+        /* ------------------------------- */
+        /* ✅ Submit Button */
+        /* ------------------------------- */
+        .add-machine-form-button {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-bottom: 40px;
+
+            button[type="submit"] {
+                padding: 1rem 2.5rem;
+                font-size: 1.15rem;
+                border-radius: 14px;
+                background: linear-gradient(135deg, rgba(139, 243, 255, 0.2), rgba(100, 200, 255, 0.15));
+                border: 1.6px solid rgba(139, 243, 255, 0.5);
+                color: #eaffff;
+                cursor: pointer;
+                font-family: var(--font-display);
+                font-weight: 600;
+                transition: 0.25s ease;
+
+                &:hover {
+                    transform: translateY(-3px) scale(1.02);
+                    box-shadow: 0 0 20px rgba(139, 243, 255, 0.7);
+                    background: linear-gradient(135deg, rgba(139, 243, 255, 0.3), rgba(100, 200, 255, 0.25));
                 }
             }
         }
     }
 
-    /* ===============================================
-       🔸 ERROR STATE
-    ================================================== */
+    /* ------------------------------- */
+    /* ❌ Error States */
+    /* ------------------------------- */
     .field-error {
-        color: #ff6b6b;
-        font-size: 0.8rem;
+        color: #ff6f6f;
+        font-size: 0.85rem;
         margin-top: 4px;
+        display: block;
     }
 
     .error-input {
-        border-color: #ff6b6b !important;
-    }
-
-    .error-message {
-        background: rgba(255, 107, 107, 0.1);
-        border-radius: 8px;
-        border: 1px solid rgba(255, 107, 107, 0.3);
-        padding: 12px;
-        margin-bottom: 16px;
-    }
-    /* ===============================================
-   🔹 Standalone Back Button Style (outside .back-button)
-================================================= */
-.IconButton {
-    width: 40px;
-    height: 40px;
-    background: rgba(0, 255, 255, 0.08);
-    border-radius: 8px;
-    cursor: pointer;
-
-    border: 1px solid rgba(137, 234, 255, 0.3);
-    transition: 0.25s ease;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &:hover {
-        background: rgba(0, 255, 255, 0.2);
-        transform: translateX(-4px);
-        box-shadow: 0 0 10px rgba(137, 234, 255, 0.5);
+        border-color: #ff6f6f !important;
+        box-shadow: 0 0 8px rgba(255, 100, 100, 0.4) !important;
     }
 }
 
+/* ------------------------------- */
+/* 📱 Responsive */
+/* ------------------------------- */
+@media (max-width: 900px) {
+    .add-machine-form {
+        padding: 0 20px 20px 20px;
+
+        .create-container {
+            grid-template-columns: 1fr;
+            gap: 20px;
+
+            .difficulty-survey-section {
+                grid-column: 1;
+                grid-row: auto;
+                order: -1;
+            }
+
+            .Description-container,
+            .hint-container {
+                grid-column: 1;
+            }
+
+            .add-machine-form-button {
+                grid-column: 1;
+                justify-content: center;
+            }
+        }
+    }
 }

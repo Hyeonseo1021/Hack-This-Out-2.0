@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getUserProgress } from "../../api/axiosUser";
 import { getContestParticipations } from "../../api/axiosContest";
 import { getArenaHistory } from "../../api/axiosArena"; // ✅ 새로 추가
@@ -11,6 +12,7 @@ import { avatarBackgroundColors, getAvatarColorIndex } from "../../utils/avatars
 import '../../assets/scss/mypage/Progress.scss';
 
 const Progress = () => {
+  const { t } = useTranslation('user');
   const [userProgress, setUserProgress] = useState<UserProgressItem[]>([]);
   const [contestParticipation, setContestParticipation] = useState<ContestParticipationItem[]>([]);
   const [arenaHistory, setArenaHistory] = useState<ArenaHistoryItem[]>([]); // ✅ 추가
@@ -45,16 +47,16 @@ const Progress = () => {
 
   return (
     <div className="progress-container">
-      <h2>History</h2>
+      <h2>{t('mystats.history')}</h2>
       <div className="tabs">
         <button className={`tab-button ${activeTab === "machine" ? "active" : ""}`} onClick={() => setActiveTab("machine")}>
-          Machine
+          {t('mystats.tabs.machine')}
         </button>
         <button className={`tab-button ${activeTab === "contest" ? "active" : ""}`} onClick={() => setActiveTab("contest")}>
-          Contest
+          {t('mystats.tabs.contest')}
         </button>
         <button className={`tab-button ${activeTab === "arena" ? "active" : ""}`} onClick={() => setActiveTab("arena")}>
-          Arena
+          {t('mystats.tabs.arena')}
         </button>
       </div>
 
@@ -65,12 +67,12 @@ const Progress = () => {
             <table className="arena-table">
               <thead>
                 <tr className="head-detail">
-                  <th className="head-name">Arena Name</th>
-                  <th className="head-category">Mode</th>
-                  <th className="head-time">End Time</th>
-                  <th className="head-winner">Winner</th>
-                  <th className="head-rank">My Rank</th>
-                  <th className="head-exp">EXP Earned</th>
+                  <th className="head-name">{t('mystats.arena.name')}</th>
+                  <th className="head-category">{t('mystats.arena.mode')}</th>
+                  <th className="head-time">{t('mystats.arena.endTime')}</th>
+                  <th className="head-winner">{t('mystats.arena.winner')}</th>
+                  <th className="head-rank">{t('mystats.arena.myRank')}</th>
+                  <th className="head-exp">{t('mystats.arena.expEarned')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,7 +100,7 @@ const Progress = () => {
             </table>
           </div>
         ) : (
-          <p>No arena history available.</p>
+          <p>{t('mystats.arena.noHistory')}</p>
         )
       ) : activeTab === "machine" ? (
         // 기존 Machine 탭 유지
@@ -107,11 +109,11 @@ const Progress = () => {
             <table className="progress-table">
               <thead>
                 <tr className="head-detail">
-                  <th>Machine Name</th>
-                  <th>EXP</th>
-                  <th>Time</th>
-                  <th>Hints Used</th>
-                  <th>Completed</th>
+                  <th>{t('mystats.machine.name')}</th>
+                  <th>{t('mystats.machine.exp')}</th>
+                  <th>{t('mystats.machine.time')}</th>
+                  <th>{t('mystats.machine.hintsUsed')}</th>
+                  <th>{t('mystats.machine.completed')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,14 +123,14 @@ const Progress = () => {
                     <td>{p.expEarned} EXP</td>
                     <td>{formatTimeSpent(new Date(p.timeSpent))}</td>
                     <td>{p.hintsUsed}</td>
-                    <td>{p.completedAt ? formatDate(p.completedAt) : "Not completed"}</td>
+                    <td>{p.completedAt ? formatDate(p.completedAt) : t('mystats.machine.notCompleted')}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p>No machine history.</p>
+          <p>{t('mystats.machine.noHistory')}</p>
         )
       ) : (
         // Contest 탭
@@ -137,11 +139,11 @@ const Progress = () => {
             <table className="contest-table">
               <thead>
                 <tr>
-                  <th>Contest Name</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>EXP</th>
-                  <th>Machines</th>
+                  <th>{t('mystats.contest.name')}</th>
+                  <th>{t('mystats.contest.start')}</th>
+                  <th>{t('mystats.contest.end')}</th>
+                  <th>{t('mystats.contest.exp')}</th>
+                  <th>{t('mystats.contest.machines')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -149,7 +151,7 @@ const Progress = () => {
                   <tr key={c._id}>
                     <td>{c.contest.name}</td>
                     <td>{formatDate(c.participationStartTime)}</td>
-                    <td>{c.participationEndTime ? formatDate(c.participationEndTime) : "Ongoing"}</td>
+                    <td>{c.participationEndTime ? formatDate(c.participationEndTime) : t('mystats.contest.ongoing')}</td>
                     <td>{c.expEarned} EXP</td>
                     <td>{c.machineCompleted.length}</td>
                   </tr>
@@ -158,7 +160,7 @@ const Progress = () => {
             </table>
           </div>
         ) : (
-          <p>No contest history.</p>
+          <p>{t('mystats.contest.noHistory')}</p>
         )
       )}
     </div>

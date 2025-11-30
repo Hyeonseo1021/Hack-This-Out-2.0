@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import MachineDetail from '../../components/machine/MachineDetail';
 import Main from '../../components/main/Main';
@@ -11,10 +12,11 @@ import MachineReviewForm from '../../components/machine/MachineReviewForm';
 
 /**
  * Component representing the Machine Detail Page.
- * 
+ *
  * @returns {JSX.Element} The rendered MachineDetailPage component.
  */
 const MachineDetailPage: React.FC = () => {
+  const { t } = useTranslation('machine');
   const { machineId } = useParams<{ machineId: string }>();
   // const navigate = useNavigate();
 
@@ -28,7 +30,7 @@ const MachineDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchMachineDetail = async () => {
       if (!machineId) {
-        setError('Machine ID is missing.');
+        setError(t('details.missingId'));
         setIsLoading(false);
         return;
       }
@@ -38,14 +40,14 @@ const MachineDetailPage: React.FC = () => {
         setMachineDetail(response.machine);
       } catch (error: any) {
         console.error('Error fetching machine details:', error.message || error);
-        setError('Failed to fetch machine details.');
+        setError(t('details.failedToLoad'));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchMachineDetail();
-  }, [machineId]);
+  }, [machineId, t]);
 
   // handlePlay is reserved for future use
   // const handlePlay = async () => {
@@ -75,16 +77,16 @@ const MachineDetailPage: React.FC = () => {
 
   if (error || !machineDetail) {
     return (
-      <Main title="Machine Detail" description="Failed to load machine details.">
+      <Main title="Machine Detail" description={t('details.failedToLoad')}>
         <div className="machine-detail-page error">
-          <p className="error-message">{error || 'Machine not found.'}</p>
+          <p className="error-message">{error || t('details.machineNotFound')}</p>
         </div>
       </Main>
     );
   }
 
   return (
-    <Main title="Machine Detail" description="Machine Detail 화면입니다.">
+    <Main title="Machine Detail" description="Machine Detail">
       <div className='machine-detail-container-page'>
         <div className="machine-detail-page">
           <div className="detail">
@@ -94,9 +96,9 @@ const MachineDetailPage: React.FC = () => {
         <div className='machine-detail-page-review'>
           <div className='machine-review'>
             <div className='machine-detail-page-new-review'>
-              <h3>Reviews</h3>
+              <h3>{t('review.title')}</h3>
               <button onClick={handleRegisterReview} className='machine-detail-page-new-review-button'>
-                Add New Review
+                {t('details.addNewReview')}
               </button>
             </div>
             <MachineReviewList machineId={machineId || ''} />

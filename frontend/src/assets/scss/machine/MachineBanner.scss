@@ -12,7 +12,7 @@
 ======================================= */
 .machine-banner-container {
   width: 100%;
-  max-width: 1200px;
+  max-width: auto;
   height: 100%;
   font-family: var(--font-cyber);
   color: var(--white);
@@ -48,8 +48,8 @@
        🔷 슬라이드 하나
     ======================================== */
     .banner-slide {
-      padding: clamp(16px, 2vw, 24px);  /* 🔥 내부 여백 축소 → 컨텐츠 압축 */
-      height: clamp(300px, 35vh, 450px); /* 배너 높이는 그대로 유지 */
+      padding: clamp(16px, 2vw, 24px);
+      height: clamp(300px, 35vh, 450px);
 
       background: var(--bg-glass);
       backdrop-filter: blur(14px);
@@ -77,11 +77,10 @@
         display: grid;
         align-items: center;
 
-        /* 🔥 핵심: 4행 → 3행으로 압축 */
         grid-template-columns: minmax(120px, 1fr) minmax(200px, 2fr) minmax(120px, 1fr);
         grid-template-rows: auto 1fr auto;
 
-        gap: clamp(6px, 0.6vw, 10px);  /* 🔥 행 간 간격 축소 → 컨텐츠 높이 감소 */
+        gap: clamp(6px, 0.6vw, 10px);
 
         position: relative;
 
@@ -174,8 +173,6 @@
           }
         }
 
-        /* ⭐⭐⭐ 아래 요소들을 4행 → 3행으로 재배치 ⭐⭐⭐ */
-
         .rating-box {
           grid-column: 2;
           grid-row: 3;
@@ -197,7 +194,7 @@
 
           justify-self: center;
 
-          margin-top: 0;           /* 🔥 버튼이 밑으로 밀리지 않도록 */
+          margin-top: 0;
           background: transparent;
           color: var(--mint);
 

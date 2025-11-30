@@ -12,18 +12,18 @@
    PAGE ROOT (CRT + NOISE)
    ============================================ */
 .contest-play-container {
-  @include background_set;
   @include scrollbar-none;
 
   position: relative;
-  height: 100%;
+  width: 100%;
+  min-height: 100vh;
   padding: 32px;
   display: flex;
   flex-direction: column;
   gap: 28px;
   overflow-y: auto;
   color: var(--white);
-  background: #000000 !important;
+  background: #000000;
 
   /* CRT Scanlines */
   &::before {

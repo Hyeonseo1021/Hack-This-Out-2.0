@@ -4,194 +4,206 @@
   --mint: #8BF3FF;
   --white: #EFFFFF;
   --bg-dark: #02070d;
-  --glass-bg: rgba(6, 15, 25, 0.55);
+  --bg-glass: rgba(8, 20, 28, 0.6);
 }
 
-/* ===========================================================
-   전체 컨테이너 (네온 + 글라스 + CRT)
-=========================================================== */
+/* =======================================
+   🔷 배너 전체 컨테이너
+======================================= */
 .contest-banner-container {
   width: 100%;
-  max-width: 1200px;
-  position: relative;
+  max-width: auto;
+  height: 100%;
   font-family: var(--font-cyber);
   color: var(--white);
-  font-weight: 600;
-
-  background: var(--color-layout);
-  border-radius: clamp(16px, 2vw, 24px);
-  border: 1px solid var(--blue-200);
-  box-shadow: none;
+  font-weight: 500;
+  position: relative;
   overflow: hidden;
-  backdrop-filter: none;
 
-  /* CRT 스캔 라인 */
+  background: radial-gradient(circle at 50% 50%, #06121a 0%, var(--bg-dark) 100%);
+  border-radius: clamp(16px, 2vw, 24px);
+  box-shadow: 0 0 40px rgba(139, 243, 255, 0.1);
+
   &::before {
     content: "";
     position: absolute;
     inset: 0;
     background: repeating-linear-gradient(
       0deg,
-      rgba(255,255,255,0.03) 0px,
-      rgba(255,255,255,0.015) 1px,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
       transparent 2px
     );
     opacity: 0.15;
     pointer-events: none;
   }
-}
 
-/* ===========================================================
-   Carousel Wrapper
-=========================================================== */
-.carousel {
-  height: 100%;
-  border-radius: inherit;
-
-  .banner-slide {
-    padding: clamp(20px, 2vw, 36px);
-    height: clamp(260px, 28vh, 420px);
-    background: transparent;
+  .carousel {
+    height: 100%;
     border-radius: inherit;
-    backdrop-filter: blur(16px);
-    position: relative;
-    overflow: hidden;
+    border: 1.5px solid rgba(139, 243, 255, 0.3);
+    overflow: visible;
 
-    /* subtle 글리치 */
-    animation: subtleGlitch 4s infinite ease-in-out;
-  }
+    /* =======================================
+       🔷 슬라이드 하나
+    ======================================== */
+    .banner-slide {
+      padding: clamp(16px, 2vw, 24px);
+      height: clamp(300px, 35vh, 450px);
 
-  @keyframes subtleGlitch {
-    0%, 100% { transform: translate(0, 0); filter: brightness(1); }
-    45% { transform: translate(-0.6px, 0.4px); filter: brightness(1.08); }
-    50% { transform: translate(0.6px, -0.4px); filter: brightness(1.15); }
-  }
-}
+      background: var(--bg-glass);
+      backdrop-filter: blur(14px);
+      border-radius: inherit;
+      position: relative;
+      overflow: hidden;
+      @include flex_center;
+      transition: all 0.4s ease-in-out;
 
-/* ===========================================================
-   메인 콘텐츠
-=========================================================== */
-.banner-contents {
-  height: 100%;
-  display: grid;
-  align-items: center;
-  width: min(90%, 1100px);
+      /* subtle glitch */
+      animation: subtleGlitch 4s infinite ease-in-out;
+      @keyframes subtleGlitch {
+        0%, 100% { transform: translate(0, 0); filter: brightness(1); }
+        45% { transform: translate(-0.5px, 0.5px); filter: brightness(1.1); }
+        50% { transform: translate(0.5px, -0.5px); filter: brightness(1.2); }
+      }
 
-  grid-template-columns:
-    minmax(120px, 1fr)
-    minmax(200px, 2fr)
-    minmax(120px, 1fr);
+      /* =======================================
+         🔷 내부 컨텐츠
+      ======================================== */
+      .banner-contents {
+        height: 100%;
+        width: min(90%, 1100px);
 
-  grid-template-rows: auto 1fr 1fr auto;
-  gap: clamp(8px, 1vw, 16px);
+        display: grid;
+        align-items: center;
 
-  h3 {
-    grid-column: 1 / -1;
-    font-size: clamp(1.3rem, 3vw, 1.9rem);
-    color: var(--mint);
-    text-shadow: 0 0 10px var(--mint);
-    text-align: center;
-    letter-spacing: 1px;
-  }
+        grid-template-columns: minmax(120px, 1fr) minmax(200px, 2fr) minmax(120px, 1fr);
+        grid-template-rows: auto 1fr auto;
 
-  .contest-avatar {
-    justify-self: center;
-    grid-row: 2 / 4;
-    width: clamp(80px, 8vw, 120px);
-    height: clamp(80px, 8vw, 120px);
-    border: 1.5px solid var(--mint);
-    box-shadow: 0 0 18px rgba(139, 243, 255, 0.25);
-    color: var(--mint);
-    transition: 0.3s;
+        gap: clamp(6px, 0.6vw, 10px);
 
-    &:hover {
-      transform: scale(1.06);
-      box-shadow: 0 0 28px var(--mint);
-    }
-  }
+        position: relative;
 
-  h4 {
-    grid-column: 2;
-    grid-row: 2/4;
-    font-size: clamp(1.8rem, 4vw, 2.5rem);
-    color: var(--white);
-    text-shadow: 0 0 12px rgba(139, 243, 255, 0.3);
-  }
+        h3 {
+          grid-column: 1 / -1;
+          font-size: clamp(1.4rem, 2.8vw, 2rem);
+          text-align: center;
+          letter-spacing: 1px;
+          color: var(--mint);
+          text-shadow: 0 0 8px var(--mint);
+          margin: 0;
+        }
 
-  .ramaining-time {
-    grid-column: 2;
-    grid-row: 4;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: clamp(1rem, 2vw, 1.2rem);
-    color: var(--white);
-    opacity: 0.95;
-    text-shadow: 0 0 6px var(--mint);
-  }
+        /* 아바타 */
+        .contest-avatar {
+          justify-self: center;
+          grid-row: 2;
 
-  .contest_reward_box {
-    grid-column: 3;
-    grid-row: 2 / 4;
-    justify-self: center;
+          width: clamp(90px, 9vw, 130px);
+          height: clamp(90px, 9vw, 130px);
 
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
+          border: 1.5px solid var(--mint);
+          background-color: rgba(139, 243, 255, 0.08);
+          box-shadow: 0 0 20px rgba(139, 243, 255, 0.2);
 
-    width: min(80%, 180px);
-    height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
 
-    background: rgba(10, 30, 40, 0.5);
-    border-radius: 8px;
-    border: 1.5px solid rgba(139, 243, 255, 0.35);
+          transition: 0.3s;
 
-    box-shadow: 0 0 18px rgba(139, 243, 255, 0.15);
-    padding-left: clamp(6px, 1vw, 12px);
+          &:hover {
+            box-shadow: 0 0 28px var(--mint);
+            transform: scale(1.04);
+          }
+        }
 
-    .banner-exp {
-      font-size: clamp(1rem, 2vw, 1.2rem);
-      color: var(--white);
-      opacity: 0.95;
-    }
+        /* 중앙 정보 */
+        h4 {
+          grid-column: 2;
+          grid-row: 2;
+          margin: 0;
+          font-size: clamp(1.8rem, 3.2vw, 2.3rem);
+          color: var(--white);
+          text-shadow: 0 0 10px rgba(139, 243, 255, 0.3);
+        }
 
-    .exp {
-      font-size: clamp(1.3rem, 3vw, 1.5rem);
-      color: var(--mint);
-      font-weight: 700;
-      text-shadow: 0 0 10px var(--mint);
-    }
-  }
+        .ramaining-time {
+          grid-column: 2;
+          grid-row: 3;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: clamp(1rem, 1.8vw, 1.2rem);
+          color: var(--white);
+          opacity: 0.95;
+          text-shadow: 0 0 6px var(--mint);
+        }
 
-  /* GO 버튼 → 네온 글리치 */
-  .go-to-machine-btn {
-    grid-column: 3;
-    grid-row: 4;
-    justify-self: center;
+        /* 보상 박스 */
+        .contest_reward_box {
+          grid-column: 3;
+          grid-row: 2;
+          justify-self: center;
 
-    width: min(80%, 190px);
-    padding: 10px 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
 
-    background: transparent;
-    border: 1.5px solid var(--mint);
-    border-radius: 6px;
-    color: var(--mint);
-    font-size: 1rem;
-    font-family: var(--font-display);
-    letter-spacing: 1px;
-    cursor: pointer;
+          width: min(85%, 200px);
+          height: clamp(70px, 9vh, 85px);
 
-    transition: 0.25s ease;
-    box-shadow: 0 0 12px rgba(139, 243, 255, 0.25);
+          background: rgba(8, 20, 28, 0.6);
+          border: 1.5px solid rgba(139, 243, 255, 0.3);
+          border-radius: 8px;
+          box-shadow: 0 0 10px rgba(139, 243, 255, 0.15);
 
-    &:hover {
-      background: rgba(139, 243, 255, 0.08);
-      transform: translateY(-4px);
-      box-shadow: 0 0 25px var(--mint);
-    }
-  }
-}
-.banner-contents {
-  transform: translateY(-20px); /* 원하는 만큼 올려주기 */
-}
+          .banner-exp {
+            color: var(--mint);
+            font-size: clamp(1.1rem, 1.7vw, 1.3rem);
+          }
+
+          .exp {
+            font-size: clamp(1.3rem, 2vw, 1.5rem);
+            color: var(--mint);
+            font-weight: bold;
+            text-shadow: 0 0 6px var(--mint);
+          }
+        }
+
+        .go-to-machine-btn {
+          grid-column: 3;
+          grid-row: 3;
+
+          justify-self: center;
+
+          margin-top: 0;
+          background: transparent;
+          color: var(--mint);
+
+          border: 1.5px solid var(--mint);
+          border-radius: 6px;
+
+          font-family: var(--font-display);
+          font-size: clamp(1rem, 1.4vw, 1.2rem);
+
+          padding: clamp(8px, 1.4vh, 12px) clamp(20px, 2.8vw, 30px);
+
+          cursor: pointer;
+          transition: 0.25s ease;
+
+          &:hover {
+            background: rgba(139, 243, 255, 0.08);
+            box-shadow: 0 0 20px var(--mint);
+            transform: translateY(-4px);
+          }
+        }
+
+      } /* banner-contents 끝 */
+
+    } /* banner-slide 끝 */
+
+  } /* carousel 끝 */
+
+} /* container 끝 */

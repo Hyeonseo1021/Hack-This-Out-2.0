@@ -3,6 +3,7 @@
   "upcoming": "Upcoming",
   "ongoing": "Ongoing",
   "ended": "Ended",
+  "notStarted": "Not Started",
   "register": "REGISTER",
   "registered": "REGISTERED",
   "enter": "ENTER",
@@ -16,6 +17,18 @@
   "status": "Status",
   "noContests": "No contests available",
   "loading": "Loading contests...",
+  "addContest": "Add Contest",
+  "goToContest": "Go to Contest",
+  "reward": "Reward",
+  "start": "Start",
+  "end": "End",
+  "noParticipants": "No participants yet",
+  "banner": {
+    "latest": "Latest Contest",
+    "ongoing": "Ongoing Contest",
+    "nothingNew": "Nothing new",
+    "failed": "Failed to load contest banners."
+  },
   "details": {
     "overview": "Overview",
     "rules": "Rules",
@@ -57,5 +70,30 @@
     "selectChallenges": "Select Challenges",
     "submit": "CREATE CONTEST",
     "submitting": "Creating..."
+  },
+  "form": {
+    "title": "Add New Contest",
+    "contestName": "Contest Name",
+    "description": "Description",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "reward": "Reward (EXP)",
+    "machines": "Machines",
+    "machinePlaceholder": "Machine {{index}}",
+    "delete": "Delete",
+    "addMachine": "Add Machine",
+    "submit": "Add Contest",
+    "errors": {
+      "nameLength": "Name must be at least 3 characters.",
+      "descriptionRequired": "Description is required.",
+      "startTimeRequired": "Start time required.",
+      "startTimeInPast": "Start cannot be in the past.",
+      "endTimeRequired": "End time required.",
+      "endTimeAfterStart": "End must be after start.",
+      "duration24Hours": "Contest must last at least 24 hours.",
+      "machinesRequired": "Select valid machines.",
+      "expMinimum": "EXP must be at least 100.",
+      "submitFailed": "Failed to create contest"
+    }
   }
 }

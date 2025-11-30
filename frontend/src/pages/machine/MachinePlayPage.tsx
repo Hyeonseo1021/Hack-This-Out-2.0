@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { getActiveMachineDetails } from '../../api/axiosMachine';
 import { getInstanceByMachine } from '../../api/axiosInstance';
@@ -43,6 +44,7 @@ interface GetMachineDetailsResponse {
  * Component representing the Machine Play Page.
  */
 const MachinePlayPage: React.FC = () => {
+  const { t } = useTranslation('machine');
   const { machineId } = useParams<{ machineId: string }>();
   const [machine, setMachine] = useState<Machine | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,7 @@ const MachinePlayPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!machineId) {
-        setError('Machine ID is missing.');
+        setError(t('details.missingId'));
         setIsLoading(false);
         return;
       }
@@ -91,14 +93,14 @@ const MachinePlayPage: React.FC = () => {
         }
       } catch (error: any) {
         console.error('Error fetching machine details or instances:', error);
-        setError('Failed to fetch machine details or instances.');
+        setError(t('play.failedToLoad'));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [machineId, setInstanceStatus]);
+  }, [machineId, setInstanceStatus, t]);
 
   // Effect to handle submitStatus changes
   useEffect(() => {
@@ -144,7 +146,7 @@ const MachinePlayPage: React.FC = () => {
     <Main>
       <div className={`machine-play-container ${submitStatus === 'flag-success' ? 'flag-success' : ''}`} ref={containerRef}>
         <div className="machine-play-name">
-          <h3><b>Now Playing: {machine.name.charAt(0).toUpperCase() + machine.name.slice(1)}</b></h3>
+          <h3><b>{t('play.nowPlaying')}: {machine.name.charAt(0).toUpperCase() + machine.name.slice(1)}</b></h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button
               onClick={() => setShowInventory(true)}
@@ -159,7 +161,7 @@ const MachinePlayPage: React.FC = () => {
                 fontSize: '14px',
               }}
             >
-              🎒 인벤토리
+              🎒 {t('play.inventory')}
             </button>
             <GiveUpButton
               machineId={machineId || ''}

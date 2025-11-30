@@ -45,3 +45,85 @@
 @keyframes toastOut {
   to { opacity: 0; transform: translateY(-10px); }
 }
+
+/* ============================
+    RESPONSIVE STYLES
+============================ */
+
+/* 1024px 이하 (태블릿/작은 랩탑) */
+@media (max-width: 1024px) {
+  .shop-toast {
+    top: 80px;
+    right: 30px;
+    padding: 10px 16px;
+
+    .shop-toast-icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    .shop-toast-msg {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+/* 768px 이하 (태블릿) */
+@media (max-width: 768px) {
+  .shop-toast {
+    top: 75px;
+    right: 20px;
+    padding: 10px 14px;
+    gap: 8px;
+    border-radius: 10px;
+
+    .shop-toast-icon {
+      width: 26px;
+      height: 26px;
+    }
+
+    .shop-toast-msg {
+      font-size: 0.85rem;
+      line-height: 1.25;
+    }
+  }
+}
+
+/* 480px 이하 (모바일) */
+@media (max-width: 480px) {
+  .shop-toast {
+    top: auto;
+    bottom: 20px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 320px;
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: 10px;
+    justify-content: center;
+
+    animation: toastInMobile 0.25s ease-out, toastOutMobile 0.3s ease-in 1.9s forwards;
+
+    .shop-toast-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .shop-toast-msg {
+      font-size: 0.8rem;
+      line-height: 1.2;
+      text-align: center;
+    }
+  }
+
+  @keyframes toastInMobile {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  @keyframes toastOutMobile {
+    to { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  }
+}

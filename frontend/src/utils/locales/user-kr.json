@@ -44,30 +44,79 @@
     "editProfile": "프로필 수정",
     "changePassword": "비밀번호 변경",
     "logout": "로그아웃",
-    "stats": {
-      "machinesSolved": "해결한 머신",
-      "contestsParticipated": "참가한 컨테스트",
-      "arenasCompleted": "완료한 아레나",
-      "totalScore": "총 점수",
-      "averageRank": "평균 순위",
-      "winRate": "승률"
-    },
     "passwordCheck": {
       "title": "비밀번호 확인",
-      "description": "계속하려면 비밀번호를 입력해주세요",
+      "description": "개인 정보를 확인하려면 비밀번호를 입력해주세요.",
       "password": "비밀번호",
+      "passwordRequired": "비밀번호를 입력해주세요",
       "verify": "확인",
       "cancel": "취소"
     },
     "personalInfo": {
       "title": "프로필 수정",
-      "username": "사용자 이름",
+      "name": "이름",
+      "id": "ID",
       "email": "이메일",
-      "currentPassword": "현재 비밀번호",
+      "exp": "경험치",
+      "htoCoin": "HTO 코인",
+      "uploadFile": "파일 업로드",
+      "change": "변경",
+      "changeName": "이름 변경",
+      "newName": "새 이름",
+      "changePassword": "비밀번호 변경",
+      "oldPassword": "기존 비밀번호",
       "newPassword": "새 비밀번호",
-      "confirmPassword": "새 비밀번호 확인",
-      "save": "변경사항 저장",
-      "cancel": "취소"
+      "confirmNewPassword": "새 비밀번호 확인",
+      "errors": {
+        "passwordLength": "비밀번호는 최소 8자 이상이어야 합니다",
+        "passwordMismatch": "새 비밀번호가 일치하지 않습니다",
+        "selectFile": "업로드할 파일을 선택해주세요."
+      },
+      "success": {
+        "passwordChanged": "비밀번호가 변경되었습니다!",
+        "nameChanged": "이름이 변경되었습니다!",
+        "avatarChanged": "아바타가 변경되었습니다!"
+      }
+    }
+  },
+  "mystats": {
+    "title": "{{username}}의 통계",
+    "level": "LVL.",
+    "nextLevel": "다음 레벨까지: {{exp}} EXP",
+    "ranking": "랭킹 #{{rank}}",
+    "noData": "데이터가 없습니다.",
+    "history": "기록",
+    "tabs": {
+      "machine": "머신",
+      "contest": "컨테스트",
+      "arena": "아레나"
+    },
+    "machine": {
+      "name": "머신 이름",
+      "exp": "경험치",
+      "time": "시간",
+      "hintsUsed": "사용한 힌트",
+      "completed": "완료일",
+      "notCompleted": "미완료",
+      "noHistory": "머신 기록이 없습니다."
+    },
+    "contest": {
+      "name": "컨테스트 이름",
+      "start": "시작",
+      "end": "종료",
+      "exp": "경험치",
+      "machines": "머신",
+      "ongoing": "진행 중",
+      "noHistory": "컨테스트 기록이 없습니다."
+    },
+    "arena": {
+      "name": "아레나 이름",
+      "mode": "모드",
+      "endTime": "종료 시간",
+      "winner": "우승자",
+      "myRank": "내 순위",
+      "expEarned": "획득 경험치",
+      "noHistory": "아레나 기록이 없습니다."
     }
   }
 }

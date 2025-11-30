@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getActiveMachines } from '../../api/axiosMachine';
 import styles from '../../assets/scss/machine/MachineList.module.scss';
 import { useNavigate } from 'react-router-dom';
@@ -34,6 +35,7 @@ interface MachinesResponse {
 }
 
 const MachineList: React.FC = () => {
+  const { t } = useTranslation('machine');
   const [machines, setMachines] = useState<Machine[]>([]);
   const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -63,14 +65,7 @@ const MachineList: React.FC = () => {
   };
 
   const getDifficultyLabel = (level: string): string => {
-    const labels: { [key: string]: string } = {
-      'very_easy': 'VE',
-      'easy': 'E',
-      'medium': 'M',
-      'hard': 'H',
-      'very_hard': 'VH'
-    };
-    return labels[level] || 'N/A';
+    return t(`difficulty_short.${level}`, 'N/A');
   };
 
   useEffect(() => {
@@ -106,15 +101,15 @@ const MachineList: React.FC = () => {
 
   return (
     <div className={styles.machine_list_container}>
-      <div className={styles.machine_list_title}>Machines</div>
+      <div className={styles.machine_list_title}>{t('title')}</div>
 
       <table className={styles.machine_list_table}>
         <thead>
           <tr className={styles.table_text_box}>
-            <th className={styles.table_name}>Name</th>
+            <th className={styles.table_name}>{t('name')}</th>
 
             <th className={styles.table_category}>
-              Category
+              {t('details.category')}
               <ClickAwayListener onClickAway={() => setFilterVisible(false)}>
                 <div className={styles.category_filter_toggle}>
                   <FilterAltIcon
@@ -132,7 +127,7 @@ const MachineList: React.FC = () => {
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
                       >
-                        <option value="">All</option>
+                        <option value="">{t('filter.all')}</option>
                         {categories.map((c) => (
                           <option key={c} value={c}>{c}</option>
                         ))}
@@ -143,10 +138,10 @@ const MachineList: React.FC = () => {
               </ClickAwayListener>
             </th>
 
-            <th className={styles.table_difficulty}>Difficulty</th>
-            <th className={styles.table_rating}>Rating</th>
-            <th className={styles.table_playCount}>Played</th>
-            <th className={styles.table_details}>Detail</th>
+            <th className={styles.table_difficulty}>{t('difficulty')}</th>
+            <th className={styles.table_rating}>{t('rating')}</th>
+            <th className={styles.table_playCount}>{t('played')}</th>
+            <th className={styles.table_details}>{t('detail')}</th>
           </tr>
         </thead>
 
@@ -221,7 +216,7 @@ const MachineList: React.FC = () => {
                           handleMachineClick(machine);
                         }}
                       >
-                        GO!
+                        {t('go')}
                       </button>
 
                       {/* 아코디언 토글 */}
@@ -245,7 +240,7 @@ const MachineList: React.FC = () => {
                     <td colSpan={6}>
                       <div className={styles.expand_content}>
                         <p className={styles.expand_description}>
-                          {machine.description || 'No description available.'}
+                          {machine.description || t('noDescription')}
                         </p>
 
                         <div className={styles.expand_reviews}>
