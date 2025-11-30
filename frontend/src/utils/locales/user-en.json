@@ -80,7 +80,7 @@
     }
   },
   "mystats": {
-    "title": "{{username}}'s Stats",
+    "title": "{{username}}'s Status",
     "level": "LVL.",
     "nextLevel": "Next Level: {{exp}} EXP",
     "ranking": "Ranking #{{rank}}",

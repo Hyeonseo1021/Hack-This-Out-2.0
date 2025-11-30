@@ -80,7 +80,7 @@
     }
   },
   "mystats": {
-    "title": "{{username}}의 통계",
+    "title": "{{username}}의 상태",
     "level": "LVL.",
     "nextLevel": "다음 레벨까지: {{exp}} EXP",
     "ranking": "랭킹 #{{rank}}",

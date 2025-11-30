@@ -121,7 +121,7 @@ const Profile: React.FC = () => {
                     >
                         <div className={styles.rectangleParent}>
                             <IoStatsChartOutline className={styles.icon} />
-                            <MenuItem>My Stats</MenuItem>
+                            <MenuItem>My Status</MenuItem>
                         </div>
                     </div>
                     <div
