@@ -1,0 +1,239 @@
+<mxfile host="app.diagrams.net" modified="2025-12-01T00:00:00.000Z" agent="Claude Code" version="21.0.0">
+  <diagram name="Arena Management" id="arena-management">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Center Box: Arena Management -->
+        <mxCell id="center" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="300" width="160" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="center-icon" value="🎮" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=28;" vertex="1" parent="1">
+          <mxGeometry x="530" y="310" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="center-text" value="Arena&#xa;Management" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="495" y="350" width="130" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- 아레나 관리 (Korean subtitle) -->
+        <mxCell id="subtitle" value="아레나 관리" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="480" y="410" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Left Top: Room Operations (초록색) -->
+        <mxCell id="room-ops" value="🚪 Room Operations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="180" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="room-line1" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=1;dashed=1;endArrow=none;" edge="1" parent="1" source="room-ops" target="center">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="room-f1" value="Create Arena" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="220" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="room-f2" value="Join Arena" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="245" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="room-f3" value="Leave Arena" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="270" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="room-f4" value="Get Arena Info" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="295" width="100" height="20" as="geometry" />
+        </mxCell>
+        <!-- 점선들 -->
+        <mxCell id="room-d1" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="230" as="sourcePoint" />
+            <mxPoint x="230" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="room-d2" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="255" as="sourcePoint" />
+            <mxPoint x="250" y="255" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="room-d3" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="280" as="sourcePoint" />
+            <mxPoint x="270" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="room-d4" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#82b366;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="305" as="sourcePoint" />
+            <mxPoint x="290" y="305" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Left Bottom: Game Control (파란색) -->
+        <mxCell id="game-ctrl" value="🎯 Game Control" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="420" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="game-line" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6c8ebf;strokeWidth=1;dashed=1;endArrow=none;" edge="1" parent="1" source="game-ctrl" target="center">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="game-f1" value="Start Arena" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="460" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="game-f2" value="End Arena" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="485" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="game-f3" value="Submit Flag" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="510" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="game-f4" value="Toggle Ready" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="100" y="535" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="game-d1" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="470" as="sourcePoint" />
+            <mxPoint x="290" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="game-d2" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="495" as="sourcePoint" />
+            <mxPoint x="270" y="495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="game-d3" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="520" as="sourcePoint" />
+            <mxPoint x="250" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="game-d4" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#6c8ebf;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="205" y="545" as="sourcePoint" />
+            <mxPoint x="230" y="545" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Right Top: Real-time Events (보라색) -->
+        <mxCell id="realtime" value="⚡ Real-time Events" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="900" y="180" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="realtime-line" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673a6;strokeWidth=1;dashed=1;endArrow=none;" edge="1" parent="1" source="realtime" target="center">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-f1" value="Score Update" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="920" y="220" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-f2" value="Time Sync" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="920" y="245" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-f3" value="User Joined/Left" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="920" y="270" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-f4" value="Chat Message" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="920" y="295" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-d1" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="890" y="230" as="sourcePoint" />
+            <mxPoint x="915" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rt-d2" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="870" y="255" as="sourcePoint" />
+            <mxPoint x="915" y="255" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rt-d3" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="850" y="280" as="sourcePoint" />
+            <mxPoint x="915" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rt-d4" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#9673a6;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="830" y="305" as="sourcePoint" />
+            <mxPoint x="915" y="305" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Right Bottom: Item & Leaderboard (주황색) -->
+        <mxCell id="item-lead" value="🏆 Items &amp; Ranking" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="900" y="420" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="item-line" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d6b656;strokeWidth=1;dashed=1;endArrow=none;" edge="1" parent="1" source="item-lead" target="center">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="il-f1" value="Use Item" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="920" y="460" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="il-f2" value="Get Leaderboard" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="920" y="485" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="il-f3" value="Item Used Event" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="920" y="510" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="il-d1" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#d6b656;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="830" y="470" as="sourcePoint" />
+            <mxPoint x="915" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="il-d2" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#d6b656;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="850" y="495" as="sourcePoint" />
+            <mxPoint x="915" y="495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="il-d3" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#d6b656;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="870" y="520" as="sourcePoint" />
+            <mxPoint x="915" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Bottom: Game Modes (빨간색) -->
+        <mxCell id="modes" value="🎲 Game Modes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="490" y="560" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="modes-line" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#b85450;strokeWidth=1;dashed=1;endArrow=none;" edge="1" parent="1" source="modes" target="center">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-f1" value="Terminal Hacking Race" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="340" y="600" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-f2" value="Vulnerability Scanner" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="480" y="600" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-f3" value="Forensics Rush" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="610" y="600" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-f4" value="Social Engineering" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="600" width="110" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="mode-d1" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="405" y="595" as="sourcePoint" />
+            <mxPoint x="405" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mode-d2" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="540" y="595" as="sourcePoint" />
+            <mxPoint x="540" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mode-d3" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="660" y="595" as="sourcePoint" />
+            <mxPoint x="660" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mode-d4" value="" style="endArrow=none;dashed=1;html=1;rounded=0;strokeColor=#b85450;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="775" y="595" as="sourcePoint" />
+            <mxPoint x="775" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

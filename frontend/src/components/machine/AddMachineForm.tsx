@@ -48,7 +48,7 @@ const AddMachineForm: React.FC = () => {
     description: '',
     exp: 50,
     hints: [''],
-    hintCosts: [1],
+    hintCosts: [0],
     difficulty: {
       creatorLevel: ''
     },
@@ -80,9 +80,9 @@ const AddMachineForm: React.FC = () => {
     }));
   };
 
-  const handleHintCostChange = (index: number, value: number) => {
+  const toggleHintPaid = (index: number) => {
     const newHintCosts = [...formData.hintCosts];
-    newHintCosts[index] = value;
+    newHintCosts[index] = newHintCosts[index] === 0 ? 1 : 0;
     setFormData((prevData) => ({
       ...prevData,
       hintCosts: newHintCosts,
@@ -93,7 +93,7 @@ const AddMachineForm: React.FC = () => {
     setFormData((prevData) => ({
       ...prevData,
       hints: [...prevData.hints, ''],
-      hintCosts: [...prevData.hintCosts, 1],
+      hintCosts: [...prevData.hintCosts, 0],
     }));
   };
 
@@ -457,54 +457,56 @@ const AddMachineForm: React.FC = () => {
           )}
         </div>
 
-        {/* ------------------------------ */}
-        {/* 🔥 Back 버튼이 실제로 이동한 부분 */}
-        {/* ------------------------------ */}
+        {/* 힌트 섹션 */}
         <div className='hint-container'>
           <label>
             {t('form.hints')} <span style={{ color: 'red' }}>*</span>
           </label>
 
-          {formData.hints.map((hint, index) => (
-            <div className='key-container' key={index}>
-              <input
-                type='text'
-                value={hint}
-                onChange={(e) => handleHintChange(index, e.target.value)}
-                placeholder={t('form.hint')}
-              />
-              <input
-                type='number'
-                value={formData.hintCosts[index]}
-                onChange={(e) => handleHintCostChange(index, Number(e.target.value))}
-                placeholder={t('form.cost')}
-                min={1}
-                max={100}
-              />
-              {formData.hints.length > 1 && (
-                <button className='remove-hint' type='button' onClick={() => removeHint(index)}>
-                  {t('form.remove')}
-                </button>
-              )}
-            </div>
-          ))}
+          {/* 힌트 목록 */}
+          <div className='hints-list'>
+            {formData.hints.map((hint, index) => (
+              <div className='hint-item' key={index}>
+                <div className='hint-header'>
+                  <span className='hint-number'>#{index + 1}</span>
+                  <span className='hint-status'>
+                    {formData.hintCosts[index] === 0
+                      ? t('form.hintFree', '무료 힌트')
+                      : t('form.hintPaid', '유료 힌트 (힌트권 필요)')}
+                  </span>
+                  <label className='hint-paid-checkbox'>
+                    <input
+                      type='checkbox'
+                      checked={formData.hintCosts[index] > 0}
+                      onChange={() => toggleHintPaid(index)}
+                    />
+                    <span>{t('form.setPaid', '유료로 설정')}</span>
+                  </label>
+                </div>
+                <div className='hint-content'>
+                  <input
+                    type='text'
+                    value={hint}
+                    onChange={(e) => handleHintChange(index, e.target.value)}
+                    placeholder={t('form.hintPlaceholder', '힌트 내용을 입력하세요')}
+                    className='hint-input'
+                  />
+                  {formData.hints.length > 1 && (
+                    <button className='remove-hint' type='button' onClick={() => removeHint(index)}>
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
 
           {validationErrors.hints && (
             <span className='field-error'>{validationErrors.hints}</span>
           )}
 
           <button className='add-hint' type='button' onClick={addHint}>
-            {t('form.addHint')}
-          </button>
-
-          {/* 🔥 여기! Back 버튼이 정확히 들어감 */}
-          <button
-            className="IconButton"
-            type="button"
-            onClick={() => navigate(-1)}
-            style={{ marginTop: '16px' }} // 위치 보조
-          >
-            <IoMdArrowRoundBack style={{ color: 'white', fontSize: "34px" }} />
+            + {t('form.addHint')}
           </button>
         </div>
 

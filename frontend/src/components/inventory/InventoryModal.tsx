@@ -45,6 +45,12 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
     return value.ko || value.en || '';
   };
 
+  // 아이콘이 이미지 URL인지 이모지인지 확인
+  const isImageUrl = (icon?: string): boolean => {
+    if (!icon) return false;
+    return icon.startsWith('/') || icon.startsWith('http');
+  };
+
   // 🎮 게임 모드별로 사용 가능한 효과 정의
   const isItemUsableInMode = (itemEffect: InventoryItemData['item']['effect']): boolean => {
     if (!gameMode || !isInGame) return true; // 게임 외에서는 모든 아이템 표시
@@ -184,19 +190,25 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
           <p className="empty">보유한 아이템이 없습니다.</p>
         ) : (
           <div className="inventory-list">
-            {items.map((invItem) => (
-              <div key={invItem._id} className="inventory-item">
-                {invItem.item.imageUrl && (
-                  <img
-                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001'}${invItem.item.imageUrl}`}
-                    alt={getText(invItem.item.name)}
-                    style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }}
-                  />
-                )}
-                <div className="item-info">
-                  <h3>{invItem.item.icon} {getText(invItem.item.name)}</h3>
-                  <p>{getText(invItem.item.description)}</p>
-                  <span>보유: {invItem.quantity}개</span>
+            {items.map((invItem) => {
+              // 이미지 URL 결정 (imageUrl 또는 icon이 URL인 경우)
+              const imgUrl = invItem.item.imageUrl || (isImageUrl(invItem.item.icon) ? invItem.item.icon : null);
+              // 이모지 아이콘 (icon이 URL이 아닌 경우만)
+              const emojiIcon = invItem.item.icon && !isImageUrl(invItem.item.icon) ? invItem.item.icon : '';
+
+              return (
+                <div key={invItem._id} className="inventory-item">
+                  {imgUrl && (
+                    <img
+                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001'}${imgUrl}`}
+                      alt={getText(invItem.item.name)}
+                      style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }}
+                    />
+                  )}
+                  <div className="item-info">
+                    <h3>{emojiIcon} {getText(invItem.item.name)}</h3>
+                    <p>{getText(invItem.item.description)}</p>
+                    <span>보유: {invItem.quantity}개</span>
 
                   {isInGame && (
                     <button
@@ -219,7 +231,8 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

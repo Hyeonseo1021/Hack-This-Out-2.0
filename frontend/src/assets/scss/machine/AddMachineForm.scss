@@ -237,36 +237,99 @@
             grid-column: 1 / 2;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
 
-            .key-container {
+            /* 힌트 목록 */
+            .hints-list {
                 display: flex;
-                align-items: center;
+                flex-direction: column;
                 gap: 12px;
 
-                input[type="text"] {
-                    flex: 2;
-                }
-
-                input[type="number"] {
-                    width: 100px;
-                    flex: 0 0 100px;
-                }
-
-                .remove-hint {
-                    padding: 0.7rem 1rem;
-                    background: rgba(255, 80, 80, 0.7);
-                    border: none;
-                    border-radius: 10px;
-                    color: #fff;
-                    cursor: pointer;
-                    font-family: var(--font-display);
-                    transition: 0.2s ease;
+                .hint-item {
+                    background: rgba(15, 25, 35, 0.8);
+                    border-radius: 12px;
+                    padding: 16px;
+                    border: 1.5px solid rgba(139, 243, 255, 0.15);
+                    transition: all 0.2s ease;
 
                     &:hover {
-                        background: rgba(255, 100, 100, 0.9);
-                        transform: translateY(-2px);
-                        box-shadow: 0 0 10px rgba(255, 80, 80, 0.6);
+                        border-color: rgba(139, 243, 255, 0.4);
+                    }
+
+                    .hint-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        margin-bottom: 12px;
+                        flex-wrap: wrap;
+
+                        .hint-number {
+                            font-size: 0.9rem;
+                            color: rgba(139, 243, 255, 0.7);
+                            font-weight: 600;
+                        }
+
+                        .hint-status {
+                            font-size: 0.9rem;
+                            font-weight: 600;
+                            padding: 4px 10px;
+                            border-radius: 6px;
+                            background: rgba(139, 243, 255, 0.1);
+                            color: #eaffff;
+                        }
+
+                        .hint-paid-checkbox {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            cursor: pointer;
+                            font-size: 0.8rem;
+                            margin-left: auto;
+
+                            input[type="checkbox"] {
+                                width: 16px;
+                                height: 16px;
+                                accent-color: #8bf3ff;
+                                cursor: pointer;
+                            }
+
+                            span {
+                                user-select: none;
+                                color: rgba(200, 230, 255, 0.6);
+                            }
+                        }
+                    }
+
+                    .hint-content {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+
+                        .hint-input {
+                            flex: 1;
+                        }
+
+                        .remove-hint {
+                            width: 36px;
+                            height: 36px;
+                            padding: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: rgba(255, 80, 80, 0.15);
+                            border: 1px solid rgba(255, 80, 80, 0.4);
+                            border-radius: 8px;
+                            color: #ff6b6b;
+                            cursor: pointer;
+                            font-size: 1rem;
+                            transition: 0.2s ease;
+
+                            &:hover {
+                                background: rgba(255, 80, 80, 0.3);
+                                border-color: rgba(255, 80, 80, 0.6);
+                                transform: scale(1.05);
+                            }
+                        }
                     }
                 }
             }
@@ -280,6 +343,7 @@
                 color: #eaffff;
                 cursor: pointer;
                 font-family: var(--font-display);
+                font-weight: 500;
                 transition: 0.25s ease;
 
                 &:hover {
@@ -287,11 +351,6 @@
                     box-shadow: 0 0 14px rgba(139, 243, 255, 0.6);
                     background: rgba(139, 243, 255, 0.1);
                 }
-            }
-
-            /* Hide the redundant back button in hints */
-            > .IconButton {
-                display: none;
             }
         }
 
