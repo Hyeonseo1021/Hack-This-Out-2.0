@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import '../../assets/scss/landing/services.scss';
 import LoadingIcon from "../public/LoadingIcon";
 
@@ -15,23 +16,13 @@ interface ServicesProps {
 }
 
 export const Services: React.FC<ServicesProps> = ({ data }) => {
+  const { t } = useTranslation('landing');
+
   return (
     <div className="services">
       <div className="service-container">
         <div className="section-title">
-          <h2>Our Services</h2>
-          <p>
-            <br />
-            People say that cybersecurity is hard to learn and boring.
-            <br />
-            But we believe that cybersecurity can be fun and interesting.
-            <br />
-            Hacking Lab for you to practice and learn in a fun and interesting way.
-            <br />
-            We used a lot of technologies to make this possible.
-            <br />
-            Let's see what we used.
-          </p>
+          <h2>{t('services.title')}</h2>
         </div>
         <div className="row">
           {data ? (

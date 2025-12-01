@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import '../../assets/scss/landing/about.scss';
 import { GrFormCheckmark } from "react-icons/gr";
 import LoadingIcon from "../public/LoadingIcon";
@@ -13,6 +14,8 @@ interface AboutProps {
 }
 
 export const About: React.FC<AboutProps> = ({ data }) => {
+  const { t } = useTranslation('landing');
+
   return (
     <div className="about">
       <div className="about-container">
@@ -22,9 +25,9 @@ export const About: React.FC<AboutProps> = ({ data }) => {
           </div>
           <div className="col-xs-12 col-md-6">
             <div className="about-text">
-              <h2>About Us</h2>
+              <h2>{t('about.title')}</h2>
               <p>{data ? data.paragraph : <LoadingIcon />}</p>
-              <h3>Why Choose Us?</h3>
+              <h3>{t('about.whyChooseUs')}</h3>
               <div className="list-style">
                 <div className="col-lg-6 col-sm-6 col-xs-12">
                   <ul>

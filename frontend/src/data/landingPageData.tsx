@@ -152,12 +152,11 @@ export const landingPageData: LandingPageData = {
     },
   ],
   Team: [
-    { img: "img/team/00.jpg", name: "Sangjin Park", job: "Project Lead, Developer" },
-    { img: "img/team/01.jpg", name: "Kangmin Lee", job: "Developer" },
-    { img: "img/team/02.jpg", name: "Jiwoo Park", job: "Developer" },
-    { img: "img/team/03.jpg", name: "Jeongjin Mun", job: "Developer" },
-    { img: "img/team/04.jpg", name: "Seungmin Lee", job: "Developer" },
-    { img: "img/team/05.jpg", name: "Undoe Yun", job: "Developer" },
+    { img: "img/team/00.jpg", name: "Kim Hyeonseo", job: "Project Lead, Developer" },
+    { img: "img/team/01.jpg", name: "Kim Kyungeun", job: "Developer" },
+    { img: "img/team/02.jpg", name: "Park Sion", job: "Developer" },
+    { img: "img/team/03.jpg", name: "Yoon Kangho", job: "Developer" },
+    { img: "img/team/04.jpg", name: "Kim Namho", job: "Developer" },
   ],
   Contact: {
     email: "hackthisout123@gmail.com",

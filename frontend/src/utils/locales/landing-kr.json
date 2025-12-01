@@ -1,0 +1,74 @@
+{
+  "header": {
+    "title": "HACK THIS OUT",
+    "paragraph": "웹 기반 해킹 실습 환경\n2024 이매지니어 프로젝트, 순천대학교",
+    "goToApp": "앱으로 이동"
+  },
+  "nav": {
+    "features": "기능",
+    "about": "소개",
+    "services": "서비스",
+    "team": "팀"
+  },
+  "features": {
+    "title": "주요 기능",
+    "userManagement": {
+      "title": "사용자 관리",
+      "text": "사용자와 권한을 안전하게 관리하는 사용자 관리 시스템."
+    },
+    "virtualEnvironment": {
+      "title": "가상 환경",
+      "text": "웹 기반 해킹 실습을 위한 보안 네트워크 및 가상 환경."
+    },
+    "gamingExperience": {
+      "title": "게이밍 경험",
+      "text": "해킹과 기술을 연습하기 위한 재미있고 흥미로운 게이밍 경험."
+    },
+    "userFriendly": {
+      "title": "사용자 친화적 인터페이스",
+      "text": "쉬운 탐색과 사용을 위한 사용자 친화적 인터페이스."
+    }
+  },
+  "about": {
+    "title": "소개",
+    "paragraph": "Hack This Out은 웹 기반 해킹 실습 환경입니다.\n해커 또는 사이버 보안 전문가가 되기 위한 여정을 위해 보안 네트워크와 가상 환경을 제공합니다.\n여정이 힘들고 지칠 수 있으므로, 게이밍 경험을 준비했습니다.",
+    "whyChooseUs": "왜 우리를 선택해야 할까요?",
+    "why": ["사용하기 쉬움", "플레이하고 경쟁하기", "안전하고 보안", "공부하고 연습하기"],
+    "why2": ["사용자 친화적 인터페이스", "게이밍 경험", "보안 네트워크", "가상 환경"]
+  },
+  "services": {
+    "title": "서비스",
+    "frontend": {
+      "name": "프론트엔드",
+      "text": "React를 사용한 쉽고 반응형의 인터랙티브 인터페이스."
+    },
+    "backend": {
+      "name": "백엔드",
+      "text": "Node.js와 Express를 사용한 안전하고 확장 가능한 백엔드."
+    },
+    "database": {
+      "name": "데이터베이스",
+      "text": "MongoDB를 사용한 간단하고 확장 가능한 NoSQL 데이터베이스."
+    },
+    "virtualMachines": {
+      "name": "가상 머신",
+      "text": "AWS를 사용한 해킹 실습을 위한 안전하고 지속 가능한 가상 머신 생태계."
+    },
+    "virtualNetwork": {
+      "name": "가상 네트워크",
+      "text": "OpenVPN을 사용한 해킹 실습을 위한 보안 및 격리된 네트워크."
+    },
+    "cicd": {
+      "name": "CI/CD 파이프라인",
+      "text": "GitHub Actions를 사용한 자동화된 CI/CD 파이프라인."
+    }
+  },
+  "team": {
+    "title": "팀 소개",
+    "subtitle": "우리 팀을 만나보세요."
+  },
+  "contact": {
+    "title": "연락처",
+    "getInTouch": "연락하기"
+  }
+}
