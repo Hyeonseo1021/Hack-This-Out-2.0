@@ -125,7 +125,7 @@
   },
   "form": {
     "title": "새 머신 추가",
-    "difficultySurvey": "난이도 설문",
+    "difficultySurvey": "난이도 설정",
     "expectedDifficulty": "예상 난이도",
     "selectDifficulty": "--난이도 선택--",
     "veryEasy": "매우 쉬움",

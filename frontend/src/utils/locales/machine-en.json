@@ -125,7 +125,7 @@
   },
   "form": {
     "title": "Add New Machine",
-    "difficultySurvey": "Difficulty Survey",
+    "difficultySurvey": "Difficulty Setting",
     "expectedDifficulty": "Expected Difficulty Level",
     "selectDifficulty": "--Select Difficulty--",
     "veryEasy": "Very Easy",
