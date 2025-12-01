@@ -308,8 +308,8 @@ const ShopPage: React.FC = () => {
       <NPCHelp open={isNPCOpen} onClose={() => setIsNPCOpen(false)} />
 
       {/* NPC BUTTON */}
-      <button 
-        className="npc-help-button" 
+      <button
+        className="npc-help-button"
         onClick={() => setIsNPCOpen((prev) => !prev)}
       >
         ?
