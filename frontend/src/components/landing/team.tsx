@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import '../../assets/scss/landing/team.scss';
 import LoadingIcon from "../public/LoadingIcon";
 
@@ -15,14 +16,14 @@ interface TeamProps {
 }
 
 export const Team: React.FC<TeamProps> = ({ data }) => {
+  const { t } = useTranslation('landing');
+
   return (
     <div className="team">
       <div className="team-container">
         <div className="section-title">
-          <h2>Meet the Team</h2>
-          <p>
-            We are a team of passionate developers and cyber security enthusiasts.
-          </p>
+          <h2>{t('team.title')}</h2>
+          <p>{t('team.subtitle')}</p>
         </div>
         <div id="row">
           {data

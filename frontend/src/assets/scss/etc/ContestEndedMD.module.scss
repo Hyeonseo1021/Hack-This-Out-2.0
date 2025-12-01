@@ -1,46 +1,135 @@
 @use "../style" as *;
 
-.contest_ended_contents{
+/* ===============================
+   사이버펑크 Contest Ended 모달
+=============================== */
+.contest_ended_contents {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    padding: 16px;
-    color: var(--color-white);
-    font-weight: bold;
-    align-items: flex-start;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-radius: 16px;
+    background: rgba(2, 7, 13, 0.95);
+    border: 2px solid rgba(0, 246, 255, 0.4);
+    box-shadow:
+        0 0 30px rgba(0, 246, 255, 0.15),
+        inset 0 0 60px rgba(0, 246, 255, 0.05);
+    animation: glitch-fade-in 0.6s steps(2, end) both;
+    position: relative;
 
-    .contest_ended_upper{
-        display: flex;
-        justify-content: center;
+    /* 스캔라인 효과 */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0.02) 0px,
+            rgba(255, 255, 255, 0.015) 1px,
+            transparent 2px
+        );
+        opacity: 0.15;
+        pointer-events: none;
+        border-radius: inherit;
     }
 
-    .contest_ended_body{
+    .contest_ended_upper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        svg {
+            color: #00f6ff;
+            filter: drop-shadow(0 0 8px #00f6ff);
+        }
+
+        h2 {
+            color: #00f6ff;
+            font-size: clamp(1.5rem, 4vw, 1.8rem);
+            font-weight: 900;
+            text-shadow: 0 0 8px #00f6ff, 0 0 16px rgba(0, 246, 255, 0.4);
+            letter-spacing: 2px;
+            margin: 0;
+        }
+    }
+
+    .contest_ended_body {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 8px;
         text-align: left;
 
-        .contest_ended_time{
+        .contest_ended_time {
             font-size: var(--font-size-mid);
-            align-self: flex-start;
-            filter: drop-shadow(0 0 10px var(--lightblue-200));
+            color: #00f6ff;
+            font-weight: 700;
+            text-shadow: 0 0 6px rgba(0, 246, 255, 0.5);
+        }
+
+        p {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
         }
     }
 
-    button{
-        padding: 10px 20px;
-        border-radius: 5px;
-        border: none;
+    button {
+        padding: 12px 32px;
+        border-radius: 10px;
+        border: 2px solid #00f6ff;
+        background: transparent;
+        color: #00f6ff;
         cursor: pointer;
-        font-weight: bold;
+        font-weight: 700;
+        font-size: 1rem;
         margin-left: auto;
         transition: all 0.3s ease;
-        @include button_color;
+        text-transform: uppercase;
+        letter-spacing: 1px;
 
-        &:hover{
-            border: 2px solid transparent;
+        &:hover {
+            background: rgba(0, 246, 255, 0.15);
+            box-shadow: 0 0 25px rgba(0, 246, 255, 0.5);
             transform: translateY(-2px);
-            filter: drop-shadow(0 0 10px var(--blue-500));
+            text-shadow: 0 0 8px #00f6ff;
         }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+}
+
+/* ===============================
+   글리치 페이드인 애니메이션
+=============================== */
+@keyframes glitch-fade-in {
+    0% {
+        opacity: 0;
+        filter: brightness(0.4);
+        transform: scale(0.95) translateX(0);
+    }
+    10% {
+        opacity: 1;
+        transform: scale(1.02) translateX(-3px);
+        filter: brightness(1.5);
+    }
+    20% {
+        transform: scale(0.98) translateX(3px);
+    }
+    30% {
+        transform: scale(1.01) translateY(-2px);
+    }
+    50% {
+        clip-path: inset(10% 0 40% 0);
+        opacity: 0.8;
+    }
+    70% {
+        clip-path: inset(30% 0 20% 0);
+    }
+    100% {
+        opacity: 1;
+        clip-path: inset(0 0 0 0);
+        transform: none;
+        filter: brightness(1);
     }
 }

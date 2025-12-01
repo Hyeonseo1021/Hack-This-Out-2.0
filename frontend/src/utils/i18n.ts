@@ -25,6 +25,9 @@ import userKR from './locales/user-kr.json';
 import commonEN from './locales/common-en.json';
 import commonKR from './locales/common-kr.json';
 
+import landingEN from './locales/landing-en.json';
+import landingKR from './locales/landing-kr.json';
+
 // localStorage에서 저장된 언어 불러오기, 없으면 'ko' 기본값
 const savedLanguage = localStorage.getItem('language') || 'ko';
 
@@ -40,7 +43,8 @@ i18n
         machine: machineEN,
         contest: contestEN,
         user: userEN,
-        common: commonEN
+        common: commonEN,
+        landing: landingEN
       },
       ko: {
         tutorial: tutorialKR,
@@ -50,7 +54,8 @@ i18n
         machine: machineKR,
         contest: contestKR,
         user: userKR,
-        common: commonKR
+        common: commonKR,
+        landing: landingKR
       }
     },
     lng: savedLanguage,  // localStorage에서 불러온 언어 사용
@@ -58,7 +63,7 @@ i18n
     interpolation: {
       escapeValue: false
     },
-    ns: ['tutorial', 'manual', 'shop', 'arena', 'machine', 'contest', 'user', 'common'],
+    ns: ['tutorial', 'manual', 'shop', 'arena', 'machine', 'contest', 'user', 'common', 'landing'],
     defaultNS: 'common'  // 기본 네임스페이스를 common으로 변경
   });
 
