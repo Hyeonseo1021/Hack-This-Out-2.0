@@ -5,25 +5,35 @@
   color: var(--color-white);
   width: 100%;
   height: 200px;
-  background-color: var(--color-layout);
-  border: 2px solid var(--color-white);
-  border-radius: 24px;
+  background: rgba(0, 10, 15, 0.55);
+  border: 1px solid rgba(139, 243, 255, 0.3);
+  border-radius: 16px;
   padding: 24px;
   margin-bottom: 24px;
   gap: 8px;
   transition: all 0.3s ease-in-out;
+  backdrop-filter: blur(40px);
+  box-shadow: 0 0 24px rgba(139, 243, 255, 0.12);
 
   &:hover {
-    border: 2px solid var(--blue-200);
+    border-color: rgba(139, 243, 255, 0.6);
+    box-shadow: 0 0 30px rgba(139, 243, 255, 0.2);
   }
 
   .upper-text {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     h2 {
-      font-weight: 600;
+      font-weight: 700;
+      color: var(--mint, #8bf3ff);
+      text-shadow: 0 0 8px rgba(139, 243, 255, 0.4);
+    }
+
+    svg {
+      color: var(--mint, #8bf3ff);
+      filter: drop-shadow(0 0 4px rgba(139, 243, 255, 0.5));
     }
   }
 
@@ -31,6 +41,7 @@
     padding-left: 48px;
     line-height: 1.5;
     font-size: clamp(16px, 2vw, 20px);
+    color: rgba(255, 255, 255, 0.7);
   }
 
   .download-btn {
@@ -40,7 +51,6 @@
     transition: all 0.3s ease-in-out;
 
     &:hover {
-      filter: drop-shadow(0 0 10px var(--blue-500));
       transform: translateY(-2px);
     }
   }
@@ -59,8 +69,8 @@
 }
 
 .download-label {
-  background-color: var(--color-layout);
-  border: 2px solid var(--color-white);
+  background: rgba(0, 255, 255, 0.08);
+  border: 1px solid rgba(139, 243, 255, 0.4);
   display: flex;
   align-items: center;
   border-radius: 50px;
@@ -70,6 +80,11 @@
   transition: all 0.4s ease;
   padding: 5px;
   position: relative;
+
+  &:hover {
+    background: rgba(139, 243, 255, 0.15);
+    box-shadow: 0 0 16px rgba(139, 243, 255, 0.4);
+  }
 
   &.instance-started {
     .download-circle {
@@ -158,7 +173,7 @@
 
 .download-label .download-title {
   font-size: var(--font-size-small);
-  color: #fff;
+  color: var(--mint, #8bf3ff);
   transition: all 0.4s ease;
   align-self: center;
   position: absolute;
@@ -166,6 +181,7 @@
   right: 25px;
   bottom: 15px;
   text-align: center;
+  text-shadow: 0 0 6px rgba(139, 243, 255, 0.4);
 }
 
 .download-label .download-title:last-child {
@@ -178,19 +194,18 @@
   height: 45px;
   width: 45px;
   border-radius: 50%;
-  border: 2px solid var(--color-white);
-  background-color: var(--color-layout);
+  border: 1px solid rgba(139, 243, 255, 0.4);
+  background: rgba(0, 255, 255, 0.08);
   display: flex;
   justify-content: center;
   align-items: center;
   transition: all 0.4s ease;
   position: relative;
-  box-shadow: 0 0 0 0 rgb(255, 255, 255);
   overflow: hidden;
 }
 
 .download-label .download-circle .download-icon {
-  color: #fff;
+  color: var(--mint, #8bf3ff);
   width: 30px;
   position: absolute;
   top: 50%;

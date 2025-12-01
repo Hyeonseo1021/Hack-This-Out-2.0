@@ -12,7 +12,7 @@ const StatusIcon: React.FC<StatusIconProps> = ({ status }) => {
     case 'idle':
       return (
         <div className='status-icon-container'>
-          <FaRegCircle size={30} color="#ccc" title="Idle" />
+          <FaRegCircle size={30} color="rgba(255, 255, 255, 0.3)" title="Idle" />
           <div className="vertical-line"></div>
         </div>
       );
@@ -20,7 +20,7 @@ const StatusIcon: React.FC<StatusIconProps> = ({ status }) => {
     case 'pending':
       return(
         <div className='status-icon-container'>
-          <FaRegDotCircle size={30} color="#f39c12" title="In Progress" />
+          <FaRegDotCircle size={30} color="#fff" title="In Progress" />
           <div className="vertical-line progress"></div>
         </div>
       );
@@ -28,20 +28,20 @@ const StatusIcon: React.FC<StatusIconProps> = ({ status }) => {
     case 'running':
       return (
         <div className='status-icon-container'>
-          <FaRegCheckCircle size={30} color="#27ae60" title="Completed" />
+          <FaRegCheckCircle size={30} color="#fff" title="Completed" />
           <div className="vertical-line completed"></div>
         </div>
       );
     case 'flag' :
       return (
         <div className='status-icon-container flag'>
-        <MdFlagCircle size={40} color="#ccc" title="Flag" />
+        <MdFlagCircle size={40} color="rgba(255, 255, 255, 0.3)" title="Flag" />
         </div>
       );
     case 'flag-success':
       return (
         <div className='status-icon-container flag'>
-        <MdFlagCircle size={40} color="#27ae60" title="Flag-success" />
+        <MdFlagCircle size={40} color="#fff" title="Flag-success" />
         </div>
       )
     default:

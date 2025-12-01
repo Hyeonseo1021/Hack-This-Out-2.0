@@ -4,19 +4,20 @@
     flex-direction: column;
     color: var(--color-white);
     width: 100%;
-    background-color: var(--color-layout);
-    border: 2px solid var(--color-white);
-    border-radius: 24px;
+    background: #000;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
     padding: 24px;
     gap: 8px;
     transition: all 0.3s ease-in-out;
 
     h3 {
         padding-left: 48px;
+        color: rgba(255, 255, 255, 0.7);
     }
 
     &:hover {
-        border: 2px solid var(--blue-200);
+        border-color: #fff;
     }
 
     .upper-text {
@@ -25,7 +26,8 @@
         gap: 8px;
 
         h2 {
-            font-weight: 600;
+            font-weight: 700;
+            color: #fff;
         }
     }
 
@@ -42,27 +44,27 @@
         gap: 8px;
         padding-left: 30px;
         margin-top: 16px;
-        
+
         .list {
             height: 60px;
-            background-color: var(--color-layout);
-            border: 2px solid var(--color-white);
-            border-radius: 24px;
+            background: #000;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
             font-size: var(--font-size-small);
             font-weight: 600;
             display: flex;
             align-items: center;
             padding-left: 30px;
             transition: all 0.3s ease-in-out;
-            
+
             &.hint-animate {
                 animation: fadeInSlide 0.5s ease-out forwards;
                 opacity: 0;
                 transform: translateY(20px);
             }
-            
+
             &:hover {
-                border: 2px solid var(--blue-200);
+                border-color: #fff;
                 transform: translateY(-2px);
             }
         }
@@ -72,8 +74,8 @@
         position: absolute;
         right: 24px;
         bottom: 24px;
-        background-color: var(--color-layout);
-        border: 2px solid var(--color-white);
+        background: transparent;
+        border: 2px solid #fff;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -83,37 +85,36 @@
         white-space: nowrap;
         cursor: pointer;
         padding: 5px 20px;
-        color: var(--color-white);
+        color: #fff;
         font-size: var(--font-size-small);
         font-weight: 600;
         transition: all 0.3s ease-in-out;
+
         &:hover {
-            background-color: var(--blue-400);
-            border: 2px solid transparent;
-            filter: drop-shadow(0 0 10px var(--blue-400));
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
         }
     }
 
     .disabled {
-        opacity: 0.5; /* 흐려짐 효과 */
-        cursor: not-allowed; /* 금지된 커서 */
-        pointer-events: none; /* 상호작용 방지 */
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
     }
 
     // 힌트 아이템 사용 섹션
     .hint-items-section {
         margin-top: 12px;
         padding: 16px;
-        background-color: rgba(0, 245, 255, 0.1);
-        border: 1px solid var(--blue-300);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 12px;
 
         h4 {
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 12px;
-            color: var(--blue-200);
+            color: #fff;
         }
 
         .hint-items-list {
@@ -126,13 +127,13 @@
                 align-items: center;
                 justify-content: space-between;
                 padding: 10px 16px;
-                background-color: var(--color-layout);
-                border: 1px solid var(--color-white);
+                background: #000;
+                border: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 8px;
                 transition: all 0.2s ease;
 
                 &:hover {
-                    border-color: var(--blue-200);
+                    border-color: #fff;
                 }
 
                 .hint-item-name {
@@ -143,24 +144,23 @@
 
                 .hint-item-qty {
                     font-size: 12px;
-                    color: var(--blue-200);
+                    color: rgba(255, 255, 255, 0.7);
                     margin-right: 12px;
                 }
 
                 .hint-item-use-btn {
                     padding: 6px 16px;
-                    background-color: var(--blue-400);
-                    border: none;
+                    background: transparent;
+                    border: 2px solid #fff;
                     border-radius: 6px;
-                    color: #000;
+                    color: #fff;
                     font-size: 12px;
                     font-weight: 600;
                     cursor: pointer;
                     transition: all 0.2s ease;
 
                     &:hover:not(:disabled) {
-                        background-color: var(--blue-300);
-                        filter: drop-shadow(0 0 6px var(--blue-400));
+                        background: rgba(255, 255, 255, 0.1);
                     }
 
                     &:disabled {
