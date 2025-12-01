@@ -12,6 +12,8 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: 20px 0;
+  box-sizing: border-box;
 
   .background-grid {
     position: absolute;
@@ -40,9 +42,10 @@
   max-width: 1400px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  height: auto;
-  max-height: 90vh;
+  gap: clamp(10px, 1.5vh, 20px);
+  height: 100%;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
 }
 
 /* === Arena Title === */
@@ -61,10 +64,11 @@
 .room-content-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(10px, 1.5vh, 20px);
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
 }
 
 
@@ -93,10 +97,11 @@
 .right-column {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: clamp(8px, 1vh, 15px);
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* === Settings Module === */
@@ -155,7 +160,7 @@
 
 /* === Chat Module (Center) === */
 .chat-module {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(0, 255, 255, 0.3);
@@ -164,11 +169,7 @@
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.15);
   backdrop-filter: blur(6px);
   overflow: hidden;
-  height: 600px;
-
-  @media (max-width: 900px) {
-    height: 150px;
-  }
+  min-height: 100px;
 }
 
 /* === Chat: Message Area === */
