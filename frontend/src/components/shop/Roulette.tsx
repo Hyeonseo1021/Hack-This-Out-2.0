@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import "../../assets/scss/Shop/Roulette.scss";
+import "../../assets/scss/shop/Roulette.scss";
 import { spinRoulette, getRouletteItems } from "../../api/axiosShop";
 
 // API URL에서 base URL 추출
