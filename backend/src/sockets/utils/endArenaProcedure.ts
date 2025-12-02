@@ -75,15 +75,28 @@ async function checkAllParticipantsCompleted(arenaId: string): Promise<boolean> 
 
 /**
  * ✅ Arena 즉시 종료 (유예 시간 없이)
+ * @param sendAllCompletedNotification - 모든 플레이어 완료 알림을 보낼지 여부 (기본: true)
  */
-export async function endArenaImmediately(arenaId: string, io: Server) {
+export async function endArenaImmediately(arenaId: string, io: Server, sendAllCompletedNotification: boolean = true) {
   console.log(`\n🏁 [endArenaImmediately] Ending arena: ${arenaId}`);
-  
+
   // 기존 유예 타이머 취소
   if (graceTimers.has(arenaId)) {
     clearTimeout(graceTimers.get(arenaId)!);
     graceTimers.delete(arenaId);
+    graceInfo.delete(arenaId);
     console.log('⏹️ Cancelled existing grace timer');
+  }
+
+  // ✅ 모든 플레이어에게 완료 알림 전송
+  if (sendAllCompletedNotification) {
+    io.to(arenaId).emit('arena:all-completed', {
+      message: {
+        ko: '모든 플레이어가 완료했습니다! 결과 페이지로 이동합니다...',
+        en: 'All players completed! Redirecting to results...'
+      }
+    });
+    console.log('📢 [endArenaImmediately] Sent arena:all-completed notification');
   }
 
   await finalizeArena(arenaId, io);
@@ -231,20 +244,13 @@ export async function checkAndEndIfAllCompleted(arenaId: string, io: Server) {
     if (allCompleted) {
       console.log('🎉 All participants completed! Ending arena immediately.');
 
-      // ✅ 모든 플레이어에게 완료 알림 전송
-      io.to(arenaId).emit('arena:all-completed', {
-        message: {
-          ko: '모든 플레이어가 완료했습니다! 결과 페이지로 이동합니다...',
-          en: 'All players completed! Redirecting to results...'
-        }
-      });
-
-      // 유예 타이머 취소하고 즉시 종료
+      // 유예 타이머 취소
       clearTimeout(graceTimers.get(arenaId)!);
       graceTimers.delete(arenaId);
       graceInfo.delete(arenaId);
 
-      await finalizeArena(arenaId, io);
+      // ✅ endArenaImmediately를 호출하면서 알림도 함께 전송
+      await endArenaImmediately(arenaId, io, true);
     } else {
       console.log('⏳ Not all participants completed yet, waiting...');
     }
