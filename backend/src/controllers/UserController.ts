@@ -176,14 +176,17 @@ export const logoutUser = async (
 	try {
 		const user = await User.findById(res.locals.jwtData.id); // get variable stored in previous middleware
 
-		if (!user)
+		if (!user) {
 			res.status(401).json({
 				message: "ERROR",
 				cause: "User doesn't exist or token malfunctioned",
 			});
+			return;
+		}
 
 		if (user._id.toString() !== res.locals.jwtData.id) {
 			res.status(401).json({ message: "ERROR", cause: "Permissions didn't match" });
+			return;
 		}
 
         // Clear any existing token
@@ -212,14 +215,17 @@ export const verifyUserStatus = async (
 	try {
 		const user = await User.findById(res.locals.jwtData.id).select('-password -date -createdAt -updatedAt -__v -level -exp -tier -htoCoin');
 
-		if (!user)
+		if (!user) {
 			res.status(401).json({
 				message: "ERROR",
 				cause: "User doesn't exist or token malfunctioned",
 			});
+			return;
+		}
 
 		if (user._id.toString() !== res.locals.jwtData.id) {
 			res.status(401).json({ message: "ERROR", cause: "Permissions didn't match" });
+			return;
 		}
 
 		res.status(200).json({ message: "OK", user: user });
@@ -239,19 +245,23 @@ export const changePassword = async (
 		const { oldPassword, newPassword } = req.body;
 		const user = await User.findById(res.locals.jwtData.id); // get variable stored in previous middleware
 
-		if (!user)
+		if (!user) {
 			res.status(401).json({
 				message: "ERROR",
 				cause: "User doesn't exist or token malfunctioned",
 			});
+			return;
+		}
 
 		if (user._id.toString() !== res.locals.jwtData.id) {
 			res.status(401).json({ message: "ERROR", cause: "Permissions didn't match" });
+			return;
 		}
 
 		const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
 		if (!isPasswordCorrect) {
 			res.status(403).json({ message: "ERROR", cause: "Incorrect Password" });
+			return;
 		}
 
 		const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -277,21 +287,27 @@ export const changeName = async (req: Request, res: Response): Promise<void> => 
 		}
 		if (user._id.toString() !== res.locals.jwtData.id) {
 			res.status(401).json({ message: "ERROR", cause: "Permissions didn't match" });
+			return;
 		}
 		if (username === user.username) {
 			res.status(401).json({ message: "ERROR", cause: "Name is the same as before" });
+			return;
 		}
 		if (username.length > 10) {
 			res.status(401).json({ message: "ERROR", cause: "Name is too long" });
+			return;
 		}
 		if (username.length < 3) {
 			res.status(401).json({ message: "ERROR", cause: "Name is too short" });
+			return;
 		}
 		if (username.includes(' ')) {
 			res.status(401).json({ message: "ERROR", cause: "Name cannot contain spaces" });
+			return;
 		}
 		if (isNameExist) {
 			res.status(401).json({ message: "ERROR", cause: "Name already taken" });
+			return;
 		}
 		// Update username
 		user.username = username;
@@ -323,19 +339,24 @@ export const checkPassword = async (
 		const { password } = req.body;
 		const user = await User.findById(res.locals.jwtData.id); // get variable stored in previous middleware
 
-		if (!user)
+		if (!user) {
 			res.status(401).json({
 				message: "ERROR",
 				cause: "User doesn't exist or token malfunctioned",
 			});
+			return;
+		}
 
 		if (user._id.toString() !== res.locals.jwtData.id) {
 			res.status(401).json({ message: "ERROR", cause: "Permissions didn't match" });
+			return;
 		}
 
 		const isPasswordCorrect = await bcrypt.compare(password, user.password);
-		if (!isPasswordCorrect)
+		if (!isPasswordCorrect) {
 			res.status(403).json({ message: "ERROR", cause: "Incorrect Password" });
+			return;
+		}
 
 		res.status(200).json({ message: "OK", username: user.username, email: user.email });
 	} catch (err) {
