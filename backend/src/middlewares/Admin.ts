@@ -16,10 +16,12 @@ export const verifyAdmin = async (req: Request, res: Response, next: NextFunctio
         } else {
             console.warn(`⛔ [verifyAdmin] User ${userId} is NOT admin - access denied`);
             res.status(403).json({ msg: 'Access denied. Admins only.' });
+            return; // Terminate to prevent further execution
         }
     } catch (error) {
         console.error('❌ [verifyAdmin] Error:', error);
         res.status(500).send('Server error');
+        return; // Terminate to prevent further execution
     }
 };
 
