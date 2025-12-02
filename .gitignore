@@ -6,3 +6,4 @@ frontend/dist/*
 .env
 *.ovpn
 etc/keys
+.claude
