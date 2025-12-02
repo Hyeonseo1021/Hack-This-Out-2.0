@@ -1,6 +1,6 @@
 // src/components/shop/ShopItemCard.tsx
 import React from "react";
-import "../../assets/scss/Shop/ShopItemCard.scss";
+import "../../assets/scss/shop/ShopItemCard.scss";
 
 interface Props {
   item: {
