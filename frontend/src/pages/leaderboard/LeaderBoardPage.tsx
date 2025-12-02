@@ -45,7 +45,11 @@ const LeaderBoardPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <Loading />;
+    return (
+      <Main>
+        <Loading />
+      </Main>
+    );
   }
 
   return (
