@@ -305,17 +305,25 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
       : `${graceSec}s`;
 
+    const isKorean = i18n.language === 'ko';
+
     setLogs(prev => [
       ...prev,
       { id: logCounter.current++, text: '', type: 'output' },
       { id: logCounter.current++, text: '╔════════════════════════════════════════════════╗', type: 'error' },
-      { id: logCounter.current++, text: '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
-      { id: logCounter.current++, text: `║  Another player has completed the challenge!   ║`, type: 'error' },
-      { id: logCounter.current++, text: `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? '║  ⚠️  경고: 유예 시간 시작  ⚠️                 ║'
+        : '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? `║  다른 플레이어가 완료했습니다!                 ║`
+        : `║  Another player has completed the challenge!   ║`, type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? `║  남은 시간: ${timeStr.padEnd(35)}║`
+        : `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
       { id: logCounter.current++, text: '╚════════════════════════════════════════════════╝', type: 'error' },
       { id: logCounter.current++, text: '', type: 'output' }
     ]);
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
 

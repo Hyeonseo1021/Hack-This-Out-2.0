@@ -264,9 +264,13 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
       : `${graceSec}s`;
 
+    const graceMessage = i18n.language === 'ko'
+      ? `⚠️ 유예 시간: 다른 플레이어가 완료했습니다! 남은 시간: ${timeStr}`
+      : `⚠️ GRACE PERIOD: Another player completed! Time remaining: ${timeStr}`;
+
     const notification = {
       id: notificationIdCounter.current++,
-      message: `⚠️ GRACE PERIOD: Another player completed! Time remaining: ${timeStr}`,
+      message: graceMessage,
       timestamp: new Date()
     };
 
@@ -276,7 +280,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     setTimeout(() => {
       setItemNotifications(prev => prev.filter(n => n.id !== notification.id));
     }, 10000);
-  }, []);
+  }, [i18n.language]);
 
   // 소켓 이벤트 핸들러
   useEffect(() => {
