@@ -226,10 +226,14 @@ const SocialEngineering: React.FC<SocialEngineeringProps> = ({
         ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
         : `${graceSec}s`;
 
+      const graceMessage = i18n.language === 'ko'
+        ? `⚠️ [SYSTEM] 유예 시간 시작: 다른 플레이어가 완료했습니다! 남은 시간: ${timeStr}`
+        : `⚠️ [SYSTEM] GRACE PERIOD STARTED: Another player has completed the challenge! Time remaining: ${timeStr}`;
+
       // 시스템 메시지로 채팅창에 표시
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `⚠️ [SYSTEM] GRACE PERIOD STARTED: Another player has completed the challenge! Time remaining: ${timeStr}`,
+        content: graceMessage,
         timestamp: new Date(),
       }]);
     };

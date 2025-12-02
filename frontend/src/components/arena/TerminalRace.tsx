@@ -91,9 +91,11 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
   const lastPromptStageRef = useRef<number>(-1);
 
+  // ✅ 리스너 등록 완료 여부 추적
+  const listenersReadyRef = useRef(false);
+
   useEffect(() => {
     if (isInitializedRef.current) return;
-    isInitializedRef.current = true;
 
     const loadProgress = async () => {
       try {
@@ -105,6 +107,24 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         };
 
         await waitForConnection();
+
+        // ✅ 리스너가 등록될 때까지 대기
+        const waitForListeners = () => {
+          return new Promise<void>((resolve) => {
+            const checkListeners = () => {
+              if (listenersReadyRef.current) {
+                resolve();
+              } else {
+                setTimeout(checkListeners, 50);
+              }
+            };
+            checkListeners();
+          });
+        };
+
+        await waitForListeners();
+
+        isInitializedRef.current = true;
 
         socket.emit('terminal:get-progress', { arenaId: arena._id });
         setTimeout(() => socket.emit('terminal:get-prompt', { arenaId: arena._id }), 500);
@@ -305,17 +325,25 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
       : `${graceSec}s`;
 
+    const isKorean = i18n.language === 'ko';
+
     setLogs(prev => [
       ...prev,
       { id: logCounter.current++, text: '', type: 'output' },
       { id: logCounter.current++, text: '╔════════════════════════════════════════════════╗', type: 'error' },
-      { id: logCounter.current++, text: '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
-      { id: logCounter.current++, text: `║  Another player has completed the challenge!   ║`, type: 'error' },
-      { id: logCounter.current++, text: `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? '║  ⚠️  경고: 유예 시간 시작  ⚠️                 ║'
+        : '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? `║  다른 플레이어가 완료했습니다!                 ║`
+        : `║  Another player has completed the challenge!   ║`, type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? `║  남은 시간: ${timeStr.padEnd(35)}║`
+        : `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
       { id: logCounter.current++, text: '╚════════════════════════════════════════════════╝', type: 'error' },
       { id: logCounter.current++, text: '', type: 'output' }
     ]);
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
 
@@ -338,8 +366,12 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.on('arena:item-used', handleItemUsed);
     socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
+    // ✅ 리스너 등록 완료 플래그 설정
+    listenersReadyRef.current = true;
+
     return () => {
       arenaEndedRef.current = false;
+      listenersReadyRef.current = false;
 
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);

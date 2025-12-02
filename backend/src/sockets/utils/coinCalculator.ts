@@ -68,15 +68,25 @@ export function calculateArenaCoin(params: CoinCalculationParams): CoinCalculati
         };
     }
 
-    // ✅ If not first clear of this scenario, no coins are awarded
+    // ✅ If not first clear of this scenario, reduced coins (no first clear bonus)
+    // 첫 클리어가 아니어도 기본 보상은 받음
     if (!isFirstClear) {
+        const baseCoin = GAME_MODE_BASE_COINS[gameMode] || 2;
+
+        let rankBonus = 0;
+        if (rank === 1) rankBonus = 2;
+        else if (rank === 2) rankBonus = 1;
+
+        let scoreBonus = 0;
+        if (score >= 100) scoreBonus = 1;
+
         return {
-            baseCoin: 0,
-            rankBonus: 0,
-            scoreBonus: 0,
+            baseCoin,
+            rankBonus,
+            scoreBonus,
             timeBonus: 0,
             firstClearBonus: 0,
-            totalCoin: 0
+            totalCoin: baseCoin + rankBonus + scoreBonus
         };
     }
 
