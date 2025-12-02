@@ -171,11 +171,14 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   }, [navigate]);
 
   // ✅ 모든 참가자 완료 핸들러
-  const handleAllCompleted = useCallback((data: { message: string }) => {
-    console.log('🎉 [ForensicsRush] All participants completed:', data.message);
+  const handleAllCompleted = useCallback((data: { message: string | { ko: string; en: string } }) => {
+    const msg = typeof data.message === 'object'
+      ? (i18n.language === 'ko' ? data.message.ko : data.message.en)
+      : data.message;
+    console.log('🎉 [ForensicsRush] All participants completed:', msg);
     setAllCompleted(true);
     // 리디렉션은 backend에서 arena:redirect-to-results 이벤트로 처리
-  }, []);
+  }, [i18n.language]);
 
   // 🎯 다른 플레이어 완료 핸들러
   const handlePlayerCompleted = useCallback((data: {
@@ -458,6 +461,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
     socket.off('forensics:all-completed');
+    socket.off('arena:all-completed');
     socket.off('arena:item-used');
     // arena:grace-period-started는 ArenaPlayPage와 공유하므로 특정 핸들러만 제거
     socket.off('arena:grace-period-started', handleGracePeriodStarted);
@@ -471,6 +475,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('forensics:all-completed', handleAllCompleted);
+    socket.on('arena:all-completed', handleAllCompleted); // ✅ 통합 이벤트도 리스닝
     socket.on('forensics:player-completed', handlePlayerCompleted);
     socket.on('arena:item-used', handleItemUsed);
     socket.on('arena:grace-period-started', handleGracePeriodStarted);
@@ -486,6 +491,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('forensics:all-completed', handleAllCompleted);
+      socket.off('arena:all-completed', handleAllCompleted);
       socket.off('forensics:player-completed', handlePlayerCompleted);
       socket.off('arena:item-used', handleItemUsed);
       socket.off('arena:grace-period-started', handleGracePeriodStarted);

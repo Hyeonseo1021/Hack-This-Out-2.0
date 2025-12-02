@@ -360,6 +360,23 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     ]);
   }, [i18n.language]);
 
+  // ✅ 모든 플레이어 완료 핸들러
+  const handleAllCompleted = useCallback((data: { message: { ko: string; en: string } }) => {
+    const msg = i18n.language === 'ko' ? data.message.ko : data.message.en;
+
+    setLogs(prev => [
+      ...prev,
+      { id: logCounter.current++, text: '', type: 'output' },
+      { id: logCounter.current++, text: '╔════════════════════════════════════════════════╗', type: 'success' },
+      { id: logCounter.current++, text: i18n.language === 'ko'
+        ? '║  🎉 모든 플레이어가 완료했습니다!             ║'
+        : '║  🎉 ALL PLAYERS COMPLETED!                    ║', type: 'success' },
+      { id: logCounter.current++, text: `║  ${msg.padEnd(46)}║`, type: 'success' },
+      { id: logCounter.current++, text: '╚════════════════════════════════════════════════╝', type: 'success' },
+      { id: logCounter.current++, text: '', type: 'output' }
+    ]);
+  }, [i18n.language]);
+
   useEffect(() => {
 
     socket.off('terminal:progress-data');
@@ -369,6 +386,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
     socket.off('arena:item-used');
+    socket.off('arena:all-completed');
     // arena:grace-period-started는 ArenaPlayPage와 공유하므로 특정 핸들러만 제거
     socket.off('arena:grace-period-started', handleGracePeriodStarted);
 
@@ -379,6 +397,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('arena:item-used', handleItemUsed);
+    socket.on('arena:all-completed', handleAllCompleted);
     socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
     // ✅ 리스너 등록 완료 알림 (콜백 호출)
@@ -395,10 +414,11 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('arena:item-used', handleItemUsed);
+      socket.off('arena:all-completed', handleAllCompleted);
       socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
   }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError,
-      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleGracePeriodStarted, notifyListenersReady]);
+      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleAllCompleted, handleGracePeriodStarted, notifyListenersReady]);
 
   useEffect(() => {
     if (logContainerRef.current) {
