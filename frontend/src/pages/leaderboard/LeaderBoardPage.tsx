@@ -39,6 +39,7 @@ const LeaderBoardPage: React.FC = () => {
     fetchData();
   }, []);
 
+
   return (
     <Main>
       <div className="leaderboard-cyber">
