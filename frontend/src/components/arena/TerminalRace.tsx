@@ -91,8 +91,18 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
   const lastPromptStageRef = useRef<number>(-1);
 
-  // ✅ 리스너 등록 완료 여부 추적
+  // ✅ 리스너 등록 완료 콜백 및 플래그
   const listenersReadyRef = useRef(false);
+  const listenersReadyCallbackRef = useRef<(() => void) | null>(null);
+
+  // ✅ 리스너 등록 완료를 알리는 함수
+  const notifyListenersReady = useCallback(() => {
+    listenersReadyRef.current = true;
+    if (listenersReadyCallbackRef.current) {
+      listenersReadyCallbackRef.current();
+      listenersReadyCallbackRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (isInitializedRef.current) return;
@@ -108,17 +118,22 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
         await waitForConnection();
 
-        // ✅ 리스너가 등록될 때까지 대기
+        // ✅ 리스너가 등록될 때까지 대기 (콜백 기반)
         const waitForListeners = () => {
           return new Promise<void>((resolve) => {
-            const checkListeners = () => {
-              if (listenersReadyRef.current) {
+            if (listenersReadyRef.current) {
+              resolve();
+            } else {
+              listenersReadyCallbackRef.current = resolve;
+              // 타임아웃 fallback (최대 2초 대기)
+              setTimeout(() => {
+                if (!listenersReadyRef.current) {
+                  console.warn('[TerminalRace] Listeners not ready after 2s, proceeding anyway');
+                  listenersReadyRef.current = true;
+                }
                 resolve();
-              } else {
-                setTimeout(checkListeners, 50);
-              }
-            };
-            checkListeners();
+              }, 2000);
+            }
           });
         };
 
@@ -366,8 +381,8 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.on('arena:item-used', handleItemUsed);
     socket.on('arena:grace-period-started', handleGracePeriodStarted);
 
-    // ✅ 리스너 등록 완료 플래그 설정
-    listenersReadyRef.current = true;
+    // ✅ 리스너 등록 완료 알림 (콜백 호출)
+    notifyListenersReady();
 
     return () => {
       arenaEndedRef.current = false;
@@ -383,7 +398,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
   }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError,
-      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleGracePeriodStarted]);
+      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleGracePeriodStarted, notifyListenersReady]);
 
   useEffect(() => {
     if (logContainerRef.current) {
