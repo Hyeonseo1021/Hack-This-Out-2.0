@@ -10,18 +10,20 @@
 
     .vertical-line {
         width: 4px;
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(139, 243, 255, 0.2);
         height: calc(100% - 30px);
         border-radius: 2px;
         height: 100%;
     }
 
     .progress {
-        background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.3) 100%);
+        background: linear-gradient(180deg, var(--mint, #8bf3ff) 0%, rgba(139, 243, 255, 0.3) 100%);
+        box-shadow: 0 0 8px rgba(139, 243, 255, 0.4);
     }
 
     .completed {
-        background: #fff;
+        background: var(--mint, #8bf3ff);
+        box-shadow: 0 0 8px rgba(139, 243, 255, 0.5);
     }
 }
 

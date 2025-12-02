@@ -65,8 +65,8 @@
 .start-instance-btn {
     /* From Uiverse.io by Na3ar-17 */
     .download-label {
-        background: transparent;
-        border: 2px solid #fff;
+        background: rgba(0, 255, 255, 0.08);
+        border: 1px solid rgba(139, 243, 255, 0.4);
         display: flex;
         align-items: center;
         border-radius: 50px;
@@ -76,6 +76,11 @@
         transition: all 0.4s ease;
         padding: 5px;
         position: relative;
+
+        &:hover {
+            background: rgba(139, 243, 255, 0.15);
+            box-shadow: 0 0 16px rgba(139, 243, 255, 0.4);
+        }
     }
 
     .download-label::before {
@@ -85,7 +90,7 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background-color: #fff;
+        background-color: var(--mint, #8bf3ff);
         width: 8px;
         height: 8px;
         transition: all 0.4s ease;
@@ -101,7 +106,7 @@
 
     .download-label .download-title {
         font-size: var(--font-size-small);
-        color: #fff;
+        color: var(--mint, #8bf3ff);
         transition: all 0.4s ease;
         align-self: center;
         position: absolute;
@@ -109,6 +114,7 @@
         right: 25px;
         bottom: 15px;
         text-align: center;
+        text-shadow: 0 0 6px rgba(139, 243, 255, 0.4);
     }
 
     .download-label .download-title:last-child {
@@ -121,8 +127,8 @@
         height: 45px;
         width: 45px;
         border-radius: 50%;
-        background: transparent;
-        border: 2px solid #fff;
+        background: rgba(0, 255, 255, 0.08);
+        border: 1px solid rgba(139, 243, 255, 0.4);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -132,7 +138,7 @@
     }
 
     .download-label .download-circle .download-icon {
-        color: #fff;
+        color: var(--mint, #8bf3ff);
         width: 30px;
         position: absolute;
         top: 50%;
@@ -145,7 +151,7 @@
         aspect-ratio: 1;
         width: 15px;
         border-radius: 2px;
-        background-color: #fff;
+        background-color: var(--mint, #8bf3ff);
         opacity: 0;
         visibility: hidden;
         position: absolute;
