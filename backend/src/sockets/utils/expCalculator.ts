@@ -29,6 +29,7 @@ interface ExpCalculationParams {
     gameMode: GameMode;
     totalPlayers: number;
     completionTime?: number; // 완료 시간 (초 단위)
+    isFirstClear: boolean; // 해당 시나리오를 처음 클리어했는지
 }
 
 interface ExpCalculationResult {
@@ -48,6 +49,15 @@ const GAME_MODE_MULTIPLIERS: Record<GameMode, number> = {
     [GameMode.FORENSICS_RUSH]: 1.3          // Very Hard - 복잡한 파일 분석
 };
 
+// ✅ 재클리어 시 경험치 감소 배율 (난이도별)
+// 쉬운 시나리오일수록 재클리어 경험치가 적음 (어뷰징 방지)
+const RECLEAR_MULTIPLIERS: Record<GameMode, number> = {
+    [GameMode.TERMINAL_RACE]: 0.2,          // Easy: 20%
+    [GameMode.SOCIAL_ENGINEERING]: 0.3,     // Normal: 30%
+    [GameMode.VULNERABILITY_SCANNER]: 0.3,  // Normal: 30%
+    [GameMode.FORENSICS_RUSH]: 0.5          // Very Hard: 50%
+};
+
 // Base experience by rank (reduced for balance)
 const RANK_BASE_EXP: Record<number, number> = {
     1: 20,  // 1등 (30 → 20)
@@ -63,7 +73,7 @@ const RANK_BASE_EXP: Record<number, number> = {
  * @returns Experience calculation result
  */
 export function calculateArenaExp(params: ExpCalculationParams): ExpCalculationResult {
-    const { rank, score, gameMode, totalPlayers, completionTime } = params;
+    const { rank, score, gameMode, totalPlayers, completionTime, isFirstClear } = params;
 
     // ✅ If score is 0, no EXP is awarded
     if (score === 0) {
@@ -109,8 +119,14 @@ export function calculateArenaExp(params: ExpCalculationParams): ExpCalculationR
     // 5. Game mode multiplier
     const gameModeMultiplier = GAME_MODE_MULTIPLIERS[gameMode] || 1.0;
 
-    // 6. Calculate total experience
-    const totalExp = Math.floor((baseExp + rankBonus + scoreBonus + timeBonus) * gameModeMultiplier);
+    // 6. Calculate base total experience
+    let totalExp = Math.floor((baseExp + rankBonus + scoreBonus + timeBonus) * gameModeMultiplier);
+
+    // 7. ✅ 재클리어 시 난이도별 감소 배율 적용
+    if (!isFirstClear) {
+        const reclearMultiplier = RECLEAR_MULTIPLIERS[gameMode] || 0.3;
+        totalExp = Math.floor(totalExp * reclearMultiplier);
+    }
 
     return {
         baseExp,
@@ -174,12 +190,12 @@ export async function assignArenaExp(
 
 /**
  * Assign arena experience to multiple users in batch
- * @param results Array containing rank, score, completionTime, and user ID for each user
+ * @param results Array containing rank, score, completionTime, isFirstClear, and user ID for each user
  * @param gameMode Game mode
  * @returns Update results for each user
  */
 export async function assignBatchArenaExp(
-    results: Array<{ userId: string; rank: number; score: number; completionTime?: number }>,
+    results: Array<{ userId: string; rank: number; score: number; completionTime?: number; isFirstClear: boolean }>,
     gameMode: GameMode
 ): Promise<Array<{
     userId: string;
@@ -199,7 +215,8 @@ export async function assignBatchArenaExp(
                 score: result.score,
                 gameMode,
                 totalPlayers,
-                completionTime: result.completionTime
+                completionTime: result.completionTime,
+                isFirstClear: result.isFirstClear
             });
 
             updateResults.push({

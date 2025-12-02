@@ -465,13 +465,23 @@ async function finalizeArena(arenaId: string, io: Server) {
 
       console.log(`🏆 [finalizeArena] Qualified for EXP: ${qualifiedProgress.length}/${uniqueProgress.length} players`);
 
-      // 순위별로 경험치 계산할 데이터 준비 (점수가 있는 플레이어만)
-      const expData = qualifiedProgress.map((progress, index) => ({
-        userId: progress.user.toString(),
-        rank: index + 1,
-        score: progress.score || 0,
-        completionTime: progress.completionTime || undefined
-      }));
+      // 각 플레이어의 첫 클리어 여부 확인 및 경험치 데이터 준비
+      console.log(`🔍 [finalizeArena] Checking first clear for EXP - scenarioId: ${arena.scenarioId}, arenaId: ${arenaId}`);
+      const expData = await Promise.all(
+        qualifiedProgress.map(async (progress, index) => {
+          const userId = progress.user.toString();
+          const isFirstClear = await isFirstScenarioCompletion(userId, arena.scenarioId.toString(), arenaId);
+          console.log(`   🔍 [EXP] User ${userId}: isFirstClear = ${isFirstClear}`);
+
+          return {
+            userId,
+            rank: index + 1,
+            score: progress.score || 0,
+            completionTime: progress.completionTime || undefined,
+            isFirstClear
+          };
+        })
+      );
 
       // GameMode 변환
       const gameMode = convertArenaModeToGameMode(arena.mode);
@@ -490,7 +500,8 @@ async function finalizeArena(arenaId: string, io: Server) {
           }
         );
 
-        console.log(`   ✅ User ${result.userId}: Rank ${expData.find(d => d.userId === result.userId)?.rank} → +${result.expResult.totalExp} EXP (Level ${result.previousLevel} → ${result.newLevel}${result.leveledUp ? ' 🎉 LEVEL UP!' : ''})`);
+        const userData = expData.find(d => d.userId === result.userId);
+        console.log(`   ✅ User ${result.userId}: Rank ${userData?.rank} → +${result.expResult.totalExp} EXP (Level ${result.previousLevel} → ${result.newLevel}${result.leveledUp ? ' 🎉 LEVEL UP!' : ''}${!userData?.isFirstClear ? ' [재클리어]' : ''})`);
       }
 
       console.log('✨ [finalizeArena] Experience assignment completed\n');
