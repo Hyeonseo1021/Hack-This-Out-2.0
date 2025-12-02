@@ -227,14 +227,23 @@ export async function checkAndEndIfAllCompleted(arenaId: string, io: Server) {
 
     // ✅ 모든 참가자가 완료했는지 확인
     const allCompleted = await checkAllParticipantsCompleted(arenaId);
-    
+
     if (allCompleted) {
       console.log('🎉 All participants completed! Ending arena immediately.');
-      
+
+      // ✅ 모든 플레이어에게 완료 알림 전송
+      io.to(arenaId).emit('arena:all-completed', {
+        message: {
+          ko: '모든 플레이어가 완료했습니다! 결과 페이지로 이동합니다...',
+          en: 'All players completed! Redirecting to results...'
+        }
+      });
+
       // 유예 타이머 취소하고 즉시 종료
       clearTimeout(graceTimers.get(arenaId)!);
       graceTimers.delete(arenaId);
-      
+      graceInfo.delete(arenaId);
+
       await finalizeArena(arenaId, io);
     } else {
       console.log('⏳ Not all participants completed yet, waiting...');
