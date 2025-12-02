@@ -1,5 +1,5 @@
 /* * BattlePage.scss - Unstable Data Stream Theme (v4 - Star Removed)
- */
+ */
 @use "../style" as *;
 
 // --- 테마 변수 ---
@@ -8,7 +8,7 @@
   --glow-color-rgb: 49, 232, 238;
   --glitch-color-1: #ff00c1;
   --glitch-color-2: #00e1ff;
-  --background-color: #01020a;
+  --background-color: #080808;
   --border-color: rgba(0, 225, 255, 0.5);
   --text-color: #e0e0e0;
 }
@@ -16,14 +16,19 @@
 // --- 전체 컨테이너 ---
 .battle-cyber-container {
   @include background_set;
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
   position: relative;
   backdrop-filter: blur(40px);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 16px;
   overflow: hidden;
-  /* 유성 효과를 위한 ::before 블록이 여기서 삭제되었습니다. */
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 // --- 동적 배경 그리드 ---
@@ -42,19 +47,20 @@
 .battle-mode-module {
   position: relative;
   text-align: center;
-  padding: 2rem;
+  padding: 1.5rem;
   width: clamp(300px, 90vw, 900px);
-  transform: translateY(60%);
 }
 
 // --- 글리치 타이틀 ---
 .battle-title {
   position: relative;
-  font-size: clamp(3rem, 10vw, 6rem);
+  font-size: clamp(3rem, 10vw, 7rem);
   font-weight: 700;
   color: var(--text-color);
   text-transform: uppercase;
-  margin: 0 0 4rem 0;
+  margin: 0 0 3rem 0;
+  letter-spacing: 0.5rem;
+  font-family: var(--font-display);
   animation: text-flicker 4s linear infinite;
 
   &::before, &::after {
@@ -84,11 +90,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5rem;
-  
+  gap: 2.5rem;
+
   @media(min-width: 768px) {
     flex-direction: row;
     justify-content: center;
+    gap: 3rem;
   }
 }
 
@@ -102,6 +109,7 @@
   text-decoration: none;
   text-transform: uppercase;
   font-size: 2rem;
+  font-family: var(--font-display);
   border: 1px solid var(--border-color);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
   transition: all 0.3s ease;
@@ -136,9 +144,10 @@
 }
 
 .cyber-footer-text {
-  margin-top: 4rem;
+  margin-top: 2.5rem;
   color: var(--border-color);
   opacity: 0.7;
+  font-family: var(--font-terminal);
 }
 
 // --- 애니메이션 키프레임 ---
@@ -174,5 +183,3 @@
   75% { clip-path: inset(85% 0 10% 0); }
   100% { clip-path: none; transform: translateY(0); }
 }
-
-/* @keyframes shooting-star 부분이 여기서 삭제되었습니다. */

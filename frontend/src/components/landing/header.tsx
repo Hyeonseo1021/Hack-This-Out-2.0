@@ -6,6 +6,7 @@ type HeaderProps = {
   data: {
     title: string;
     paragraph: string;
+    goToApp: string;
   };
 };
 
@@ -23,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({ data }) => {
                     <p key={i}>{line}</p>
                   ))}
                   <a href="/login" className="btn-custom btn btn-lg page-scroll">
-                     Go to App <FaArrowRight fontSize={20} style={{ marginLeft: '8px', }} />
+                     {data.goToApp} <FaArrowRight fontSize={20} style={{ marginLeft: '8px', }} />
                   </a>
                 </div>
               </div>

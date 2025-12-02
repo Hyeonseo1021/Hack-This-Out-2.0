@@ -1,116 +1,170 @@
 @use "../style" as *;
-* {
-    &::-webkit-scrollbar {
-        display: none; // Chrome, Safari, Opera
-    }
-    scrollbar-width: none; // Firefox
-    -ms-overflow-style: none; // IE, Edge
-}
+
+/* ============================
+   전체 컨테이너
+============================ */
 .machine-detail-container-page {
-    @include background_set;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    backdrop-filter: blur(40px);
-    overflow-y: scroll;
-    padding: clamp(4px, 1vw, 16px);
-    gap: clamp(4px, 1vw, 16px);
+  @include background_set;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(40px);
+  overflow-y: scroll;
+  padding: clamp(4px, 1vw, 16px);
+  gap: clamp(12px, 1vw, 20px);
+  background: radial-gradient(circle at 20% 20%, #02010a, #000);
+  position: relative;
+  width: 100%;
+  height: 100%;
 
-    .machine-detail-page {
-        width: 100%;
-        min-height: 40%;
-        padding: clamp(8px, 2vw, 16px);
-        position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 225, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 225, 255, 0.5) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.1;
+    animation: grid-pan 10s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
 
-        .detail {
-            width: 100%;
-            height: 100%;
-        }
+  .machine-detail-page {
+    width: 100%;
+    min-height: fit-content !important;
+    height: auto !important;
+    padding: clamp(16px, 2vw, 20px);
+    position: relative;
+    z-index: 1;
 
-        .play-button {
-            position: absolute;
-            right: clamp(24px, 5vw, 83px);
-            top: clamp(190px, 15vh, 250px);
-            font-weight: 600;
-            width: clamp(100px, 15vw, 140px);
-            height: clamp(36px, 6vh, 48px);
-            box-shadow: 0px 2px 4px rgba(44, 39, 56, 0.08), 0px 4px 8px rgba(44, 39, 56, 0.08);
-            border-radius: 6px;
-            background: var(--color-layout);
-            color: var(--color-white);
-            font-size: clamp(14px, 2vw, 16px);
-            transition: all 0.3s ease-in-out;
-            cursor: pointer;
-            border: 2px solid transparent;
-            @media (max-width: 768px) {
-                position: relative;
-                right: auto;
-                top: auto;
-                margin: 16px auto;
-                display: block;
-            }
-
-            &:hover {
-                background: var(--blue-400);
-                border: 2px solid transparent;
-                transform: translateY(-2px);
-                filter: drop-shadow(0 0 10px var(--blue-500));
-            }
-        }
+    .detail {
+      width: 100%;
+      height: 100%;
     }
 
-    .machine-detail-page-review {
-        width: 100%;
-        height: auto;
-        min-height: 510px;
-        padding: 0 clamp(4px, 1vw, 8px) clamp(4px, 1vw, 8px);
+    /* ==========================================
+       🔥 Play 버튼 = Reward 박스와 동일한 네온 박스
+       ========================================== */
+    .play-button {
+      position: absolute;
+      right: clamp(24px, 4vw, 70px);
+      top: clamp(210px, 16vh, 260px);
+      z-index: 9999;
 
-        .machine-review {
-            height: 100%;
-            position: relative;
-            backdrop-filter: blur(40px);
-            border-radius: clamp(16px, 3vw, 24px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: clamp(12px, 2vw, 16px);
-            padding: clamp(16px, 3vw, 24px);
-            color: var(--color-white);
+      width: clamp(140px, 15vw, 180px);
+      height: clamp(60px, 8vh, 77px);
 
-            .machine-detail-page-new-review {
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-                h3 {
-                    font-size: clamp(24px, 4vw, 35px);
-                    font-weight: 600;
-                    color: var(--color-white);
-                    margin: 0;
-                }
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--mint);
+      cursor: pointer;
 
-                button {
-                    background-color: var(--color-layout);
-                    color: white;
-                    border: 2px solid var(--color-white);
-                    border-radius: 20px;
-                    padding: clamp(8px, 1.5vw, 12px) clamp(16px, 2.5vw, 24px);
-                    font-weight: bold;
-                    font-size: clamp(14px, 2vw, 16px);
-                    cursor: pointer;
-                    transition: all 0.3s ease-in-out;
+      /* Reward 박스 동일 스타일 */
+      background: rgba(10, 30, 40, 0.5);
+      border: 1.5px solid rgba(139, 243, 255, 0.3);
+      border-radius: 8px;
+      text-shadow: 0 0 10px var(--mint-glow);
 
-                    &:hover {
-                        background-color: var(--blue-400);
-                        border: 2px solid transparent;
-                        filter: drop-shadow(0 0 10px var(--blue-500));
-                        transform: translateY(-2px);
-                    }
-                }
-            }
-        }
+      box-shadow: 
+        0 0 16px rgba(139, 243, 255, 0.25),
+        inset 0 0 12px rgba(139, 243, 255, 0.25);
+
+      /* 항상 네온 효과 유지 */
+      animation: mintPulse 3s infinite ease-in-out;
+
+      transition: 0.25s ease-in-out;
     }
+
+    .play-button:hover {
+      box-shadow: 
+        0 0 25px var(--mint),
+        inset 0 0 20px var(--mint);
+      transform: translateY(-2px);
+    }
+  }
+
+  /* ============================
+     Review 패널
+  ============================ */
+  .machine-detail-page-review {
+    width: 100%;
+    min-height: 510px;
+    padding: 0 clamp(4px, 1vw, 8px) clamp(4px, 1vw, 12px);
+    position: relative;
+    z-index: 1;
+
+    .machine-review {
+      height: 100%;
+      backdrop-filter: blur(40px);
+      border-radius: clamp(16px, 3vw, 24px);
+      padding: clamp(20px, 3vw, 28px);
+
+      border: 1px solid rgba(139, 243, 255, 0.3);
+      background: rgba(0, 10, 15, 0.55);
+      box-shadow: 0 0 24px rgba(139, 243, 255, 0.12);
+
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 2vw, 20px);
+      align-items: center;
+      color: var(--white);
+
+      .machine-detail-page-new-review {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+
+        h3 {
+          color: var(--mint);
+          text-shadow: 0 0 8px rgba(139, 243, 255, 0.4);
+          font-size: clamp(24px, 4vw, 35px);
+          font-weight: 700;
+        }
+
+        button {
+          background-color: rgba(0, 255, 255, 0.08);
+          color: white;
+          border: 1px solid rgba(139, 243, 255, 0.4);
+          border-radius: 12px;
+          padding: clamp(8px, 1.5vw, 14px) clamp(16px, 2.2vw, 26px);
+          font-weight: bold;
+          cursor: pointer;
+          transition: 0.25s;
+
+          &:hover {
+            background-color: rgba(139, 243, 255, 0.2);
+            box-shadow: 0 0 16px rgba(139, 243, 255, 0.45);
+            transform: translateY(-2px);
+          }
+        }
+      }
+    }
+  }
+}
+
+/* 공통 네온 애니메이션 */
+@keyframes mintPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 14px var(--mint),
+      inset 0 0 8px rgba(139, 243, 255, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 26px var(--mint),
+      inset 0 0 14px rgba(139, 243, 255, 0.4);
+  }
+}
+
+@keyframes grid-pan {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
 }

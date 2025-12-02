@@ -78,6 +78,9 @@ export const createMachine = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    // 힌트 비용 중 하나라도 0보다 크면 힌트권 필요
+    const requiresHintItem = hintCostsArray.some((cost: number) => cost > 0);
+
     const newMachine = new Machine({
       name,
       category,
@@ -88,6 +91,11 @@ export const createMachine = async (req: Request, res: Response): Promise<void> 
       flag: hashedFlag,
       isActive: false,
       forArena: forArena || false,
+      // 힌트 설정 (비용이 있으면 힌트권 필요)
+      hintSettings: {
+        requiresItem: requiresHintItem,
+        description: requiresHintItem ? '힌트권이 필요합니다.' : '힌트를 무료로 사용할 수 있습니다.'
+      },
       // 새로 추가된 필드들
       difficulty: {
         creatorLevel: difficulty.creatorLevel,
@@ -231,24 +239,24 @@ export const getActiveMachineDetailsById = async (req: Request, res: Response): 
 export const getActiveMachines = async (req: Request, res: Response): Promise<void> => {
   try {
     const machines = await Machine.find({ isActive: true }).sort({ playerCount: -1 })
-    .select('-hints -flag -__v -reviews -createdAt -updatedAt -isActive -description -exp -amiId');
+    .select('-hints -flag -__v -createdAt -updatedAt -isActive -exp -amiId');
     if (machines.length === 0) {
-      res.status(200).json({ 
-        message: "OK", 
-        msg: 'No active machines found.', 
-        machines: [] 
+      res.status(200).json({
+        message: "OK",
+        msg: 'No active machines found.',
+        machines: []
       });
       return;
-    }      
+    }
     // Update average rating for each machine
     const machineReviews = await Machine.find({ isActive: true }).select('reviews');
     await machineReviews.forEach(async (machine) => {
       await (machine as any).updateRating();
     });
-    res.status(200).json({ 
-      message: "OK", 
-      msg: 'Active machines fetched successfully.', 
-      machines: machines 
+    res.status(200).json({
+      message: "OK",
+      msg: 'Active machines fetched successfully.',
+      machines: machines
     });
   } catch (error: any) {
     console.error('Error fetching active machines:', error);
@@ -373,7 +381,15 @@ export const updateMachineDetails = async (req: Request, res: Response): Promise
       const hashedFlag = await bcrypt.hash(flag, saltRounds);
       machine.flag = hashedFlag;
     } // Update flag if provided
-    if (hints) machine.hints = hints.map((hint: string, index: number) => ({ content: hint, cost: hintCosts[index] }));
+    if (hints) {
+      machine.hints = hints.map((hint: string, index: number) => ({ content: hint, cost: hintCosts[index] }));
+      // 힌트 비용 업데이트 시 requiresItem도 자동 업데이트
+      const requiresHintItem = hintCosts.some((cost: number) => cost > 0);
+      machine.hintSettings = {
+        requiresItem: requiresHintItem,
+        description: requiresHintItem ? '힌트권이 필요합니다.' : '힌트를 무료로 사용할 수 있습니다.'
+      };
+    }
     if (forArena !== undefined) machine.forArena = forArena;
 
     await machine.save();
@@ -1161,10 +1177,10 @@ export const getMostPlayedMachine = async (req: Request, res: Response): Promise
         const mostPlayedMachine = await Machine.findOne({ isActive: true })
         .sort({ playerCount: -1 })
         .select('-__v -updatedAt -description -reviews -hints -amiId -flag');
-        res.status(200).json({ 
-            message: "OK", 
-            msg: 'Most played machine fetched successfully.', 
-            machine: mostPlayedMachine 
+        res.status(200).json({
+            message: "OK",
+            msg: 'Most played machine fetched successfully.',
+            machine: mostPlayedMachine
         });
     } catch (error) {
         console.error('Error fetching most played machine:', error);

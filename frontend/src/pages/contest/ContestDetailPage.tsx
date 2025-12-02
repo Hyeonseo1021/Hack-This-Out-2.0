@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, NavigateFunction } from 'react-router-dom';
-import ContestDetail from '../../components/contest/ContestDetail';
-import Main from '../../components/main/Main';
-import { getContestDetails, getContestStatus, getLeaderboardByContest, getMyRankinContest } from '../../api/axiosContest';
-import { ContestDetail as ContestDetailType } from '../../types/Contest';
-import { CurrentUser } from '../../types/CurrentUser';
-import ContestLeaderboard from '../../components/leaderboard/ContestLeaderboard';
-import { User } from '../../types/User';
-import { ContestStatus } from '../../types/Contest';
-import styles from '../../assets/scss/contest/ContestDetailPage.module.scss';
-import Loading from '../../components/public/Loading';
-import ContestEndedMD from '../../components/modal/ContestEndedMD';
-import ContestPendingMD from '../../components/modal/ContestPendingMD';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Main from "../../components/main/Main";
 
-/**
- * Component representing the Contest Detail Page.
- * 
- * @returns {JSX.Element} The rendered ContestDetailPage component.
- */
+import {
+  getContestDetails,
+  getContestStatus,
+  getLeaderboardByContest,
+  getMyRankinContest,
+} from "../../api/axiosContest";
+
+import ContestDetail from "../../components/contest/ContestDetail";
+import ContestLeaderboard from "../../components/leaderboard/ContestLeaderboard";
+
+import { ContestDetail as ContestDetailType } from "../../types/Contest";
+import { CurrentUser } from "../../types/CurrentUser";
+import { ContestStatus } from "../../types/Contest";
+import { User } from "../../types/User";
+
+import styles from "../../assets/scss/contest/ContestDetailPage.module.scss";
+import Loading from "../../components/public/Loading";
+import ContestEndedMD from "../../components/modal/ContestEndedMD";
+import ContestPendingMD from "../../components/modal/ContestPendingMD";
+
 const ContestDetailPage: React.FC = () => {
+  const { contestId } = useParams<{ contestId: string }>();
+  const navigate = useNavigate();
+
   const [contestDetail, setContestDetail] = useState<ContestDetailType | null>(null);
   const [leaderboard, setLeaderboard] = useState<User[]>([]);
   const [contestStatus, setContestStatus] = useState<ContestStatus>({
@@ -26,6 +33,7 @@ const ContestDetailPage: React.FC = () => {
     isStarted: false,
     isEnded: false,
   });
+
   const [currentUser, setCurrentUser] = useState<CurrentUser>({
     _id: null,
     myRank: null,
@@ -34,169 +42,151 @@ const ContestDetailPage: React.FC = () => {
     myUsername: null,
     myAvatar: null,
   });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { contestId } = useParams<{ contestId: string }>();
-  const navigate: NavigateFunction = useNavigate();
 
-  // State to manage ContestEndedMD modal visibility
-  const [showEndedMD, setShowEndedMD] = useState<boolean>(false);
-  const [showPendingMD, setShowPendingMD] = useState<boolean>(false);
+  const [showEndedMD, setShowEndedMD] = useState(false);
+  const [showPendingMD, setShowPendingMD] = useState(false);
 
-  /**
-   * Fetches the contest details from the API.
-   */
+  /* ----------------------------------
+     FETCH DETAIL
+  ---------------------------------- */
   useEffect(() => {
-    const fetchContestDetail = async () => {
-      if (!contestId) {
-        setError('Contest ID is missing.');
-        setIsLoading(false);
-        return;
-      }
-
+    const fetchDetail = async () => {
+      if (!contestId) return;
       try {
-        const response = await getContestDetails(contestId);
-        const fetchedContest = response.contest;
+        const data = await getContestDetails(contestId);
+        const c = data.contest;
 
-        // **Parse `startTime` and `endTime` as Date objects**
-        const parsedContest: ContestDetailType = {
-          ...fetchedContest,
-          startTime: new Date(fetchedContest.startTime),
-          endTime: new Date(fetchedContest.endTime),
-        };
-
-        setContestDetail(parsedContest);
-      } catch (error: any) {
-        console.error('Error fetching contest details:', error.message || error);
-        setError('Failed to fetch contest details.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchContestDetail();
-  }, [contestId]);
-
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getLeaderboardByContest(contestId || '');
-        setLeaderboard(response.users);
-      } catch (error: any) {
-        console.error('Error fetching leaderboard:', error.message || error);
-        setError('Failed to fetch leaderboard.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchLeaderboard();
-  }, [contestId]);
-
-  useEffect(() => {
-    const fetchMyRank = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getMyRankinContest(contestId || '');
-        setCurrentUser({
-          _id: response.user._id,
-          myRank: response.myRank,
-          myLevel: response.user.level,
-          myExp: response.expEarned,
-          myUsername: response.user.username,
-          myAvatar: response.user.avatar,
+        setContestDetail({
+          ...c,
+          startTime: new Date(c.startTime),
+          endTime: new Date(c.endTime),
         });
-      } catch (error: any) {
-        console.error('Error fetching current user:', error.message || error);
-        setError('Failed to fetch current user.');
+      } catch {
+        setError("Failed to load contest details.");
       } finally {
         setIsLoading(false);
       }
     };
-    fetchMyRank();
+
+    fetchDetail();
   }, [contestId]);
 
+  /* ----------------------------------
+     FETCH LEADERBOARD
+  ---------------------------------- */
   useEffect(() => {
-    const fetchContestStatus = async () => {
+    if (!contestId) return;
+    const loadLeaderboard = async () => {
       try {
-        const contestStatus = await getContestStatus(contestId || '');
-        setContestStatus(contestStatus);
-      } catch (error: any) {
-        console.error('Error fetching contest status:', error.message || error);
-        setError('Failed to fetch contest status.');
+        const result = await getLeaderboardByContest(contestId);
+        setLeaderboard(result.users);
+      } catch {
+        setError("Failed to load leaderboard.");
       }
     };
-    fetchContestStatus();
+    loadLeaderboard();
   }, [contestId]);
 
-  /**
-   * Handles navigation to the participate page or displays appropriate modal.
-   */
-  const handlePlay = () => {
+  /* ----------------------------------
+     FETCH USER RANK
+  ---------------------------------- */
+  useEffect(() => {
+    if (!contestId) return;
+
+    const loadRank = async () => {
+      try {
+        const res = await getMyRankinContest(contestId);
+        setCurrentUser({
+          _id: res.user._id,
+          myRank: res.myRank,
+          myLevel: res.user.level,
+          myExp: res.expEarned,
+          myUsername: res.user.username,
+          myAvatar: res.user.avatar,
+        });
+      } catch {
+        setError("Failed to load user rank.");
+      }
+    };
+    loadRank();
+  }, [contestId]);
+
+  /* ----------------------------------
+     FETCH STATUS
+  ---------------------------------- */
+  useEffect(() => {
+    if (!contestId) return;
+
+    const loadStatus = async () => {
+      try {
+        const status = await getContestStatus(contestId);
+        setContestStatus(status);
+      } catch {
+        setError("Failed to load contest status.");
+      }
+    };
+    loadStatus();
+  }, [contestId]);
+
+  /* ----------------------------------
+     JOIN BUTTON
+  ---------------------------------- */
+  const handleJoin = () => {
     if (!contestDetail) return;
 
-    const { isActive, startTime, endTime, _id } = contestDetail;
-
     const now = Date.now();
+    const start = new Date(contestDetail.startTime).getTime();
+    const end = new Date(contestDetail.endTime).getTime();
 
-    const isContestStarted =
-      isActive &&
-      new Date(startTime).getTime() <= now &&
-      new Date(endTime).getTime() >= now;
-
-    const isContestEnded =
-      isActive &&
-      new Date(endTime).getTime() < now;
-
-    if (isContestStarted) {
-      navigate(`/contest/${_id}/pre`);
-    } else if (isContestEnded) {
-      setShowEndedMD(true); // Show the ContestEndedMD modal
+    if (now >= start && now <= end) {
+      navigate(`/contest/${contestDetail._id}/pre`);
+    } else if (now > end) {
+      setShowEndedMD(true);
     } else {
-      setShowPendingMD(true); // Show the ContestPendingMD modal
+      setShowPendingMD(true);
     }
   };
 
-  if (isLoading) {
+  /* ----------------------------------
+     LOADING / ERROR
+  ---------------------------------- */
+  if (isLoading) return <Loading />;
+  if (error || !contestDetail)
     return (
-      <div className="contest-detail-page loading">
-        <Loading />
-      </div>
-    );
-  }
-
-  if (error || !contestDetail) {
-    return (
-      <Main title="Contest Detail" description="Failed to load contest details.">
-        <div className="contest-detail-page error">
-          <p className="error-message">{error || 'Contest not found.'}</p>
-        </div>
+      <Main title="Contest Detail">
+        <p className={styles.error_message}>{error || "Contest Not Found"}</p>
       </Main>
     );
-  }
 
+  /* ----------------------------------
+     RENDER
+  ---------------------------------- */
   return (
-    <Main title="Contest Detail" description="Contest Detail 화면입니다.">
-      <div className={styles.contest_detail_container}>
-        <div className={styles.contest_detail_page}>
-          <div className={styles.detail}>
-            <ContestDetail contestDetail={contestDetail} />
-          </div>
-          <button onClick={handlePlay} className={styles.participate_button}>
-            Join
+    <Main title="Contest Detail">
+      <div className={styles.page_wrapper}>
+
+        <div className={styles.top_box}>
+          <ContestDetail contestDetail={contestDetail} />
+
+          <button className={styles.join_button} onClick={handleJoin}>
+            JOIN
           </button>
         </div>
+
         {contestStatus.isActive && contestStatus.isStarted && (
-          <ContestLeaderboard
-            leaderboard={leaderboard}
-            currentUser={currentUser}
-          />
+          <div className={styles.leaderboard_box}>
+            <ContestLeaderboard
+              leaderboard={leaderboard}
+              currentUser={currentUser}
+            />
+          </div>
         )}
       </div>
 
-      {/* Render the ContestEndedMD modal when showEndedMD is true */}
       {showEndedMD && <ContestEndedMD onClose={() => setShowEndedMD(false)} />}
-      {/* Render the ContestPendingMD modal when showPendingMD is true */}
       {showPendingMD && <ContestPendingMD onClose={() => setShowPendingMD(false)} />}
     </Main>
   );

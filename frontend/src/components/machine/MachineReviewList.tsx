@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getMachineReviews } from '../../api/axiosMachine';
 import '../../assets/scss/machine/MachineReviewList.scss';
 import Rating from '@mui/material/Rating';
 import Box from '@mui/material/Box';
 import { Review } from '../../types/Machine';
-import '../../assets/scss/machine/MachineReviewList.scss';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
 
@@ -13,6 +13,7 @@ interface MachineReviewListProps {
 }
 
 const MachineReviewList: React.FC<MachineReviewListProps> = ({ machineId }) => {
+  const { t } = useTranslation('machine');
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +21,7 @@ const MachineReviewList: React.FC<MachineReviewListProps> = ({ machineId }) => {
   useEffect(() => {
     const fetchReviews = async () => {
       if (!machineId) {
-        setError('Machine ID is missing.');
+        setError(t('details.missingId'));
         setLoading(false);
         return;
       }
@@ -34,7 +35,7 @@ const MachineReviewList: React.FC<MachineReviewListProps> = ({ machineId }) => {
       }
     };
     fetchReviews();
-  }, [machineId]);
+  }, [machineId, t]);
 
   if (loading) {
     return <LoadingIcon />;
@@ -51,16 +52,16 @@ const MachineReviewList: React.FC<MachineReviewListProps> = ({ machineId }) => {
           {reviews.length === 0 ? (
             <tbody>
               <tr>
-                <td colSpan={3} className='no-data'>No reviews available.</td>
+                <td colSpan={3} className='no-data'>{t('review.noReviewsShort')}</td>
               </tr>
             </tbody>
           ) : (
             <>
               <thead>
                 <tr>
-                  <th className='machine-review-username'>User</th>
-                  <th className='machine-review-rating'>Rating</th>
-                  <th className='machine-review-comment'>Comment</th>
+                  <th className='machine-review-username'>{t('review.user')}</th>
+                  <th className='machine-review-rating'>{t('review.rating')}</th>
+                  <th className='machine-review-comment'>{t('review.comment')}</th>
                 </tr>
               </thead>
               <tbody>

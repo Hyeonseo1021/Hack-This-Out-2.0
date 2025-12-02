@@ -1,0 +1,139 @@
+/* === 전체 컨테이너 === */
+.roulette-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  padding-top: 20px;
+  padding-bottom: 40px;
+  font-family: var(--font-display);
+
+  /* ⭐ ShopPage 레이아웃 침범 방지 */
+  position: relative;
+}
+
+/* === 룰렛 + 정보 패널 묶음 === */
+.roulette-main-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 60px;
+
+  width: 100%;
+  max-width: 900px;
+
+  /* ⭐ 고정 height 제거 → 인벤토리 깨짐 방지 */
+}
+
+/* === 룰렛 박스 === */
+.roulette-wheel-box {
+  width: 300px;
+  height: 300px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  position: relative;
+}
+
+/* 포인터 */
+.roulette-pointer {
+  position: absolute;
+  top: -28px;
+  font-size: 24px;
+  color: #fff;
+  z-index: 5;
+}
+
+/* 룰렛 원판 */
+.roulette-wheel {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 4px solid #00f6ff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 섹션 */
+.roulette-segment {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  left: 50%;
+  top: 50%;
+  transform-origin: 0% 0%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 이미지 */
+.roulette-item-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.7));
+}
+
+/* === 정보 패널 (오른쪽) === */
+.roulette-info {
+  width: 260px;
+  text-align: center;
+  color: #fff;
+
+  /* ⭐ absolute 제거 → 인벤토리 레이아웃 정상화 */
+}
+
+/* 제목 */
+.roulette-title {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+}
+
+/* 설명 */
+.roulette-sub {
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+}
+
+/* 결과 박스 */
+.roulette-result-box {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #00f6ff88;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* === START 버튼 === */
+.roulette-button {
+  margin-top: 40px;
+  padding: 12px 36px;
+  background: #00f6ff;
+  color: #000;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  font-family: var(--font-display);
+  transition: 0.2s;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px #00f6ff;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}

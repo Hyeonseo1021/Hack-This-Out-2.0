@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/contest/ContestList.tsx
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getActiveContests } from '../../api/axiosContest';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../../utils/dateUtils';
 
 import styles from '../../assets/scss/contest/ContestList.module.scss';
-import { Avatar, Box } from '@mui/material';
+import { Avatar } from '@mui/material';
 import { avatarBackgroundColors, getAvatarColorIndex } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import { IoMdArrowRoundForward } from 'react-icons/io';
@@ -26,11 +28,14 @@ interface ContestsResponse {
 }
 
 const ContestList: React.FC = () => {
+  const { t } = useTranslation('contest');
   const [ongoingContests, setOngoingContests] = useState<Contest[]>([]);
   const [notStartedContests, setNotStartedContests] = useState<Contest[]>([]);
   const [endedContests, setEndedContests] = useState<Contest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'ongoing' | 'notStarted' | 'ended'>('ongoing');
+  const [activeTab, setActiveTab] =
+    useState<'ongoing' | 'notStarted' | 'ended'>('ongoing');
+
   const navigate = useNavigate();
 
   const fetchContests = async () => {
@@ -54,122 +59,81 @@ const ContestList: React.FC = () => {
     navigate(`/contest/${contestId}`);
   };
 
-  const renderContests = () => {
-    let contestsToDisplay: Contest[] = [];
-
-    if (activeTab === 'ongoing') {
-      contestsToDisplay = ongoingContests;
-    } else if (activeTab === 'notStarted') {
-      contestsToDisplay = notStartedContests;
-    } else if (activeTab === 'ended') {
-      contestsToDisplay = endedContests;
-    }
-
-    if (contestsToDisplay.length === 0) {
-      return (
-        <tbody>
-          <tr>
-            {/* <td colSpan={6} className={styles.no_data}>No contests available.</td> */}
-          </tr>
-        </tbody>
-      );
-    }
-
-    if (loading) {
-      return <LoadingIcon />;
-    }
-
-    return (
-      <tbody>
-        {contestsToDisplay.map((contest) =>
-        (
-          <tr className={styles.contest_box} key={contest._id}>
-            <td className={styles.contest_name}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 16px)', width: '100%' }}>
-                <Avatar
-                  variant="rounded"
-                  sx={{
-                    backgroundColor: avatarBackgroundColors[getAvatarColorIndex(contest.name)],
-                    width: 'clamp(32px, 5vw, 40px)',
-                    height: 'clamp(32px, 5vw, 40px)',
-                    fontSize: 'clamp(14px, 2vw, 16px)',
-                  }}
-                >
-                  {contest.name.charAt(0).toUpperCase()}
-                </Avatar>
-                <span>{contest.name.charAt(0).toUpperCase() + contest.name.slice(1)}</span>
-              </Box>
-            </td>
-            <td className={styles.contest_start_time}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                {formatDate(contest.startTime)}
-              </Box>
-            </td>
-            <td className={styles.contest_end_time}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                {formatDate(contest.endTime)}
-              </Box>
-            </td>
-            <td className={styles.contest_reward}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                {contest.contestExp}
-              </Box>
-            </td>
-            <td className={styles.contest_details}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                <button className={styles.details_button} onClick={() => handleContestClick(contest._id)}>
-                  <IoMdArrowRoundForward size={'clamp(20px, 2.5vw, 24px)'} color="white" />
-                </button>
-              </Box>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    );
+  const getList = () => {
+    if (activeTab === 'ongoing') return ongoingContests;
+    if (activeTab === 'notStarted') return notStartedContests;
+    return endedContests;
   };
 
-  if (loading) {
-    return <LoadingIcon />;
-  }
+  const list = getList();
 
   return (
     <div className={styles.contest_list_container}>
-      <div className={styles.contest_list_title}>Contests</div>
+      <h2 className={styles.contest_title}>{t('title')}</h2>
+
+          {/* 탭 */}
       <div className={styles.tabs}>
-        <button
-          className={`${styles.tab_button} ${activeTab === 'ongoing' ? styles.active : ''}`}
-          onClick={() => setActiveTab('ongoing')}
-        >
-          <p>Ongoing</p>
-        </button>
-        <button
-          className={`${styles.tab_button} ${activeTab === 'notStarted' ? styles.active : ''}`}
-          onClick={() => setActiveTab('notStarted')}
-        >
-          <p>Not Started</p>
-        </button>
-        <button
-          className={`${styles.tab_button} ${activeTab === 'ended' ? styles.active : ''}`}
-          onClick={() => setActiveTab('ended')}
-        >
-          <p>Ended</p>
-        </button>
+        {['ongoing', 'notStarted', 'ended'].map((tab) => (
+          <button
+            key={tab}
+            className={`${styles.tab_button} ${
+              activeTab === tab ? styles.active : ''
+            }`}
+            onClick={() => setActiveTab(tab as any)}
+          >
+            {tab === 'ongoing' && t('ongoing')}
+            {tab === 'notStarted' && t('notStarted')}
+            {tab === 'ended' && t('ended')}
+          </button>
+        ))}
       </div>
-      <table className={styles.contest_list_table}>
-        <thead>
-          <tr className={styles.table_text_box}>
-            <th className={styles.table_name}>Name</th>
-            <th className={styles.table_start_time}>Start Time</th>
-            <th className={styles.table_end_time}>End Time</th>
-            <th className={styles.table_reward}>Reward</th>
-            <th className={styles.table_details}>Details</th>
-          </tr>
-        </thead>
-        {renderContests()}
-      </table>
+
+      {/* 카드 리스트 */}
+      <div className={styles.card_grid}>
+        {loading ? (
+          <LoadingIcon />
+        ) : list.length === 0 ? (
+          <p className={styles.no_contests}>{t('noContests')}</p>
+        ) : (
+          list.map((item) => (
+            <div
+              key={item._id}
+              className={styles.contest_card}
+              onClick={() => handleContestClick(item._id)}
+            >
+              <div className={styles.card_header}>
+                <Avatar
+                  variant="rounded"
+                  sx={{
+                    backgroundColor:
+                      avatarBackgroundColors[getAvatarColorIndex(item.name)],
+                    width: 52,
+                    height: 52,
+                  }}
+                >
+                  {item.name.charAt(0).toUpperCase()}
+                </Avatar>
+
+                <div className={styles.card_title}>
+                  {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                </div>
+
+                <div className={styles.go_icon}>
+                  <IoMdArrowRoundForward />
+                </div>
+              </div>
+
+              <div className={styles.card_info}>
+                <p>📅 {t('start')}: {formatDate(item.startTime)}</p>
+                <p>⏳ {t('end')}: {formatDate(item.endTime)}</p>
+                <p>⭐ {t('reward')}: {item.contestExp} EXP</p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
 
 export default ContestList;
-

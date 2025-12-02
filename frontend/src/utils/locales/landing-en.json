@@ -1,0 +1,74 @@
+{
+  "header": {
+    "title": "HACK THIS OUT",
+    "paragraph": "Web-based Hacking Lab\nImagineer Project 2024, SCNU",
+    "goToApp": "GO TO APP"
+  },
+  "nav": {
+    "features": "FEATURES",
+    "about": "ABOUT",
+    "services": "SERVICES",
+    "team": "TEAM"
+  },
+  "features": {
+    "title": "Features",
+    "userManagement": {
+      "title": "User Management",
+      "text": "User Management system for managing users and their permissions safely."
+    },
+    "virtualEnvironment": {
+      "title": "Virtual Environment",
+      "text": "Secured Network and Virtual environment for web-based Hacking Lab."
+    },
+    "gamingExperience": {
+      "title": "Gaming Experience",
+      "text": "Fun and interesting Gaming experience for practicing hacking and your skills."
+    },
+    "userFriendly": {
+      "title": "User-friendly Interface",
+      "text": "User-friendly interface for easy navigation and usage."
+    }
+  },
+  "about": {
+    "title": "About Us",
+    "paragraph": "Hack This Out is a web-based Hacking Lab.\nWe provide Secure Network and Virtual Environment for your journey to become a hacker or cyber security enthusiast.\nThe journey can be rough and exhausting, so we prepared Gaming experience for you.",
+    "whyChooseUs": "Why Choose Us?",
+    "why": ["Easy to Use", "Play and Compete", "Safe and Secure", "Study and Practice"],
+    "why2": ["User-friendly Interface", "Gaming Experience", "Secure Network", "Virtual Environment"]
+  },
+  "services": {
+    "title": "Services",
+    "frontend": {
+      "name": "Frontend",
+      "text": "Easy to use and Responsive, Interactive Interface using React."
+    },
+    "backend": {
+      "name": "Backend",
+      "text": "Secure and Scalable Backend using Node.js and Express."
+    },
+    "database": {
+      "name": "Database",
+      "text": "Simple and Scalable NoSQL Database using MongoDB."
+    },
+    "virtualMachines": {
+      "name": "Virtual Machines",
+      "text": "Secure and Sustaiable Virtural Machine ecosystem for Hacking Lab using AWS."
+    },
+    "virtualNetwork": {
+      "name": "Virtual Network",
+      "text": "Secured and Quarantined Network for Hacking Lab using OpenVPN."
+    },
+    "cicd": {
+      "name": "CI/CD Pipeline",
+      "text": "Automated CI/CD Pipeline for Hacking Lab using GitHub Actions."
+    }
+  },
+  "team": {
+    "title": "Meet the Team",
+    "subtitle": "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor."
+  },
+  "contact": {
+    "title": "Contact",
+    "getInTouch": "Get in Touch"
+  }
+}

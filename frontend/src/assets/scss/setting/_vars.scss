@@ -1,10 +1,23 @@
 :root {
     /* Font Definitions */
-    --mainfont-noto: 'Noto Sans KR Variable', sans-serif;
-    --mainfont-roboto: 'Roboto', sans-serif;
+    --font-noto: 'Noto Sans KR Variable', sans-serif;
+    --font-roboto: 'Roboto', sans-serif;
+    --font-main: 'Noto Sans KR Variable', 'Roboto', sans-serif;
+
+    /* Display/Heading Fonts (사이버/게임 느낌) */
+    --font-display: 'Orbitron', 'Noto Sans KR Variable', sans-serif;
+    --font-retro: 'VT323', 'Noto Sans KR Variable', monospace;
+    --font-cyber: 'Audiowide', 'Noto Sans KR Variable', sans-serif;
+
+    /* Monospace Fonts (코드/터미널) */
+    --font-mono: 'Source Code Pro', 'Courier New', monospace;
+    --font-terminal: 'Share Tech Mono', monospace;
+
+    /* UI Fonts */
+    --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
     /* Font Settings */
-    font-family: var(--mainfont-noto), var(--mainfont-roboto);
+    font-family: var(--font-main);
     font-size: 18px;
     line-height: 1.5;
     font-weight: 500;

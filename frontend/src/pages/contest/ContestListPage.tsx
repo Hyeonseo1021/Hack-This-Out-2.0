@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import ContestList from '../../components/contest/ContestList';
 import ContestBanner from '../../components/contest/ContestBanner';
 import Main from '../../components/main/Main';
@@ -9,6 +10,8 @@ import AddIcon from '@mui/icons-material/Add';
 import styles from '../../assets/scss/contest/ContestListPage.module.scss';
 
 const ContestListPage: React.FC = () => {
+    const { t } = useTranslation('contest');
+
     return (
         <Main>
             <div className={styles.contest_container}>
@@ -21,7 +24,7 @@ const ContestListPage: React.FC = () => {
                             <EmojiEventsOutlinedIcon className={styles.machine} style={{ fontSize: '80px' }} />
                             <AddIcon className={styles.plus} style={{ fontSize: '50px' }} />
                         </div>
-                        <div className={styles.register_text}>Add Contest</div>
+                        <div className={styles.register_text}>{t('addContest')}</div>
                     </Link>
                 </div>
                 <ContestList />

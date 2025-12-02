@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import path from 'path';
 import connectDB from './config/db';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -37,6 +38,9 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(mongoSanitize());
 
+// Serve static files (uploaded images)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Routes
 app.use('/api/user', userRoutes);
 app.use('/api/inst', InstRoutes);
@@ -47,7 +51,7 @@ app.use('/api/shop', ItemRoutes);
 
 
 // Root Endpoint
-app.get('/', (req, res) => res.send('API is running'));
+app.get('/', (req: any, res: any) => res.send('API is running'));
 
 // Server Port
 const PORT = process.env.PORT || 5000;

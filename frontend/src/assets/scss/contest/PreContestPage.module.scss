@@ -1,127 +1,160 @@
 @use "../style" as *;
 
 .pre_contest_page {
-    @include background_set;
-    width: 50vw;
-    color: var(--color-white);
-    min-height: 30rem;
-    height: auto;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    padding: 32px;
+  width: 100%;
+  min-height: 100vh;
+  color: var(--white);
+  font-family: var(--font-display);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  background: #000000;
+
+  &::-webkit-scrollbar { display: none; }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  .contest_basic_info {
+    width: 100%;
+    text-align: center;
+    padding: 12px 24px;
+    border-bottom: 2px solid rgba(0,255,255,0.3);
+
+    .contest_name {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--mint);
+      text-shadow: 0 0 12px var(--mint), 0 0 24px var(--mint-glow);
+      animation: neonPulse 2s infinite alternate;
+    }
+
+    .contest_description {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      color: var(--white);
+      text-shadow: 0 0 6px var(--mint);
+    }
+
+    .contest_exp {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--white);
+      text-shadow: 0 0 12px #00eaff;
+    }
+  }
+
+  .under_box {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
 
-    &::-webkit-scrollbar {
-        display: none;
+    .contest_rules {
+      width: 100%;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--mint);
+      border-radius: 16px;
+      padding: 16px;
+      font-size: var(--base-font-size);
+      line-height: 1.6;
+      color: var(--white);
+      box-shadow: 0 0 20px var(--mint-glow);
+
+      .contest_rules_title {
+        font-size: var(--font-size-mid);
+        font-weight: 600;
+        color: var(--mint);
+        text-shadow: 0 0 12px var(--mint);
+        margin-bottom: 8px;
+      }
+
+      ul { padding-left: 20px; }
     }
 
-    scrollbar-width: none;
+    .contest_start {
+      @include button_color;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.2rem;
+      width: 160px;
+      height: 50px;
+      border-radius: 12px;
+      border: 2px solid var(--mint);
+      background: rgba(0, 255, 255, 0.15);
+      color: var(--white);
+      cursor: pointer;
+      text-shadow: 0 0 12px var(--mint);
+      transition: all 0.3s ease-in-out;
 
-    -ms-overflow-style: none;
-
-    .contest_basic_info {
-        width: 100%;
-        height: 170px;
-        border-bottom: 1px solid var(--color-white);
-        padding: 8px 30px 16px;
-
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-
-        .contest_name {
-            font-weight: 600;
-        }
-
-        .contest_exp,
-        .contest_description {
-            font-weight: 600;
-            padding-left: 16px;
-        }
+      &:hover {
+        background: rgba(0,255,255,0.35);
+        transform: translateY(-3px);
+        box-shadow: 0 0 20px var(--mint-glow);
+      }
     }
-
-    .under_box{
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        margin: 16px 0;
-        gap: 16px;
-
-        .contest_rules_title{
-            display: flex;
-            font-size: var(--font-size-mid);
-            font-weight: 600;
-        }
-        .contest_rules {
-            height: 100%;
-            font-size: var(--base-font-size);
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: flex-start;
-            gap: 8px;
-        }
-
-        .contest_start {
-            @include button_color;
-            font-weight: 600;
-            width: 140px;
-            height: 48px;
-            box-shadow: 0px 2px 4px rgba(44, 39, 56, 0.08), 0px 4px 8px rgba(44, 39, 56, 0.08);
-            border-radius: 6px;
-            transition: all 0.3s ease-in-out;
-
-            &:hover {
-                border: 2px solid transparent;
-                transform: translateY(-2px);
-                filter: drop-shadow(0 0 10px var(--blue-500));
-            }
-        }
-    }
-
+  }
 }
 
+// Warning Modal 강화
 .modal_body {
-    width: 100%;
-    height: 100%;
-    padding: 16px;
-    gap: 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: var(--color-background-transparent);
-    .contest_warning_title{
-        font-size: var(--font-size-mid);
-        font-weight: 800;
-        color: var(--color-red-rosso);
-        text-align: center;
-        filter: drop-shadow(0 0 10px var(--danger));
-    }
-    .contest_warning {
-        color: var(--color-white);
-        font-weight: 600;
-        line-height: 1.6;
-        text-align: left;
-        text-wrap: pretty;
-    }
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background-color: rgba(0,0,0,0.85);
+  border-radius: 16px;
+  font-family: var(--font-display);
 
-    .modal_button {
-        width: 160px;
-        padding: 10px 20px;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.3s ease-in-out;
-        @include button_color;
-        &:hover {
-            border: 2px solid transparent;
-            transform: translateY(-2px);
-            filter: drop-shadow(0 0 10px var(--blue-500));
-        }
+  .contest_warning_title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ff3b3b;
+    text-shadow: 0 0 8px #ff3b3b, 0 0 16px #ff0000;
+    margin-bottom: 12px;
+    animation: neonWarning 1.8s infinite alternate;
+  }
+
+  .contest_warning {
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--white);
+    margin-bottom: 16px;
+  }
+
+  .modal_button {
+    width: 160px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    color: var(--white);
+    background: rgba(255,59,59,0.25);
+    text-shadow: 0 0 6px #ff3b3b;
+    transition: all 0.3s ease-in-out;
+
+    &:hover {
+      background: rgba(255,59,59,0.45);
+      box-shadow: 0 0 20px #ff3b3b, 0 0 36px #ff0000;
+      transform: translateY(-2px);
     }
+  }
+}
+
+@keyframes neonPulse {
+  0% { text-shadow:0 0 6px var(--mint),0 0 12px var(--mint),0 0 18px var(--mint-glow);}
+  50% { text-shadow:0 0 12px var(--mint),0 0 24px var(--mint),0 0 36px var(--mint-glow);}
+  100% { text-shadow:0 0 6px var(--mint),0 0 12px var(--mint),0 0 18px var(--mint-glow);}
+}
+
+@keyframes neonWarning {
+  0%,100% { text-shadow:0 0 6px #ff3b3b,0 0 12px #ff0000; }
+  50% { text-shadow:0 0 12px #ff3b3b,0 0 24px #ff0000; }
 }

@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import socket from '../../utils/socket';
 import Main from '../../components/main/Main';
 import { getArenaById } from '../../api/axiosArena';
 import { getUserStatus } from '../../api/axiosUser';
 import '../../assets/scss/arena/ArenaRoomPage.scss';
 
-const MAX_PLAYERS = 8;
-
 type ChatMessage = {
-  type: 'chat' | 'system' | 'notification'; 
+  type: 'chat' | 'system' | 'notification';
   senderId?: string;
-  senderName: string; 
+  senderName: string;
   message: string;
   timestamp: string;
 };
@@ -19,6 +18,7 @@ type ChatMessage = {
 const ArenaRoomPage: React.FC = () => {
   const { id: arenaId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [hostId, setHostId] = useState<string | null>(null);
@@ -34,31 +34,29 @@ const ArenaRoomPage: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const chatMessagesEndRef = useRef<null | HTMLDivElement>(null);
-  const [tempArenaName, setTempArenaName] = useState('');
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const [maxPlayers, setMaxPlayers] = useState<number>(8);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initMessage, setInitMessage] = useState('');
   const activeParticipants = useMemo(() => participants.filter(p => !p.hasLeft), [participants]);
 
   // Mode/Difficulty 헬퍼
   const getModeName = (mode: string) => {
-    const names: Record<string, string> = {
-      'TERMINAL_HACKING_RACE': '⚡ Terminal Race',
-      'CYBER_DEFENSE_BATTLE': '⚔️ Defense Battle',
-      'CAPTURE_THE_SERVER': '🏰 Capture Server',
-      'HACKERS_DECK': "🎲 Hacker's Deck",
-      'EXPLOIT_CHAIN_CHALLENGE': '🎯 Exploit Chain'
-    };
-    return names[mode] || mode;
+    const modeKey = `modes.${mode}.title`;
+    // 번역이 있으면 사용, 없으면 원래 이름 반환
+    const translated = t(modeKey);
+    return translated !== modeKey ? translated : mode;
   };
 
   const getDifficultyInfo = (diff: string) => {
-    const info: Record<string, { emoji: string; color: string }> = {
-      'EASY': { emoji: '🟢', color: '#4ade80' },
-      'MEDIUM': { emoji: '🟡', color: '#fbbf24' },
-      'HARD': { emoji: '🔴', color: '#f87171' },
-      'EXPERT': { emoji: '💀', color: '#a855f7' }
+    const info: Record<string, { color: string }> = {
+      'EASY': { color: '#4ade80' },
+      'MEDIUM': { color: '#fbbf24' },
+      'HARD': { color: '#f87171' },
+      'EXPERT': { color: '#a855f7' }
     };
-    return info[diff] || { emoji: '⚪', color: '#999' };
+    return info[diff] || { color: '#999' };
   };
 
   // 본인 정보
@@ -67,14 +65,14 @@ const ArenaRoomPage: React.FC = () => {
     [activeParticipants, currentUserId]
   );
   
-  // 8개의 슬롯을 만들고, 활성 참가자로 채워넣는 로직
+  // 슬롯을 만들고, 활성 참가자로 채워넣는 로직
   const displaySlots = useMemo(() => {
-    const slots = new Array(MAX_PLAYERS).fill(null);
-    activeParticipants.slice(0, MAX_PLAYERS).forEach((p, index) => {
+    const slots = new Array(maxPlayers).fill(null);
+    activeParticipants.slice(0, maxPlayers).forEach((p, index) => {
       slots[index] = p;
     });
     return slots;
-  }, [activeParticipants]);
+  }, [activeParticipants, maxPlayers]);
 
   // 호스트 판별
   useEffect(() => {
@@ -114,6 +112,7 @@ const ArenaRoomPage: React.FC = () => {
   };
 
   const handleLeave = () => {
+    skipLeaveRef.current = true; // cleanup에서 중복 호출 방지
     socket.emit('arena:leave', { arenaId, userId: currentUserId });
     navigate('/arena');
   };
@@ -127,14 +126,6 @@ const ArenaRoomPage: React.FC = () => {
   const handleKick = (kickedUserId: string, username: string) => {
     if (window.confirm(`정말 ${username}님을 강퇴하시겠습니까?`)) {
       socket.emit('arena:kick', { kickedUserId });
-    }
-  };
-
-  const handleArenaNameChange = () => {
-    if (isHost && status === 'waiting' && tempArenaName !== arenaName) {
-      socket.emit('arena:settingsChange', { 
-        newSettings: { name: tempArenaName } 
-      });
     }
   };
 
@@ -153,14 +144,14 @@ const ArenaRoomPage: React.FC = () => {
 
         const arenaRes = await getArenaById(arenaId);
         const data = arenaRes?.data || arenaRes;
-        
+
         setArenaName(data?.name ?? 'Arena Room');
-        setTempArenaName(data?.name ?? 'Arena Room');
         setHostId(data?.host?._id || data?.host || null);
         setParticipants(data?.participants || []);
         setStatus(data?.status || 'waiting');
         setMode(data?.mode || '');
         setDifficulty(data?.difficulty || '');
+        setMaxPlayers(data?.maxParticipants || 8);
         setLoading(false);
       } catch (error) {
         console.error('❌ Error loading arena data:', error);
@@ -177,25 +168,47 @@ const ArenaRoomPage: React.FC = () => {
       return;
     }
 
+    console.log('🔌 [ArenaRoomPage] Socket connected:', socket.connected);
+    console.log('🔌 [ArenaRoomPage] Setting up event listeners for arenaId:', arenaId);
+
     socket.off('arena:update');
     socket.off('arena:start');
     socket.off('arena:join-failed');
-    socket.off('arena:chatMessage'); 
-    socket.off('arena:notify');      
+    socket.off('arena:chatMessage');
+    socket.off('arena:notify');
     socket.off('arena:kicked');
+    socket.off('arena:initializing');
+    socket.off('arena:initialized');
 
     socket.on('arena:update', payload => {
-      if (payload.arenaId !== arenaId) return;
-      
+      console.log('🔄 [ArenaRoomPage] arena:update received:', payload);
+      if (payload.arenaId !== arenaId) {
+        console.log('⚠️ [ArenaRoomPage] arenaId mismatch:', payload.arenaId, arenaId);
+        return;
+      }
+
       setStatus(payload.status || 'waiting');
       setHostId(payload.host || null);
       setParticipants(payload.participants || []);
+      console.log('👥 [ArenaRoomPage] Updated participants:', payload.participants);
       if (payload.name) {
         setArenaName(payload.name);
-        setTempArenaName(payload.name);
       }
       if (payload.mode) setMode(payload.mode);
       if (payload.difficulty) setDifficulty(payload.difficulty);
+      if (payload.maxParticipants) setMaxPlayers(payload.maxParticipants);
+    });
+
+    socket.on('arena:initializing', ({ message }: { message: string }) => {
+      console.log('⏳ [ArenaRoomPage] arena:initializing:', message);
+      setIsInitializing(true);
+      setInitMessage(message);
+    });
+
+    socket.on('arena:initialized', () => {
+      console.log('✅ [ArenaRoomPage] arena:initialized');
+      setIsInitializing(false);
+      setInitMessage('');
     });
 
     socket.on('arena:start', ({ arenaId: startedId }) => {
@@ -203,7 +216,7 @@ const ArenaRoomPage: React.FC = () => {
         skipLeaveRef.current = true;
         setShowStartOverlay(true);
         setCountdown(3);
-        
+
         const countdownInterval = setInterval(() => {
           setCountdown(prev => {
             if (prev <= 1) {
@@ -213,7 +226,7 @@ const ArenaRoomPage: React.FC = () => {
             return prev - 1;
           });
         }, 1000);
-        
+
         setTimeout(() => {
           navigate(`/arena/play/${arenaId}`);
         }, 3500);
@@ -229,9 +242,17 @@ const ArenaRoomPage: React.FC = () => {
       setChatMessages(prev => [...prev, payload]);
     });
 
-    socket.on('arena:notify', (payload: { type: 'system', message: string }) => {
+    socket.on('arena:notify', (payload: { type: 'system', message: string | { ko: string; en: string } }) => {
+      console.log('📢 [ArenaRoomPage] arena:notify received:', payload);
+      // 다국어 메시지 지원
+      const lang = i18n.language as 'ko' | 'en';
+      const messageText = typeof payload.message === 'object'
+        ? (payload.message[lang] || payload.message.en || payload.message.ko)
+        : payload.message;
+
       setChatMessages(prev => [...prev, {
-        ...payload,
+        type: payload.type,
+        message: messageText,
         senderName: 'SYSTEM',
         timestamp: new Date().toISOString()
       }]);
@@ -243,16 +264,21 @@ const ArenaRoomPage: React.FC = () => {
       navigate('/arena');
     });
 
+    console.log('📡 [ArenaRoomPage] Emitting arena:join...', { arenaId, userId: currentUserId });
     socket.emit('arena:join', { arenaId, userId: currentUserId });
 
     return () => {
-      socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      if (!skipLeaveRef.current) {
+        socket.emit('arena:leave', { arenaId, userId: currentUserId });
+      }
       socket.off('arena:update');
       socket.off('arena:start');
       socket.off('arena:join-failed');
       socket.off('arena:chatMessage');
-      socket.off('arena:notify');     
+      socket.off('arena:notify');
       socket.off('arena:kicked');
+      socket.off('arena:initializing');
+      socket.off('arena:initialized');
     };
   }, [arenaId, currentUserId, navigate]);
 
@@ -276,20 +302,31 @@ const ArenaRoomPage: React.FC = () => {
 
   return (
     <Main>
-      {/* 게임 시작 오버레이 */}
-        {showStartOverlay && (
-          <div className="game-start-overlay">
-            <div className="start-overlay-content">
-              <div className="start-title">GAME STARTING</div>
-              {countdown > 0 ? (
-                <div className="countdown-number">{countdown}</div>
-              ) : (
-                <div className="countdown-go">GO!</div>
-              )}
-              <div className="start-subtitle">Prepare for battle...</div>
-            </div>
+      {/* 초기화 로딩 오버레이 */}
+      {isInitializing && (
+        <div className="game-start-overlay initializing">
+          <div className="start-overlay-content">
+            <div className="loading-spinner-large"></div>
+            <div className="start-title">INITIALIZING</div>
+            <div className="start-subtitle">{initMessage || '게임 환경을 준비 중입니다...'}</div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* 게임 시작 오버레이 */}
+      {showStartOverlay && (
+        <div className="game-start-overlay">
+          <div className="start-overlay-content">
+            <div className="start-title">{(i18n.language === 'ko' ? '게임 시작' : 'GAME STARTING').toUpperCase()}</div>
+            {countdown > 0 ? (
+              <div className="countdown-number">{countdown}</div>
+            ) : (
+              <div className="countdown-go">{i18n.language === 'ko' ? '시작!' : 'GO!'}</div>
+            )}
+            <div className="start-subtitle">{i18n.language === 'ko' ? '전투 준비...' : 'Prepare for battle...'}</div>
+          </div>
+        </div>
+      )}
       <div className="battle-cyber-container room-variant">
         <div className="background-grid"></div>
 
@@ -303,16 +340,19 @@ const ArenaRoomPage: React.FC = () => {
               <div className="arena-metadata">
                 <span className="mode-badge">{getModeName(mode)}</span>
                 {difficulty && (
-                  <span 
-                    className="difficulty-badge" 
-                    style={{ 
+                  <span
+                    className="difficulty-badge"
+                    style={{
                       color: diffInfo.color,
-                      borderColor: diffInfo.color 
+                      borderColor: diffInfo.color
                     }}
                   >
-                    {diffInfo.emoji} {difficulty}
+                    {t(`difficulties.${difficulty}`)}
                   </span>
                 )}
+                <span className="participant-count-badge">
+                  {activeParticipants.length} / {maxPlayers} {(i18n.language === 'ko' ? '플레이어' : 'PLAYERS').toUpperCase()}
+                </span>
               </div>
             )}
           </div>
@@ -332,21 +372,21 @@ const ArenaRoomPage: React.FC = () => {
                     <div key={uid || index} className={`participant-card ${isMe ? 'is-me' : ''} ${isUserHost ? 'is-host' : ''} ${p.isReady ? 'is-ready' : ''}`}>
                       <div className="card-content">
                         <div className="player-info">
-                          <span className="player-slot">PLAYER {index + 1}</span>
+                          <span className="player-slot">{(i18n.language === 'ko' ? '플레이어' : 'PLAYER').toUpperCase()} {index + 1}</span>
                           <span className="username">{username}</span>
                         </div>
                         <div className="player-status">
-                          {isUserHost && <span className="host-tag">HOST</span>}
-                          {isMe && !isUserHost && <span className="me-tag">(YOU)</span>}
+                          {isUserHost && <span className="host-tag">{i18n.language === 'ko' ? '호스트' : 'HOST'}</span>}
+                          {isMe && !isUserHost && <span className="me-tag">({i18n.language === 'ko' ? '나' : 'YOU'})</span>}
                           {!isUserHost && (
-                            <span className="status">{p.isReady ? 'READY' : 'WAITING'}</span>
+                            <span className="status">{p.isReady ? t('ready') : t('waiting')}</span>
                           )}
                         </div>
 
                         {/* 강퇴 버튼 */}
                         {isHost && !isMe && status === 'waiting' && (
                           <button className="cyber-button kick-btn" onClick={() => handleKick(uid, username)}>
-                            강퇴
+                            {i18n.language === 'ko' ? '강퇴' : 'KICK'}
                           </button>
                         )}
                       </div>
@@ -357,8 +397,8 @@ const ArenaRoomPage: React.FC = () => {
                     <div key={`empty-${index}`} className="participant-card is-empty">
                       <div className="card-content">
                         <div className="player-info">
-                          <span className="player-slot">PLAYER {index + 1}</span>
-                          <span className="username">... WAITING FOR PLAYER ...</span>
+                          <span className="player-slot">{(i18n.language === 'ko' ? '플레이어' : 'PLAYER').toUpperCase()} {index + 1}</span>
+                          <span className="username">... {i18n.language === 'ko' ? '플레이어 대기 중' : 'WAITING FOR PLAYER'} ...</span>
                         </div>
                       </div>
                     </div>
@@ -390,11 +430,11 @@ const ArenaRoomPage: React.FC = () => {
                         handleSendMessage();
                       }
                     }}
-                    placeholder="메시지 입력..."
+                    placeholder={i18n.language === 'ko' ? '메시지 입력...' : 'Type a message...'}
                     disabled={status !== 'waiting'}
                   />
                   <button className="cyber-button" onClick={handleSendMessage} disabled={!currentMessage.trim() || status !== 'waiting'}>
-                    전송
+                    {i18n.language === 'ko' ? '전송' : 'SEND'}
                   </button>
                 </div>
               </div>
@@ -402,15 +442,21 @@ const ArenaRoomPage: React.FC = () => {
               <div className="footer-actions">
                 {isHost ? (
                   <button className="cyber-button start-btn" disabled={!everyoneExceptHostReady || isStarting || status !== 'waiting'} onClick={handleStart}>
-                    {isStarting ? 'STARTING...' : 'START GAME'}
+                    {isStarting
+                      ? (i18n.language === 'ko' ? '시작 중...' : 'STARTING...')
+                      : t('startGame').toUpperCase()
+                    }
                   </button>
                 ) : (
                   <button className={`cyber-button ${myParticipant?.isReady ? 'is-ready-button' : ''}`} disabled={status !== 'waiting'} onClick={toggleReady}>
-                    {myParticipant?.isReady ? 'CANCEL' : 'READY'}
+                    {myParticipant?.isReady
+                      ? (i18n.language === 'ko' ? '취소' : 'CANCEL')
+                      : t('ready').toUpperCase()
+                    }
                   </button>
                 )}
                 <button className="cyber-button leave-btn" onClick={handleLeave}>
-                  LEAVE
+                  {t('leave').toUpperCase()}
                 </button>
               </div>
             </div>

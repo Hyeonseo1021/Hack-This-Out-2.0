@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createContest } from '../../api/axiosContest';
 import { getActiveMachines } from '../../api/axiosMachine';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +16,7 @@ interface Contest {
     endTime: string;
     machines: string[];
     contestExp: number;
-};
+}
 
 interface AddContestFormProps {
     onContestAdded: (contest: Contest) => void;
@@ -24,7 +25,7 @@ interface AddContestFormProps {
 interface Machine {
     id: string;
     name: string;
-};
+}
 
 interface FormData {
     name: string;
@@ -33,7 +34,7 @@ interface FormData {
     endTime: string;
     machines: Machine[];
     contestExp: number;
-};
+}
 
 interface Suggestions {
     [key: number]: Machine[];
@@ -44,6 +45,7 @@ interface ValidationErrors {
 }
 
 const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
+    const { t } = useTranslation('contest');
     const [formData, setFormData] = useState<FormData>({
         name: '',
         description: '',
@@ -52,6 +54,7 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
         machines: [{ id: '', name: '' }],
         contestExp: 100,
     });
+
     const [loading, setLoading] = useState(false);
     const [allMachines, setAllMachines] = useState<Machine[]>([]);
     const [suggestions, setSuggestions] = useState<Suggestions>({});
@@ -72,38 +75,24 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
         }
     };
 
-    useEffect(() => {
-        adjustTextareaHeight();
-    }, [description]);
+    useEffect(() => { adjustTextareaHeight(); }, [description]);
 
     useEffect(() => {
-        const fetchAllMachines = async () => {
+        const loadMachines = async () => {
             try {
                 const data = await getActiveMachines();
-                if (
-                    Array.isArray(data.machines) &&
-                    typeof data.machines[0] === 'object' &&
-                    'name' in data.machines[0] &&
-                    '_id' in data.machines[0]
-                ) {
-                    const machinesList = data.machines.map((machine: any) => ({
-                        id: machine._id,
-                        name: machine.name,
+                if (Array.isArray(data.machines)) {
+                    const machinesList = data.machines.map((m: any) => ({
+                        id: m._id,
+                        name: m.name,
                     }));
                     setAllMachines(machinesList);
-                } else if (Array.isArray(data.machines) && typeof data.machines[0] === 'string') {
-                    console.warn('Machines are received as strings. Expected objects with _id and name.');
-                    setAllMachines([]);
-                } else {
-                    console.error('Unexpected format for machines:', data.machines);
-                    setAllMachines([]);
                 }
-            } catch (error) {
-                console.error('Error fetching machines:', error);
+            } catch {
                 setAllMachines([]);
             }
         };
-        fetchAllMachines();
+        loadMachines();
     }, []);
 
     const handleChange = (
@@ -111,42 +100,39 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
         index?: number
     ) => {
         const { name, value } = e.target;
+
         if (name.startsWith('machine-') && typeof index === 'number') {
-            const newMachines = [...machines];
-            newMachines[index] = { id: '', name: value };
-            setFormData({ ...formData, machines: newMachines });
+            const updatedMachines = [...machines];
+            updatedMachines[index] = { id: '', name: value };
+            setFormData({ ...formData, machines: updatedMachines });
 
             if (value) {
-                const filteredSuggestions = allMachines.filter(machine =>
+                const matched = allMachines.filter(machine =>
                     machine.name.toLowerCase().includes(value.toLowerCase())
                 );
-                setSuggestions(prev => ({
-                    ...prev,
-                    [index]: filteredSuggestions,
-                }));
+                setSuggestions(prev => ({ ...prev, [index]: matched }));
             } else {
-                setSuggestions(prev => ({
-                    ...prev,
-                    [index]: [],
-                }));
+                setSuggestions(prev => ({ ...prev, [index]: [] }));
             }
 
             setFocusedMachineIndex(index);
-        } else {
-            setFormData({ ...formData, [name]: name === 'contestExp' ? Number(value) : value });
+            return;
         }
+
+        setFormData({
+            ...formData,
+            [name]: name === 'contestExp' ? Number(value) : value,
+        });
     };
 
     const handleFocus = (index: number) => {
         setFocusedMachineIndex(index);
+
         if (machines[index].name) {
-            const filteredSuggestions = allMachines.filter(machine =>
+            const matched = allMachines.filter(machine =>
                 machine.name.toLowerCase().includes(machines[index].name.toLowerCase())
             );
-            setSuggestions(prev => ({
-                ...prev,
-                [index]: filteredSuggestions,
-            }));
+            setSuggestions(prev => ({ ...prev, [index]: matched }));
         }
     };
 
@@ -158,113 +144,79 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
     };
 
     const handleDeleteMachineField = (index: number) => {
-        const newMachines = machines.filter((_, i) => i !== index);
-        setFormData({
-            ...formData,
-            machines: newMachines,
-        });
+        const updatedMachines = machines.filter((_, i) => i !== index);
+        setFormData({ ...formData, machines: updatedMachines });
+
         setSuggestions(prev => {
             const updated = { ...prev };
             delete updated[index];
             return updated;
         });
+
         setActiveSuggestion(prev => {
             const updated = { ...prev };
             delete updated[index];
             return updated;
         });
+
         setFocusedMachineIndex(null);
     };
 
-    const handleSuggestionClick = (index: number, suggestion: Machine) => {
-        const newMachines = [...machines];
-        newMachines[index] = { id: suggestion.id, name: suggestion.name };
-        setFormData({ ...formData, machines: newMachines });
-        setSuggestions(prev => ({
-            ...prev,
-            [index]: [],
-        }));
-        setActiveSuggestion(prev => ({
-            ...prev,
-            [index]: -1,
-        }));
+    const handleSuggestionClick = (index: number, machine: Machine) => {
+        const updatedMachines = [...machines];
+        updatedMachines[index] = { id: machine.id, name: machine.name };
+        setFormData({ ...formData, machines: updatedMachines });
+
+        setSuggestions(prev => ({ ...prev, [index]: [] }));
+        setActiveSuggestion(prev => ({ ...prev, [index]: -1 }));
         setFocusedMachineIndex(null);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-        const suggestionList = suggestions[index] || [];
+        const list = suggestions[index] || [];
+
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             setActiveSuggestion(prev => ({
                 ...prev,
-                [index]: (prev[index] || -1) + 1,
+                [index]: (prev[index] ?? -1) + 1,
             }));
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             setActiveSuggestion(prev => ({
                 ...prev,
-                [index]: (prev[index] || 0) - 1,
+                [index]: (prev[index] ?? 0) - 1,
             }));
         } else if (e.key === 'Enter') {
-            if (activeSuggestion[index] >= 0 && activeSuggestion[index] < suggestionList.length) {
+            if (activeSuggestion[index] >= 0 && activeSuggestion[index] < list.length) {
                 e.preventDefault();
-                handleSuggestionClick(index, suggestionList[activeSuggestion[index]]);
+                handleSuggestionClick(index, list[activeSuggestion[index]]);
             }
         } else if (e.key === 'Escape') {
-            setSuggestions(prev => ({
-                ...prev,
-                [index]: [],
-            }));
-            setActiveSuggestion(prev => ({
-                ...prev,
-                [index]: -1,
-            }));
+            setSuggestions(prev => ({ ...prev, [index]: [] }));
+            setActiveSuggestion(prev => ({ ...prev, [index]: -1 }));
             setFocusedMachineIndex(null);
         }
     };
 
     const validateForm = (): boolean => {
         const errors: ValidationErrors = {};
-        const currentTime = new Date();
-        const startTimeDate = new Date(startTime);
-        const endTimeDate = new Date(endTime);
+        const now = new Date();
+        const s = new Date(startTime);
+        const e = new Date(endTime);
 
-        if (!name || name.length < 3) {
-            errors.name = 'Name must be at least 3 characters long';
-        }
+        if (!name || name.length < 3) errors.name = t('form.errors.nameLength');
+        if (!description) errors.description = t('form.errors.descriptionRequired');
+        if (!startTime) errors.startTime = t('form.errors.startTimeRequired');
+        else if (s < now) errors.startTime = t('form.errors.startTimeInPast');
 
-        if (!description) {
-            errors.description = 'Description is required';
-        } else if (description.length > 500) {
-            errors.description = 'Description must be less than 500 characters';
-        }
+        if (!endTime) errors.endTime = t('form.errors.endTimeRequired');
+        else if (e <= s) errors.endTime = t('form.errors.endTimeAfterStart');
+        else if ((e.getTime() - s.getTime()) / 3600000 < 24)
+            errors.endTime = t('form.errors.duration24Hours');
 
-        if (!startTime) {
-            errors.startTime = 'Start time is required';
-        } else if (startTimeDate < currentTime) {
-            errors.startTime = 'Start time cannot be in the past';
-        }
-
-        if (!endTime) {
-            errors.endTime = 'End time is required';
-        } else if (endTimeDate <= startTimeDate) {
-            errors.endTime = 'End time must be after start time';
-        } else {
-            const durationInHours = (endTimeDate.getTime() - startTimeDate.getTime()) / (1000 * 60 * 60);
-            if (durationInHours < 24) {
-                errors.endTime = 'Contest duration must be at least 24 hours';
-            }
-        }
-
-        if (!machines.length) {
-            errors.machines = 'At least one machine is required';
-        } else if (machines.some(machine => !machine.id)) {
-            errors.machines = 'Please select valid machines';
-        }
-
-        if (!contestExp || contestExp < 100) {
-            errors.contestExp = 'Contest EXP must be at least 100';
-        }
+        if (machines.some(m => !m.id)) errors.machines = t('form.errors.machinesRequired');
+        if (contestExp < 100) errors.contestExp = t('form.errors.expMinimum');
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
@@ -272,154 +224,105 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setLoading(false);
-        setValidationErrors({});
-
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setLoading(true);
-            const machineIds = machines.map(machine => machine.id).filter(id => id);
-            
-            // Add timezone offset to dates
-            const startTimeWithOffset = new Date(startTime).toISOString();
-            const endTimeWithOffset = new Date(endTime).toISOString();
+            const machineIds = machines.map(m => m.id);
 
-            const contestData = {
+            const data = await createContest({
                 name,
                 description,
-                startTime: startTimeWithOffset,
-                endTime: endTimeWithOffset,
+                startTime: new Date(startTime).toISOString(),
+                endTime: new Date(endTime).toISOString(),
                 machines: machineIds,
-                contestExp
-            };
+                contestExp,
+            });
 
-            const response = await createContest(contestData);
-            if (response.message === "OK") {
+            if (data.message === 'OK') {
                 setRegisterComplete(true);
-                onContestAdded(response.contest);
+                onContestAdded(data.contest);
             }
         } catch (err: any) {
-            setValidationErrors({
-                submit: err.message || 'Failed to create contest'
-            });
-            // Scroll to top to show error
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setValidationErrors({ submit: err.message || t('form.errors.submitFailed') });
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (formRef.current && !formRef.current.contains(event.target as Node)) {
-                setSuggestions({});
-                setActiveSuggestion({});
-                setFocusedMachineIndex(null);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-    if (loading) {
-        return <Loading />;
-    }
+    if (loading) return <Loading />;
 
     return (
-        <form onSubmit={handleSubmit} ref={formRef} className='add-contest-form'>
-            <div className='back-button'>
-                <h2>Add New Contest</h2>
-                <button className="IconButton" type='button' onClick={() => navigate(-1)}>
+        <form onSubmit={handleSubmit} ref={formRef} className="add-contest-form">
+            <div className="back-button">
+                <button className="IconButton" type="button" onClick={() => navigate(-1)}>
                     <IoMdArrowRoundBack style={{ color: 'white', fontSize: "34px" }} />
                 </button>
+                <h2>{t('form.title')}</h2>
             </div>
 
-            <div className='create-container'>
-                <div className='name-container'>
-                    <label htmlFor='name'>Contest Name <span className="required">*</span></label>
+            <div className="create-container">
+                <div className="name-container">
+                    <label>{t('form.contestName')} *</label>
                     <input
-                        type='text'
-                        id='name'
-                        name='name'
+                        type="text"
+                        name="name"
                         value={name}
                         onChange={handleChange}
                         className={validationErrors.name ? 'error-input' : ''}
-                        placeholder="Enter the contest name"
                     />
-                    {validationErrors.name && (
-                        <span className='field-error'>{validationErrors.name}</span>
-                    )}
+                    {validationErrors.name && <span className="field-error">{validationErrors.name}</span>}
                 </div>
 
-                <div className='description-container'>
-                    <label htmlFor='description'>Description <span className="required">*</span></label>
+                <div className="description-container">
+                    <label>{t('form.description')} *</label>
                     <textarea
-                        id='description'
-                        name='description'
+                        id="description"
+                        name="description"
                         value={description}
                         onChange={handleChange}
                         className={validationErrors.description ? 'error-input' : ''}
-                        placeholder="Description of the contest"
                     />
                     {validationErrors.description && (
-                        <span className='field-error'>{validationErrors.description}</span>
+                        <span className="field-error">{validationErrors.description}</span>
                     )}
                 </div>
 
-                <div className='start-time-container'>
-                    <label htmlFor='startTime'>Start Time <span className="required">*</span></label>
+                <div className="start-time-container">
+                    <label>{t('form.startTime')} *</label>
                     <input
-                        type='datetime-local'
-                        id='startTime'
-                        name='startTime'
+                        type="datetime-local"
+                        name="startTime"
                         value={startTime}
                         onChange={handleChange}
                         className={validationErrors.startTime ? 'error-input' : ''}
                     />
-                    {validationErrors.startTime && (
-                        <span className='field-error'>{validationErrors.startTime}</span>
-                    )}
                 </div>
 
-                <div className='end-time-container'>
-                    <label htmlFor='endTime'>End Time <span className="required">*</span></label>
+                <div className="end-time-container">
+                    <label>{t('form.endTime')} *</label>
                     <input
-                        type='datetime-local'
-                        id='endTime'
-                        name='endTime'
+                        type="datetime-local"
+                        name="endTime"
                         value={endTime}
                         onChange={handleChange}
                         className={validationErrors.endTime ? 'error-input' : ''}
                     />
-                    {validationErrors.endTime && (
-                        <span className='field-error'>{validationErrors.endTime}</span>
-                    )}
                 </div>
 
-                <div className='exp-container'>
-                    <label htmlFor="contestExp">Reward (EXP)<span style={{ color: 'red' }}> *</span></label>
+                <div className="exp-container">
+                    <label>{t('form.reward')} *</label>
                     <input
                         type="number"
-                        id="contestExp"
                         name="contestExp"
                         value={contestExp}
-                        onChange={(e) => handleChange(e)}
-                        placeholder="Enter the EXP"
-                        min="100"
-                        required
+                        onChange={handleChange}
                     />
-                    {validationErrors.contestExp && (
-                        <span className='field-error'>{validationErrors.contestExp}</span>
-                    )}
                 </div>
-                <div className='add-machine-container'>
-                    <label>Machines<span style={{ color: 'red' }}> *</span></label>
+
+                <div className="add-machine-container">
+                    <label>{t('form.machines')} *</label>
+
                     {machines.map((machine, index) => (
                         <div key={index} className="machine-field">
                             <input
@@ -429,79 +332,57 @@ const AddContestForm: React.FC<AddContestFormProps> = ({ onContestAdded }) => {
                                 onChange={(e) => handleChange(e, index)}
                                 onFocus={() => handleFocus(index)}
                                 onKeyDown={(e) => handleKeyDown(e, index)}
-                                placeholder={`Machine ${index + 1}`}
+                                placeholder={t('form.machinePlaceholder', { index: index + 1 })}
                                 autoComplete="off"
-                                aria-autocomplete="list"
-                                aria-controls={`suggestions-${index}`}
-                                aria-expanded={focusedMachineIndex === index && suggestions[index]?.length > 0}
-                                role="combobox"
-                                aria-haspopup="listbox"
-                                aria-activedescendant={
-                                    activeSuggestion[index] >= 0
-                                        ? `suggestion-${index}-${activeSuggestion[index]}`
-                                        : undefined
-                                }
                             />
+
                             {machines.length > 1 && (
                                 <button
                                     type="button"
-                                    className='delete-machine'
+                                    className="delete-machine"
                                     onClick={() => handleDeleteMachineField(index)}
                                 >
-                                    Delete
+                                    {t('form.delete')}
                                 </button>
                             )}
-                            {focusedMachineIndex === index && suggestions[index] && suggestions[index].length > 0 ? (
-                                <ul
-                                    className="suggestions-list"
-                                    id={`suggestions-${index}`}
-                                    role="listbox"
-                                >
-                                    {suggestions[index].map((suggestion, sIndex) => (
-                                        <li
-                                            key={sIndex}
-                                            id={`suggestion-${index}-${sIndex}`}
-                                            className={activeSuggestion[index] === sIndex ? 'active' : ''}
-                                            onMouseDown={() => handleSuggestionClick(index, suggestion)}
-                                            onMouseEnter={() =>
-                                                setActiveSuggestion(prev => ({
-                                                    ...prev,
-                                                    [index]: sIndex,
-                                                }))
-                                            }
-                                            onMouseLeave={() =>
-                                                setActiveSuggestion(prev => ({
-                                                    ...prev,
-                                                    [index]: -1,
-                                                }))
-                                            }
-                                            role="option"
-                                            aria-selected={activeSuggestion[index] === sIndex}
-                                        >
-                                            {suggestion.name}
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : machine.name && focusedMachineIndex === index && (
-                                <div className="no-suggestions">No matching machines found.</div>
-                            )}
-                            {validationErrors.machines && (
-                                <span className='field-error'>{validationErrors.machines}</span>
-                            )}
+
+                            {focusedMachineIndex === index &&
+                                suggestions[index] &&
+                                suggestions[index].length > 0 && (
+                                    <ul className="suggestions-list">
+                                        {suggestions[index].map((suggestion, sIndex) => (
+                                            <li
+                                                key={sIndex}
+                                                className={activeSuggestion[index] === sIndex ? 'active' : ''}
+                                                onMouseDown={() => handleSuggestionClick(index, suggestion)}
+                                            >
+                                                {suggestion.name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                         </div>
                     ))}
-                    <button className='add-machine-button' type="button" onClick={handleAddMachineField}>
-                        Add Machine
+
+                    <button type="button" className="add-machine-button" onClick={handleAddMachineField}>
+                        {t('form.addMachine')}
                     </button>
                 </div>
-                <div className='add-contest-form-button'>
-                    <button type="submit" disabled={loading}>
-                        {loading ? 'Registering...' : 'Add Contest'}
-                    </button>
+
+                <div className="add-contest-form-button">
+                    <button type="submit">{t('form.submit')}</button>
                 </div>
             </div>
-            {registerComplete && <RegisterCompleteMD onClose={
-                () => {setRegisterComplete(false); navigate('/contest');}} mode='contest' />}
+
+            {registerComplete && (
+                <RegisterCompleteMD
+                    onClose={() => {
+                        setRegisterComplete(false);
+                        navigate('/contest');
+                    }}
+                    mode="contest"
+                />
+            )}
         </form>
     );
 };

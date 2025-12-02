@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Main from '../../components/main/Main';
 import { useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
@@ -16,6 +17,7 @@ interface ArenaSummary {
 
 const ArenaPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('arena');
   const [arenas, setArenas] = useState<ArenaSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -133,12 +135,14 @@ const ArenaPage: React.FC = () => {
         if (hasLeft) {
           // 나갔던 방 - 재접속 확인
           const confirmReconnect = window.confirm(
-            `You previously left this room.\nWould you like to reconnect?`
+            i18n.language === 'ko'
+              ? '이전에 나간 방입니다.\n다시 접속하시겠습니까?'
+              : 'You previously left this room.\nWould you like to reconnect?'
           );
-          
+
           if (confirmReconnect) {
             console.log('[handleEnterArena] Reconnecting to arena:', arenaId);
-            
+
             // 방 상태가 "대기 중"일 때만 대기방으로 이동
             if (arena.status === 'waiting') {
               navigate(`/arena/${arenaId}`);
@@ -167,14 +171,14 @@ const ArenaPage: React.FC = () => {
           console.log('[handleEnterArena] Entering new arena:', arenaId);
           navigate(`/arena/${arenaId}`); // 대기방으로 이동
         } else {
-          alert('This room is full.');
+          alert(i18n.language === 'ko' ? '방이 가득 찼습니다.' : 'This room is full.');
         }
       } else if (arena.status === 'started') {
         // 게임이 시작된 경우
-        alert('This game has already started. You cannot join.');
+        alert(i18n.language === 'ko' ? '게임이 이미 시작되었습니다. 참가할 수 없습니다.' : 'This game has already started. You cannot join.');
       } else if (arena.status === 'ended') {
         // 게임이 종료된 경우
-        alert('This game has ended.');
+        alert(i18n.language === 'ko' ? '게임이 종료되었습니다.' : 'This game has ended.');
       }
     } catch (error) {
       console.error('[handleEnterArena] Error checking participation:', error);
@@ -197,25 +201,25 @@ const ArenaPage: React.FC = () => {
 
   return (
     <Main>
-      <div className="blueprint-container">
-        <div className="blueprint-container__scanline"></div>
-
+      <div className="arena-container">
         {/* 좌측: 아레나 리스트 패널 */}
         <div className="blueprint-panel blueprint-panel--list">
           <div className="blueprint-panel__header">
-            <h2 className="blueprint-panel__title">ARENA LIST</h2>
+            <h2 className="blueprint-panel__title" data-text={t('arenaList').toUpperCase()}>
+              {t('arenaList').toUpperCase()}
+            </h2>
           </div>
           <div className="blueprint-panel__body">
             <div className="arena-list">
               <div className="arena-list__row arena-list__row--header">
                 <div className="arena-list__col">ID</div>
-                <div className="arena-list__col">ROOM NAME</div>
-                <div className="arena-list__col">MODE</div>
-                <div className="arena-list__col">PARTICIPATIONS</div>
-                <div className="arena-list__col">STATUS</div>
+                <div className="arena-list__col">{t('arenaName').toUpperCase()}</div>
+                <div className="arena-list__col">{t('gameMode').toUpperCase()}</div>
+                <div className="arena-list__col">{t('participants').toUpperCase()}</div>
+                <div className="arena-list__col">{t('status').toUpperCase()}</div>
               </div>
               {loading ? (
-                <p className="arena-list__message">SYSTEM SCANNING...</p>
+                <p className="arena-list__message">{t('loading').toUpperCase()}</p>
               ) : sortedArenas.length > 0 ? (
                 sortedArenas.map((arena, index) => {
                   const isFull = arena.activeParticipantsCount >= arena.maxParticipants;
@@ -230,25 +234,28 @@ const ArenaPage: React.FC = () => {
                       <div className="arena-list__col" data-label="ID">
                         {`#${(index + 1).toString().padStart(4, '0')}`}
                       </div>
-                      <div className="arena-list__col" data-label="Room Name">
+                      <div className="arena-list__col" data-label={t('arenaName')}>
                         {arena.name}
                       </div>
-                      <div className="arena-list__col" data-label="Mode">
+                      <div className="arena-list__col" data-label={t('gameMode')}>
                         {arena.mode}
                       </div>
-                      <div className="arena-list__col" data-label="Participations">
+                      <div className="arena-list__col" data-label={t('participants')}>
                         {arena.activeParticipantsCount} / {arena.maxParticipants}
                       </div>
-                      <div className="arena-list__col" data-label="Status">
+                      <div className="arena-list__col" data-label={t('status')}>
                         <span className={`status-badge status-badge--${isFull ? 'full' : arena.status}`}>
-                          {isFull && arena.status === 'waiting' ? 'FULL' : arena.status.toUpperCase()}
+                          {isFull && arena.status === 'waiting'
+                            ? (i18n.language === 'ko' ? '가득참' : 'FULL')
+                            : t(arena.status).toUpperCase()
+                          }
                         </span>
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <p className="arena-list__message">NO SIGNAL DETECTED</p>
+                <p className="arena-list__message">{t('noArenas').toUpperCase()}</p>
               )}
             </div>
           </div>
@@ -257,13 +264,15 @@ const ArenaPage: React.FC = () => {
         {/* 우측: 방 만들기 패널 */}
         <div className="blueprint-panel blueprint-panel--create">
           <div className="blueprint-panel__header">
-            <h2 className="blueprint-panel__title">NEW CONNECTION</h2>
+            <h2 className="blueprint-panel__title" data-text={t('createArena').toUpperCase()}>
+              {t('createArena').toUpperCase()}
+            </h2>
           </div>
           <div className="blueprint-panel__body blueprint-panel__body--center">
             <button className="blueprint-button" onClick={() => navigate('/arena/create')}>
-              <span className="blueprint-button__text">CREATE ROOM</span>
+              <span className="blueprint-button__text">{t('createArena').toUpperCase()}</span>
             </button>
-            <p className="blueprint-panel__subtext">Create a new arena</p>
+            <p className="blueprint-panel__subtext">{t('createNew')}</p>
           </div>
         </div>
       </div>

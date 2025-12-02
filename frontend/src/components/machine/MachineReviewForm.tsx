@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { postMachineReview } from '../../api/axiosMachine';
 import { Review } from '../../types/Machine';
 import Rating from '@mui/material/Rating';
@@ -20,12 +21,13 @@ interface FormData {
   review: string;
 }
 
-const MachineReviewForm: React.FC<MachineReviewFormProps> = ({ 
-  machineId, 
-  onReviewAdded, 
+const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
+  machineId,
+  onReviewAdded,
   isModalOpen,
   onClose
 }) => {
+  const { t } = useTranslation('machine');
   const [formData, setFormData] = useState<FormData>({
     rating: 0,
     difficulty: '',
@@ -72,24 +74,24 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
 
     // Validate rating
     if (rating < 1.0 || rating > 5.0) {
-      setError('Rating must be between 1.0 and 5.0.');
+      setError(t('review.ratingError'));
       return;
     }
 
     // Validate one decimal place
     if (!Number.isInteger(rating * 10)) {
-      setError('Rating must have at most one decimal place.');
+      setError(t('review.ratingDecimalError'));
       return;
     }
 
     // Validate difficulty
     if (!difficulty) {
-      setError('Please select difficulty level.');
+      setError(t('review.difficultyError'));
       return;
     }
 
     if (!review.trim()) {
-      setError('Please write your review.');
+      setError(t('review.contentError'));
       return;
     }
 
@@ -100,7 +102,7 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
         review,
         difficulty
       };
-      
+
       const newReview = await postMachineReview(machineId, reviewData);
       onReviewAdded(newReview);
       setFormData({ rating: 0, difficulty: '', review: '' });
@@ -112,7 +114,7 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
       } else if (err.msg) {
         setError(err.msg);
       } else {
-        setError('Error submitting review: Unknown error.');
+        setError(t('review.unknownError'));
       }
     } finally {
       setLoading(false);
@@ -127,13 +129,13 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
     <Modal isOpen={isModalOpen} onClose={onClose}>
       <form className='machine-review-form' onSubmit={handleSubmit}>
         <div className="modal-header">
-          <h2>New Review</h2>
+          <h2>{t('review.newReview')}</h2>
         </div>
-      
+
         {error && <p className='error-message'>{error}</p>}
-      
+
         <div className='machine-review-form-rating'>
-          <label htmlFor='rating' className='rating'>Quality Rating</label>
+          <label htmlFor='rating' className='rating'>{t('review.qualityRating')}</label>
           <Box
             sx={{
               '& > legend': { mt: 2 },
@@ -150,8 +152,8 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
         </div>
 
         <div className='machine-review-form-difficulty'>
-          <label htmlFor='difficulty'>Difficulty Level</label>
-          <select 
+          <label htmlFor='difficulty'>{t('review.difficultyLevel')}</label>
+          <select
             id='difficulty'
             name='difficulty'
             value={difficulty}
@@ -159,35 +161,35 @@ const MachineReviewForm: React.FC<MachineReviewFormProps> = ({
             required
             className='difficulty-select'
           >
-            <option value="">Select difficulty</option>
-            <option value="very_easy">⭐ Very Easy</option>
-            <option value="easy">⭐⭐ Easy</option>
-            <option value="medium">⭐⭐⭐ Medium</option>
-            <option value="hard">⭐⭐⭐⭐ Hard</option>
-            <option value="very_hard">⭐⭐⭐⭐⭐ Very Hard</option>
+            <option value="">{t('review.selectDifficulty')}</option>
+            <option value="very_easy">⭐ {t('difficulty_levels.very_easy')}</option>
+            <option value="easy">⭐⭐ {t('difficulty_levels.easy')}</option>
+            <option value="medium">⭐⭐⭐ {t('difficulty_levels.medium')}</option>
+            <option value="hard">⭐⭐⭐⭐ {t('difficulty_levels.hard')}</option>
+            <option value="very_hard">⭐⭐⭐⭐⭐ {t('difficulty_levels.very_hard')}</option>
           </select>
         </div>
-      
+
         <div className='machine-review-form-content'>
-          <label htmlFor='review'>Comment</label>
-          <textarea 
-            ref={reviewContentRef} 
-            id='review' 
-            name='review' 
-            value={review} 
-            placeholder='Please write your review here'
-            onChange={handleChange} 
-            required 
+          <label htmlFor='review'>{t('review.comment')}</label>
+          <textarea
+            ref={reviewContentRef}
+            id='review'
+            name='review'
+            value={review}
+            placeholder={t('review.placeholder')}
+            onChange={handleChange}
+            required
           />
         </div>
-      
+
         <div className="modal-footer">
-          <button 
-            className='machine-review-form-submit' 
-            type='submit' 
+          <button
+            className='machine-review-form-submit'
+            type='submit'
             disabled={loading}
           >
-            {loading ? 'Submitting...' : 'Submit'}
+            {loading ? t('review.submitting') : t('review.submit')}
           </button>
         </div>
       </form>

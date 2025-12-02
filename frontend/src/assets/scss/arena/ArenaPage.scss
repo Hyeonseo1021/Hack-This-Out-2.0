@@ -1,5 +1,10 @@
-// ArenaPage.scss - Cyberpunk Theme
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=VT323&display=swap');
+// ArenaPage.scss - Neon CRT Glitch Theme
+
+// ========================================
+// 색상 팔레트 (하얀색 + 네온 민트)
+// ========================================
+$neon-mint: #00e5ff;      // 네온 민트
+$white: #ffffff;          // 하얀색
 
 // ========================================
 // 애니메이션
@@ -11,27 +16,134 @@
 }
 
 @keyframes scanline {
-  0% { transform: translateY(-10%); }
-  100% { transform: translateY(110vh); }
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes scanline-slow {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
 }
 
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(10px); 
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { 
-    box-shadow: 0 0 15px rgba(0, 246, 255, 0.3); 
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(0, 115, 255, 0.4),
+      0 0 40px rgba(0, 246, 255, 0.2),
+      inset 0 0 20px rgba(0, 246, 255, 0.1);
   }
-  50% { 
-    box-shadow: 0 0 25px rgba(0, 246, 255, 0.6); 
+  50% {
+    box-shadow:
+      0 0 30px rgba(0, 128, 255, 0.6),
+      0 0 60px rgba(0, 246, 255, 0.3),
+      inset 0 0 30px rgba(0, 246, 255, 0.15);
+  }
+}
+
+@keyframes glitch-1 {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+@keyframes glitch-2 {
+  0%, 100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+  10% {
+    clip-path: inset(10% 0 85% 0);
+    transform: translate(-5px, 0);
+  }
+  20% {
+    clip-path: inset(80% 0 15% 0);
+    transform: translate(5px, 0);
+  }
+  30% {
+    clip-path: inset(50% 0 30% 0);
+    transform: translate(-5px, 0);
+  }
+  40% {
+    clip-path: inset(30% 0 70% 0);
+    transform: translate(5px, 0);
+  }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  41% { opacity: 1; }
+  42% { opacity: 0.8; }
+  43% { opacity: 1; }
+  45% { opacity: 0.9; }
+  46% { opacity: 1; }
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 5px #00f6ff,
+      0 0 10px #00f6ff,
+      0 0 20px #00f6ff,
+      0 0 40px #00f6ff;
+  }
+  50% {
+    text-shadow:
+      0 0 2px #00f6ff,
+      0 0 5px #00f6ff,
+      0 0 10px #00f6ff,
+      0 0 20px #00f6ff;
+  }
+}
+
+@keyframes rgb-shift {
+  0%, 100% {
+    text-shadow:
+      0.05em 0 0 rgba(255, 0, 0, 0.75),
+      -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+      0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  14% {
+    text-shadow:
+      0.05em 0 0 rgba(255, 0, 0, 0.75),
+      -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+      0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  15% {
+    text-shadow:
+      -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  49% {
+    text-shadow:
+      -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  50% {
+    text-shadow:
+      0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      0.05em 0 0 rgba(0, 255, 0, 0.75),
+      0 -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  99% {
+    text-shadow:
+      0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      0.05em 0 0 rgba(0, 255, 0, 0.75),
+      0 -0.05em 0 rgba(0, 0, 255, 0.75);
   }
 }
 
@@ -39,45 +151,165 @@
 // 전체 컨테이너
 // ========================================
 
-.blueprint-container {
+.arena-container {
   display: flex;
-  height: 99%;
-  width: 180vh;
-  margin: 0 auto;
+  height: 100%;
+  width: 100%;
+  margin: 0;
   gap: 32px;
   padding: 32px;
-  background: radial-gradient(circle at 20% 20%, #02010a, #000);
+  background: #000000;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--font-display);
+}
 
-  // 배경 그리드
+// ========================================
+// 메인 타이틀
+// ========================================
+
+.arena-title {
+  font-family: var(--font-display);
+  font-size: 8rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 2rem;
+  margin: 0 0 4rem 0;
+  position: relative;
+  z-index: 2;
+  text-shadow:
+    0 0 20px rgba(0, 229, 255, 0.8),
+    0 0 40px rgba(0, 229, 255, 0.6),
+    0 0 60px rgba(255, 255, 255, 0.4),
+    2px 2px 0 rgba(0, 229, 255, 0.3),
+    -2px -2px 0 rgba(255, 255, 255, 0.3);
+
+  // 글리치 효과
+  &::before {
+    content: 'ARENA';
+    position: absolute;
+    left: 2px;
+    top: 0;
+    color: rgba(0, 229, 255, 0.7);
+    z-index: -1;
+  }
+
+  &::after {
+    content: 'ARENA';
+    position: absolute;
+    left: -2px;
+    top: 0;
+    color: rgba(255, 255, 255, 0.7);
+    z-index: -1;
+  }
+}
+
+// ========================================
+// 버튼 그리드
+// ========================================
+
+.arena-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
+  max-width: 1200px;
+  width: 100%;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 4rem;
+}
+
+// ========================================
+// 배틀 카드 (버튼)
+// ========================================
+
+.arena-card {
+  background: rgba(0, 0, 0, 0.7);
+  border: 3px solid $neon-mint;
+  padding: 4rem 2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  font-family: var(--font-display);
+  box-shadow:
+    0 0 30px rgba(0, 229, 255, 0.4),
+    0 0 60px rgba(0, 229, 255, 0.2),
+    inset 0 0 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+
+  &__text {
+    position: relative;
+    z-index: 2;
+    color: #ffffff;
+    display: block;
+    text-shadow:
+      0 0 10px rgba(0, 229, 255, 0.8),
+      0 0 20px rgba(255, 255, 255, 0.5);
+  }
+
+  // 배경 그라디언트 효과
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-image:
-      linear-gradient(rgba(0, 225, 255, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 225, 255, 0.1) 1px, transparent 1px);
-    background-size: 60px 60px;
-    opacity: 0.07;
-    animation: grid-pan 10s linear infinite;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  &__scanline {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(to bottom, transparent, rgba(0, 246, 255, 0.8), transparent);
-    animation: scanline 8s linear infinite;
-    opacity: 0.5;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 229, 255, 0.1),
+      rgba(255, 255, 255, 0.05),
+      rgba(0, 229, 255, 0.1)
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
     z-index: 1;
   }
+
+  &:hover {
+    border-color: $white;
+    box-shadow:
+      0 0 40px rgba(255, 255, 255, 0.6),
+      0 0 80px rgba(0, 229, 255, 0.4),
+      0 0 120px rgba(0, 229, 255, 0.3),
+      inset 0 0 60px rgba(255, 255, 255, 0.1);
+    transform: translateY(-10px) scale(1.02);
+
+    &::before {
+      opacity: 1;
+    }
+
+    .arena-card__text {
+      text-shadow:
+        0 0 15px rgba(255, 255, 255, 1),
+        0 0 30px rgba(0, 229, 255, 0.8),
+        0 0 45px rgba(0, 229, 255, 0.6);
+    }
+  }
+
+  &:active {
+    transform: translateY(-5px) scale(0.98);
+  }
+}
+
+// ========================================
+// 하단 상태 텍스트
+// ========================================
+
+.arena-status {
+  font-size: 1rem;
+  color: $neon-mint;
+  text-transform: uppercase;
+  letter-spacing: 0.5rem;
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
 }
 
 // ========================================
@@ -85,58 +317,81 @@
 // ========================================
 
 .blueprint-panel {
-  background: rgba(0, 5, 15, 0.7);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(0, 246, 255, 0.3);
-  border-radius: 5px;
-  box-shadow: 
-    0 0 20px rgba(0, 246, 255, 0.15),
-    inset 0 0 30px rgba(0, 246, 255, 0.03);
+  border: 2px solid $neon-mint;
+  border-radius: 0;
+  box-shadow:
+    0 0 30px rgba(0, 229, 255, 0.4),
+    0 0 60px rgba(0, 229, 255, 0.3),
+    inset 0 0 40px rgba(0, 229, 255, 0.05),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
   z-index: 1;
   display: flex;
   flex-direction: column;
   animation: fadeIn 0.8s ease-out forwards;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    z-index: -1;
+  }
 
   &--list { flex: 3; }
   &--create { flex: 1; opacity: 0; animation-delay: 0.2s; }
 
   &__header {
     padding: 1rem 1.5rem;
-    border-bottom: 2px solid rgba(0, 246, 255, 0.2);
-    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid;
+    border-image: linear-gradient(90deg, $neon-mint, $white) 1;
+    background: linear-gradient(90deg, rgba(0, 229, 255, 0.05), rgba(255, 255, 255, 0.05));
+    position: relative;
+    overflow: hidden;
   }
 
   &__title {
-    color: #00f6ff;
-    font-size: 1.2rem;
-    font-weight: 600;
+    color: $neon-mint;
+    font-size: 1.3rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(0, 246, 255, 0.5);
-    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 4px;
+    font-family: var(--font-display);
+    position: relative;
+    text-shadow:
+      0 0 10px rgba(0, 229, 255, 0.8),
+      0 0 20px rgba(0, 229, 255, 0.5);
   }
 
   &__body {
     padding: 1.5rem;
     overflow-y: auto;
     flex-grow: 1;
+    position: relative;
 
-    // 커스텀 스크롤바
+    // 커스텀 스크롤바 - 네온 스타일
     &::-webkit-scrollbar {
-      width: 6px;
+      width: 8px;
     }
 
     &::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.5);
+      border-left: 1px solid rgba(0, 229, 255, 0.3);
     }
 
     &::-webkit-scrollbar-thumb {
-      background: rgba(0, 246, 255, 0.5);
-      border-radius: 3px;
+      background: linear-gradient(180deg, $neon-mint, $white);
+      box-shadow:
+        0 0 10px rgba(0, 229, 255, 0.8),
+        inset 0 0 5px rgba(255, 255, 255, 0.5);
 
       &:hover {
-        background: rgba(0, 246, 255, 0.8);
+        background: linear-gradient(180deg, $white, $neon-mint);
+        box-shadow:
+          0 0 20px rgba(255, 255, 255, 1),
+          inset 0 0 10px rgba(0, 229, 255, 0.8);
       }
     }
 
@@ -148,12 +403,15 @@
       text-align: center;
     }
   }
-  
+
   &__subtext {
     margin-top: 1.5rem;
-    color: rgba(234, 250, 255, 0.7);
-    opacity: 0.7;
+    color: $white;
     font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.6);
   }
 }
 
@@ -164,41 +422,103 @@
 .arena-list {
   &__row {
     display: grid;
-    grid-template-columns: 0.5fr 2fr 1fr 1fr 1fr;
+    grid-template-columns: 0.6fr 2fr 1.8fr 0.8fr 0.8fr;
     align-items: center;
     gap: 1rem;
-    padding: 1rem 0;
-    color: #eafaff;
-    border-bottom: 2px solid rgba(0, 246, 255, 0.15);
-    transition: background-color 0.2s ease, color 0.2s ease;
+    padding: 1rem;
+    color: #00e5ff;
+    border: 1px solid transparent;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+    transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
+    background: rgba(0, 229, 255, 0.02);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(0, 229, 255, 0.3), transparent);
+      transition: width 0.3s ease;
+      pointer-events: none;
+    }
 
     &:hover {
-      background-color: rgba(0, 246, 255, 0.1);
+      background: rgba(0, 229, 255, 0.1);
+      border-color: #00e5ff;
       color: #fff;
+      box-shadow:
+        0 0 20px rgba(0, 229, 255, 0.4),
+        inset 0 0 20px rgba(0, 229, 255, 0.1);
+      transform: translateX(5px);
+
+      &::before {
+        width: 100%;
+      }
     }
-    
+
     &--header {
-      color: #00f6ff;
+      color: $neon-mint;
       font-weight: bold;
       cursor: default;
-      &:hover { background-color: transparent; }
+      background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), rgba(255, 255, 255, 0.05));
+      border-bottom: 2px solid;
+      border-image: linear-gradient(90deg, $neon-mint, $white) 1;
+      text-shadow:
+        0 0 10px rgba(0, 229, 255, 0.8),
+        0 0 20px rgba(0, 229, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+
+      &:hover {
+        background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), rgba(255, 255, 255, 0.05));
+        transform: none;
+        box-shadow: none;
+      }
+
+      &::before {
+        display: none;
+      }
     }
 
     &--locked {
       cursor: not-allowed;
-      color: #8892b0;
-      &:hover { background-color: transparent; }
+      color: #666;
+      opacity: 0.5;
+
+      &:hover {
+        background: rgba(0, 229, 255, 0.02);
+        transform: none;
+        box-shadow: none;
+        border-color: transparent;
+      }
+
+      &::before {
+        display: none;
+      }
     }
   }
 
-  &__col { font-size: 0.95rem; }
+  &__col {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+  }
 
   &__message {
     text-align: center;
-    color: rgba(234, 250, 255, 0.7);
+    background: linear-gradient(90deg, $neon-mint, $white, $neon-mint);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     font-size: 1.1rem;
     margin-top: 4rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.6));
   }
 }
 
@@ -207,21 +527,61 @@
 // ========================================
 
 .status-badge {
-  padding: 0.3em 0.8em;
-  border-radius: 20px;
+  padding: 0.4em 1em;
+  border-radius: 0;
   font-weight: bold;
-  font-size: 0.8rem;
-  border: 1px solid;
+  font-size: 0.75rem;
+  border: 2px solid;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: var(--font-display);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+  }
 
   &--waiting {
-    background-color: rgba(0, 255, 174, 0.1);
+    background: rgba(0, 255, 174, 0.15);
     color: #00ffae;
-    border-color: rgba(0, 255, 174, 0.3);
+    border-color: #00ffae;
+    box-shadow:
+      0 0 10px rgba(0, 255, 174, 0.5),
+      inset 0 0 10px rgba(0, 255, 174, 0.1);
+    text-shadow: 0 0 5px rgba(0, 255, 174, 0.8);
+
+    &::before {
+      background: rgba(0, 255, 174, 0.3);
+    }
   }
-  &--started, &--ended {
-    background-color: rgba(255, 138, 128, 0.1);
-    color: #ff8a80;
-    border-color: rgba(255, 138, 128, 0.3);
+
+  &--started {
+    background: rgba(255, 165, 0, 0.15);
+    color: #ffa500;
+    border-color: #ffa500;
+    box-shadow:
+      0 0 10px rgba(255, 165, 0, 0.5),
+      inset 0 0 10px rgba(255, 165, 0, 0.1);
+    text-shadow: 0 0 5px rgba(255, 165, 0, 0.8);
+  }
+
+  &--ended, &--full {
+    background: rgba(255, 0, 100, 0.15);
+    color: #ff0064;
+    border-color: #ff0064;
+    box-shadow:
+      0 0 10px rgba(255, 0, 100, 0.5),
+      inset 0 0 10px rgba(255, 0, 100, 0.1);
+    text-shadow: 0 0 5px rgba(255, 0, 100, 0.8);
   }
 }
 
@@ -230,44 +590,93 @@
 // ========================================
 
 .blueprint-button {
-  background-color: transparent;
-  border: 2px solid #00f6ff;
-  color: #00f6ff;
-  padding: 1rem 3rem;
-  font-size: 1.2rem;
-  font-weight: 600;
+  background: rgba(0, 0, 0, 0.8);
+  border: 3px solid;
+  border-image: linear-gradient(135deg, $neon-mint, $white, $neon-mint) 1;
+  color: $neon-mint;
+  padding: 1.2rem 3.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 3px;
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
   overflow: hidden;
-  font-family: 'Orbitron', sans-serif;
-  box-shadow: 0 0 15px rgba(0, 246, 255, 0.3);
+  font-family: var(--font-display);
+  box-shadow:
+    0 0 30px rgba(0, 229, 255, 0.5),
+    0 0 50px rgba(0, 229, 255, 0.3),
+    0 0 70px rgba(255, 255, 255, 0.2),
+    inset 0 0 20px rgba(0, 229, 255, 0.1);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 
   &__text {
     position: relative;
     z-index: 2;
+    background: linear-gradient(135deg, $neon-mint, $white);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.8));
   }
 
+  // 배경 애니메이션
   &::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    width: 0;
+    left: -100%;
+    width: 100%;
     height: 100%;
-    background-color: rgba(0, 246, 255, 0.2);
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(0, 229, 255, 0.2),
+      rgba(255, 255, 255, 0.2),
+      rgba(0, 229, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
     z-index: 1;
   }
 
+  // 글리치 효과
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: linear-gradient(135deg, $white, $neon-mint, $white);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
   &:hover {
-    color: #fff;
-    box-shadow: 0 0 25px rgba(0, 246, 255, 0.6);
+    box-shadow:
+      0 0 40px rgba(0, 229, 255, 0.8),
+      0 0 60px rgba(255, 255, 255, 0.6),
+      0 0 80px rgba(0, 229, 255, 0.4),
+      inset 0 0 30px rgba(0, 229, 255, 0.3);
+    transform: scale(1.05);
+
     &::before {
-      width: 100%;
+      left: 100%;
     }
+
+    &::after {
+      opacity: 0.3;
+    }
+
+    .blueprint-button__text {
+      background: linear-gradient(135deg, $white, $neon-mint);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 }
 

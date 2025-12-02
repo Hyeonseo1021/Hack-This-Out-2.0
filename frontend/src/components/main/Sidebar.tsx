@@ -1,66 +1,83 @@
+// Sidebar.tsx
+
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MdOutlineLeaderboard, MdLeaderboard } from "react-icons/md";
-import { FaQuestionCircle, FaRegQuestionCircle, FaBook } from "react-icons/fa";
+import { FaBook } from "react-icons/fa";
 import { PiComputerTowerBold, PiComputerTowerFill } from "react-icons/pi";
 import { RiArrowLeftDoubleFill, RiArrowRightDoubleFill } from "react-icons/ri";
 import { GiCrossedSwords } from "react-icons/gi";
 import { FaShop } from 'react-icons/fa6';
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import EmojiEventsIconRounded from '@mui/icons-material/EmojiEventsRounded';
 import styles from '../../assets/scss/section/_sidebar.module.scss';
 import logo from "../../assets/img/icon/HTO nud.png";
-import collapsed_logo from '../../assets/img/icon/Hack cat.png';
+import collapsed_logo from '../../assets/img/icon/Hack_cat.png';
 
 interface SidebarProps {
   isCollapsed: boolean;
-  toggleSidebar: (forceCollapse?: boolean) => void; // toggleSidebar가 강제 설정을 허용하도록 변경
+  toggleSidebar: (forceCollapse?: boolean) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
   const location = useLocation();
   const [isHovered, setIsHovered] = useState(false);
-  const [isAutoCollapsed, setIsAutoCollapsed] = useState(false); // 자동 collapse 여부 추적
+  const [isAutoCollapsed, setIsAutoCollapsed] = useState(false);
 
-  // 화면 크기 감지 및 isCollapsed 상태 변경
+  // ==================
+  // 경로 Active 조건
+  // ==================
+
+  // Manual 활성화: /manual + /tutorial 포함
+  const isManualActive =
+    location.pathname.startsWith('/manual') ||
+    location.pathname.startsWith('/tutorial');
+
+  // Machines 활성화: /machine 정확하게만
+  const isMachineActive =
+    location.pathname === '/machine' ||
+    location.pathname.startsWith('/machine/');
+
+  // Leaderboard
+  const isLeaderboardActive = location.pathname.startsWith('/leaderboard');
+
+  const isBattleActive = location.pathname.startsWith('/battle');
+
+  const isShopActive = location.pathname.startsWith('/shop');
+
+  // ==================
+  // Resize auto-collapse
+  // ==================
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 1000 && !isCollapsed) {
-        toggleSidebar(true); // 강제로 collapse 상태로 변경
-        setIsAutoCollapsed(true); // 자동 collapse 상태 기록
+        toggleSidebar(true);
+        setIsAutoCollapsed(true);
       } else if (window.innerWidth > 1000 && isAutoCollapsed) {
-        toggleSidebar(false); // 강제로 확장 상태로 변경
-        setIsAutoCollapsed(false); // 자동 collapse 상태 해제
+        toggleSidebar(false);
+        setIsAutoCollapsed(false);
       }
     };
 
-    // 초기 실행 (마운트 시 한 번 적용)
     handleResize();
-
-    // 리스너 등록
     window.addEventListener('resize', handleResize);
-
-    // 리스너 정리
     return () => window.removeEventListener('resize', handleResize);
-  }, [isCollapsed, toggleSidebar, isAutoCollapsed]);
-  
-  // URL을 기반으로 현재 선택된 메뉴 확인
-  const getMenuIcon = (path: string, iconActive: React.ReactElement, iconInactive: React.ReactElement) => {
-    return location.pathname.startsWith(path) ? iconActive : iconInactive;
-  };
+  }, [isCollapsed, isAutoCollapsed, toggleSidebar]);
 
   return (
     <div className={`${styles.sidebarMenu} ${isCollapsed ? styles.collapsed : ''}`}>
       <div className={styles.headerParent}>
         <div className={styles.header}>
+
+          {/* 로고 */}
           <Link to='/' className={styles.logoimage}>
             <img className={styles.logoContainerIcon} alt="" src={logo} />
           </Link>
+
           <div className={styles.sidebarMenuButton}>
-            <button className={styles.collapse_button}
+            <button
+              className={styles.collapse_button}
               onClick={() => {
                 toggleSidebar();
-                setIsAutoCollapsed(false); // 사용자가 수동으로 변경했음을 기록
+                setIsAutoCollapsed(false);
                 setIsHovered(false);
               }}
               onMouseEnter={() => setIsHovered(true)}
@@ -68,59 +85,74 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
             >
               {isCollapsed && isHovered && <RiArrowRightDoubleFill className={styles.collapse_icon_open} size={40} />}
               {isCollapsed && !isHovered && (
-                <img
-                  className={styles.icon_logo}
-                  src={collapsed_logo}
-                  alt="Collapsed Logo"
-                />
+                <img className={styles.icon_logo} src={collapsed_logo} alt="Collapsed Logo" />
               )}
               {!isCollapsed && <RiArrowLeftDoubleFill className={styles.collapse_icon_close} size={40} />}
             </button>
           </div>
+
         </div>
+
         <div className={styles.headerParent}>
           <div className={styles.topMenu}>
             <li className={styles.verticalMenuList}>
+
+              {/* Manual */}
               <Link
                 to="/manual"
-                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/manual') ? styles.selected : ''}`}
+                className={`${styles.verticalMenuItem} ${isManualActive ? styles.selected : ''}`}
                 data-tooltip="Manual"
               >
-                {getMenuIcon('/manual', <FaBook className={styles.menuIcon} />, <FaBook className={styles.menuIcon} />)}
+                <FaBook className={styles.menuIcon} />
                 <div className={styles.label}>Manual</div>
               </Link>
+
+              {/* Leaderboard */}
               <Link
                 to="/leaderboard"
-                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/leaderboard') ? styles.selected : ''}`}
+                className={`${styles.verticalMenuItem} ${isLeaderboardActive ? styles.selected : ''}`}
                 data-tooltip="LeaderBoard"
               >
-                {getMenuIcon('/leaderboard', <MdLeaderboard className={styles.menuIcon} />, <MdOutlineLeaderboard className={styles.menuIcon} />)}
+                {isLeaderboardActive ?
+                  <MdLeaderboard className={styles.menuIcon} /> :
+                  <MdOutlineLeaderboard className={styles.menuIcon} />
+                }
                 <div className={styles.label}>LeaderBoard</div>
               </Link>
+
+              {/* Battle */}
               <Link
                 to="/battle"
-                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/battle') ? styles.selected : ''}`}
+                className={`${styles.verticalMenuItem} ${isBattleActive ? styles.selected : ''}`}
                 data-tooltip="Battle"
               >
-                {getMenuIcon('/battle', <GiCrossedSwords className={styles.menuIcon} />, <GiCrossedSwords className={styles.menuIcon} />)}
+                <GiCrossedSwords className={styles.menuIcon} />
                 <div className={styles.label}>Battle</div>
               </Link>
+
+              {/* Machines */}
               <Link
                 to="/machine"
-                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/machine') ? styles.selected : ''}`}
+                className={`${styles.verticalMenuItem} ${isMachineActive ? styles.selected : ''}`}
                 data-tooltip="Machines"
               >
-                {getMenuIcon('/machine', <PiComputerTowerFill className={styles.menuIcon} />, <PiComputerTowerBold className={styles.menuIcon} />)}
+                {isMachineActive ?
+                  <PiComputerTowerFill className={styles.menuIcon} /> :
+                  <PiComputerTowerBold className={styles.menuIcon} />
+                }
                 <div className={styles.label}>Machines</div>
               </Link>
+
+              {/* Shop */}
               <Link
                 to="/shop"
-                className={`${styles.verticalMenuItem} ${location.pathname.startsWith('/shop') ? styles.selected : ''}`}
-                data-tooltip="shop"
+                className={`${styles.verticalMenuItem} ${isShopActive ? styles.selected : ''}`}
+                data-tooltip="Shop"
               >
-                {getMenuIcon('/shop', <FaShop className={styles.menuIcon} />, <FaShop className={styles.menuIcon} />)}
+                <FaShop className={styles.menuIcon} />
                 <div className={styles.label}>Shop</div>
               </Link>
+
             </li>
           </div>
         </div>

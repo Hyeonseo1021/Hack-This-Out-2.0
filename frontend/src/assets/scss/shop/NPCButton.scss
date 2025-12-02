@@ -1,0 +1,23 @@
+.npc-help-button {
+  position: fixed;
+  bottom: 40px;
+  right: 25px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #00f6ff;
+  color: #000;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 12px #00f6ff;
+  transition: 0.25s;
+
+  &:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 20px #00f6ff;
+  }
+}

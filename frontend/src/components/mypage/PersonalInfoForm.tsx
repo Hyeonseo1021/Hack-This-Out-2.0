@@ -1,4 +1,5 @@
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   changePassword,
   changeName,
@@ -22,6 +23,7 @@ interface UserData {
 }
 
 const PersonalInfoForm: React.FC = () => {
+  const { t } = useTranslation('user');
   const [userData, setUserData] = useState<UserData>({
     id: '',
     email: '',
@@ -66,11 +68,11 @@ const PersonalInfoForm: React.FC = () => {
 
   const validatePassword = (newPw: string, confirmPw: string): boolean => {
     const newErrors: { password?: string } = {};
-    
+
     if (newPw.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long';
+      newErrors.password = t('mypage.personalInfo.errors.passwordLength');
     } else if (newPw !== confirmPw) {
-      newErrors.password = 'New passwords do not match';
+      newErrors.password = t('mypage.personalInfo.errors.passwordMismatch');
     }
 
     setErrors(prev => ({ ...prev, ...newErrors }));
@@ -94,7 +96,7 @@ const PersonalInfoForm: React.FC = () => {
       await changePassword(oldPassword, newPassword);
       setSuccessMessages(prev => ({
         ...prev,
-        password: 'Password changed successfully!'
+        password: t('mypage.personalInfo.success.passwordChanged')
       }));
       setNewPassword('');
       setOldPassword('');
@@ -124,7 +126,7 @@ const PersonalInfoForm: React.FC = () => {
       await changeName(username);
       setSuccessMessages(prev => ({
         ...prev,
-        name: 'Name changed successfully!'
+        name: t('mypage.personalInfo.success.nameChanged')
       }));
       setUsername('');
       // Delay reload to show success message
@@ -151,7 +153,7 @@ const PersonalInfoForm: React.FC = () => {
     if (!avatar) {
       setErrors(prev => ({
         ...prev,
-        avatar: 'Please select a file to upload.'
+        avatar: t('mypage.personalInfo.errors.selectFile')
       }));
       return;
     }
@@ -160,7 +162,7 @@ const PersonalInfoForm: React.FC = () => {
       await updateUserAvatar(avatar);
       setSuccessMessages(prev => ({
         ...prev,
-        avatar: 'Avatar changed successfully!'
+        avatar: t('mypage.personalInfo.success.avatarChanged')
       }));
       setAvatar(null);
       // Delay reload to show success message
@@ -201,7 +203,7 @@ const PersonalInfoForm: React.FC = () => {
           </Avatar>
           <form className="avatar-form" onSubmit={handleAvatarChange}>
             <label htmlFor="file">
-              <div className="avatar-input">Upload File</div>
+              <div className="avatar-input">{t('mypage.personalInfo.uploadFile')}</div>
             </label>
             <input
               type="file"
@@ -212,7 +214,7 @@ const PersonalInfoForm: React.FC = () => {
               required
             />
             <button className="avatar-button" type="submit">
-              Change
+              {t('mypage.personalInfo.change')}
             </button>
             {errors.avatar && <ErrorMessage message={errors.avatar} />}
             {successMessages.avatar && <div className="success-message">{successMessages.avatar}</div>}
@@ -220,68 +222,68 @@ const PersonalInfoForm: React.FC = () => {
         </div>
         <div className="user-container">
           <div className="name-container">
-            <label>Name : {userData.username}</label>
+            <label>{t('mypage.personalInfo.name')} : {userData.username}</label>
           </div>
           <div className="username-container">
-            <label>ID : {userData.username}</label>
+            <label>{t('mypage.personalInfo.id')} : {userData.username}</label>
           </div>
           <div className="email-container">
-            <label>Email : {userData.email}</label>
+            <label>{t('mypage.personalInfo.email')} : {userData.email}</label>
           </div>
           <div className="exp-container">
-            <label>EXP : {userData.exp}</label>
+            <label>{t('mypage.personalInfo.exp')} : {userData.exp}</label>
           </div>
           <div className="coin-container">
-            <label>HTO Coin : {userData.htoCoin}</label>
+            <label>{t('mypage.personalInfo.htoCoin')} : {userData.htoCoin}</label>
           </div>
         </div>
       </div>
       <div className="modify-container">
         <form className="name-form" onSubmit={handleNameChange}>
-          <h3>Change Name</h3>
+          <h3>{t('mypage.personalInfo.changeName')}</h3>
           {errors.name && <ErrorMessage message={errors.name} />}
           {successMessages.name && <div className="success-message">{successMessages.name}</div>}
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="New Name"
+            placeholder={t('mypage.personalInfo.newName')}
             required
           />
           <div className="button-container">
             <button className="name-button" type="submit">
-              Change
+              {t('mypage.personalInfo.change')}
             </button>
           </div>
         </form>
         <form className="password-form" onSubmit={handlePasswordChange}>
-          <h3>Change Password</h3>
+          <h3>{t('mypage.personalInfo.changePassword')}</h3>
           {errors.password && <ErrorMessage message={errors.password} />}
           {successMessages.password && <div className="success-message">{successMessages.password}</div>}
           <input
             type="password"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
-            placeholder="Old Password"
+            placeholder={t('mypage.personalInfo.oldPassword')}
             required
           />
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New Password"
+            placeholder={t('mypage.personalInfo.newPassword')}
             required
           />
           <input
             type="password"
             value={confirmNewPassword}
             onChange={(e) => setConfirmNewPassword(e.target.value)}
-            placeholder="Confirm New Password"
+            placeholder={t('mypage.personalInfo.confirmNewPassword')}
             required
           />
           <div className="button-container">
             <button className="password-button" type="submit">
-              Change
+              {t('mypage.personalInfo.change')}
             </button>
           </div>
         </form>

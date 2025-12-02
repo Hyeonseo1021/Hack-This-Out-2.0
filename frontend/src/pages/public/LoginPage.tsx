@@ -1,95 +1,118 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
-import '../../assets/scss/login/LoginPage.scss';
-import LoginForm from '../../components/login/LoginForm'; 
-import Modal from '../../components/modal/Modal'; // Modal import
-import RegisterForm from '../../components/login/RegisterForm'; // RegisterForm import
-import { AuthUserContext } from '../../contexts/AuthUserContext'; // Import AuthUserContext
-import Main from '../../components/main/Main';
+import { useNavigate } from 'react-router-dom';
+import styles from '../../assets/scss/etc/MainPage.module.scss';
+
+import LoginForm from '../../components/login/LoginForm';
+import Modal from '../../components/modal/Modal';
 import Loading from '../../components/public/Loading';
 
-const LoginPage: React.FC = () => {
-  const [isClicked, setIsClicked] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state management
-  const navigate = useNavigate(); // Initialize navigate
-  const [, setIsTransitioning] = useState(false);
-  const [, setIsPreGlitch] = useState(false);
+import { AuthUserContext } from '../../contexts/AuthUserContext';
+
+import fullscreenBlack from '../../assets/img/Fullscreen_black.png';
+import fullscreen from '../../assets/img/Fullscreen.png';
+import screennoise from "../../assets/img/screennoise.png";
+import screennoise1 from "../../assets/img/screennoise_1.png";
+import screennoise2 from "../../assets/img/screennoise2.png";
+import screennoise3 from "../../assets/img/screennoise3.png";
+import screennoise4 from "../../assets/img/screennoise4.png";
+
+interface LoginPageProps {
+  intervalMs?: number;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ intervalMs = 40 }) => {
+  const navigate = useNavigate();
+  const { isLoggedIn, isLoading } = useContext(AuthUserContext)!;
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Consume AuthUserContext
-  const authUserContext = useContext(AuthUserContext);
+  const noiseFrames = useRef([screennoise, screennoise1, screennoise2, screennoise3, screennoise4]);
+  const [currentImage, setCurrentImage] = useState(fullscreenBlack);
+  const [glitchIntensity, setGlitchIntensity] = useState(0);
+  const [isFirstPhase, setIsFirstPhase] = useState(true);
 
-  if (!authUserContext) {
-    throw new Error('AuthUserContext must be used within an AuthUserProvider');
-  }
-
-  const { isLoggedIn, isLoading } = authUserContext;
-
-  // Handle redirection if user is already logged in
   useEffect(() => {
-    if (!isLoading && isLoggedIn) {
-      navigate('/', { state: { fromLogin: true } }); // Pass state to indicate login redirect
-    }
+    if (!isLoading && isLoggedIn) navigate('/');
   }, [isLoggedIn, isLoading, navigate]);
 
-  // Background click handler
-  const handleBackgroundClick = () => {
-    // Start pre-glitch effect
-    setIsPreGlitch(true);
-    
-    // Start main transition after pre-glitch
-    setTimeout(() => {
-      setIsPreGlitch(false);
-      setIsTransitioning(true);
-      
-      // Update state after transition starts
-      setTimeout(() => {
-        setIsClicked(!isClicked);
-        setIsTransitioning(false);
-      }, 500);
-    }, 350);
+  useEffect(() => {
+    let noiseIndex = 0;
+    let mainTimer: NodeJS.Timeout;
+    let noiseInterval: NodeJS.Timeout;
+
+    const startLoop = () => {
+      // 첫 화면: fullscreen_black → fullscreen
+      if (isFirstPhase) {
+        setCurrentImage(fullscreenBlack);
+        setTimeout(() => setCurrentImage(fullscreen), 400);
+        mainTimer = setTimeout(() => {
+          setIsFirstPhase(false);
+          startLoop();
+        }, 1000);
+        return;
+      }
+
+      // 일반 루프
+      setCurrentImage(fullscreen);
+      mainTimer = setTimeout(() => {
+        noiseInterval = setInterval(() => {
+          setCurrentImage(noiseFrames.current[noiseIndex % noiseFrames.current.length]);
+          setGlitchIntensity(Math.random() * 0.8 + 0.3);
+          noiseIndex++;
+        }, intervalMs);
+
+        // 노이즈 끝 → 다시 fullscreen
+        setTimeout(() => {
+          clearInterval(noiseInterval);
+          setCurrentImage(fullscreen);
+          setGlitchIntensity(0);
+          setTimeout(startLoop, 1200);
+        }, 1200);
+      }, 800);
+    };
+
+    startLoop();
+    return () => {
+      clearTimeout(mainTimer);
+      clearInterval(noiseInterval);
+    };
+  }, [intervalMs, isFirstPhase]);
+
+  const style = {
+    backgroundImage: `url(${currentImage})`,
+    filter: `contrast(${1 + glitchIntensity * 0.3}) brightness(${1 + glitchIntensity * 0.2})`,
+    transition: 'background-image 0.1s ease-in-out, filter 0.08s ease-in-out',
   };
 
-  // Open registration modal
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-
-  // Close registration modal
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
-  // While checking authentication status, you might want to show a loader
+  // 로딩 중일 때는 Loading 컴포넌트 표시
   if (isLoading) {
-    return (
-      <Main title="Login" description="Loading login page.">
-        <div className="login-page loading">
-          <Loading />
-        </div>
-      </Main>
-    );
+    return <Loading />;
   }
 
-  // ✅ 수정된 return 블록
   return (
-    <div>
+    <>
+      {/* MainPage와 동일한 글리치 배경 */}
       <div
         ref={containerRef}
-        className={`background-image ${1 ? 'change-background' : ''} ${1 ? 'transitioning' : ''} ${1 ? 'pre-glitch' : ''}`}
-        onClick={handleBackgroundClick}
+        style={style}
+        onClick={() => setShowLoginModal(true)}
+        className={styles.glitch}
       >
-        <Loading />
-      </div>
-      <div className={1 ? "content-wrapper visible" : "content-wrapper"}>
-        <LoginForm openRegisterModal={openModal} /> {/* Pass the modal opening function to LoginForm */}
+        {/* RGB 채널 왜곡 */}
+        <div className={`${styles.channel} ${styles.r}`} style={{ opacity: 0.3 + glitchIntensity * 0.5 }}></div>
+        <div className={`${styles.channel} ${styles.g}`} style={{ opacity: 0.3 + glitchIntensity * 0.5 }}></div>
+        <div className={`${styles.channel} ${styles.b}`} style={{ opacity: 0.3 + glitchIntensity * 0.5 }}></div>
+
+        {/* 스크린 노이즈 오버레이 */}
+        <div className={styles.noise} style={{ opacity: 0.25 + glitchIntensity * 0.5 }}></div>
       </div>
 
-      {/* Registration Modal */}
-      <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <RegisterForm closeRegisterModal={closeModal}/>
+      {/* 로그인 모달 */}
+      <Modal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)}>
+        <LoginForm openRegisterModal={() => {}} />
       </Modal>
-    </div>
+    </>
   );
 };
 

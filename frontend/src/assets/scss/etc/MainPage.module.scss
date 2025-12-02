@@ -7,7 +7,7 @@
   overflow: hidden;
   position: relative;
   background-color: #000000; /* ✅ 완전 블랙 */
-  background-size: cover;
+  background-size: 70%; /* ✅ 배경 이미지 크기 70%로 줄임 */
   background-position: center;
   background-repeat: no-repeat;
   background-blend-mode: normal;

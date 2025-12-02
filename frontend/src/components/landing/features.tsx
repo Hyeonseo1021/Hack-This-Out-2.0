@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import '../../assets/scss/landing/features.scss';
 import LoadingIcon from "../public/LoadingIcon";
 
@@ -12,11 +13,13 @@ type FeatureProps = {
 };
 
 export const Features: React.FC<FeatureProps> = ({ data }) => {
+  const { t } = useTranslation('landing');
+
   return (
     <div className="features">
       <div className="features-container">
         <div className="col-md-10 col-md-offset-1 section-title">
-          <h2>Features</h2>
+          <h2>{t('features.title')}</h2>
         </div>
         <div className="row">
           {data && data.length > 0 ? (

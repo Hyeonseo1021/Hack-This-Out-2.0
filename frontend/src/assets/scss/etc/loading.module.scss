@@ -1,8 +1,8 @@
 @use 'sass:math';
 
 // Jinx x Cyberpunk settings
-$transition-duration: 0.85s;
-$pre-glitch-duration: 0.35s;
+$transition-duration: 0.3s;
+$pre-glitch-duration: 0.1s;
 $glitch-intensity: 25;
 
 @mixin paint-splash {

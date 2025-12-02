@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getActiveMachines } from '../../api/axiosMachine';
 import styles from '../../assets/scss/machine/MachineList.module.scss';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +11,8 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
-import { IoMdArrowRoundForward } from 'react-icons/io';
+import CatIcon from '../../assets/img/icon/Hack_cat.png';
+
 
 interface Machine {
   _id: string;
@@ -18,6 +20,8 @@ interface Machine {
   category: string;
   rating: number;
   playerCount: number;
+  description?: string;
+  reviews?: string[];
   difficulty?: {
     creatorLevel: string;
     confirmedLevel?: string;
@@ -31,53 +35,48 @@ interface MachinesResponse {
 }
 
 const MachineList: React.FC = () => {
+  const { t } = useTranslation('machine');
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
-  const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
+  const [openRow, setOpenRow] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [filterVisible, setFilterVisible] = useState<boolean>(false);
 
-  const categories = [
-    'Web', 'Network', 'Database', 'Crypto', 'Cloud', 'AI', 'OS', 'Other'
-  ];
+  const navigate = useNavigate();
 
-  // 난이도 색상 매핑
+  const categories = ['Web', 'Network', 'Database', 'Crypto', 'Cloud', 'AI', 'OS', 'Other'];
+
+  const toggleAccordion = (id: string) => {
+    setOpenRow(prev => (prev === id ? null : id));
+  };
+
   const getDifficultyColor = (level: string): string => {
     const colors: { [key: string]: string } = {
       'very_easy': '#4ade80',
       'easy': '#86efac',
       'medium': '#fbbf24',
       'hard': '#fb923c',
-      'very_hard': '#ef4444'
+      'very_hard': '#ef4444',
     };
     return colors[level] || '#94a3b8';
   };
 
-  // 난이도 레이블 (짧은 버전)
   const getDifficultyLabel = (level: string): string => {
-    const labels: { [key: string]: string } = {
-      'very_easy': 'VE',
-      'easy': 'E',
-      'medium': 'M',
-      'hard': 'H',
-      'very_hard': 'VH'
-    };
-    return labels[level] || 'N/A';
+    return t(`difficulty_short.${level}`, 'N/A');
   };
 
   useEffect(() => {
-    const fetchMachines = async (): Promise<void> => {
+    const fetchMachines = async () => {
       try {
         const data: MachinesResponse = await getActiveMachines();
         setMachines(data.machines);
         setFilteredMachines(data.machines);
-        setLoading(false);
-      } catch (error: any) {
-        console.error('Error fetching machines:', error);
-        setError(`Error fetching machines: ${error.msg || error.message}`);
+      } catch (err: any) {
+        setError(err.msg || err.message);
+      } finally {
         setLoading(false);
       }
     };
@@ -85,66 +84,52 @@ const MachineList: React.FC = () => {
     fetchMachines();
   }, []);
 
-  const handleMachineClick = (machine: Machine): void => {
-    navigate(`/machine/${machine._id}`);
-  };
-
   useEffect(() => {
     if (categoryFilter === '') {
       setFilteredMachines(machines);
     } else {
-      setFilteredMachines(machines.filter(machine => machine.category === categoryFilter));
+      setFilteredMachines(machines.filter(m => m.category === categoryFilter));
     }
   }, [categoryFilter, machines]);
 
-  const toggleFilterVisibility = (e: React.MouseEvent): void => {
-    e.stopPropagation();
-    setFilterVisible((prev) => !prev);
+  const handleMachineClick = (machine: Machine) => {
+    navigate(`/machine/${machine._id}`);
   };
 
-  const handleClickAway = (): void => {
-    setFilterVisible(false);
-  };
-
-  if (loading) {
-    return <LoadingIcon />;
-  }
-
-  if (error) {
-    return <ErrorIcon />;
-  }
+  if (loading) return <LoadingIcon />;
+  if (error) return <ErrorIcon />;
 
   return (
     <div className={styles.machine_list_container}>
-      <div className={styles.machine_list_title}>Machines</div>
+      <div className={styles.machine_list_title}>{t('title')}</div>
+
       <table className={styles.machine_list_table}>
         <thead>
           <tr className={styles.table_text_box}>
-            <th className={styles.table_name}>Name</th>
+            <th className={styles.table_name}>{t('name')}</th>
+
             <th className={styles.table_category}>
-              Category
-              <ClickAwayListener onClickAway={handleClickAway}>
+              {t('details.category')}
+              <ClickAwayListener onClickAway={() => setFilterVisible(false)}>
                 <div className={styles.category_filter_toggle}>
-                  <FilterAltIcon 
-                    onClick={toggleFilterVisibility}
-                    sx={{
-                      fontSize: 'clamp(20px, 2.5vw, 24px)',
-                      cursor: 'pointer'
-                    }} 
+                  <FilterAltIcon
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFilterVisible(prev => !prev);
+                    }}
+                    sx={{ fontSize: 'clamp(20px, 2.5vw, 24px)', cursor: 'pointer' }}
                   />
+
                   {filterVisible && (
                     <div className={styles.category_filter}>
-                      <label className={styles.category_label}>Filter by </label>
                       <select
                         className={styles.category_select}
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value)}
                       >
-                        <option className={styles.category} value=''>All</option>
-                        {categories.map((category) => (
-                          <option className={styles.category} key={category} value={category}>
-                            {category}
-                          </option>
+                        <option value="">{t('filter.all')}</option>
+                        {categories.map((c) => (
+                          <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
                     </div>
@@ -152,97 +137,125 @@ const MachineList: React.FC = () => {
                 </div>
               </ClickAwayListener>
             </th>
-            <th className={styles.table_difficulty}>Difficulty</th>
-            <th className={styles.table_rating}>Rating</th>
-            <th className={styles.table_playCount}>Played</th>
-            <th className={styles.table_details}>Detail</th>
+
+            <th className={styles.table_difficulty}>{t('difficulty')}</th>
+            <th className={styles.table_rating}>{t('rating')}</th>
+            <th className={styles.table_playCount}>{t('played')}</th>
+            <th className={styles.table_details}>{t('detail')}</th>
           </tr>
         </thead>
+
         <tbody>
-          {filteredMachines.length === 0 ? (
-            <tr className={styles['no-data']}>
-              {/* <td colSpan={6}>No machines available.</td> */}
-            </tr>
-          ) : (
-            filteredMachines.map((machine) => {
-              const avatarColorIndex = getAvatarColorIndex(machine.name);
-              const avatarBgColor = avatarBackgroundColors[avatarColorIndex];
-              const displayDifficulty = machine.difficulty?.confirmedLevel || machine.difficulty?.creatorLevel;
-              
-              return (
-                <tr className={styles.machine_box} key={machine._id}>
+          {filteredMachines.map((machine) => {
+            const avatarColorIndex = getAvatarColorIndex(machine.name);
+            const avatarBgColor = avatarBackgroundColors[avatarColorIndex];
+            const difficulty = machine.difficulty?.confirmedLevel || machine.difficulty?.creatorLevel;
+
+            return (
+              <React.Fragment key={machine._id}>
+
+                {/* ▶ 기본 행 */}
+                <tr className={styles.machine_box}>
                   <td className={styles.machine_name}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 16px)', width: '100%' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <Avatar
                         variant="rounded"
                         sx={{
                           backgroundColor: avatarBgColor,
-                          width: 'clamp(32px, 5vw, 40px)',
-                          height: 'clamp(32px, 5vw, 40px)',
-                          fontSize: 'clamp(14px, 2vw, 16px)',
+                          width: '40px',
+                          height: '40px',
+                          fontSize: '16px',
                         }}
                       >
-                        {machine.name.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <span>{machine.name.charAt(0).toUpperCase() + machine.name.slice(1)}</span>
-                    </Box>
-                  </td>
-                  <td className={styles.machine_category}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                      {machine.category}
-                    </Box>
-                  </td>
-                  
-                  {/* 난이도 추가 */}
-                  <td className={styles.machine_difficulty}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                      {displayDifficulty && (
-                        <span
-                          style={{
-                            backgroundColor: getDifficultyColor(displayDifficulty),
-                            color: '#000',
-                            padding: '4px 8px',
-                            borderRadius: '8px',
-                            fontWeight: 'bold',
-                            fontSize: 'clamp(12px, 1.5vw, 14px)'
+                          <img
+                            src={CatIcon}
+                            alt="cat"
+                            style={{
+                            width: '70%',          // 네모박스 안에 자연스럽게 들어오게 조절
+                            height: '70%',
+                            objectFit: 'contain',
                           }}
-                        >
-                          {getDifficultyLabel(displayDifficulty)}
-                        </span>
-                      )}
+                       />
+                      </Avatar>
+                      <span>{machine.name}</span>
                     </Box>
                   </td>
-                  <td className={styles.machine_rating}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                      <Rating
-                        name={`read-only-rating-${machine._id}`}
-                        value={Number(machine.rating)}
-                        precision={0.5}
-                        readOnly
-                        sx={{
-                          fontSize: 'clamp(20px, 2vw, 24px)',
-                          '& .MuiRating-iconEmpty': { color: '#fff' },
-                          '& .MuiRating-iconFilled': { color: '#ffd700' },
+
+                  <td className={styles.machine_category}>{machine.category}</td>
+
+                  <td className={styles.machine_difficulty}>
+                    {difficulty && (
+                      <span
+                        style={{
+                          backgroundColor: getDifficultyColor(difficulty),
+                          padding: '4px 8px',
+                          borderRadius: '8px',
+                          fontWeight: 'bold'
                         }}
-                      />
-                    </Box>
+                      >
+                        {getDifficultyLabel(difficulty)}
+                      </span>
+                    )}
                   </td>
-                  <td className={styles.machine_playCount}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                      {machine.playerCount}
-                    </Box>
+
+                  <td className={styles.machine_rating}>
+                    <Rating value={machine.rating} precision={0.5} readOnly />
                   </td>
+
+                  <td className={styles.machine_playCount}>{machine.playerCount}</td>
+
+                  {/* 🔥 GO 버튼 + +/– 버튼 */}
                   <td className={styles.machine_details}>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                      <button className={styles.details_button} onClick={() => handleMachineClick(machine)}>
-                        <IoMdArrowRoundForward size={'clamp(20px, 2.5vw, 24px)'} color='white' />
+                    <div className={styles.detail_buttons_wrapper}>
+
+                      {/* GO! 버튼 */}
+                      <button
+                        className={styles.go_button}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMachineClick(machine);
+                        }}
+                      >
+                        {t('go')}
                       </button>
-                    </Box>
+
+                      {/* 아코디언 토글 */}
+                      <button
+                        className={styles.toggle_button}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleAccordion(machine._id);
+                        }}
+                      >
+                        {openRow === machine._id ? '▲' : '▼'}
+                      </button>
+
+                    </div>
                   </td>
                 </tr>
-              );
-            })
-          )}
+
+                {/* ▼ 아코디언 */}
+                {openRow === machine._id && (
+                  <tr className={styles.machine_expand_row}>
+                    <td colSpan={6}>
+                      <div className={styles.expand_content}>
+                        <p className={styles.expand_description}>
+                          {machine.description || t('noDescription')}
+                        </p>
+
+                        <div className={styles.expand_reviews}>
+                          {machine.reviews?.map((r, i) => (
+                            <p key={i}>{r}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+              </React.Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

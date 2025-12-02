@@ -10,10 +10,9 @@ import {
 import Sidebar from '../../components/admin/AdminSidebar';
 import ErrorMessage from '../../components/admin/ErrorMessage';
 import TerminalRaceForm from '../../components/admin/forms/TerminalRaceForm';
-import DefenseBattleForm from '../../components/admin/forms/DefenseBattleForm';
-import CaptureServerForm from '../../components/admin/forms/CaptureServerForm';
-import HackersDeckForm from '../../components/admin/forms/HackersDeckForm';
-import ExploitChainForm from '../../components/admin/forms/ExploitChainForm';
+import ForensicsRushForm from '../../components/admin/forms/ForensicsRushForm';
+// SocialEngineeringForm - Coming Soon
+import VulnerabilityScannerRaceForm from '../../components/admin/forms/VulnerablilityScannerRaceForm';
 import { FaEdit, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import '../../assets/scss/admin/ScenariosManagement.scss';
 
@@ -21,71 +20,113 @@ interface Scenario {
   _id?: string;
   mode: string;
   difficulty: string;
-  title: string;
-  description: string;
+  title: {
+    ko: string;
+    en: string;
+  };
+  description: {
+    ko: string;
+    en: string;
+  };
   timeLimit: number;
   isActive: boolean;
   usageCount?: number;
   data: any;
 }
 
-// ✅ 새로운 Form 컴포넌트와 완전히 일치하는 초기 데이터 구조
+// ✅ 모든 모드의 초기 데이터 구조
 const getInitialData = (mode: string) => {
   switch (mode) {
     case 'TERMINAL_HACKING_RACE':
       return {
         totalStages: 1,
-        stages: [{ 
-          stage: 1, 
-          prompt: '', 
+        stages: [{
+          stage: 1,
+          prompt: { ko: '', en: '' },
           commands: [],
-          defaultResponse: '유효하지 않은 명령어입니다.'
+          defaultResponse: { ko: '유효하지 않은 명령어입니다.', en: 'Invalid command.' }
         }]
       };
       
-    case 'CYBER_DEFENSE_BATTLE':
+    case 'VULNERABILITY_SCANNER_RACE':
       return {
-        serverHealth: 100,
-        attackActions: [],
-        defenseActions: [],
-        victoryConditions: {
-          attackTeam: '서버 HP를 0으로 만들기',
-          defenseTeam: '15분 동안 서버 방어'
-        }
-      };
-      
-    case 'CAPTURE_THE_SERVER':
-      return {
-        servers: [],
-        mapLayout: {
-          rows: 3,
-          cols: 3
-        }
-      };
-      
-    case 'HACKERS_DECK':
-      return {
-        deck: {
-          attack: [],
-          defense: [],
-          special: []
+        mode: 'SIMULATED', // ✅ 추가: SIMULATED 또는 REAL
+        targetUrl: '',
+        targetName: { ko: '', en: '' },
+        targetDescription: { ko: '', en: '' },
+        features: [],
+        vulnerabilities: [],
+        hints: [],
+        scoring: {
+          invalidSubmissionPenalty: 5,
+          graceTimeSeconds: 60
         },
-        startingHand: 5,
-        startingEnergy: 3,
-        maxTurns: 15,
-        victoryCondition: '상대 HP 0 또는 최대 턴 후 HP 높은 플레이어'
+        totalVulnerabilities: 0
       };
-      
-    case 'EXPLOIT_CHAIN_CHALLENGE':
+
+    case 'FORENSICS_RUSH':
       return {
-        missionBrief: {
-          target: '',
-          goal: '',
-          constraint: ''
+        scenario: {
+          title: { ko: '', en: '' },
+          description: { ko: '', en: '' },
+          incidentType: 'ransomware',
+          date: '',
+          context: { ko: '', en: '' }
         },
-        steps: [],
-        hintsAvailable: 3,
-        hintPenalty: 5
+        evidenceFiles: [],
+        availableTools: ['grep', 'awk', 'sed', 'wireshark', 'volatility'],
+        questions: [],
+        scoring: {
+          wrongAnswerPenalty: 5,
+          perfectScoreBonus: 50,
+          speedBonus: true
+        },
+        totalQuestions: 0
+      };
+
+    case 'SOCIAL_ENGINEERING':
+      return {
+        scenarioType: 'IT_HELPDESK',
+        objective: {
+          title: { ko: '', en: '' },
+          description: { ko: '', en: '' },
+          targetInformation: []
+        },
+        aiTarget: {
+          name: '',
+          role: '',
+          department: '',
+          personality: {
+            helpfulness: 8,
+            securityAwareness: 3,
+            authorityRespect: 7,
+            skepticism: 4
+          },
+          suspicionThreshold: 70,
+          knownInfo: [],
+          secretInfo: []
+        },
+        availableTechniques: [],
+        conversationRules: {
+          maxTurns: 20,
+          turnTimeLimit: undefined,
+          warningThresholds: [30, 60, 90]
+        },
+        scoring: {
+          objectiveComplete: 100,
+          turnEfficiency: {
+            maxBonus: 50,
+            optimalTurns: 10
+          },
+          suspicionManagement: {
+            bonus: 30,
+            threshold: 30
+          },
+          naturalnessBonus: {
+            maxPoints: 20,
+            evaluationCriteria: ['대화 흐름', '자연스러운 질문', '상황에 맞는 반응']
+          }
+        }
       };
       
     default:
@@ -96,8 +137,14 @@ const getInitialData = (mode: string) => {
 const initialForm: Scenario = {
   mode: 'TERMINAL_HACKING_RACE',
   difficulty: 'EASY',
-  title: '',
-  description: '',
+  title: {
+    ko: '',
+    en: ''
+  },
+  description: {
+    ko: '',
+    en: ''
+  },
   timeLimit: 600,
   isActive: true,
   data: getInitialData('TERMINAL_HACKING_RACE')
@@ -137,8 +184,16 @@ const ScenariosManagement: React.FC = () => {
     if (filterDifficulty !== 'ALL' && s.difficulty !== filterDifficulty) return false;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      if (!s.title.toLowerCase().includes(query) && 
-          !s.description?.toLowerCase().includes(query)) {
+      // Handle both old (string) and new (object) format
+      const titleText = typeof s.title === 'object'
+        ? `${s.title.ko} ${s.title.en}`
+        : s.title;
+      const descText = typeof s.description === 'object'
+        ? `${s.description.ko} ${s.description.en}`
+        : s.description || '';
+
+      if (!titleText.toLowerCase().includes(query) &&
+          !descText.toLowerCase().includes(query)) {
         return false;
       }
     }
@@ -154,8 +209,8 @@ const ScenariosManagement: React.FC = () => {
   };
 
   const validateForm = () => {
-    if (!form.title.trim()) {
-      alert('Title is required');
+    if (!form.title.ko.trim() || !form.title.en.trim()) {
+      alert('Title is required in both Korean and English');
       return false;
     }
 
@@ -166,8 +221,12 @@ const ScenariosManagement: React.FC = () => {
           return false;
         }
         for (let i = 0; i < (form.data.stages?.length || 0); i++) {
-          if (!form.data.stages[i].prompt?.trim()) {
-            alert(`Stage ${i + 1} prompt is required`);
+          if (!form.data.stages[i].prompt?.ko?.trim() || !form.data.stages[i].prompt?.en?.trim()) {
+            alert(`Stage ${i + 1} prompt is required in both Korean and English`);
+            return false;
+          }
+          if (!form.data.stages[i].defaultResponse?.ko?.trim() || !form.data.stages[i].defaultResponse?.en?.trim()) {
+            alert(`Stage ${i + 1} default response is required in both Korean and English`);
             return false;
           }
           if (form.data.stages[i].commands?.length === 0) {
@@ -177,40 +236,128 @@ const ScenariosManagement: React.FC = () => {
         }
         break;
 
-      case 'CYBER_DEFENSE_BATTLE':
-        if ((form.data.attackActions?.length || 0) === 0 && (form.data.defenseActions?.length || 0) === 0) {
-          alert('At least one attack or defense action is required');
-          return false;
-        }
-        break;
 
-      case 'CAPTURE_THE_SERVER':
-        if ((form.data.servers?.length || 0) === 0) {
-          alert('At least one server is required');
+      case 'VULNERABILITY_SCANNER_RACE':
+        // 필수 필드 검증
+        if (!form.data.targetName?.ko?.trim() || !form.data.targetName?.en?.trim()) {
+          alert('Target name is required in both Korean and English');
           return false;
         }
-        break;
 
-      case 'HACKERS_DECK':
-        const totalCards = (form.data.deck?.attack?.length || 0) + 
-                          (form.data.deck?.defense?.length || 0) + 
-                          (form.data.deck?.special?.length || 0);
-        if (totalCards === 0) {
-          alert('At least one card is required');
+        if (!form.data.targetDescription?.ko?.trim() || !form.data.targetDescription?.en?.trim()) {
+          alert('Target description is required in both Korean and English');
           return false;
         }
-        break;
 
-      case 'EXPLOIT_CHAIN_CHALLENGE':
-        if ((form.data.steps?.length || 0) === 0) {
-          alert('At least one step is required');
-          return false;
+        // 모드 기본값 설정 (없으면 SIMULATED)
+        if (!form.data.mode) {
+          form.data.mode = 'SIMULATED';
         }
-        for (let i = 0; i < (form.data.steps?.length || 0); i++) {
-          if (!form.data.steps[i].question?.trim()) {
-            alert(`Step ${i + 1} question is required`);
+
+        // 모드 기반 검증
+        if (form.data.mode === 'SIMULATED') {
+          // SIMULATED 모드: features 필수
+          if (!form.data.features || form.data.features.length === 0) {
+            alert('Features are required for SIMULATED mode');
             return false;
           }
+          // targetUrl은 무시/초기화
+          form.data.targetUrl = '';
+        } else if (form.data.mode === 'REAL') {
+          // REAL 모드: targetUrl 필수
+          if (!form.data.targetUrl?.trim()) {
+            alert('Target URL is required for REAL mode');
+            return false;
+          }
+
+          // URL 형식 검증
+          try {
+            new URL(form.data.targetUrl);
+          } catch (error) {
+            alert('Target URL must be a valid URL (e.g., https://example.com)');
+            return false;
+          }
+          // features는 무시/초기화
+          form.data.features = [];
+        }
+        
+        // Vulnerabilities 배열 검증
+        if (!form.data.vulnerabilities || form.data.vulnerabilities.length === 0) {
+          alert('At least one vulnerability is required');
+          return false;
+        }
+        
+        // 각 취약점 검증
+        for (let i = 0; i < form.data.vulnerabilities.length; i++) {
+          const vuln = form.data.vulnerabilities[i];
+
+          // vulnName 검증 (객체 형태)
+          if (typeof vuln.vulnName === 'object') {
+            if (!vuln.vulnName?.ko?.trim() || !vuln.vulnName?.en?.trim()) {
+              alert(`Vulnerability ${i + 1}: Name is required in both Korean and English`);
+              return false;
+            }
+          } else if (typeof vuln.vulnName === 'string') {
+            if (!vuln.vulnName?.trim()) {
+              alert(`Vulnerability ${i + 1}: Name is required`);
+              return false;
+            }
+          } else {
+            alert(`Vulnerability ${i + 1}: Name is required`);
+            return false;
+          }
+
+          if (!vuln.vulnType?.trim()) {
+            alert(`Vulnerability ${i + 1}: Type is required`);
+            return false;
+          }
+
+          if (!vuln.difficulty?.trim()) {
+            alert(`Vulnerability ${i + 1}: Difficulty is required`);
+            return false;
+          }
+
+          // Difficulty 값 검증
+          const validDifficulties = ['EASY', 'MEDIUM', 'HARD'];
+          if (!validDifficulties.includes(vuln.difficulty.toUpperCase())) {
+            alert(`Vulnerability ${i + 1}: Difficulty must be EASY, MEDIUM, or HARD`);
+            return false;
+          }
+
+          if (typeof vuln.basePoints !== 'number' || vuln.basePoints <= 0) {
+            alert(`Vulnerability ${i + 1}: Base Points must be a positive number`);
+            return false;
+          }
+        }
+        
+        // totalVulnerabilities 자동 설정
+        form.data.totalVulnerabilities = form.data.vulnerabilities.length;
+        
+        break;
+
+      case 'FORENSICS_RUSH':
+        if (!form.data.scenario?.context?.ko?.trim() || !form.data.scenario?.context?.en?.trim()) {
+          alert('Scenario context is required in both Korean and English');
+          return false;
+        }
+        if ((form.data.questions?.length || 0) === 0) {
+          alert('At least one question is required');
+          return false;
+        }
+        break;
+
+      case 'SOCIAL_ENGINEERING':
+        if (!form.data.objective?.title?.ko?.trim() || !form.data.objective?.title?.en?.trim()) {
+          alert('Objective title is required in both Korean and English');
+          return false;
+        }
+        if (!form.data.objective?.description?.ko?.trim() || !form.data.objective?.description?.en?.trim()) {
+          alert('Objective description is required in both Korean and English');
+          return false;
+        }
+        if (!form.data.aiTarget?.name?.trim()) {
+          alert('AI target name is required');
+          return false;
         }
         break;
     }
@@ -220,11 +367,21 @@ const ScenariosManagement: React.FC = () => {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setSaving(true);
     setError(null);
+
+    // VulnerabilityScannerRace SIMULATED 모드일 때 안내 메시지
+    const isVulnScannerSimulated =
+      form.mode === 'VULNERABILITY_SCANNER_RACE' &&
+      (form.data as any)?.mode === 'SIMULATED';
+
+    if (isVulnScannerSimulated && !editingId) {
+      console.log('🤖 Generating vulnerable HTML with Claude AI...');
+    }
+
     try {
       if (editingId) {
         await updateScenario(editingId, form);
@@ -233,7 +390,12 @@ const ScenariosManagement: React.FC = () => {
       } else {
         const created = await createScenario(form);
         setScenarios(prev => [created.scenario, ...prev]);
-        alert('Scenario created successfully!');
+
+        if (isVulnScannerSimulated) {
+          alert('Scenario created successfully!\n\n✅ Vulnerable HTML has been generated with Claude AI and saved to the scenario.');
+        } else {
+          alert('Scenario created successfully!');
+        }
       }
       setForm(initialForm);
       setEditingId(null);
@@ -271,8 +433,9 @@ const ScenariosManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`Delete scenario "${title}"?`)) return;
+  const handleDelete = async (id: string, title: string | { ko: string; en: string }) => {
+    const titleText = typeof title === 'object' ? `${title.ko} / ${title.en}` : title;
+    if (!window.confirm(`Delete scenario "${titleText}"?`)) return;
     try {
       await deleteScenario(id);
       setScenarios(prev => prev.filter(s => s._id !== id));
@@ -284,100 +447,100 @@ const ScenariosManagement: React.FC = () => {
 
   const getModeIcon = (mode: string) => {
     const icons: Record<string, string> = {
-      TERMINAL_HACKING_RACE: '⚡',
-      CYBER_DEFENSE_BATTLE: '⚔️',
-      CAPTURE_THE_SERVER: '🏰',
-      HACKERS_DECK: '🎲',
-      EXPLOIT_CHAIN_CHALLENGE: '🎯'
+      TERMINAL_HACKING_RACE: '',
+      VULNERABILITY_SCANNER_RACE: '',
+      FORENSICS_RUSH: '',
+      SOCIAL_ENGINEERING: ''
     };
-    return icons[mode] || '🎮';
+    return icons[mode] || '';
   };
 
   const getModeName = (mode: string) => {
     const names: Record<string, string> = {
       TERMINAL_HACKING_RACE: 'Terminal Race',
-      CYBER_DEFENSE_BATTLE: 'Defense Battle',
-      CAPTURE_THE_SERVER: 'Capture Server',
-      HACKERS_DECK: "Hacker's Deck",
-      EXPLOIT_CHAIN_CHALLENGE: 'Exploit Chain'
+      VULNERABILITY_SCANNER_RACE: 'Vulnerability Scanner Race',
+      FORENSICS_RUSH: 'Forensics Rush',
+      SOCIAL_ENGINEERING: 'Social Engineering'
     };
     return names[mode] || mode;
   };
 
   const getStageCount = (scenario: Scenario) => {
-    if (!scenario || !scenario.data) return '-'; // ✅ data가 비어있을 때 바로 리턴
+    if (!scenario || !scenario.data) return '-';
 
     switch (scenario.mode) {
       case 'TERMINAL_HACKING_RACE':
-        return `${scenario.data?.stages?.length || 0} stages`;
-
-      case 'CYBER_DEFENSE_BATTLE':
-        const totalActions =
-          (scenario.data?.attackActions?.length || 0) +
-          (scenario.data?.defenseActions?.length || 0);
-        return `${totalActions} actions`;
-
-      case 'CAPTURE_THE_SERVER':
-        return `${scenario.data?.servers?.length || 0} servers`;
-
-      case 'HACKERS_DECK':
-        const totalCards =
-          (scenario.data?.deck?.attack?.length || 0) +
-          (scenario.data?.deck?.defense?.length || 0) +
-          (scenario.data?.deck?.special?.length || 0);
-        return `${totalCards} cards`;
-
-      case 'EXPLOIT_CHAIN_CHALLENGE':
-        return `${scenario.data?.steps?.length || 0} steps`;
-
+        return `${scenario.data.stages?.length || 0} stages`;
+      case 'VULNERABILITY_SCANNER_RACE':
+        return `${scenario.data.vulnerabilities?.length || 0} vulnerabilities`;
+      case 'FORENSICS_RUSH':
+        return `${scenario.data.questions?.length || 0} questions`;
+      case 'SOCIAL_ENGINEERING':
+        return `${scenario.data.availableTechniques?.length || 0} techniques`;
       default:
         return '-';
     }
   };
 
-
   return (
     <div className="admin-layout scenarios-management">
       <Sidebar />
       <div className="admin-content">
-        <h1 className="page-title">🎮 Scenarios Management</h1>
+        <h1 className="page-title">Scenarios Management</h1>
 
         {error && <ErrorMessage message={error} />}
 
         {/* 폼 섹션 */}
         <div className="form-card">
-          <h2>{editingId ? '✏️ Edit Scenario' : '➕ Create New Scenario'}</h2>
+          <h2>{editingId ? 'Edit Scenario' : 'Create New Scenario'}</h2>
           
           <form onSubmit={onSubmit}>
             <div className="basic-info">
               <div className="form-row-3">
                 <div className="form-group">
                   <label>Game Mode *</label>
-                  <select 
-                    value={form.mode} 
+                  <select
+                    value={form.mode}
                     onChange={e => handleModeChange(e.target.value)}
                     disabled={!!editingId}
                     required
                   >
-                    <option value="TERMINAL_HACKING_RACE">⚡ Terminal Hacking Race</option>
-                    <option value="CYBER_DEFENSE_BATTLE">⚔️ Cyber Defense Battle</option>
-                    <option value="CAPTURE_THE_SERVER">🏰 Capture The Server</option>
-                    <option value="HACKERS_DECK">🎲 Hacker's Deck</option>
-                    <option value="EXPLOIT_CHAIN_CHALLENGE">🎯 Exploit Chain Challenge</option>
+                    <option value="TERMINAL_HACKING_RACE">Terminal Hacking Race</option>
+                    <option value="VULNERABILITY_SCANNER_RACE">Vulnerability Scanner Race</option>
+                    <option value="FORENSICS_RUSH">Forensics Rush</option>
+                    <option value="SOCIAL_ENGINEERING" disabled>Social Engineering (Coming Soon)</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Difficulty *</label>
-                  <select 
-                    value={form.difficulty} 
-                    onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))}
+                  <select
+                    value={form.difficulty}
+                    onChange={e => {
+                      const newDifficulty = e.target.value;
+                      setForm(f => {
+                        // VULNERABILITY_SCANNER_RACE: 난이도에 따라 mode 자동 설정
+                        if (f.mode === 'VULNERABILITY_SCANNER_RACE') {
+                          const isEasyOrMedium = newDifficulty === 'EASY' || newDifficulty === 'MEDIUM';
+                          return {
+                            ...f,
+                            difficulty: newDifficulty,
+                            data: {
+                              ...f.data,
+                              mode: isEasyOrMedium ? 'SIMULATED' : 'REAL',
+                              targetUrl: isEasyOrMedium ? '' : f.data.targetUrl // EASY/MEDIUM이면 URL 초기화
+                            }
+                          };
+                        }
+                        return { ...f, difficulty: newDifficulty };
+                      });
+                    }}
                     required
                   >
-                    <option value="EASY">🟢 Easy</option>
-                    <option value="MEDIUM">🟡 Medium</option>
-                    <option value="HARD">🔴 Hard</option>
-                    <option value="EXPERT">💀 Expert</option>
+                    <option value="EASY">Easy</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HARD">Hard</option>
+                    <option value="EXPERT">Expert</option>
                   </select>
                 </div>
 
@@ -396,25 +559,60 @@ const ScenariosManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Title *</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Corporate Network Breach"
-                  value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  required
-                />
+              {/* Title - Bilingual */}
+              <div className="form-group" style={{ border: '1px solid #333', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+                  Title (제목) *
+                </label>
+                <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8 }}>한글</label>
+                    <input
+                      type="text"
+                      placeholder="기업 네트워크 침해"
+                      value={form.title.ko}
+                      onChange={e => setForm(f => ({ ...f, title: { ...f.title, ko: e.target.value } }))}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8 }}>English</label>
+                    <input
+                      type="text"
+                      placeholder="Corporate Network Breach"
+                      value={form.title.en}
+                      onChange={e => setForm(f => ({ ...f, title: { ...f.title, en: e.target.value } }))}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  rows={2}
-                  placeholder="Brief description..."
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                />
+              {/* Description - Bilingual */}
+              <div className="form-group" style={{ border: '1px solid #333', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'block' }}>
+                  Description (설명)
+                </label>
+                <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: '1fr 1fr' }}>
+                  <div style={{ display: 'grid', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8 }}>한글</label>
+                    <textarea
+                      rows={2}
+                      placeholder="간단한 설명..."
+                      value={form.description.ko}
+                      onChange={e => setForm(f => ({ ...f, description: { ...f.description, ko: e.target.value } }))}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', opacity: 0.8 }}>English</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Brief description..."
+                      value={form.description.en}
+                      onChange={e => setForm(f => ({ ...f, description: { ...f.description, en: e.target.value } }))}
+                    />
+                  </div>
+                </div>
               </div>
 
               <label className="checkbox-label">
@@ -441,41 +639,40 @@ const ScenariosManagement: React.FC = () => {
                 />
               )}
 
-              {form.mode === 'CYBER_DEFENSE_BATTLE' && (
-                <DefenseBattleForm
+              {form.mode === 'FORENSICS_RUSH' && (
+                <ForensicsRushForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
                 />
               )}
 
-              {form.mode === 'CAPTURE_THE_SERVER' && (
-                <CaptureServerForm
+              {form.mode === 'VULNERABILITY_SCANNER_RACE' && (
+                <VulnerabilityScannerRaceForm
                   data={form.data}
                   onChange={(data) => setForm(f => ({ ...f, data }))}
+                  difficulty={form.difficulty}
                 />
               )}
 
-              {form.mode === 'HACKERS_DECK' && (
-                <HackersDeckForm
-                  data={form.data}
-                  onChange={(data) => setForm(f => ({ ...f, data }))}
-                />
-              )}
-
-              {form.mode === 'EXPLOIT_CHAIN_CHALLENGE' && (
-                <ExploitChainForm
-                  data={form.data}
-                  onChange={(data) => setForm(f => ({ ...f, data }))}
-                />
+              {form.mode === 'SOCIAL_ENGINEERING' && (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
+                  <h3>Social Engineering</h3>
+                  <p style={{ fontSize: '2rem', margin: '20px 0' }}>Coming Soon</p>
+                  <p>This mode will be available in a future update.</p>
+                </div>
               )}
             </div>
 
             <div className="form-actions">
               <button type="submit" disabled={saving}>
-                {saving ? 'Saving...' : (editingId ? '💾 Update' : '✨ Create')}
+                {saving
+                  ? form.mode === 'VULNERABILITY_SCANNER_RACE' && (form.data as any)?.mode === 'SIMULATED'
+                    ? 'Generating HTML with AI...'
+                    : 'Saving...'
+                  : (editingId ? 'Update' : 'Create')}
               </button>
               <button type="button" onClick={handleCancelEdit} disabled={saving}>
-                {editingId ? '✖️ Cancel' : '🔄 Reset'}
+                {editingId ? 'Cancel' : 'Reset'}
               </button>
             </div>
           </form>
@@ -485,19 +682,18 @@ const ScenariosManagement: React.FC = () => {
         <div className="filters-section">
           <select value={filterMode} onChange={e => setFilterMode(e.target.value)}>
             <option value="ALL">All Modes</option>
-            <option value="TERMINAL_HACKING_RACE">⚡ Terminal Race</option>
-            <option value="CYBER_DEFENSE_BATTLE">⚔️ Defense Battle</option>
-            <option value="CAPTURE_THE_SERVER">🏰 Capture Server</option>
-            <option value="HACKERS_DECK">🎲 Hacker's Deck</option>
-            <option value="EXPLOIT_CHAIN_CHALLENGE">🎯 Exploit Chain</option>
+            <option value="TERMINAL_HACKING_RACE">Terminal Race</option>
+            <option value="VULNERABILITY_SCANNER_RACE">Vulnerability Scanner Race</option>
+            <option value="FORENSICS_RUSH">Forensics Rush</option>
+            <option value="SOCIAL_ENGINEERING">Social Engineering</option>
           </select>
 
           <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)}>
             <option value="ALL">All Difficulties</option>
-            <option value="EASY">🟢 Easy</option>
-            <option value="MEDIUM">🟡 Medium</option>
-            <option value="HARD">🔴 Hard</option>
-            <option value="EXPERT">💀 Expert</option>
+            <option value="EASY">Easy</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HARD">Hard</option>
+            <option value="EXPERT">Expert</option>
           </select>
 
           <input
@@ -540,10 +736,24 @@ const ScenariosManagement: React.FC = () => {
                       {getModeName(s.mode)}
                     </td>
                     <td>
-                      <strong>{s.title}</strong>
+                      {/* Handle both old (string) and new (object) format */}
+                      <strong>
+                        {typeof s.title === 'object'
+                          ? `${s.title.ko} / ${s.title.en}`
+                          : s.title}
+                      </strong>
                       {s.description && (
                         <div className="description-preview">
-                          {s.description.substring(0, 50)}{s.description.length > 50 ? '...' : ''}
+                          {(() => {
+                            if (typeof s.description === 'object' && s.description !== null && 'ko' in s.description && 'en' in s.description) {
+                              const combined = `${s.description.ko} / ${s.description.en}`;
+                              return combined.substring(0, 50) + (combined.length > 50 ? '...' : '');
+                            } else if (typeof s.description === 'string') {
+                              const desc = s.description as string;
+                              return desc.substring(0, 50) + (desc.length > 50 ? '...' : '');
+                            }
+                            return '';
+                          })()}
                         </div>
                       )}
                     </td>
@@ -557,7 +767,7 @@ const ScenariosManagement: React.FC = () => {
                     <td>{s.usageCount || 0}</td>
                     <td>
                       <span className={`status-badge ${s.isActive ? 'active' : 'inactive'}`}>
-                        {s.isActive ? '✅ Active' : '❌ Inactive'}
+                        {s.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td>

@@ -107,10 +107,11 @@ UserRoutes.post("/reset/:userId",
     resetUserProgressByUserId
 );
 
+
 // Delete User by User ID(Admin Only)
-UserRoutes.delete("/:userId/delete", 
-    verifyToken, 
-    verifyAdmin, 
+UserRoutes.delete("/delete/:userId",
+    verifyToken,
+    verifyAdmin,
     deleteUserByUserId
 );
 

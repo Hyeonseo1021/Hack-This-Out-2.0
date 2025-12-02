@@ -5,32 +5,31 @@ import '../assets/scss/etc/TutorialPage.scss';
 import logo_dark from '../assets/img/icon/HTO Dark.png';
 import logo_light from '../assets/img/icon/HTO Light.png';
 
-const TutorialPage: React.FC = () => {
-  const { t, i18n } = useTranslation('manual');
-  const [step, setStep] = useState(0);
 
-  // 🔹 언어 전환 (로고 클릭 시)
+const TutorialPage: React.FC = () => {
+  const { t, i18n } = useTranslation('tutorial');
+  const [step, setStep] = useState(0);
+  const [isGlitch, setIsGlitch] = useState(false);
+
+  // ✅ 언어 전환 함수
   const handleChangeLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'kr' : 'en';
+    const newLang = i18n.language === 'en' ? 'ko' : 'en';
     i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);  // 언어 설정 저장
+
+    // ✅ 글리치 + 빛나는 페이드 효과 트리거
+    setIsGlitch(true);
+    setTimeout(() => setIsGlitch(false), 500);
   };
 
-  // 🔹 단계별 클래스
+  // ✅ 단계별 스타일
   const articleClass = (index: number) =>
     `tutorial-article ${step === index ? 'active' : step > index ? 'passed' : ''}`;
 
-  // 🔹 페이지 클릭 시 다음 단계로 진행
+  // ✅ 클릭 시 다음 단계로
   const handleNext = () => {
     if (step < 3) setStep(prev => prev + 1);
   };
-
-  // 🔹 다국어 규칙 리스트
-  const gamingRulesList = [
-    t('gamingRules.list.0'),
-    t('gamingRules.list.1'),
-    t('gamingRules.list.2'),
-    t('gamingRules.list.3'),
-  ];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -39,16 +38,17 @@ const TutorialPage: React.FC = () => {
   return (
     <Main>
       <div className="tutorial-page-container" onClick={handleNext}>
-        {/* === 상단 이미지 로고 === */}
+        {/* === 상단 배너 === */}
         <div className="tutorial-page-top">
           <img
-            className="tutorial-banner"
+            className={`tutorial-banner ${isGlitch ? 'glitch-flash' : ''}`}
             src={i18n.language === 'en' ? logo_dark : logo_light}
             alt="HTO Banner"
-            onClick={e => {
+            onClick={(e) => {
               e.stopPropagation();
               handleChangeLanguage();
             }}
+            style={{ cursor: 'pointer' }}
           />
         </div>
 
@@ -68,7 +68,7 @@ const TutorialPage: React.FC = () => {
           <article className={articleClass(1)}>
             <h2>{t('gamingRules.title', '게임 규칙')}</h2>
             <ol>
-              {gamingRulesList.map((_item: string, index: number) => (
+              {[0, 1, 2, 3].map((index) => (
                 <li key={index}>
                   <Trans
                     i18nKey={`gamingRules.list.${index}`}
@@ -80,7 +80,7 @@ const TutorialPage: React.FC = () => {
             </ol>
           </article>
 
-          {/* 3️⃣ 게임모드 */}
+          {/* 3️⃣ 게임 모드 */}
           <article className={articleClass(2)}>
             <h2>{t('gameModes.title', '게임 모드')}</h2>
             <p>
@@ -121,9 +121,7 @@ const TutorialPage: React.FC = () => {
           )}
 
           {/* 🔹 클릭 안내 문구 */}
-          {step < 3 && (
-            <div className="tutorial-hint">Click anywhere to continue...</div>
-          )}
+          {step < 3 && <div className="tutorial-hint">Click anywhere to continue...</div>}
         </section>
       </div>
     </Main>

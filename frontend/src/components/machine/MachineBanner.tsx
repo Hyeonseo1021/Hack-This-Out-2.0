@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Carousel from 'react-material-ui-carousel';
 import { getLatestMachine, getMostPlayedMachine } from '../../api/axiosMachine';
 import { MachineforBanner } from '../../types/Machine';
@@ -11,8 +12,11 @@ import { ArrowForwardIos, ArrowBackIos } from '@mui/icons-material';
 import { getAvatarColorIndex, avatarBackgroundColors } from '../../utils/avatars';
 import LoadingIcon from '../public/LoadingIcon';
 import ErrorIcon from '../public/ErrorIcon';
+import whiteCat from '../../assets/img/icon/Hack_cat.png';
+
 
 const MachineBanner: React.FC = () => {
+  const { t } = useTranslation('machine');
   const [latestMachine, setLatestMachine] = useState<MachineforBanner | null>(null);
   const [mostPlayedMachine, setMostPlayedMachine] = useState<MachineforBanner | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -47,8 +51,8 @@ const MachineBanner: React.FC = () => {
   }
 
   const machines = [
-    { ...latestMachine!, title: <><b>Latest Machine</b></> },
-    { ...mostPlayedMachine!, title: <><b>Trending Machine</b></> },
+    { ...latestMachine!, title: <><b>{t('banner.latest')}</b></> },
+    { ...mostPlayedMachine!, title: <><b>{t('banner.trending')}</b></> },
   ];
 
   return (
@@ -88,14 +92,28 @@ const MachineBanner: React.FC = () => {
                   sx={{
                     backgroundColor: avatarBgColor
                   }}
+
                 >
-                  {machine?.name ? machine.name.charAt(0).toUpperCase() : "?"}
+                    <img
+                      src={whiteCat}
+                      alt="machine-icon"
+                      style={{
+                      width: '70%',
+                      height: '70%',
+                      objectFit: 'contain'
+                  }}
+  />
+
                 </Avatar>
-                <h4>
-                  <b>
-                    {machine?.name ? machine.name.charAt(0).toUpperCase() + machine.name.slice(1) : "Nothing new"}</b></h4>
+                <div className="machine-info-center">
+                  <h4>
+                    <b>
+                      {machine?.name ? machine.name.charAt(0).toUpperCase() + machine.name.slice(1) : t('banner.nothingNew')}</b>
+                  </h4>
+                  <p className="machine-category">{machine?.category || 'Uncategorized'}</p>
+                </div>
                 <div className='machine_reward_box'>
-                  <p className='banner-exp'>Reward</p>
+                  <p className='banner-exp'>{t('banner.reward')}</p>
                   <p className='exp'>{machine.exp} EXP</p>
                 </div>
                 <Box className='rating-box'>
@@ -117,7 +135,7 @@ const MachineBanner: React.FC = () => {
                   variant="contained"
                   onClick={() => navigate(`/machine/${machine._id}`)}
                 >
-                  Go to Machine
+                  {t('goToMachine')}
                 </Button>
               </div>
             </Paper>

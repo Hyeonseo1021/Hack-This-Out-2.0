@@ -1,7 +1,7 @@
 import React from 'react';
 import Main from '../../components/main/Main';
-import { io } from 'socket.io-client';
-import image from '../../assets/img/match/image.png';
+// import { io } from 'socket.io-client';
+// import image from '../../assets/img/match/image.png';
 import '../../assets/scss/match/MatchPage.scss';
 
 const MatchPage: React.FC = () => {

@@ -596,7 +596,8 @@ export const resetUserProgressByUserId = async (req: Request, res: Response): Pr
 //Get Leaderboard
 export const getLeaderboard = async (req: Request, res: Response): Promise<void> => {
 	try {
-		const users = await User.find({ exp: { $gt: 0 } }).sort({ exp: -1 }).select('-password -isAdmin -email -createdAt -updatedAt -__v -_id');
+		// EXP 내림차순 정렬, EXP 같으면 먼저 가입한 유저가 위로
+		const users = await User.find({ exp: { $gte: 0 } }).sort({ exp: -1, createdAt: 1 }).select('-password -isAdmin -email -createdAt -updatedAt -__v -_id');
 		res.status(200).json({ message: "OK", users: users });
 	} catch (error: any) {
 		console.error('Error getting leaderboard:', error);

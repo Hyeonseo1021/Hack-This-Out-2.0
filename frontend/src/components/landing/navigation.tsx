@@ -1,8 +1,16 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import '../../assets/scss/landing/navigation.scss';
-import HTO_LOGO from '@assets/img/icon/HTO LIGHT RECOLORED_crop_filled.png';
+import HTO_LOGO from '../../assets/img/icon/Hack_cat.png';
 
 const Navigation: React.FC = () => {
+  const { t, i18n } = useTranslation('landing');
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'ko' ? 'en' : 'ko';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('language', newLang);
+  };
 
   return (
     <nav id="menu" className="navbar navbar-default navbar-fixed-top">
@@ -20,9 +28,18 @@ const Navigation: React.FC = () => {
             <span className="icon-bar"></span>{" "}
             <span className="icon-bar"></span>{" "}
           </button>
-          <a className="navbar-brand page-scroll" href="#header">
-            <img 
-              src={HTO_LOGO} 
+          <a
+            className="navbar-brand page-scroll"
+            href="#header"
+            onClick={(e) => {
+              e.preventDefault();
+              toggleLanguage();
+            }}
+            title={i18n.language === 'ko' ? 'Switch to English' : '한국어로 전환'}
+            style={{ cursor: 'pointer' }}
+          >
+            <img
+              src={HTO_LOGO}
               alt="Hack This Out"
               className="logo-image"
             />
@@ -36,22 +53,22 @@ const Navigation: React.FC = () => {
           <ul className="nav navbar-nav navbar-right">
             <li>
               <a href="#features" className="page-scroll">
-                Features
+                {t('nav.features')}
               </a>
             </li>
             <li>
               <a href="#about" className="page-scroll">
-                About
+                {t('nav.about')}
               </a>
             </li>
             <li>
               <a href="#services" className="page-scroll">
-                Services
+                {t('nav.services')}
               </a>
             </li>
             <li>
               <a href="#team" className="page-scroll">
-                Team
+                {t('nav.team')}
               </a>
             </li>
           </ul>

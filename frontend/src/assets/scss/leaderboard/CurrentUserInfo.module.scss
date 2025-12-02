@@ -28,16 +28,30 @@
     animation: pulse-border 3s infinite ease-in-out;
   }
 
-  .user_rank,
+  .user_rank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    text-align: center;
+    color: #00e1ff;
+    text-shadow: 0 0 8px rgba(0, 225, 255, 0.8);
+    white-space: nowrap;
+    margin-right: 16px;
+  }
+
   .user_level {
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 60px;
-    font-size: var(--font-size-large);
+    font-size: clamp(1rem, 2vw, 1.5rem);
     text-align: center;
     color: #00e1ff;
     text-shadow: 0 0 8px rgba(0, 225, 255, 0.8);
+    white-space: nowrap;
+    margin-left: 16px;
   }
 
   .info_container {

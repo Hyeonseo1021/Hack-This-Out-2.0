@@ -20,10 +20,6 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: 0 
   },
   
-  // ✅ stage = 완료한 스테이지 개수
-  // stage 0 → Playing Stage 1 (아무것도 완료 안 함)
-  // stage 1 → Playing Stage 2 (Stage 1 완료)
-  // stage 4 → All stages completed
   stage: { 
     type: Number, 
     default: 0 
@@ -32,6 +28,18 @@ const ArenaProgressSchema = new mongoose.Schema({
   completed: { 
     type: Boolean, 
     default: false 
+  },
+  
+  // ✅ 게임 완료 시각 (정확한 완료 시간 기록)
+  submittedAt: {
+    type: Date,
+    default: null
+  },
+  
+  // ✅ 완료까지 걸린 시간 (초 단위, startTime부터 submittedAt까지)
+  completionTime: {
+    type: Number,
+    default: null
   },
   
   timeSpent: { 
@@ -52,57 +60,89 @@ const ArenaProgressSchema = new mongoose.Schema({
     default: 0
   },
 
-  // 🃏 Hacker's Deck 모드용 카드 로그
-  cardsUsed: [{
-    name: String,
-    cost: Number,       // ✅ 카드 비용 기록
-    usedAt: Date
-  }],
+  // 💰 HTO 코인 보상 (게임 종료 시 계산)
+  coinsEarned: {
+    type: Number,
+    default: 0
+  },
 
-  // 🏰 Capture The Server 모드용
-  serversCaptured: { 
-    type: Number, 
-    default: 0 
+  // 🎮 Terminal Hacking Race 전용
+  terminalRace: {
+    timeBonusPoints: { type: Number, default: 0 },      // 시간 보너스 점수
+    commandsExecuted: { type: Number, default: 0 },     // 실행한 명령어 수
+    hintsUsed: { type: Number, default: 0 }             // 사용한 힌트 개수
   },
-  
-  // ✅ 점령한 서버 목록
-  capturedServers: [{
-    serverId: String,
-    capturedAt: Date,
-    lostAt: { type: Date, default: null }  // null = 여전히 소유 중
-  }],
 
-  // ⚔️ Defense Battle 모드용
-  teamName: { 
-    type: String, 
-    default: null 
+  // 🔍 Vulnerability Scanner Race 전용 - NEW
+  vulnerabilityScannerRace: {
+    vulnerabilitiesFound: { type: Number, default: 0 },  // 발견한 취약점 개수
+    firstBloods: { type: Number, default: 0 },           // First Blood 개수
+    invalidSubmissions: { type: Number, default: 0 },    // 잘못된 제출 횟수
+    hintsUsed: { type: Number, default: 0 },            // 사용한 힌트 개수
+    speedBonusPoints: { type: Number, default: 0 },     // 속도 보너스 점수
+    comboPoints: { type: Number, default: 0 },          // 콤보 보너스 점수
+    timeBonusPoints: { type: Number, default: 0 },      // 시간 보너스 점수
+    discoveries: [{
+      vulnId: String,              // 취약점 ID
+      vulnType: String,            // 취약점 타입
+      endpoint: String,            // 엔드포인트
+      payload: String,             // 사용한 페이로드
+      discoveredAt: Date,          // 발견 시각
+      isFirstBlood: Boolean,       // First Blood 여부
+      basePoints: Number,          // 기본 점수
+      speedBonus: Number,          // 속도 보너스
+      comboBonus: Number,          // 콤보 보너스
+      totalPoints: Number          // 총 획득 점수
+    }],
+    submissions: [{
+      vulnType: String,
+      endpoint: String,
+      parameter: String,
+      payload: String,
+      isCorrect: Boolean,
+      pointsChange: Number,        // +점수 또는 -점수 (페널티)
+      submittedAt: Date
+    }]
   },
-  
-  // ✅ 팀 관련 추가
-  teamRole: {
-    type: String,
-    enum: ['ATTACKER', 'DEFENDER', null],
-    default: null
+
+  // 🔎 Forensics Rush 전용
+  forensicsRush: {
+    questionsAnswered: { type: Number, default: 0 },
+    questionsCorrect: { type: Number, default: 0 },
+    totalAttempts: { type: Number, default: 0 },
+    penalties: { type: Number, default: 0 },  // 오답 페널티 점수
+    perfectScore: { type: Boolean, default: false },  // 10문제 전부 정답
+    answers: [{
+      questionId: String,
+      answer: String,
+      correct: Boolean,
+      attempts: { type: Number, default: 1 },
+      answeredAt: Date,
+      points: Number
+    }]
   },
-  
-  kills: { 
-    type: Number, 
-    default: 0 
-  },
-  
-  deaths: { 
-    type: Number, 
-    default: 0 
-  },
-  
-  // ✅ 공격/방어 액션 로그
-  actions: [{
-    actionType: String,   // 'attack', 'defend', 'heal', etc.
-    actionName: String,   // 'SQL Injection', 'Enable Firewall', etc.
-    damage: Number,       // 가한 피해
-    heal: Number,         // 회복량
-    timestamp: Date
-  }]
+
+  // 💬 Social Engineering Challenge 전용
+  socialEngineering: {
+    objectiveAchieved: { type: Boolean, default: false },
+    finalSuspicion: { type: Number, default: 0 },
+    turnsUsed: { type: Number, default: 0 },
+    blocked: { type: Boolean, default: false },  // 의심도 100% 도달로 차단됨
+    techniquesUsed: [{
+      technique: String,  // 'PRETEXTING', 'AUTHORITY', 'URGENCY', etc.
+      message: String,
+      suspicionDelta: Number,
+      timestamp: Date
+    }],
+    naturalness: { type: Number, default: 0 },  // AI 평가 점수 (0-20점)
+    conversation: [{
+      from: { type: String, enum: ['PLAYER', 'AI'] },
+      message: String,
+      suspicionBefore: Number,
+      suspicionAfter: Number,
+      timestamp: Date
+    }]
+  }
 
 }, { 
   timestamps: true 

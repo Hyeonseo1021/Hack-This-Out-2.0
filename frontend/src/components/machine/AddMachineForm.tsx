@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createMachine } from '../../api/axiosMachine';
 import { useNavigate } from 'react-router-dom';
 import '../../assets/scss/machine/AddMachineForm.scss';
@@ -26,16 +27,17 @@ interface MachineFormData {
 }
 
 interface ValidationErrors {
-    [key: string]: string;
+  [key: string]: string;
 }
 
 const AddMachineForm: React.FC = () => {
+  const { t } = useTranslation('machine');
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const authUserContext = useContext(AuthUserContext);
   if (!authUserContext) {
     throw new Error('AddMachineForm must be used within an AuthUserProvider');
   }
-  const { currentUser } = authUserContext;
+  const { currentUser: _currentUser } = authUserContext;
   const availableSkills = ['Web', 'Network', 'Crypto', 'Reversing', 'Pwn', 'Forensics', 'Cloud', 'AI'];
 
   const [formData, setFormData] = useState<MachineFormData>({
@@ -46,7 +48,7 @@ const AddMachineForm: React.FC = () => {
     description: '',
     exp: 50,
     hints: [''],
-    hintCosts: [1],
+    hintCosts: [0],
     difficulty: {
       creatorLevel: ''
     },
@@ -61,9 +63,7 @@ const AddMachineForm: React.FC = () => {
   const [registerComplete, setRegisterComplete] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -80,9 +80,9 @@ const AddMachineForm: React.FC = () => {
     }));
   };
 
-  const handleHintCostChange = (index: number, value: number) => {
+  const toggleHintPaid = (index: number) => {
     const newHintCosts = [...formData.hintCosts];
-    newHintCosts[index] = value;
+    newHintCosts[index] = newHintCosts[index] === 0 ? 1 : 0;
     setFormData((prevData) => ({
       ...prevData,
       hintCosts: newHintCosts,
@@ -93,7 +93,7 @@ const AddMachineForm: React.FC = () => {
     setFormData((prevData) => ({
       ...prevData,
       hints: [...prevData.hints, ''],
-      hintCosts: [...prevData.hintCosts, 1],
+      hintCosts: [...prevData.hintCosts, 0],
     }));
   };
 
@@ -115,7 +115,7 @@ const AddMachineForm: React.FC = () => {
       const newSkills = skills.includes(skill)
         ? skills.filter(s => s !== skill)
         : [...skills, skill];
-      
+
       return {
         ...prevData,
         creatorSurvey: {
@@ -128,45 +128,36 @@ const AddMachineForm: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
-    
+
     if (!formData.name || formData.name.length < 3) {
-        errors.name = 'Name must be at least 3 characters long';
+      errors.name = t('form.errors.nameLength');
     }
-    
     if (!formData.category) {
-        errors.category = 'Category is required';
+      errors.category = t('form.errors.categoryRequired');
     }
-    
     if (!formData.amiId || !/^ami-[0-9a-fA-F]{8,17}$/.test(formData.amiId)) {
-        errors.amiId = 'Invalid AMI ID format';
+      errors.amiId = t('form.errors.invalidAmiId');
     }
-    
     if (!formData.flag || formData.flag.length < 5) {
-        errors.flag = 'Flag must be at least 5 characters long';
+      errors.flag = t('form.errors.flagLength');
     }
-    
     if (!formData.description || formData.description.length < 4) {
-        errors.description = 'Description must be at least 4 characters long';
+      errors.description = t('form.errors.descriptionLength');
     }
-    
     if (!formData.exp || formData.exp < 50) {
-        errors.exp = 'Experience points must be at least 50';
+      errors.exp = t('form.errors.expMinimum');
     }
-    
     if (!formData.hints.length || formData.hints.some(hint => !hint.trim())) {
-        errors.hints = 'At least one valid hint is required';
+      errors.hints = t('form.errors.hintsRequired');
     }
-
     if (!formData.difficulty.creatorLevel) {
-        errors.difficulty = 'Please select difficulty level';
+      errors.difficulty = t('form.errors.difficultyRequired');
     }
-
     if (!formData.creatorSurvey.estimatedTime || formData.creatorSurvey.estimatedTime < 1) {
-        errors.estimatedTime = 'Please enter estimated time';
+      errors.estimatedTime = t('form.errors.estimatedTimeRequired');
     }
-
     if (!formData.creatorSurvey.technicalComplexity) {
-        errors.technicalComplexity = 'Please select technical complexity';
+      errors.technicalComplexity = t('form.errors.complexityRequired');
     }
 
     setValidationErrors(errors);
@@ -179,8 +170,8 @@ const AddMachineForm: React.FC = () => {
     setValidationErrors({});
 
     if (!validateForm()) {
-        setError('Please fix the validation errors below.');
-        return;
+      setError(t('form.fixErrors'));
+      return;
     }
 
     try {
@@ -205,69 +196,85 @@ const AddMachineForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit} className='add-machine-form'>
+
+      {/* 상단 헤더 */}
       <div className='back-button'>
-        <h2>Add New Machine</h2>
-        <button className="IconButton" type='button' onClick={() => navigate(-1)}>
-          <IoMdArrowRoundBack style={{ color: 'white', fontSize: "34px" }} />
+        <button
+          className="IconButton"
+          type="button"
+          onClick={() => navigate(-1)}
+        >
+          <IoMdArrowRoundBack />
         </button>
+        <h2>{t('form.title')}</h2>
       </div>
 
       {error && (
-        <div className='error-message' style={{ 
-          color: 'red',
-          padding: '10px',
-          marginBottom: '20px',
-          backgroundColor: 'rgba(255, 0, 0, 0.1)',
-          borderRadius: '4px'
-        }}>
+        <div
+          className='error-message'
+          style={{
+            color: 'red',
+            padding: '10px',
+            marginBottom: '20px',
+            backgroundColor: 'rgba(255, 0, 0, 0.1)',
+            borderRadius: '4px'
+          }}
+        >
           {error}
         </div>
       )}
 
       <div className='create-container'>
 
-        {/* 난이도 설문 섹션 - 오른쪽에 고정 */}
+        {/* 난이도 섹션 */}
         <div className='difficulty-survey-section'>
-          <h3>Difficulty Survey</h3>
-          
-          {/* 난이도 선택 */}
+          <h3>{t('form.difficultySurvey')}</h3>
+
           <div className='difficulty-container'>
-            <label htmlFor='difficulty'>Expected Difficulty Level <span style={{ color: 'red' }}>*</span></label>
+            <label htmlFor='difficulty'>
+              {t('form.expectedDifficulty')} <span style={{ color: 'red' }}>*</span>
+            </label>
             <select
               id='difficulty'
               value={formData.difficulty.creatorLevel}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                difficulty: { creatorLevel: e.target.value }
-              }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  difficulty: { creatorLevel: e.target.value }
+                }))
+              }
               className={validationErrors.difficulty ? 'error-input' : ''}
             >
-              <option value="">--Select Difficulty--</option>
-              <option value="very_easy">⭐ Very Easy</option>
-              <option value="easy">⭐⭐ Easy</option>
-              <option value="medium">⭐⭐⭐ Medium</option>
-              <option value="hard">⭐⭐⭐⭐ Hard</option>
-              <option value="very_hard">⭐⭐⭐⭐⭐ Very Hard</option>
+              <option value="">{t('form.selectDifficulty')}</option>
+              <option value="very_easy">⭐ {t('form.veryEasy')}</option>
+              <option value="easy">⭐⭐ {t('form.easy')}</option>
+              <option value="medium">⭐⭐⭐ {t('form.medium')}</option>
+              <option value="hard">⭐⭐⭐⭐ {t('form.hard')}</option>
+              <option value="very_hard">⭐⭐⭐⭐⭐ {t('form.veryHard')}</option>
             </select>
             {validationErrors.difficulty && (
               <span className='field-error'>{validationErrors.difficulty}</span>
             )}
           </div>
 
-          {/* 예상 소요 시간 */}
           <div className='estimated-time-container'>
-            <label htmlFor='estimatedTime'>Estimated Time to Solve (minutes) <span style={{ color: 'red' }}>*</span></label>
+            <label htmlFor='estimatedTime'>
+              {t('form.estimatedTime')}{' '}
+              <span style={{ color: 'red' }}>*</span>
+            </label>
             <input
               type='number'
               id='estimatedTime'
               value={formData.creatorSurvey.estimatedTime}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                creatorSurvey: {
-                  ...prev.creatorSurvey,
-                  estimatedTime: Number(e.target.value)
-                }
-              }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  creatorSurvey: {
+                    ...prev.creatorSurvey,
+                    estimatedTime: Number(e.target.value)
+                  }
+                }))
+              }
               min={1}
               placeholder='30'
               className={validationErrors.estimatedTime ? 'error-input' : ''}
@@ -277,15 +284,23 @@ const AddMachineForm: React.FC = () => {
             )}
           </div>
 
-          {/* 필요한 스킬 */}
           <div className='required-skills-container'>
-            <label>Required Skills (optional)</label>
+            <label>{t('form.requiredSkills')}</label>
             <div className='skills-checkbox-group'>
-              {availableSkills.map(skill => (
-                <label key={skill} className={formData.creatorSurvey.requiredSkills.includes(skill) ? 'skill-selected' : ''}>
+              {availableSkills.map((skill) => (
+                <label
+                  key={skill}
+                  className={
+                    formData.creatorSurvey.requiredSkills.includes(skill)
+                      ? 'skill-selected'
+                      : ''
+                  }
+                >
                   <input
                     type='checkbox'
-                    checked={formData.creatorSurvey.requiredSkills.includes(skill)}
+                    checked={formData.creatorSurvey.requiredSkills.includes(
+                      skill
+                    )}
                     onChange={() => handleSkillToggle(skill)}
                   />
                   <span>{skill}</span>
@@ -294,42 +309,49 @@ const AddMachineForm: React.FC = () => {
             </div>
           </div>
 
-          {/* 기술적 복잡도 */}
           <div className='technical-complexity-container'>
-            <label htmlFor='technicalComplexity'>Technical Complexity <span style={{ color: 'red' }}>*</span></label>
+            <label htmlFor='technicalComplexity'>
+              {t('form.technicalComplexity')} <span style={{ color: 'red' }}>*</span>
+            </label>
             <select
               id='technicalComplexity'
               value={formData.creatorSurvey.technicalComplexity}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                creatorSurvey: {
-                  ...prev.creatorSurvey,
-                  technicalComplexity: Number(e.target.value)
-                }
-              }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  creatorSurvey: {
+                    ...prev.creatorSurvey,
+                    technicalComplexity: Number(e.target.value)
+                  }
+                }))
+              }
               className={validationErrors.technicalComplexity ? 'error-input' : ''}
             >
-              <option value={1}>1 - Very Simple</option>
-              <option value={2}>2 - Simple</option>
-              <option value={3}>3 - Moderate</option>
-              <option value={4}>4 - Complex</option>
-              <option value={5}>5 - Very Complex</option>
+              <option value={1}>1 - {t('form.verySimple')}</option>
+              <option value={2}>2 - {t('form.simple')}</option>
+              <option value={3}>3 - {t('form.moderate')}</option>
+              <option value={4}>4 - {t('form.complex')}</option>
+              <option value={5}>5 - {t('form.veryComplex')}</option>
             </select>
             {validationErrors.technicalComplexity && (
-              <span className='field-error'>{validationErrors.technicalComplexity}</span>
+              <span className='field-error'>
+                {validationErrors.technicalComplexity}
+              </span>
             )}
           </div>
         </div>
 
         <div className='name-container'>
-          <label htmlFor='name'>Machine Name <span style={{ color: 'red' }}>*</span></label>
+          <label htmlFor='name'>
+            {t('form.machineName')} <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type='text'
             id='name'
             name='name'
             value={formData.name}
             onChange={handleChange}
-            placeholder="Enter the machine name"
+            placeholder={t('form.enterMachineName')}
             className={validationErrors.name ? 'error-input' : ''}
           />
           {validationErrors.name && (
@@ -338,15 +360,17 @@ const AddMachineForm: React.FC = () => {
         </div>
 
         <div className='category-container'>
-          <label htmlFor='category'>Category <span style={{ color: 'red' }}>*</span></label>
+          <label htmlFor='category'>
+            {t('form.category')} <span style={{ color: 'red' }}>*</span>
+          </label>
           <select
-            id="category"
-            name="category"
+            id='category'
+            name='category'
             value={formData.category}
             onChange={(e) => handleChange(e as any)}
             className={validationErrors.category ? 'error-input' : ''}
           >
-            <option value="">--Select Category--</option>
+            <option value="">{t('form.selectCategory')}</option>
             <option value="Web">Web</option>
             <option value="Network">Network</option>
             <option value="Database">Database</option>
@@ -362,7 +386,9 @@ const AddMachineForm: React.FC = () => {
         </div>
 
         <div className='amiId-container'>
-          <label htmlFor='amiId'>AMI ID <span style={{ color: 'red' }}>*</span></label>
+          <label htmlFor='amiId'>
+            {t('form.amiId')} <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type='text'
             id='amiId'
@@ -378,14 +404,16 @@ const AddMachineForm: React.FC = () => {
         </div>
 
         <div className='flag-container'>
-          <label htmlFor='flag'>Flag <span style={{ color: 'red' }}>*</span></label>
+          <label htmlFor='flag'>
+            {t('form.flag')} <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type='text'
             id='flag'
             name='flag'
             value={formData.flag}
             onChange={handleChange}
-            placeholder='Flag of the machine here'
+            placeholder={t('form.flagPlaceholder')}
             className={validationErrors.flag ? 'error-input' : ''}
           />
           {validationErrors.flag && (
@@ -394,13 +422,15 @@ const AddMachineForm: React.FC = () => {
         </div>
 
         <div className='Description-container'>
-          <label htmlFor='description'>Description <span style={{ color: 'red' }}>*</span></label>
+          <label htmlFor='description'>
+            {t('form.description')} <span style={{ color: 'red' }}>*</span>
+          </label>
           <textarea
             ref={descriptionRef}
             id='description'
             name='description'
             value={formData.description}
-            placeholder='Description of the machine here'
+            placeholder={t('form.descriptionPlaceholder')}
             onChange={handleChange}
             className={validationErrors.description ? 'error-input' : ''}
           />
@@ -410,7 +440,9 @@ const AddMachineForm: React.FC = () => {
         </div>
 
         <div className='exp-container'>
-          <label htmlFor='exp'>Reward (EXP) <span style={{ color: 'red' }}>*</span></label>
+          <label htmlFor='exp'>
+            {t('form.reward')} <span style={{ color: 'red' }}>*</span>
+          </label>
           <input
             type='number'
             id='exp'
@@ -425,45 +457,73 @@ const AddMachineForm: React.FC = () => {
           )}
         </div>
 
+        {/* 힌트 섹션 */}
         <div className='hint-container'>
-          <label>Hints <span style={{ color: 'red' }}>*</span></label>
-          {formData.hints.map((hint, index) => (
-            <div className='key-container' key={index}>
-              <input
-                type='text'
-                value={hint}
-                onChange={(e) => handleHintChange(index, e.target.value)}
-                placeholder='Hint'
-              />
-              <input
-                type='number'
-                value={formData.hintCosts[index]}
-                onChange={(e) => handleHintCostChange(index, Number(e.target.value))}
-                placeholder='Cost'
-                min={1}
-                max={100}
-              />
-              {formData.hints.length > 1 && (
-                <button className='remove-hint' type='button' onClick={() => removeHint(index)}>
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
+          <label>
+            {t('form.hints')} <span style={{ color: 'red' }}>*</span>
+          </label>
+
+          {/* 힌트 목록 */}
+          <div className='hints-list'>
+            {formData.hints.map((hint, index) => (
+              <div className='hint-item' key={index}>
+                <div className='hint-header'>
+                  <span className='hint-number'>#{index + 1}</span>
+                  <span className='hint-status'>
+                    {formData.hintCosts[index] === 0
+                      ? t('form.hintFree', '무료 힌트')
+                      : t('form.hintPaid', '유료 힌트 (힌트권 필요)')}
+                  </span>
+                  <label className='hint-paid-checkbox'>
+                    <input
+                      type='checkbox'
+                      checked={formData.hintCosts[index] > 0}
+                      onChange={() => toggleHintPaid(index)}
+                    />
+                    <span>{t('form.setPaid', '유료로 설정')}</span>
+                  </label>
+                </div>
+                <div className='hint-content'>
+                  <input
+                    type='text'
+                    value={hint}
+                    onChange={(e) => handleHintChange(index, e.target.value)}
+                    placeholder={t('form.hintPlaceholder', '힌트 내용을 입력하세요')}
+                    className='hint-input'
+                  />
+                  {formData.hints.length > 1 && (
+                    <button className='remove-hint' type='button' onClick={() => removeHint(index)}>
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
           {validationErrors.hints && (
             <span className='field-error'>{validationErrors.hints}</span>
           )}
+
           <button className='add-hint' type='button' onClick={addHint}>
-            Add Hint
+            + {t('form.addHint')}
           </button>
         </div>
 
         <div className='add-machine-form-button'>
-          <button type='submit'>Add Machine</button>
+          <button type='submit'>{t('form.submit')}</button>
         </div>
       </div>
-      
-      {registerComplete && <RegisterCompleteMD onClose={() => {setRegisterComplete(false); navigate('/machine');}} mode='machine' />}
+
+      {registerComplete && (
+        <RegisterCompleteMD
+          onClose={() => {
+            setRegisterComplete(false);
+            navigate('/machine');
+          }}
+          mode='machine'
+        />
+      )}
     </form>
   );
 };

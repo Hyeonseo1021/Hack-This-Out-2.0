@@ -1,64 +1,115 @@
-// src/api/axiosShop.ts
+// src/api/axiosShop.tsx
 import axiosInstance from './axiosInit';
-import { ShopItem } from '../types/ShopItem'; // 타입은 기존 그대로 사용
+import { ShopItem } from '../types/ShopItem';
 
-export const getShopItems = async (): Promise<ShopItem[]> => {
-  const res = await axiosInstance.get('/shop/items'); // ✅ GET /api/shop/items
-  return res.data?.items ?? [];
-};
 
-/** 💰 아이템 구매 (유저 토큰 필요) */
-export const buyShopItem = async (
-  itemId: string
-): Promise<{ msg: string; updatedTokens?: number }> => {
-  const res = await axiosInstance.post('/shop/buy', { itemId }); // ✅ POST /api/shop/buy
+export const getBalance = async (): Promise<{ balance: number }> => {
+  const res = await axiosInstance.get('/shop/balance'); // ✅ GET /api/item/balance
   return {
-    msg: res.data?.msg ?? '구매 완료',
-    updatedTokens: res.data?.updatedTokens,
+    balance: res.data?.balance ?? 0,
   };
 };
 
-/** 🎒 내 인벤토리 조회 */
+
+export const getShopItems = async (): Promise<ShopItem[]> => {
+  const res = await axiosInstance.get('/shop/items'); // ✅ GET /api/item/shop/items
+  return res.data?.items ?? [];
+};
+
+
+export const buyShopItem = async (
+  itemId: string
+): Promise<{
+  msg: string;
+  updatedBalance: number;
+  acquiredItem?: { id: string; name: { ko: string; en: string } | string };
+}> => {
+  const res = await axiosInstance.post('/shop/buy', { itemId }); // ✅ POST /api/item/shop/buy
+  return {
+    msg: res.data?.msg ?? '구매 완료',
+    updatedBalance: res.data?.updatedBalance ?? 0,
+    acquiredItem: res.data?.acquiredItem,
+  };
+};
+
+
 export const getInventory = async (): Promise<
-  { _id: string; name: string; description: string; quantity: number }[]
+  Array<{
+    _id: string;
+    item: {
+      _id: string;
+      name: { ko: string; en: string } | string;
+      description: { ko: string; en: string } | string;
+      price: number;
+      icon: string;
+      type: string;
+    };
+    quantity: number;
+    acquiredAt: string;
+  }>
 > => {
-  const res = await axiosInstance.get('/inventory/list'); // ✅ GET /api/inventory/list
+  const res = await axiosInstance.get('/shop/inventory'); // ✅ GET /api/item/inventory
   return res.data?.inventory ?? [];
 };
 
-/** 🧩 인벤토리 아이템 사용 */
 export const useInventoryItem = async (
   invId: string
-): Promise<{ msg: string }> => {
-  const res = await axiosInstance.patch(`/inventory/${invId}/use`); // ✅ PATCH /api/inventory/:invId/use
-  return { msg: res.data?.msg ?? '아이템을 사용했습니다.' };
+): Promise<{ msg: string; remainingQuantity: number }> => {
+  const res = await axiosInstance.patch(`/shop/inventory/${invId}/use`); // ✅ PATCH /api/item/inventory/:invId/use
+  return { 
+    msg: res.data?.msg ?? '아이템을 사용했습니다.',
+    remainingQuantity: res.data?.remainingQuantity ?? 0,
+  };
 };
 
-/** ---------- 🧑‍💼 관리자 전용 ---------- */
 
-/** 상점 아이템 생성 */
-export const createItem = async (payload: {
-  name: string;
-  price: number;
-  description?: string;
-  isListed?: boolean;
-  imageUrl?: string;
-}) => {
-  const res = await axiosInstance.post('/shop/admin/create', payload);
-  return res.data;
-};
-
-/** 상점 아이템 수정 */
-export const updateItem = async (
-  id: string,
-  payload: Partial<{
-    name: string;
-    price: number;
-    description: string;
-    isListed: boolean;
-    imageUrl: string;
+/** 🎰 룰렛 아이템 목록 조회 */
+export const getRouletteItems = async (): Promise<
+  Array<{
+    id: string;
+    name: { ko: string; en: string } | string;
+    icon: string;
+    weight: number;
   }>
-) => {
-  const res = await axiosInstance.put(`/shop/admin/${id}`, payload);
+> => {
+  const res = await axiosInstance.get('/shop/roulette/items'); // ✅ GET /api/item/roulette/items
+  return res.data?.items ?? [];
+};
+
+/** 🎰 룰렛 돌리기 */
+export const spinRoulette = async (): Promise<{
+  rewardId: string;
+  rewardName: { ko: string; en: string } | string;
+  rewardIcon: string;
+  updatedBalance: number;
+}> => {
+  const res = await axiosInstance.post('/shop/roulette/spin'); // ✅ POST /api/item/roulette/spin
+  return {
+    rewardId: res.data?.rewardId ?? '',
+    rewardName: res.data?.rewardName ?? '',
+    rewardIcon: res.data?.rewardIcon ?? '',
+    updatedBalance: res.data?.updatedBalance ?? 0,
+  };
+};
+
+
+export const createItem = async (payload: {
+  name: { ko: string; en: string };
+  price: number;
+  description?: { ko: string; en: string };
+  isListed?: boolean;
+  icon?: string;
+  type?: string;
+  effect?: any;
+  roulette?: any;
+}) => {
+  const res = await axiosInstance.post('/shop/item', payload); // ✅ POST /api/item (관리자 전용)
   return res.data;
 };
+
+export const deleteItem = async (itemId: string) => {
+  const res = await axiosInstance.delete(`/shop/item/${itemId}`); // ✅ DELETE /api/shop/item/:id (관리자 전용)
+  return res.data;
+};
+
+

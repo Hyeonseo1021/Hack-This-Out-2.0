@@ -1,0 +1,139 @@
+/* NPCHelp.scss */
+.npc-help-box {
+  position: fixed;
+  bottom: 110px;
+  right: 25px;
+  z-index: 9999;
+  animation: fadeIn 0.25s ease-out;
+  font-family: var(--font-cyber);
+
+  .npc-inner {
+    background: rgba(0, 0, 0, 0.82);
+    border: 1px solid #00f6ff88;
+    padding: 16px;
+    width: 270px;
+    border-radius: 14px;
+    color: #eaffff;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 14px rgba(0, 255, 255, 0.25);
+  }
+
+  .npc-avatar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+
+    img {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 2px solid #00f6ff88;
+      box-shadow: 0 0 8px #00f6ffaa;
+    }
+  }
+
+  .npc-message {
+    text-align: center;
+    margin-bottom: 15px;
+    line-height: 1.45;
+  }
+
+  .npc-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .faq-btn {
+      width: 100%;
+      padding: 8px;
+      background: #003a3e;
+      border: 1px solid #00f6ff55;
+      color: #aefbff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+
+      &:hover,
+      &.active {
+        background: #00f6ff;
+        color: #000;
+        box-shadow: 0 0 10px #00f6ff;
+      }
+    }
+  }
+
+  .npc-answer-box {
+    background: rgba(0, 246, 255, 0.1);
+    border: 1px solid #00f6ff55;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .npc-close-btn {
+    width: 100%;
+    padding: 8px;
+    background: #00f6ff;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-display);
+    transition: 0.2s;
+
+    &:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 8px #00f6ff;
+    }
+  }
+}
+
+.npc-help-button {
+  position: fixed;
+  bottom: 40px;
+  right: 25px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #00f6ff;
+  color: #000;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 0 12px #00f6ff;
+  transition: 0.25s;
+
+  &:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 20px #00f6ff;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

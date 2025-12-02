@@ -1,4 +1,5 @@
 import React, { useContext, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { logoutUser } from '../../api/axiosUser';
 import { useNavigate } from 'react-router-dom';
 import { AuthUserContext } from '../../contexts/AuthUserContext';
@@ -13,6 +14,7 @@ import { avatarBackgroundColors, getAvatarColorIndex } from '../../utils/avatars
 
 import { FaRegUserCircle } from "react-icons/fa";
 import { IoStatsChartOutline } from "react-icons/io5";
+import { MdLanguage } from "react-icons/md";
 interface MenuItemProps {
     onClick?: () => void;
     children: React.ReactNode;
@@ -27,12 +29,19 @@ const Profile: React.FC = () => {
     const navigate = useNavigate();
     const authUserContext = useContext(AuthUserContext);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const { i18n } = useTranslation();
 
     if (!authUserContext) {
         throw new Error('AuthUserContext must be used within an AuthUserProvider');
     }
 
     const { currentUser, logout } = authUserContext;
+
+    const toggleLanguage = () => {
+        const newLang = i18n.language === 'ko' ? 'en' : 'ko';
+        i18n.changeLanguage(newLang);
+        localStorage.setItem('language', newLang);  // 언어 설정 저장
+    };
 
     const handleLogout = async () => {
         try {
@@ -112,16 +121,25 @@ const Profile: React.FC = () => {
                     >
                         <div className={styles.rectangleParent}>
                             <IoStatsChartOutline className={styles.icon} />
-                            <MenuItem>My Stats</MenuItem>
+                            <MenuItem>My Status</MenuItem>
                         </div>
                     </div>
-                    <div 
+                    <div
                         className={styles.settingsInner}
                         onClick={() => handleMenuItemClick(() => navigate('/intro'))}
                     >
                         <div className={styles.rectangleParent}>
                             <ImInfo className={styles.icon} />
                             <MenuItem>Infomation</MenuItem>
+                        </div>
+                    </div>
+                    <div
+                        className={styles.settingsInner}
+                        onClick={() => handleMenuItemClick(toggleLanguage)}
+                    >
+                        <div className={styles.rectangleParent}>
+                            <MdLanguage className={styles.icon} />
+                            <MenuItem>{i18n.language === 'ko' ? 'English' : '한국어'}</MenuItem>
                         </div>
                     </div>
                 </li>

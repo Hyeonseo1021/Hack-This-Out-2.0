@@ -1,0 +1,122 @@
+{
+  "login": {
+    "title": "LOGIN",
+    "username": "Username",
+    "password": "Password",
+    "loginButton": "LOGIN",
+    "loggingIn": "Logging in...",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "errors": {
+      "allFieldsRequired": "All fields are required",
+      "loginFailed": "Login failed"
+    }
+  },
+  "register": {
+    "title": "REGISTER",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "registerButton": "REGISTER",
+    "registering": "Registering...",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "errors": {
+      "allFieldsRequired": "All fields are required",
+      "passwordMismatch": "Passwords do not match",
+      "registerFailed": "Registration failed"
+    }
+  },
+  "mypage": {
+    "title": "MY PAGE",
+    "profile": "Profile",
+    "stats": "Statistics",
+    "achievements": "Achievements",
+    "settings": "Settings",
+    "username": "Username",
+    "email": "Email",
+    "level": "Level",
+    "exp": "Experience",
+    "rank": "Rank",
+    "balance": "HTO Balance",
+    "joined": "Joined",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "logout": "Logout",
+    "passwordCheck": {
+      "title": "Confirm Password",
+      "description": "Please enter your password to see your personal information.",
+      "password": "Password",
+      "passwordRequired": "Password is required",
+      "verify": "Confirm",
+      "cancel": "Cancel"
+    },
+    "personalInfo": {
+      "title": "Edit Profile",
+      "name": "Name",
+      "id": "ID",
+      "email": "Email",
+      "exp": "EXP",
+      "htoCoin": "HTO Coin",
+      "uploadFile": "Upload File",
+      "change": "Change",
+      "changeName": "Change Name",
+      "newName": "New Name",
+      "changePassword": "Change Password",
+      "oldPassword": "Old Password",
+      "newPassword": "New Password",
+      "confirmNewPassword": "Confirm New Password",
+      "errors": {
+        "passwordLength": "Password must be at least 8 characters long",
+        "passwordMismatch": "New passwords do not match",
+        "selectFile": "Please select a file to upload."
+      },
+      "success": {
+        "passwordChanged": "Password changed successfully!",
+        "nameChanged": "Name changed successfully!",
+        "avatarChanged": "Avatar changed successfully!"
+      }
+    }
+  },
+  "mystats": {
+    "title": "{{username}}'s Status",
+    "level": "LVL.",
+    "nextLevel": "Next Level: {{exp}} EXP",
+    "ranking": "Ranking #{{rank}}",
+    "noData": "No data available.",
+    "history": "History",
+    "tabs": {
+      "machine": "Machine",
+      "contest": "Contest",
+      "arena": "Arena"
+    },
+    "machine": {
+      "name": "Machine Name",
+      "exp": "EXP",
+      "time": "Time",
+      "hintsUsed": "Hints Used",
+      "completed": "Completed",
+      "notCompleted": "Not completed",
+      "noHistory": "No machine history."
+    },
+    "contest": {
+      "name": "Contest Name",
+      "start": "Start",
+      "end": "End",
+      "exp": "EXP",
+      "machines": "Machines",
+      "ongoing": "Ongoing",
+      "noHistory": "No contest history."
+    },
+    "arena": {
+      "name": "Arena Name",
+      "mode": "Mode",
+      "endTime": "End Time",
+      "winner": "Winner",
+      "myRank": "My Rank",
+      "expEarned": "EXP Earned",
+      "noHistory": "No arena history available."
+    }
+  }
+}
