@@ -56,12 +56,15 @@ $color-bubble: #ffffff;
 .manual-beginner-container {
   position: relative;
   z-index: 1;
-  width: clamp(300px, 95vw, 1400px);
-  height: clamp(500px, 90vh, 1000px);
+  width: clamp(300px, 90vw, 1400px);
+  height: auto;
+  min-height: clamp(500px, 85vh, 1000px);
+  max-height: 90vh;
   background: rgba(13, 13, 13, 0.7);
   padding: clamp(20px, 4vw, 50px);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 // --- 헤더 ---
@@ -156,10 +159,12 @@ $color-bubble: #ffffff;
 .manual-content-area {
   flex-grow: 1;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  padding-right: 10px;
 }
 
 // --- 아바타 ---
@@ -181,6 +186,7 @@ $color-bubble: #ffffff;
   opacity: 0;
   transform: translateY(20px);
   animation: dialogEnter 0.6s ease-out forwards;
+  flex-shrink: 0;
 }
 
 // 첫 페이지 스타일

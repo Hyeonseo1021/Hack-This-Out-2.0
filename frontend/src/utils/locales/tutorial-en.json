@@ -5,11 +5,11 @@
     },
     "gamingRules": {
       "title": "Gaming Rules",
-      "list": [
-        "You complete a machine by <0>Hacking</0> and <1>Capturing the Flag</1>.",
-        "You get rewarded <0>Experience Points (EXP)</0> by completing machines.",
-        "You can get <0>Hints</0> from each machine, but there will be a penalty."
-      ]
+      "list": {
+        "0": "Please maintain <0>respect</0> between players.",
+        "1": "This site is a <0>simulated hacking platform</0>. Please refrain from other uses.",
+        "2": "Please use our site to the best of your <0>abilities</0>."
+      }
     },
     "gameModes": {
       "title": "Game Modes",
