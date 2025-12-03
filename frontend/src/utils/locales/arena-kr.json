@@ -90,7 +90,9 @@
     "hideSidebar": "사이드바 숨기기",
     "showSidebar": "사이드바 보기",
     "left": "나감",
-    "active": "활동 중"
+    "active": "활동 중",
+    "exit": "나가기",
+    "exitConfirm": "정말로 아레나를 나가시겠습니까?"
   },
   "game": {
     "missionComplete": "미션 완료",

@@ -778,6 +778,20 @@ const ArenaPlayPage: React.FC = () => {
                 </div>
               )}
 
+              {/* 나가기 버튼 */}
+              <div className="sidebar-section exit-section">
+                <button
+                  className="exit-arena-btn"
+                  onClick={() => {
+                    if (window.confirm(t('play.exitConfirm') || 'Are you sure you want to leave the arena?')) {
+                      navigate('/arena');
+                    }
+                  }}
+                >
+                  🚪 {t('play.exit') || 'Exit Arena'}
+                </button>
+              </div>
+
             </aside>
           )}
 
