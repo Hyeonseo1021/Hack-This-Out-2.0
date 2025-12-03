@@ -2,6 +2,33 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
+// 취약점 타입별 exploit 패턴 정의
+function getExploitPatterns(vulnType: string): string[] {
+  const patterns: Record<string, string[]> = {
+    'SQLi': ["' OR", "1=1", "' --", "UNION SELECT", "' OR '1'='1", "OR 1=1--", "admin'--"],
+    'SQL Injection': ["' OR", "1=1", "' --", "UNION SELECT", "' OR '1'='1", "OR 1=1--", "admin'--"],
+    'XSS': ["<script>", "javascript:", "onerror=", "onload=", "<img src=x", "alert(", "<svg onload"],
+    'Cross-Site Scripting (XSS)': ["<script>", "javascript:", "onerror=", "onload=", "<img src=x", "alert("],
+    'CSRF': ["csrf_token", "missing token", "no referrer check"],
+    'IDOR': ["user_id=", "id=2", "id=1", "account=", "../", "other user"],
+    'Path Traversal': ["../", "..\\", "/etc/passwd", "....//", "%2e%2e%2f"],
+    'PATH_TRAVERSAL': ["../", "..\\", "/etc/passwd", "....//", "%2e%2e%2f"],
+    'Command Injection': ["; ls", "| cat", "&& whoami", "; id", "$(", "`"],
+    'COMMAND_INJECTION': ["; ls", "| cat", "&& whoami", "; id", "$(", "`"],
+    'Auth Bypass': ["admin", "bypass", "' OR '1'='1", "cookie manipulation"],
+    'AUTH_BYPASS': ["admin", "bypass", "' OR '1'='1", "cookie manipulation"],
+    'Info Disclosure': ["debug=true", "verbose", "stack trace", "error"],
+    'INFO_DISCLOSURE': ["debug=true", "verbose", "stack trace", "error"],
+    'File Upload': [".php", ".jsp", ".exe", "image/php", "shell"],
+    'FILE_UPLOAD': [".php", ".jsp", ".exe", "image/php", "shell"],
+    'XXE': ["<!ENTITY", "file://", "SYSTEM", "<!DOCTYPE"],
+    'SSRF': ["localhost", "127.0.0.1", "internal", "file://", "http://169.254"],
+    'Deserialization': ["O:", "rO0", "serialize", "pickle"],
+    'DESERIALIZATION': ["O:", "rO0", "serialize", "pickle"],
+  };
+  return patterns[vulnType] || ["exploit", "attack", "hack"];
+}
+
 export async function generateVulnerableHTML(scenario: any): Promise<string> {
 
   const useFallback = process.env.USE_FALLBACK_HTML === 'true';
@@ -43,38 +70,38 @@ export async function generateVulnerableHTML(scenario: any): Promise<string> {
       'Insecure Deserialization': 'Cookie-based session or data import functionality',
     };
 
-    // 취약점별 상세 정보 생성 (AI가 정확히 사용해야 함)
+    // 취약점별 상세 정보 생성 (FLAG 기반)
     const vulnsDescription = scenario.data.vulnerabilities
       .map((v: any, index: number) => {
         const vulnName = typeof v.vulnName === 'object' ? v.vulnName.en : (v.vulnName || v.vulnType);
         const requiredUI = vulnTypeToUI[v.vulnType] || 'Appropriate input field';
-        const endpoint = v.endpoint || '/';
-        const parameter = v.parameter || 'input';
-        const expectedPayload = v.validation?.expectedPayload || '';
+        const flag = v.flag || `FLAG{${v.vulnType}_${v.vulnId}}`;
+        const exploitPatterns = getExploitPatterns(v.vulnType);
 
         return `
 === VULNERABILITY #${index + 1}: ${v.vulnType} ===
 vulnId: "${v.vulnId}"
 vulnName: "${vulnName}"
 difficulty: ${v.difficulty || 'MEDIUM'}
-
->>> EXACT VALUES YOU MUST USE (COPY-PASTE THESE): <<<
-endpoint: "${endpoint}"
-parameter: "${parameter}"
-expectedPayload: "${expectedPayload}"
+FLAG: "${flag}"
 
 REQUIRED UI: ${requiredUI}
-INPUT NAME: The input field MUST have name="${parameter}" and id="${parameter}"
 
->>> MANDATORY postMessage CODE FOR THIS VULNERABILITY: <<<
+>>> EXPLOIT DETECTION PATTERNS (check user input for these): <<<
+${exploitPatterns.map(p => `- "${p}"`).join('\n')}
+
+>>> BEHAVIOR WHEN EXPLOIT IS DETECTED: <<<
+1. Show the FLAG visually on the page: "${flag}"
+2. Send postMessage to parent with the flag
+3. The FLAG should look like it's "leaked" data (e.g., "Admin password: ${flag}" or "Secret: ${flag}")
+
+>>> MANDATORY postMessage CODE WHEN EXPLOIT SUCCEEDS: <<<
 \`\`\`javascript
-// When user submits form for ${v.vulnType}:
+// When exploit is detected, send flag to parent:
 window.parent.postMessage({
-  type: 'vulnerability_attempt',
+  type: 'flag_captured',
   vulnType: '${v.vulnType}',
-  endpoint: '${endpoint}',
-  parameter: '${parameter}',
-  payload: document.getElementById('${parameter}').value
+  flag: '${flag}'
 }, '*');
 \`\`\``;
       })
@@ -165,19 +192,20 @@ ${vulnsDescription}
 #  ABSOLUTE REQUIREMENTS (FAILURE = REJECTED) #
 ##############################################
 
-**RULE 1: EXACT ENDPOINT, PARAMETER, AND PAYLOAD**
-You MUST use the EXACT endpoint and parameter values shown above.
-DO NOT invent your own values. DO NOT change them.
-The backend validates these EXACT strings. Different values = FAILURE.
+**RULE 1: FLAG-BASED EXPLOIT DETECTION**
+Each vulnerability has a unique FLAG that must be shown when the exploit succeeds.
+The FLAG is the "secret" that gets leaked when the vulnerability is exploited.
+DO NOT show the FLAG unless the user input contains exploit patterns.
 
-**RULE 2: INPUT FIELD IDs MUST MATCH PARAMETERS**
-For each vulnerability, the input field id/name MUST be the EXACT parameter name.
-Example: If parameter is "keyword", use: <input id="keyword" name="keyword">
-NOT "query", NOT "search", NOT "q" - use "keyword" EXACTLY.
+**RULE 2: EXPLOIT PATTERN DETECTION**
+Check user input against the exploit patterns provided for each vulnerability.
+If ANY pattern is found (case-insensitive), the exploit succeeds and FLAG is revealed.
 
-**RULE 3: postMessage MUST USE EXACT VALUES**
-Every postMessage call MUST use the EXACT endpoint and parameter from the vulnerability definition above.
-Copy-paste the postMessage code blocks provided above - do not modify them.
+**RULE 3: postMessage ON SUCCESS**
+When an exploit is detected:
+1. Display the FLAG visually on the page (like leaked data)
+2. Send postMessage with type='flag_captured', vulnType, and flag
+3. The FLAG should look natural, like "Admin Secret: FLAG{...}" or "Database dump: ... FLAG{...}"
 
 ##############################################
 #  MULTI-PAGE TAB-BASED SPA STRUCTURE        #
@@ -243,30 +271,49 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
 **Minimum Code Length:** 500+ lines
 
 ##############################################
-#  FORM SUBMISSION BEHAVIOR                  #
+#  FORM SUBMISSION BEHAVIOR (FLAG-BASED)     #
 ##############################################
 
 ALL form submissions must:
 1. Prevent default form behavior (e.preventDefault())
-2. Show loading state: "Checking..."
-3. Send postMessage with EXACT values from vulnerability definition
-4. Do NOT validate input - backend handles validation
+2. Check if user input contains any exploit pattern
+3. If exploit detected: Show FLAG and send postMessage
+4. If no exploit: Show normal response (login failed, no results, etc.)
 
-Example submission handler:
+Example submission handler for SQL Injection:
 \`\`\`javascript
 form.addEventListener('submit', function(e) {
   e.preventDefault();
-  resultDiv.innerHTML = 'Checking...';
-  resultDiv.style.display = 'block';
+  const userInput = document.getElementById('username').value;
+  const resultDiv = document.getElementById('result');
 
-  // USE EXACT VALUES FROM VULNERABILITY DEFINITION
-  window.parent.postMessage({
-    type: 'vulnerability_attempt',
-    vulnType: 'SQLi',        // Exact vulnType
-    endpoint: '/api/login',   // Exact endpoint from definition
-    parameter: 'username',    // Exact parameter from definition
-    payload: document.getElementById('username').value
-  }, '*');
+  // Check for SQL injection patterns
+  const sqlPatterns = ["' OR", "1=1", "' --", "UNION SELECT", "admin'--"];
+  const isExploited = sqlPatterns.some(p =>
+    userInput.toUpperCase().includes(p.toUpperCase())
+  );
+
+  if (isExploited) {
+    // EXPLOIT SUCCESS! Show leaked data with FLAG
+    resultDiv.innerHTML = \`
+      <div class="success-exploit">
+        ✅ Login bypassed! Welcome admin!<br>
+        <strong>Admin Secret: FLAG{SQLi_xxx}</strong>
+      </div>
+    \`;
+    resultDiv.style.display = 'block';
+
+    // Send FLAG to parent
+    window.parent.postMessage({
+      type: 'flag_captured',
+      vulnType: 'SQLi',
+      flag: 'FLAG{SQLi_xxx}'
+    }, '*');
+  } else {
+    // Normal response - no exploit
+    resultDiv.innerHTML = '❌ Login failed. Invalid credentials.';
+    resultDiv.style.display = 'block';
+  }
 });
 \`\`\`
 
@@ -274,10 +321,10 @@ form.addEventListener('submit', function(e) {
 #  FORBIDDEN                                  #
 ##############################################
 
-- DO NOT show "SYSTEM COMPROMISED" or hack animations
-- DO NOT validate payloads in JavaScript
-- DO NOT invent your own endpoint/parameter values
-- DO NOT use different parameter names than specified
+- DO NOT show FLAG unless exploit pattern is detected
+- DO NOT show "SYSTEM COMPROMISED" or hack animations - keep it realistic
+- DO NOT reveal FLAG in page source (only show after successful exploit)
+- DO NOT make exploits too obvious - users should think about what to try
 
 ##############################################
 #  OUTPUT FORMAT                              #
@@ -350,14 +397,14 @@ function generateFallbackHTML(scenario: any): string {
   const vulns = scenario.data.vulnerabilities || [];
   const targetNameRaw = scenario.data.targetName || 'Practice Web App';
   const targetName = typeof targetNameRaw === 'object' ? targetNameRaw.en : targetNameRaw;
-  const features = scenario.data.features || ['Login', 'Search', 'Profile', 'Downloads'];
 
-  // 취약점 타입별 매핑
-  const sqliVuln = vulns.find((v: any) => v.vulnType === 'SQLi') || vulns[0];
-  const xssVuln = vulns.find((v: any) => v.vulnType === 'XSS');
-  const csrfVuln = vulns.find((v: any) => v.vulnType === 'CSRF');
-  const pathVuln = vulns.find((v: any) => v.vulnType === 'PATH_TRAVERSAL' || v.vulnType === 'Path Traversal');
-  const idorVuln = vulns.find((v: any) => v.vulnType === 'IDOR');
+  // 취약점별 FLAG 및 패턴 생성
+  const vulnConfigs = vulns.map((v: any) => ({
+    vulnId: v.vulnId,
+    vulnType: v.vulnType,
+    flag: v.flag || `FLAG{${v.vulnType}_${v.vulnId}}`,
+    patterns: getExploitPatterns(v.vulnType)
+  }));
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -653,42 +700,59 @@ function generateFallbackHTML(scenario: any): string {
   </footer>
 
   <script>
-    // Vulnerability data
-    const vulns = ${JSON.stringify(vulns, null, 2)};
+    // Vulnerability configurations with FLAGS and patterns
+    const vulnConfigs = ${JSON.stringify(vulnConfigs, null, 2)};
 
     // Tab switching
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', (e) => {
         e.preventDefault();
         const targetTab = tab.dataset.tab;
-
         document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-
         document.getElementById(targetTab + '-section').classList.add('active');
         tab.classList.add('active');
       });
     });
 
-    // Helper: Show result
-    function showResult(elementId, message, isChecking) {
-      const el = document.getElementById(elementId);
-      if (isChecking) {
-        el.innerHTML = '⏳ <strong>Checking...</strong>';
-        el.style.cssText = 'display:block;background:#e7f3ff;color:#0066cc;padding:15px;border-radius:6px;';
-      }
-      setTimeout(() => { el.style.display = 'none'; }, 2000);
+    // Helper: Check if input contains exploit pattern
+    function checkExploit(input, vulnType) {
+      const config = vulnConfigs.find(v => v.vulnType === vulnType);
+      if (!config) return null;
+
+      const inputUpper = input.toUpperCase();
+      const isExploited = config.patterns.some(p => inputUpper.includes(p.toUpperCase()));
+
+      return isExploited ? config.flag : null;
     }
 
-    // Helper: Send to backend
-    function sendAttempt(vulnType, endpoint, parameter, payload) {
+    // Helper: Show exploit success with FLAG
+    function showExploitSuccess(elementId, flag, vulnType, message) {
+      const el = document.getElementById(elementId);
+      el.innerHTML = \`
+        <div style="background:#d4edda;color:#155724;padding:20px;border-radius:8px;border:2px solid #28a745;">
+          <div style="font-size:18px;font-weight:bold;margin-bottom:10px;">🎉 \${message}</div>
+          <div style="background:#000;color:#0f0;padding:15px;border-radius:4px;font-family:monospace;font-size:14px;">
+            <strong>\${flag}</strong>
+          </div>
+        </div>
+      \`;
+      el.style.display = 'block';
+
+      // Send FLAG to parent (auto-submit)
       window.parent.postMessage({
-        type: 'vulnerability_attempt',
+        type: 'flag_captured',
         vulnType: vulnType,
-        endpoint: endpoint,
-        parameter: parameter,
-        payload: payload
+        flag: flag
       }, '*');
+    }
+
+    // Helper: Show normal failure
+    function showNormalResponse(elementId, message) {
+      const el = document.getElementById(elementId);
+      el.innerHTML = '❌ ' + message;
+      el.style.cssText = 'display:block;background:#f8f9fa;color:#666;padding:15px;border-radius:6px;';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
     }
 
     // Login form (SQLi)
@@ -696,25 +760,43 @@ function generateFallbackHTML(scenario: any): string {
       e.preventDefault();
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-      showResult('login-result', '', true);
-      const vuln = vulns.find(v => v.vulnType === 'SQLi') || vulns[0];
-      sendAttempt(vuln?.vulnType || 'SQLi', vuln?.endpoint || '/login', 'username', username || password);
+      const input = username + ' ' + password;
+
+      const flag = checkExploit(input, 'SQLi');
+      if (flag) {
+        showExploitSuccess('login-result', flag, 'SQLi', 'SQL Injection Success! Database leaked:');
+      } else {
+        showNormalResponse('login-result', 'Login failed. Invalid username or password.');
+      }
     });
 
     // Search (XSS)
     function doSearch() {
       const query = document.getElementById('searchQuery').value;
-      showResult('search-result', '', true);
-
-      // Display results (vulnerable - reflects input)
       const resultsDiv = document.getElementById('searchResults');
       const contentDiv = document.getElementById('searchResultsContent');
-      contentDiv.innerHTML = 'Results for: <strong>' + query + '</strong>';
-      resultsDiv.style.display = 'block';
 
-      const vuln = vulns.find(v => v.vulnType === 'XSS');
-      if (vuln) {
-        sendAttempt('XSS', vuln.endpoint || '/search', vuln.parameter || 'query', query);
+      const flag = checkExploit(query, 'XSS');
+      if (flag) {
+        // XSS: Show the script being "executed" and reveal flag
+        contentDiv.innerHTML = \`
+          <div style="background:#fff3cd;color:#856404;padding:15px;border-radius:6px;margin-bottom:10px;">
+            ⚠️ Script executed! Cookies stolen...
+          </div>
+          <div style="background:#000;color:#0f0;padding:15px;border-radius:4px;font-family:monospace;">
+            document.cookie = "\${flag}"
+          </div>
+        \`;
+        resultsDiv.style.display = 'block';
+
+        window.parent.postMessage({
+          type: 'flag_captured',
+          vulnType: 'XSS',
+          flag: flag
+        }, '*');
+      } else {
+        contentDiv.innerHTML = 'No results found for: <strong>' + query.replace(/</g, '&lt;') + '</strong>';
+        resultsDiv.style.display = 'block';
       }
     }
     document.getElementById('searchBtn').addEventListener('click', doSearch);
@@ -722,63 +804,59 @@ function generateFallbackHTML(scenario: any): string {
       if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
     });
 
-    // Profile (CSRF / IDOR)
+    // Profile - IDOR
     document.getElementById('loadProfileBtn').addEventListener('click', function() {
       const userId = document.getElementById('userId').value;
-      showResult('profile-result', '', true);
-      const vuln = vulns.find(v => v.vulnType === 'IDOR');
-      if (vuln) {
-        sendAttempt('IDOR', vuln.endpoint || '/api/users', vuln.parameter || 'id', userId);
+
+      // IDOR: accessing other user's data (not your own ID 1001)
+      const flag = checkExploit(userId, 'IDOR');
+      const isOtherUser = userId !== '1001' && userId !== '';
+
+      if (flag || isOtherUser) {
+        const idorConfig = vulnConfigs.find(v => v.vulnType === 'IDOR');
+        const actualFlag = idorConfig ? idorConfig.flag : 'FLAG{IDOR_default}';
+        showExploitSuccess('profile-result', actualFlag, 'IDOR',
+          'IDOR Vulnerability! Accessed user ' + userId + ' data:');
+      } else {
+        showNormalResponse('profile-result', 'Loaded your profile (User 1001)');
       }
     });
 
+    // Profile form - CSRF simulation
     document.getElementById('profileForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      showResult('profile-result', '', true);
-      const vuln = vulns.find(v => v.vulnType === 'CSRF');
-      if (vuln) {
-        sendAttempt('CSRF', vuln.endpoint || '/profile', vuln.parameter || 'email', email);
+      const csrfConfig = vulnConfigs.find(v => v.vulnType === 'CSRF');
+      if (csrfConfig) {
+        // CSRF: No token check - always succeeds and shows flag
+        showExploitSuccess('profile-result', csrfConfig.flag, 'CSRF',
+          'CSRF Attack Success! No CSRF token validation:');
+      } else {
+        showNormalResponse('profile-result', 'Profile updated.');
       }
     });
 
     // Downloads (Path Traversal)
+    function handleDownload(filename) {
+      const flag = checkExploit(filename, 'PATH_TRAVERSAL') || checkExploit(filename, 'Path Traversal');
+
+      if (flag) {
+        showExploitSuccess('download-result', flag, 'PATH_TRAVERSAL',
+          'Path Traversal Success! Sensitive file accessed:');
+      } else {
+        showNormalResponse('download-result', 'Downloading: ' + filename);
+      }
+    }
+
     document.querySelectorAll('.download-link').forEach(link => {
       link.addEventListener('click', function(e) {
         e.preventDefault();
-        const filename = this.dataset.file;
-        showResult('download-result', '', true);
-        const vuln = vulns.find(v => v.vulnType === 'PATH_TRAVERSAL' || v.vulnType === 'Path Traversal');
-        if (vuln) {
-          sendAttempt(vuln.vulnType, vuln.endpoint || '/download', vuln.parameter || 'file', filename);
-        }
+        handleDownload(this.dataset.file);
       });
     });
 
     document.getElementById('downloadCustomBtn').addEventListener('click', function() {
       const filename = document.getElementById('customFile').value;
-      showResult('download-result', '', true);
-      const vuln = vulns.find(v => v.vulnType === 'PATH_TRAVERSAL' || v.vulnType === 'Path Traversal');
-      if (vuln) {
-        sendAttempt(vuln.vulnType, vuln.endpoint || '/download', vuln.parameter || 'file', filename);
-      }
-    });
-
-    // Handle results from parent
-    window.addEventListener('message', function(event) {
-      if (event.data.type === 'submission_result') {
-        const resultDivs = document.querySelectorAll('.result');
-        resultDivs.forEach(div => {
-          if (event.data.success) {
-            div.innerHTML = '✅ <strong>Correct!</strong> ' + (event.data.message || '');
-            div.style.cssText = 'display:block;background:#d4edda;color:#155724;padding:15px;border-radius:6px;';
-          } else {
-            div.innerHTML = '❌ <strong>Incorrect</strong> ' + (event.data.message || '');
-            div.style.cssText = 'display:block;background:#f8d7da;color:#721c24;padding:15px;border-radius:6px;';
-          }
-          setTimeout(() => { div.style.display = 'none'; }, 3000);
-        });
-      }
+      handleDownload(filename);
     });
 
     // Prevent navigation except tabs

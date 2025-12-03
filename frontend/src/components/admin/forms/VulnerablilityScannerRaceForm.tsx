@@ -19,23 +19,7 @@ interface Vulnerability {
     ko: string;
     en: string;
   };
-  endpoint: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  parameter: string;
-  validation: {
-    expectedPayload?: string;
-    validationMethod?: 'contains' | 'exact' | 'regex' | 'stored' | 'unauthorized_access' | 'missing_token';
-    validationCriteria?: {
-      responseContains?: string;
-      statusCode?: number;
-      differentUserId?: boolean;
-      accessDenied?: boolean;
-      balanceRevealed?: boolean;
-      checkUrl?: string;
-      pattern?: string;
-      noCSRFToken?: boolean;
-    };
-  };
+  flag: string;  // FLAG{...} 형식
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   basePoints: number;
   category: string;
@@ -117,6 +101,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
   // 취약점 추가
   const addVulnerability = () => {
     const newVulnId = `vuln_${Date.now()}`;
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
     onChange({
       ...data,
       vulnerabilities: [
@@ -125,13 +110,7 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           vulnId: newVulnId,
           vulnType: 'SQLi',
           vulnName: { ko: '', en: '' },
-          endpoint: '/',
-          method: 'POST',
-          parameter: '',
-          validation: {
-            expectedPayload: '',
-            validationMethod: 'contains'
-          },
+          flag: `FLAG{SQLi_${randomSuffix}}`,
           difficulty: 'EASY',
           basePoints: 50,
           category: 'Authentication',
@@ -158,16 +137,6 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
       ...data,
       vulnerabilities: data.vulnerabilities.map((v, i) =>
         i === index ? { ...v, [field]: value } : v
-      )
-    });
-  };
-
-  // 취약점의 validation 필드 업데이트
-  const updateValidation = (index: number, field: string, value: any) => {
-    onChange({
-      ...data,
-      vulnerabilities: data.vulnerabilities.map((v, i) =>
-        i === index ? { ...v, validation: { ...v.validation, [field]: value } } : v
       )
     });
   };
@@ -542,72 +511,41 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
                 </div>
               </div>
 
-              <div className="input-row-3">
-                <div className="input-group">
-                  <label>엔드포인트 *</label>
+              {/* FLAG 설정 */}
+              <div className="input-row">
+                <div className="input-group" style={{ flex: 1 }}>
+                  <label>FLAG *</label>
                   <input
                     type="text"
-                    placeholder="/login"
-                    value={vuln.endpoint}
-                    onChange={e => updateVulnerability(idx, 'endpoint', e.target.value)}
+                    placeholder="FLAG{SQLi_abc123}"
+                    value={vuln.flag || ''}
+                    onChange={e => updateVulnerability(idx, 'flag', e.target.value)}
                     required
+                    style={{ fontFamily: 'monospace' }}
                   />
+                  <small style={{ color: '#888', fontSize: '11px' }}>
+                    exploit 성공 시 노출되는 고유 플래그 (예: FLAG&#123;SQLi_abc123&#125;)
+                  </small>
                 </div>
-
-                <div className="input-group">
-                  <label>HTTP 메서드 *</label>
-                  <select
-                    value={vuln.method}
-                    onChange={e => updateVulnerability(idx, 'method', e.target.value)}
-                    required
-                  >
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="DELETE">DELETE</option>
-                    <option value="PATCH">PATCH</option>
-                  </select>
-                </div>
-
-                <div className="input-group">
-                  <label>파라미터 *</label>
-                  <input
-                    type="text"
-                    placeholder="username"
-                    value={vuln.parameter}
-                    onChange={e => updateVulnerability(idx, 'parameter', e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="input-row-2">
-                <div className="input-group">
-                  <label>검증 방법 *</label>
-                  <select
-                    value={vuln.validation?.validationMethod || 'contains'}
-                    onChange={e => updateValidation(idx, 'validationMethod', e.target.value)}
-                    required
-                  >
-                    <option value="contains">Contains (포함 여부)</option>
-                    <option value="exact">Exact (정확히 일치)</option>
-                    <option value="regex">Regex (정규식)</option>
-                    <option value="stored">Stored (저장 확인)</option>
-                    <option value="unauthorized_access">Unauthorized Access</option>
-                    <option value="missing_token">Missing Token</option>
-                  </select>
-                </div>
-
-                <div className="input-group">
-                  <label>예상 페이로드 *</label>
-                  <input
-                    type="text"
-                    placeholder="' OR 1=1--"
-                    value={vuln.validation?.expectedPayload || ''}
-                    onChange={e => updateValidation(idx, 'expectedPayload', e.target.value)}
-                    required
-                  />
-                </div>
+                <button
+                  type="button"
+                  style={{
+                    marginTop: '24px',
+                    padding: '8px 12px',
+                    background: '#444',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                  onClick={() => {
+                    const randomSuffix = Math.random().toString(36).substring(2, 8);
+                    updateVulnerability(idx, 'flag', `FLAG{${vuln.vulnType}_${randomSuffix}}`);
+                  }}
+                >
+                  🎲 자동 생성
+                </button>
               </div>
             </div>
           </div>
