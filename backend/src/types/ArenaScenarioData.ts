@@ -3,16 +3,25 @@
 export interface TerminalHackingRaceData {
   stages: {
     stage: number;
-    prompt: string;
+    prompt: {
+      ko: string;
+      en: string;
+    };
     commands: {
       command: string;
       args?: string[];
-      response: string;
+      response: {
+        ko: string;
+        en: string;
+      };
       progressDelta?: number;
       advanceStage?: boolean;
       flagFound?: boolean;
     }[];
-    defaultResponse: string;
+    defaultResponse: {
+      ko: string;
+      en: string;
+    };
   }[];
   totalStages: number;
 }
@@ -43,6 +52,14 @@ export interface VulnerabilityScannerRaceData {
     basePoints: number;
     category: string;
     hintIds?: string[];
+
+    // 🆕 Exploit 설정 (시나리오별 커스텀 가능)
+    exploitPatterns?: string[];          // exploit 감지 패턴 (예: ["' OR", "1=1", "admin'--"])
+    targetField?: string;                // exploit 대상 필드 (예: "username", "search", "file")
+    location?: string | {                // 취약점 위치 설명 (REAL 모드에서 유저 안내용)
+      ko: string;
+      en: string;
+    };
   }[];
 
   hints?: {
@@ -77,99 +94,129 @@ export type VulnType =
 
 export interface ForensicsRushData {
   scenario: {
-    title: string;
-    description: string;
+    title: string | {              // 시나리오 제목 (다국어 지원)
+      ko: string;
+      en: string;
+    };
+    description: string | {        // 시나리오 설명 (다국어 지원)
+      ko: string;
+      en: string;
+    };
     incidentType: 'ransomware' | 'breach' | 'ddos' | 'insider' | 'phishing';
     date: string;
-    context: string;
+    context: string | {            // 배경 설명 (다국어 지원)
+      ko: string;
+      en: string;
+    };
   };
-  
+
   evidenceFiles: {
     id: string;
     name: string;
     type: 'log' | 'pcap' | 'memory' | 'filesystem' | 'image';
     path: string;
-    description: string;
-    content?: string; 
+    description: string | {        // 증거 파일 설명 (다국어 지원)
+      ko: string;
+      en: string;
+    };
+    content?: string;
   }[];
-  
-  availableTools: string[];  
-  
+
+  availableTools: string[];
+
   questions: {
     id: string;
-    question: string;
+    question: string | {           // 질문 (다국어 지원)
+      ko: string;
+      en: string;
+    };
     type: 'text' | 'multiple-choice' | 'ip-address' | 'timestamp';
-    answer: string | string[]; 
+    answer: string | string[];
     points: number;
-    hints?: string[];
-    relatedFiles: string[];  
+    hints?: string[] | {           // 힌트 (다국어 지원)
+      ko: string[];
+      en: string[];
+    };
+    relatedFiles: string[];
     difficulty: 'easy' | 'medium' | 'hard';
   }[];
-  
+
   scoring: {
-    wrongAnswerPenalty: number;  
-    perfectScoreBonus: number;   
-    speedBonus: boolean;         
+    wrongAnswerPenalty: number;
+    perfectScoreBonus: number;
+    speedBonus: boolean;
   };
-  
+
   totalQuestions: number;
 }
 
 export interface SocialEngineeringData {
-  scenarioType: 'IT_HELPDESK' | 'FINANCE_SPEARPHISHING' | 'CEO_IMPERSONATION';
-  
+  scenarioType: string;            // 시나리오 타입 (자유 입력 또는 프리셋)
+
   objective: {
-    title: string;
-    description: string;
-    targetInformation: string[]; 
+    title: string | {              // 목표 제목 (다국어 지원)
+      ko: string;
+      en: string;
+    };
+    description: string | {        // 목표 설명 (다국어 지원)
+      ko: string;
+      en: string;
+    };
+    targetInformation: string[];
   };
-  
+
   aiTarget: {
     name: string;
     role: string;
     department: string;
     personality: {
-      helpfulness: number;     
-      securityAwareness: number;  
-      authorityRespect: number;   
-      skepticism: number;         
+      helpfulness: number;
+      securityAwareness: number;
+      authorityRespect: number;
+      skepticism: number;
     };
-    suspicionThreshold: number;  
-    knownInfo: string[];  
-    secretInfo: string[];  
+    suspicionThreshold: number;
+    knownInfo: string[];
+    secretInfo: string[];
   };
-  
+
   availableTechniques: {
     id: string;
-    name: string;
+    name: string | {               // 기법 이름 (다국어 지원)
+      ko: string;
+      en: string;
+    };
     type: 'PRETEXTING' | 'AUTHORITY' | 'URGENCY' | 'RECIPROCITY' | 'LIKING';
-    description: string;
-    suspicionImpact: number;  
-    effectiveness: number;     
+    description: string | {        // 기법 설명 (다국어 지원)
+      ko: string;
+      en: string;
+    };
+    suspicionImpact: number;
+    effectiveness: number;
   }[];
-  
+
   conversationRules: {
     maxTurns: number;
-    turnTimeLimit?: number;  
-    warningThresholds: number[];  
+    turnTimeLimit?: number;
+    warningThresholds: number[];
   };
-  
+
   scoring: {
-    objectiveComplete: number;     
+    objectiveComplete: number;
     turnEfficiency: {
-      maxBonus: number;            
-      optimalTurns: number;        
+      maxBonus: number;
+      optimalTurns: number;
     };
     suspicionManagement: {
-      bonus: number;               
-      threshold: number;           
+      bonus: number;
+      threshold: number;
     };
     naturalnessBonus: {
-      maxPoints: number;        
+      maxPoints: number;
       evaluationCriteria: string[];
     };
   };
-  
+
   sampleDialogue?: {
     playerMessage: string;
     aiResponse: string;

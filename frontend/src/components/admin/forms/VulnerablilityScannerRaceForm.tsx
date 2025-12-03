@@ -22,6 +22,13 @@ interface Vulnerability {
   basePoints: number;
   category: string;
   hintIds?: string[];
+  // 🆕 Exploit 설정 (시나리오별 커스텀 가능)
+  exploitPatterns?: string[];  // exploit 감지 패턴 (예: ["' OR", "1=1", "admin'--"])
+  targetField?: string;        // exploit 대상 필드 (예: "username", "search", "file")
+  location?: string | {        // 취약점 위치 설명 (REAL 모드에서 유저 안내용)
+    ko: string;
+    en: string;
+  };
 }
 
 interface VulnerabilityScannerRaceData {
@@ -563,6 +570,71 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
                 >
                   🎲 자동 생성
                 </button>
+              </div>
+
+              {/* Exploit 설정 (선택사항) */}
+              <div className="input-group" style={{ border: '1px solid #555', padding: '10px', borderRadius: '6px', marginTop: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px', display: 'block', color: '#ffc107' }}>
+                  ⚙️ Exploit 설정 (선택사항 - 미입력 시 기본값 사용)
+                </label>
+
+                {/* Exploit Patterns */}
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '11px', opacity: 0.8 }}>Exploit 패턴 (줄바꿈으로 구분)</label>
+                  <textarea
+                    rows={3}
+                    placeholder={"' OR\n1=1\nadmin'--\n(미입력 시 취약점 타입에 맞는 기본 패턴 사용)"}
+                    value={(vuln.exploitPatterns || []).join('\n')}
+                    onChange={e => updateVulnerability(idx, 'exploitPatterns',
+                      e.target.value.split('\n').filter(p => p.trim() !== '')
+                    )}
+                    style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                  />
+                </div>
+
+                {/* Target Field */}
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '11px', opacity: 0.8 }}>대상 입력 필드</label>
+                  <input
+                    type="text"
+                    placeholder="예: username, search, file (미입력 시 자동 추론)"
+                    value={vuln.targetField || ''}
+                    onChange={e => updateVulnerability(idx, 'targetField', e.target.value)}
+                  />
+                </div>
+
+                {/* Location (REAL 모드용) */}
+                {data.mode === 'REAL' && (
+                  <div style={{ marginTop: '10px' }}>
+                    <label style={{ fontSize: '11px', opacity: 0.8 }}>취약점 위치 설명 (REAL 모드 - 유저 안내용)</label>
+                    <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr', marginTop: '4px' }}>
+                      <div style={{ display: 'grid', gap: '2px' }}>
+                        <label style={{ fontSize: '10px', opacity: 0.6 }}>한글</label>
+                        <input
+                          type="text"
+                          placeholder="로그인 페이지의 사용자명 입력란"
+                          value={typeof vuln.location === 'string' ? vuln.location : (vuln.location?.ko || '')}
+                          onChange={e => updateVulnerability(idx, 'location', {
+                            ko: e.target.value,
+                            en: typeof vuln.location === 'object' ? (vuln.location?.en || '') : ''
+                          })}
+                        />
+                      </div>
+                      <div style={{ display: 'grid', gap: '2px' }}>
+                        <label style={{ fontSize: '10px', opacity: 0.6 }}>English</label>
+                        <input
+                          type="text"
+                          placeholder="Username field on login page"
+                          value={typeof vuln.location === 'string' ? vuln.location : (vuln.location?.en || '')}
+                          onChange={e => updateVulnerability(idx, 'location', {
+                            ko: typeof vuln.location === 'object' ? (vuln.location?.ko || '') : '',
+                            en: e.target.value
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

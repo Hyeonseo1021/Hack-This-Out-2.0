@@ -2,31 +2,41 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-// 취약점 타입별 exploit 패턴 정의
-function getExploitPatterns(vulnType: string): string[] {
-  const patterns: Record<string, string[]> = {
-    'SQLi': ["' OR", "1=1", "' --", "UNION SELECT", "' OR '1'='1", "OR 1=1--", "admin'--"],
-    'SQL Injection': ["' OR", "1=1", "' --", "UNION SELECT", "' OR '1'='1", "OR 1=1--", "admin'--"],
-    'XSS': ["<script>", "javascript:", "onerror=", "onload=", "<img src=x", "alert(", "<svg onload"],
-    'Cross-Site Scripting (XSS)': ["<script>", "javascript:", "onerror=", "onload=", "<img src=x", "alert("],
-    'CSRF': ["csrf_token", "missing token", "no referrer check"],
-    'IDOR': ["user_id=", "id=2", "id=1", "account=", "../", "other user"],
-    'Path Traversal': ["../", "..\\", "/etc/passwd", "....//", "%2e%2e%2f"],
-    'PATH_TRAVERSAL': ["../", "..\\", "/etc/passwd", "....//", "%2e%2e%2f"],
-    'Command Injection': ["; ls", "| cat", "&& whoami", "; id", "$(", "`"],
-    'COMMAND_INJECTION': ["; ls", "| cat", "&& whoami", "; id", "$(", "`"],
-    'Auth Bypass': ["admin", "bypass", "' OR '1'='1", "cookie manipulation"],
-    'AUTH_BYPASS': ["admin", "bypass", "' OR '1'='1", "cookie manipulation"],
-    'Info Disclosure': ["debug=true", "verbose", "stack trace", "error"],
-    'INFO_DISCLOSURE': ["debug=true", "verbose", "stack trace", "error"],
-    'File Upload': [".php", ".jsp", ".exe", "image/php", "shell"],
-    'FILE_UPLOAD': [".php", ".jsp", ".exe", "image/php", "shell"],
-    'XXE': ["<!ENTITY", "file://", "SYSTEM", "<!DOCTYPE"],
-    'SSRF': ["localhost", "127.0.0.1", "internal", "file://", "http://169.254"],
-    'Deserialization': ["O:", "rO0", "serialize", "pickle"],
-    'DESERIALIZATION': ["O:", "rO0", "serialize", "pickle"],
-  };
-  return patterns[vulnType] || ["exploit", "attack", "hack"];
+// 취약점 타입별 기본 exploit 패턴 (시나리오에서 커스텀 패턴이 없을 때 사용)
+const DEFAULT_EXPLOIT_PATTERNS: Record<string, string[]> = {
+  'SQLi': ["' OR", "1=1", "' --", "UNION SELECT", "' OR '1'='1", "OR 1=1--", "admin'--"],
+  'SQL Injection': ["' OR", "1=1", "' --", "UNION SELECT", "' OR '1'='1", "OR 1=1--", "admin'--"],
+  'XSS': ["<script>", "javascript:", "onerror=", "onload=", "<img src=x", "alert(", "<svg onload"],
+  'Cross-Site Scripting (XSS)': ["<script>", "javascript:", "onerror=", "onload=", "<img src=x", "alert("],
+  'CSRF': ["csrf_token", "missing token", "no referrer check"],
+  'IDOR': ["user_id=", "id=2", "id=1", "account=", "../", "other user"],
+  'Path Traversal': ["../", "..\\", "/etc/passwd", "....//", "%2e%2e%2f"],
+  'PATH_TRAVERSAL': ["../", "..\\", "/etc/passwd", "....//", "%2e%2e%2f"],
+  'Command Injection': ["; ls", "| cat", "&& whoami", "; id", "$(", "`"],
+  'COMMAND_INJECTION': ["; ls", "| cat", "&& whoami", "; id", "$(", "`"],
+  'Auth Bypass': ["admin", "bypass", "' OR '1'='1", "cookie manipulation"],
+  'AUTH_BYPASS': ["admin", "bypass", "' OR '1'='1", "cookie manipulation"],
+  'Info Disclosure': ["debug=true", "verbose", "stack trace", "error"],
+  'INFO_DISCLOSURE': ["debug=true", "verbose", "stack trace", "error"],
+  'File Upload': [".php", ".jsp", ".exe", "image/php", "shell"],
+  'FILE_UPLOAD': [".php", ".jsp", ".exe", "image/php", "shell"],
+  'XXE': ["<!ENTITY", "file://", "SYSTEM", "<!DOCTYPE"],
+  'SSRF': ["localhost", "127.0.0.1", "internal", "file://", "http://169.254"],
+  'Deserialization': ["O:", "rO0", "serialize", "pickle"],
+  'DESERIALIZATION': ["O:", "rO0", "serialize", "pickle"],
+};
+
+/**
+ * exploit 패턴 가져오기
+ * 시나리오에서 커스텀 패턴이 있으면 사용, 없으면 기본값 사용
+ */
+function getExploitPatterns(vulnType: string, customPatterns?: string[]): string[] {
+  // 시나리오에 커스텀 패턴이 있으면 우선 사용
+  if (customPatterns && customPatterns.length > 0) {
+    return customPatterns;
+  }
+  // 없으면 기본 패턴 사용
+  return DEFAULT_EXPLOIT_PATTERNS[vulnType] || ["exploit", "attack", "hack"];
 }
 
 export async function generateVulnerableHTML(scenario: any): Promise<string> {
@@ -76,7 +86,9 @@ export async function generateVulnerableHTML(scenario: any): Promise<string> {
         const vulnName = typeof v.vulnName === 'object' ? v.vulnName.en : (v.vulnName || v.vulnType);
         const requiredUI = vulnTypeToUI[v.vulnType] || 'Appropriate input field';
         const flag = v.flag || `FLAG{${v.vulnType}_${v.vulnId}}`;
-        const exploitPatterns = getExploitPatterns(v.vulnType);
+        // 🆕 시나리오에서 커스텀 패턴이 있으면 사용, 없으면 기본값
+        const exploitPatterns = getExploitPatterns(v.vulnType, v.exploitPatterns);
+        const targetField = v.targetField || 'appropriate input field';
 
         return `
 === VULNERABILITY #${index + 1}: ${v.vulnType} ===
@@ -86,6 +98,7 @@ difficulty: ${v.difficulty || 'MEDIUM'}
 FLAG: "${flag}"
 
 REQUIRED UI: ${requiredUI}
+TARGET INPUT FIELD: ${targetField}
 
 >>> EXPLOIT DETECTION PATTERNS (check user input for these): <<<
 ${exploitPatterns.map(p => `- "${p}"`).join('\n')}
@@ -398,12 +411,13 @@ function generateFallbackHTML(scenario: any): string {
   const targetNameRaw = scenario.data.targetName || 'Practice Web App';
   const targetName = typeof targetNameRaw === 'object' ? targetNameRaw.en : targetNameRaw;
 
-  // 취약점별 FLAG 및 패턴 생성
+  // 취약점별 FLAG 및 패턴 생성 (시나리오에 커스텀 패턴이 있으면 사용)
   const vulnConfigs = vulns.map((v: any) => ({
     vulnId: v.vulnId,
     vulnType: v.vulnType,
     flag: v.flag || `FLAG{${v.vulnType}_${v.vulnId}}`,
-    patterns: getExploitPatterns(v.vulnType)
+    patterns: getExploitPatterns(v.vulnType, v.exploitPatterns),
+    targetField: v.targetField || null
   }));
 
   return `<!DOCTYPE html>
