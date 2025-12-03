@@ -21,6 +21,7 @@ interface TerminalRaceProps {
     description: { ko: string; en: string } | string;
     difficulty: string;
   } | null;
+  onComplete?: () => void; // 게임 완료 시 콜백
 }
 
 interface TerminalResultData {
@@ -61,7 +62,8 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
   arena,
   socket,
   currentUserId,
-  scenario
+  scenario,
+  onComplete
 }) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation('arena');
@@ -274,6 +276,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
       setIsCompleted(true);
       isCompletedRef.current = true;
+      onComplete?.(); // ✅ 부모 컴포넌트에 완료 알림
       if (data.totalScore !== undefined) setCurrentScore(data.totalScore);
     }
 

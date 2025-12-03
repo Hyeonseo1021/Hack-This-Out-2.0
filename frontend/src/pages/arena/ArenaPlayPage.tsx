@@ -58,6 +58,7 @@ const ArenaPlayPage: React.FC = () => {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [loadingInventory, setLoadingInventory] = useState(false);
   const [usingItemId, setUsingItemId] = useState<string | null>(null);
+  const [isGameCompleted, setIsGameCompleted] = useState(false); // ✅ 게임 완료 상태
 
   // ✅ Grace period 상태 (전역적으로 관리)
   const [gracePeriodActive, setGracePeriodActive] = useState(false);
@@ -530,18 +531,24 @@ const ArenaPlayPage: React.FC = () => {
       participants: participants
     };
 
+    // ✅ 게임 완료 콜백 - 아이템 사용 비활성화
+    const handleGameComplete = () => {
+      console.log('🎉 [ArenaPlayPage] Game completed - disabling items');
+      setIsGameCompleted(true);
+    };
+
     switch (mode) {
       case 'TERMINAL_HACKING_RACE':
         console.log('🎮 Loading Terminal Race component...');
-        return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} scenario={scenario} />;
+        return <TerminalRace arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} scenario={scenario} onComplete={handleGameComplete} />;
 
       case 'VULNERABILITY_SCANNER_RACE':
         console.log('🔍 Loading Vulnerability Scanner Race component...');
-        return <VulnerabilityScannerRace arenaId={arenaId!} userId={currentUserId!} />;
+        return <VulnerabilityScannerRace arenaId={arenaId!} userId={currentUserId!} onComplete={handleGameComplete} />;
 
       case 'FORENSICS_RUSH':
         console.log('🔎 Loading Forensics Rush component...');
-        return <ForensicsRush arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} />;
+        return <ForensicsRush arena={currentArenaProps} socket={socket} currentUserId={currentUserId} participants={participants} onComplete={handleGameComplete} />;
 
       case 'SOCIAL_ENGINEERING':
         console.log('🎭 Social Engineering - Coming Soon');
@@ -639,6 +646,7 @@ const ArenaPlayPage: React.FC = () => {
             arenaId={arenaId}
             userId={currentUserId || undefined}
             gameMode={mode || undefined}
+            isGameCompleted={isGameCompleted}
           />
         )}
 

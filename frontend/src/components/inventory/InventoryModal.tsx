@@ -30,9 +30,10 @@ interface InventoryModalProps {
   arenaId?: string; // Arena 전용: 아레나 ID
   userId?: string; // Arena 전용: 유저 ID
   gameMode?: string; // 현재 게임 모드 (TERMINAL_HACKING_RACE, VULNERABILITY_SCANNER_RACE 등)
+  isGameCompleted?: boolean; // 게임 완료 여부 (완료 시 아이템 사용 불가)
 }
 
-const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = false, socket, arenaId, userId, gameMode }) => {
+const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = false, socket, arenaId, userId, gameMode, isGameCompleted = false }) => {
   const [items, setItems] = useState<InventoryItemData[]>([]);
   const [loading, setLoading] = useState(true);
   const [using, setUsing] = useState<string | null>(null);
@@ -214,19 +215,20 @@ const InventoryModal: React.FC<InventoryModalProps> = ({ onClose, isInGame = fal
                     <button
                       className="use-btn"
                       onClick={() => handleUseItem(invItem._id, invItem)}
-                      disabled={using === invItem._id}
+                      disabled={using === invItem._id || isGameCompleted}
                       style={{
                         marginTop: 8,
                         padding: '6px 12px',
-                        background: '#00f5ff',
+                        background: isGameCompleted ? '#666' : '#00f5ff',
                         border: 'none',
                         borderRadius: 4,
-                        color: '#000',
+                        color: isGameCompleted ? '#999' : '#000',
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: isGameCompleted ? 'not-allowed' : 'pointer',
+                        opacity: isGameCompleted ? 0.6 : 1,
                       }}
                     >
-                      {using === invItem._id ? '사용 중...' : '사용하기'}
+                      {using === invItem._id ? '사용 중...' : isGameCompleted ? '완료됨' : '사용하기'}
                     </button>
                   )}
                 </div>
