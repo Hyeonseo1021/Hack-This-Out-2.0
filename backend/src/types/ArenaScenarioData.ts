@@ -18,36 +18,18 @@ export interface TerminalHackingRaceData {
 }
 
 export interface VulnerabilityScannerRaceData {
-  targetUrl: string;                  
-  targetName: string;                  
-  targetDescription: string;        
-  
-  features: string[];                  
-  
+  targetUrl: string;
+  targetName: string;
+  targetDescription: string;
+
+  features: string[];
+
   vulnerabilities: {
-    vulnId: string;                   
-    vulnType: VulnType;               
-    vulnName: string;                  
-    endpoint: string;                  
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-    parameter: string;                
-    
-    validation: {
-      expectedPayload?: string;        
-      validationUrl?: string;         
-      validationMethod?: 'contains' | 'exact' | 'regex' | 'stored' | 'unauthorized_access' | 'missing_token';
-      validationCriteria?: {
-        responseContains?: string;
-        statusCode?: number;
-        differentUserId?: boolean;
-        accessDenied?: boolean;
-        balanceRevealed?: boolean;
-        checkUrl?: string;
-        pattern?: string;
-        noCSRFToken?: boolean;
-      };
-    };
-    
+    vulnId: string;
+    vulnType: VulnType;
+    vulnName: string;
+    flag: string;                     // Flag string to find (e.g., "FLAG{sqli_success}")
+
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     basePoints: number;
     category: string;
@@ -65,7 +47,7 @@ export interface VulnerabilityScannerRaceData {
     invalidSubmissionPenalty: number;
   };
 
-  totalVulnerabilities: number;         
+  totalVulnerabilities: number;
 }
 
 // 취약점 타입 정의

@@ -22,28 +22,27 @@ const processingSubmissions = new Map<string, boolean>();
 export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Socket) => {
 
   /**
-   * 취약점 제출
+   * Flag 제출 (HackTheBox/TryHackMe 방식)
    */
   socket.on('scannerRace:submit', async ({
-    vulnType,
-    endpoint,
-    parameter,
-    payload
+    flag
   }: {
-    vulnType: string;
-    endpoint: string;
-    parameter: string;
-    payload: string;
+    flag: string;
   }) => {
 
     const arenaId = (socket as any).arenaId;
     const userId = (socket as any).userId;
 
-    console.log(`\n🔍 [scannerRace:submit] Arena: ${arenaId}, User: ${userId}`);
-    console.log(`   VulnType: ${vulnType}, Endpoint: ${endpoint}`);
+    console.log(`\n🚩 [scannerRace:submit] Arena: ${arenaId}, User: ${userId}`);
+    console.log(`   Flag: ${flag}`);
 
     if (!arenaId || !userId) {
       socket.emit('scannerRace:error', { message: 'Invalid request' });
+      return;
+    }
+
+    if (!flag || !flag.trim()) {
+      socket.emit('scannerRace:error', { message: 'Flag is required' });
       return;
     }
 
@@ -58,14 +57,11 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
     processingSubmissions.set(userKey, true);
 
     try {
-      // 1. 제출 처리
+      // 1. Flag 제출 처리
       const result = await processVulnerabilitySubmission({
         arenaId,
         userId,
-        vulnType,
-        endpoint,
-        parameter,
-        payload
+        flag: flag.trim()
       });
 
       console.log('📤 [scannerRace:submit] Result:', result);

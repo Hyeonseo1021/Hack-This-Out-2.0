@@ -43,40 +43,32 @@ export async function generateVulnerableHTML(scenario: any): Promise<string> {
       'Insecure Deserialization': 'Cookie-based session or data import functionality',
     };
 
-    // 취약점별 상세 정보 생성 (AI가 정확히 사용해야 함)
+    // 취약점별 상세 정보 생성 (Flag 기반)
     const vulnsDescription = scenario.data.vulnerabilities
       .map((v: any, index: number) => {
         const vulnName = typeof v.vulnName === 'object' ? v.vulnName.en : (v.vulnName || v.vulnType);
         const requiredUI = vulnTypeToUI[v.vulnType] || 'Appropriate input field';
-        const endpoint = v.endpoint || '/';
-        const parameter = v.parameter || 'input';
-        const expectedPayload = v.validation?.expectedPayload || '';
+        const flag = v.flag || `FLAG{${v.vulnId}}`;
 
         return `
 === VULNERABILITY #${index + 1}: ${v.vulnType} ===
 vulnId: "${v.vulnId}"
 vulnName: "${vulnName}"
 difficulty: ${v.difficulty || 'MEDIUM'}
-
->>> EXACT VALUES YOU MUST USE (COPY-PASTE THESE): <<<
-endpoint: "${endpoint}"
-parameter: "${parameter}"
-expectedPayload: "${expectedPayload}"
+FLAG: "${flag}"
 
 REQUIRED UI: ${requiredUI}
-INPUT NAME: The input field MUST have name="${parameter}" and id="${parameter}"
 
->>> MANDATORY postMessage CODE FOR THIS VULNERABILITY: <<<
-\`\`\`javascript
-// When user submits form for ${v.vulnType}:
-window.parent.postMessage({
-  type: 'vulnerability_attempt',
-  vulnType: '${v.vulnType}',
-  endpoint: '${endpoint}',
-  parameter: '${parameter}',
-  payload: document.getElementById('${parameter}').value
-}, '*');
-\`\`\``;
+>>> HOW THIS VULNERABILITY SHOULD WORK: <<<
+1. Create a UI element where user can attempt to exploit this vulnerability
+2. When the exploit is successful (e.g., SQL injection bypasses login, XSS executes),
+   DISPLAY THE FLAG "${flag}" prominently on the page
+3. User will copy this flag and submit it manually
+
+>>> EXAMPLE BEHAVIOR: <<<
+- SQLi: If user enters "' OR 1=1--" in username, show "🚩 FLAG: ${flag}"
+- XSS: If user enters "<script>alert(1)</script>", show the flag in an alert or on page
+- IDOR: If user changes user ID to access other's data, reveal the flag`;
       })
       .join('\n\n');
 
@@ -142,11 +134,10 @@ window.parent.postMessage({
     const tabsDescription = featuresList.map((f: string, i: number) => `Tab ${i + 1}: ${f}`).join('\n');
 
     const prompt = `
-You are a senior full-stack developer at a Fortune 500 company creating a PRODUCTION-QUALITY web application for cybersecurity training.
+You are creating a VULNERABLE web application for a CTF (Capture The Flag) security training platform.
 
 ##############################################
-#  CRITICAL: READ EVERY WORD CAREFULLY       #
-#  YOUR OUTPUT WILL BE VALIDATED STRICTLY    #
+#  FLAG-BASED VULNERABILITY CHALLENGE        #
 ##############################################
 
 **Application Info:**
@@ -156,28 +147,107 @@ You are a senior full-stack developer at a Fortune 500 company creating a PRODUC
 - Description: ${targetDescription}
 
 ##############################################
-#  VULNERABILITIES - USE EXACT VALUES BELOW  #
+#  VULNERABILITIES & FLAGS                   #
 ##############################################
 
 ${vulnsDescription}
 
 ##############################################
-#  ABSOLUTE REQUIREMENTS (FAILURE = REJECTED) #
+#  CORE MECHANIC: SHOW FLAG ON EXPLOIT       #
 ##############################################
 
-**RULE 1: EXACT ENDPOINT, PARAMETER, AND PAYLOAD**
-You MUST use the EXACT endpoint and parameter values shown above.
-DO NOT invent your own values. DO NOT change them.
-The backend validates these EXACT strings. Different values = FAILURE.
+**HOW IT WORKS (LIKE HACKTHEBOX/TRYHACKME):**
+1. User attempts to exploit vulnerabilities in your web app
+2. When exploit SUCCEEDS, the FLAG is revealed on screen
+3. User copies the flag and submits it manually in the parent app
 
-**RULE 2: INPUT FIELD IDs MUST MATCH PARAMETERS**
-For each vulnerability, the input field id/name MUST be the EXACT parameter name.
-Example: If parameter is "keyword", use: <input id="keyword" name="keyword">
-NOT "query", NOT "search", NOT "q" - use "keyword" EXACTLY.
+**IMPORTANT: You must implement INTENTIONALLY VULNERABLE code that:**
+- Actually checks for common exploit patterns
+- Shows the FLAG when the exploit works
+- Does NOT send postMessage - user submits flag manually
 
-**RULE 3: postMessage MUST USE EXACT VALUES**
-Every postMessage call MUST use the EXACT endpoint and parameter from the vulnerability definition above.
-Copy-paste the postMessage code blocks provided above - do not modify them.
+##############################################
+#  VULNERABILITY IMPLEMENTATION EXAMPLES     #
+##############################################
+
+**SQLi Example:**
+\`\`\`javascript
+loginForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+
+  // INTENTIONALLY VULNERABLE: Check for SQL injection patterns
+  if (username.includes("'") && (username.includes("OR") || username.includes("or") || username.includes("=") || username.includes("--"))) {
+    // SQL Injection successful! Show the flag
+    resultDiv.innerHTML = '<div class="success">Login Successful!</div>' +
+      '<div class="flag-reveal">🚩 FLAG: FLAG{sqli_example}</div>';
+  } else if (username === 'admin' && password === 'password123') {
+    resultDiv.innerHTML = '<div class="success">Welcome, admin!</div>';
+  } else {
+    resultDiv.innerHTML = '<div class="error">Invalid credentials</div>';
+  }
+});
+\`\`\`
+
+**XSS Example:**
+\`\`\`javascript
+searchForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const query = document.getElementById('search').value;
+
+  // INTENTIONALLY VULNERABLE: Directly inject user input
+  resultsDiv.innerHTML = '<p>Search results for: ' + query + '</p>';
+
+  // If script tag is detected, also show the flag
+  if (query.toLowerCase().includes('<script>') || query.includes('onerror') || query.includes('onload')) {
+    setTimeout(() => {
+      alert('🚩 FLAG: FLAG{xss_example}');
+    }, 100);
+  }
+});
+\`\`\`
+
+**IDOR Example:**
+\`\`\`javascript
+// URL has ?userId=1, show different data for different IDs
+const urlParams = new URLSearchParams(window.location.search);
+const userId = urlParams.get('userId') || '1';
+
+if (userId !== '1') {
+  // Accessing another user's data - IDOR vulnerability!
+  document.getElementById('profile').innerHTML =
+    '<h2>Admin User Profile</h2>' +
+    '<p>Secret Data: Confidential Information</p>' +
+    '<div class="flag-reveal">🚩 FLAG: FLAG{idor_example}</div>';
+}
+\`\`\`
+
+##############################################
+#  FLAG DISPLAY STYLING                      #
+##############################################
+
+\`\`\`css
+.flag-reveal {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin: 20px 0;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+  animation: flagPulse 1s ease-in-out;
+}
+
+@keyframes flagPulse {
+  0% { transform: scale(0.9); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+\`\`\`
 
 ##############################################
 #  MULTI-PAGE TAB-BASED SPA STRUCTURE        #
@@ -187,97 +257,23 @@ Create a Single Page Application with navigation tabs:
 
 Required tabs: ${tabsDescription}
 
-HTML Structure:
-\`\`\`html
-<nav class="main-nav">
-  <a href="#" class="nav-tab active" data-tab="home">Home</a>
-  <a href="#" class="nav-tab" data-tab="search">Search</a>
-  <!-- more tabs -->
-</nav>
-
-<section id="home-section" class="tab-content active">...</section>
-<section id="search-section" class="tab-content">...</section>
-\`\`\`
-
-Tab switching JS:
-\`\`\`javascript
-document.querySelectorAll('.nav-tab').forEach(tab => {
-  tab.addEventListener('click', (e) => {
-    e.preventDefault();
-    const targetTab = tab.dataset.tab;
-    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(targetTab + '-section').classList.add('active');
-    tab.classList.add('active');
-  });
-});
-\`\`\`
-
 ##############################################
-#  DESIGN - MAKE IT LOOK LIKE A REAL WEBSITE #
+#  DESIGN REQUIREMENTS                       #
 ##############################################
 
-**Visual Requirements:**
-1. Professional gradient header with logo, nav tabs, user dropdown
-2. Sidebar navigation (optional) with icons
-3. Card-based layouts with shadows and rounded corners
-4. Proper typography hierarchy (h1, h2, h3, p with different sizes)
-5. Loading states and smooth transitions (0.3s ease)
-6. Hover effects on all interactive elements
-7. Color scheme consistent with ${theme} theme
-8. Footer with links and copyright
-
-**CSS Requirements:**
-- Use CSS custom properties (--primary-color, --secondary-color, etc.)
-- Box shadows: box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-- Border radius: 8px-12px for cards
-- Transitions: transition: all 0.3s ease;
-- Responsive padding and margins
-
-**Content Requirements:**
-- Each section should have realistic placeholder content
-- Use realistic usernames, product names, file names
-- Include breadcrumbs, pagination where appropriate
-- Add realistic data tables, lists, cards
-
-**Minimum Code Length:** 500+ lines
-
-##############################################
-#  FORM SUBMISSION BEHAVIOR                  #
-##############################################
-
-ALL form submissions must:
-1. Prevent default form behavior (e.preventDefault())
-2. Show loading state: "Checking..."
-3. Send postMessage with EXACT values from vulnerability definition
-4. Do NOT validate input - backend handles validation
-
-Example submission handler:
-\`\`\`javascript
-form.addEventListener('submit', function(e) {
-  e.preventDefault();
-  resultDiv.innerHTML = 'Checking...';
-  resultDiv.style.display = 'block';
-
-  // USE EXACT VALUES FROM VULNERABILITY DEFINITION
-  window.parent.postMessage({
-    type: 'vulnerability_attempt',
-    vulnType: 'SQLi',        // Exact vulnType
-    endpoint: '/api/login',   // Exact endpoint from definition
-    parameter: 'username',    // Exact parameter from definition
-    payload: document.getElementById('username').value
-  }, '*');
-});
-\`\`\`
+1. Professional gradient header with logo and nav tabs
+2. Card-based layouts with shadows and rounded corners
+3. Color scheme consistent with ${theme} theme
+4. Make it look like a REAL website, not a hacking challenge
+5. Hide the vulnerable nature - make it look normal
 
 ##############################################
 #  FORBIDDEN                                  #
 ##############################################
 
-- DO NOT show "SYSTEM COMPROMISED" or hack animations
-- DO NOT validate payloads in JavaScript
-- DO NOT invent your own endpoint/parameter values
-- DO NOT use different parameter names than specified
+- DO NOT send postMessage for flag submission
+- DO NOT show "SYSTEM COMPROMISED" or obvious hack indicators initially
+- DO NOT make the flags visible without successful exploit
 
 ##############################################
 #  OUTPUT FORMAT                              #
@@ -287,7 +283,6 @@ form.addEventListener('submit', function(e) {
 - Single file with inline <style> and <script>
 - NO markdown code blocks
 - NO explanations before or after
-- NO comments like "Here is the HTML..."
 
 Generate the complete HTML now:
 `;
