@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from '../../assets/scss/etc/MainPage.module.scss';
 
 import LoginForm from '../../components/login/LoginForm';
+import RegisterForm from '../../components/login/RegisterForm';
 import Modal from '../../components/modal/Modal';
 import Loading from '../../components/public/Loading';
 
@@ -25,6 +26,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ intervalMs = 40 }) => {
   const { isLoggedIn, isLoading } = useContext(AuthUserContext)!;
 
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const noiseFrames = useRef([screennoise, screennoise1, screennoise2, screennoise3, screennoise4]);
@@ -110,7 +112,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ intervalMs = 40 }) => {
 
       {/* 로그인 모달 */}
       <Modal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)}>
-        <LoginForm openRegisterModal={() => {}} />
+        <LoginForm openRegisterModal={() => {
+          setShowLoginModal(false);
+          setShowRegisterModal(true);
+        }} />
+      </Modal>
+
+      {/* 회원가입 모달 */}
+      <Modal isOpen={showRegisterModal} onClose={() => setShowRegisterModal(false)}>
+        <RegisterForm closeRegisterModal={() => setShowRegisterModal(false)} />
       </Modal>
     </>
   );

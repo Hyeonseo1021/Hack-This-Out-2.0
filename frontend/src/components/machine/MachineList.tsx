@@ -246,6 +246,7 @@ const MachineList: React.FC = () => {
                         <div className={styles.expand_reviews}>
                           {machine.reviews?.map((r: any, i) => (
                             <p key={i}>{typeof r === 'string' ? r : r.content}</p>
+
                           ))}
                         </div>
                       </div>

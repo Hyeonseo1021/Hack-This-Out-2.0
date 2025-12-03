@@ -68,7 +68,7 @@ export function calculateArenaCoin(params: CoinCalculationParams): CoinCalculati
         };
     }
 
-    // ✅ If not first clear of this scenario, no coins are awarded
+    // ✅ 이미 깬 시나리오는 코인 지급 안 함 (어뷰징 방지)
     if (!isFirstClear) {
         return {
             baseCoin: 0,

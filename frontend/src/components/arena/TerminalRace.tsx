@@ -91,9 +91,21 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
 
   const lastPromptStageRef = useRef<number>(-1);
 
+  // ✅ 리스너 등록 완료 콜백 및 플래그
+  const listenersReadyRef = useRef(false);
+  const listenersReadyCallbackRef = useRef<(() => void) | null>(null);
+
+  // ✅ 리스너 등록 완료를 알리는 함수
+  const notifyListenersReady = useCallback(() => {
+    listenersReadyRef.current = true;
+    if (listenersReadyCallbackRef.current) {
+      listenersReadyCallbackRef.current();
+      listenersReadyCallbackRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (isInitializedRef.current) return;
-    isInitializedRef.current = true;
 
     const loadProgress = async () => {
       try {
@@ -105,6 +117,29 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
         };
 
         await waitForConnection();
+
+        // ✅ 리스너가 등록될 때까지 대기 (콜백 기반)
+        const waitForListeners = () => {
+          return new Promise<void>((resolve) => {
+            if (listenersReadyRef.current) {
+              resolve();
+            } else {
+              listenersReadyCallbackRef.current = resolve;
+              // 타임아웃 fallback (최대 2초 대기)
+              setTimeout(() => {
+                if (!listenersReadyRef.current) {
+                  console.warn('[TerminalRace] Listeners not ready after 2s, proceeding anyway');
+                  listenersReadyRef.current = true;
+                }
+                resolve();
+              }, 2000);
+            }
+          });
+        };
+
+        await waitForListeners();
+
+        isInitializedRef.current = true;
 
         socket.emit('terminal:get-progress', { arenaId: arena._id });
         setTimeout(() => socket.emit('terminal:get-prompt', { arenaId: arena._id }), 500);
@@ -305,17 +340,42 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       ? `${graceMin}:${String(graceSec).padStart(2, '0')}`
       : `${graceSec}s`;
 
+    const isKorean = i18n.language === 'ko';
+
     setLogs(prev => [
       ...prev,
       { id: logCounter.current++, text: '', type: 'output' },
       { id: logCounter.current++, text: '╔════════════════════════════════════════════════╗', type: 'error' },
-      { id: logCounter.current++, text: '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
-      { id: logCounter.current++, text: `║  Another player has completed the challenge!   ║`, type: 'error' },
-      { id: logCounter.current++, text: `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? '║  ⚠️  경고: 유예 시간 시작  ⚠️                 ║'
+        : '║  ⚠️  WARNING: GRACE PERIOD STARTED  ⚠️        ║', type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? `║  다른 플레이어가 완료했습니다!                 ║`
+        : `║  Another player has completed the challenge!   ║`, type: 'error' },
+      { id: logCounter.current++, text: isKorean
+        ? `║  남은 시간: ${timeStr.padEnd(35)}║`
+        : `║  Time remaining: ${timeStr.padEnd(30)}║`, type: 'error' },
       { id: logCounter.current++, text: '╚════════════════════════════════════════════════╝', type: 'error' },
       { id: logCounter.current++, text: '', type: 'output' }
     ]);
-  }, []);
+  }, [i18n.language]);
+
+  // ✅ 모든 플레이어 완료 핸들러
+  const handleAllCompleted = useCallback((data: { message: { ko: string; en: string } }) => {
+    const msg = i18n.language === 'ko' ? data.message.ko : data.message.en;
+
+    setLogs(prev => [
+      ...prev,
+      { id: logCounter.current++, text: '', type: 'output' },
+      { id: logCounter.current++, text: '╔════════════════════════════════════════════════╗', type: 'success' },
+      { id: logCounter.current++, text: i18n.language === 'ko'
+        ? '║  🎉 모든 플레이어가 완료했습니다!             ║'
+        : '║  🎉 ALL PLAYERS COMPLETED!                    ║', type: 'success' },
+      { id: logCounter.current++, text: `║  ${msg.padEnd(46)}║`, type: 'success' },
+      { id: logCounter.current++, text: '╚════════════════════════════════════════════════╝', type: 'success' },
+      { id: logCounter.current++, text: '', type: 'output' }
+    ]);
+  }, [i18n.language]);
 
   useEffect(() => {
 
@@ -326,6 +386,7 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.off('arena:ended');
     socket.off('arena:redirect-to-results');
     socket.off('arena:item-used');
+    socket.off('arena:all-completed');
     // arena:grace-period-started는 ArenaPlayPage와 공유하므로 특정 핸들러만 제거
     socket.off('arena:grace-period-started', handleGracePeriodStarted);
 
@@ -336,10 +397,15 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
     socket.on('arena:ended', handleArenaEnded);
     socket.on('arena:redirect-to-results', handleRedirectToResults);
     socket.on('arena:item-used', handleItemUsed);
+    socket.on('arena:all-completed', handleAllCompleted);
     socket.on('arena:grace-period-started', handleGracePeriodStarted);
+
+    // ✅ 리스너 등록 완료 알림 (콜백 호출)
+    notifyListenersReady();
 
     return () => {
       arenaEndedRef.current = false;
+      listenersReadyRef.current = false;
 
       socket.off('terminal:progress-data', handleProgressData);
       socket.off('terminal:prompt-data', handlePromptData);
@@ -348,10 +414,11 @@ const TerminalRace: React.FC<TerminalRaceProps> = ({
       socket.off('arena:ended', handleArenaEnded);
       socket.off('arena:redirect-to-results', handleRedirectToResults);
       socket.off('arena:item-used', handleItemUsed);
+      socket.off('arena:all-completed', handleAllCompleted);
       socket.off('arena:grace-period-started', handleGracePeriodStarted);
     };
   }, [socket, handleProgressData, handlePromptData, handleTerminalResult, handleTerminalError,
-      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleGracePeriodStarted]);
+      handleArenaEnded, handleRedirectToResults, handleItemUsed, handleAllCompleted, handleGracePeriodStarted, notifyListenersReady]);
 
   useEffect(() => {
     if (logContainerRef.current) {

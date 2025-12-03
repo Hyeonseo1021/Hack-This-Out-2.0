@@ -75,15 +75,28 @@ async function checkAllParticipantsCompleted(arenaId: string): Promise<boolean> 
 
 /**
  * ✅ Arena 즉시 종료 (유예 시간 없이)
+ * @param sendAllCompletedNotification - 모든 플레이어 완료 알림을 보낼지 여부 (기본: true)
  */
-export async function endArenaImmediately(arenaId: string, io: Server) {
+export async function endArenaImmediately(arenaId: string, io: Server, sendAllCompletedNotification: boolean = true) {
   console.log(`\n🏁 [endArenaImmediately] Ending arena: ${arenaId}`);
-  
+
   // 기존 유예 타이머 취소
   if (graceTimers.has(arenaId)) {
     clearTimeout(graceTimers.get(arenaId)!);
     graceTimers.delete(arenaId);
+    graceInfo.delete(arenaId);
     console.log('⏹️ Cancelled existing grace timer');
+  }
+
+  // ✅ 모든 플레이어에게 완료 알림 전송
+  if (sendAllCompletedNotification) {
+    io.to(arenaId).emit('arena:all-completed', {
+      message: {
+        ko: '모든 플레이어가 완료했습니다! 결과 페이지로 이동합니다...',
+        en: 'All players completed! Redirecting to results...'
+      }
+    });
+    console.log('📢 [endArenaImmediately] Sent arena:all-completed notification');
   }
 
   await finalizeArena(arenaId, io);
@@ -227,15 +240,17 @@ export async function checkAndEndIfAllCompleted(arenaId: string, io: Server) {
 
     // ✅ 모든 참가자가 완료했는지 확인
     const allCompleted = await checkAllParticipantsCompleted(arenaId);
-    
+
     if (allCompleted) {
       console.log('🎉 All participants completed! Ending arena immediately.');
-      
-      // 유예 타이머 취소하고 즉시 종료
+
+      // 유예 타이머 취소
       clearTimeout(graceTimers.get(arenaId)!);
       graceTimers.delete(arenaId);
-      
-      await finalizeArena(arenaId, io);
+      graceInfo.delete(arenaId);
+
+      // ✅ endArenaImmediately를 호출하면서 알림도 함께 전송
+      await endArenaImmediately(arenaId, io, true);
     } else {
       console.log('⏳ Not all participants completed yet, waiting...');
     }
@@ -450,13 +465,23 @@ async function finalizeArena(arenaId: string, io: Server) {
 
       console.log(`🏆 [finalizeArena] Qualified for EXP: ${qualifiedProgress.length}/${uniqueProgress.length} players`);
 
-      // 순위별로 경험치 계산할 데이터 준비 (점수가 있는 플레이어만)
-      const expData = qualifiedProgress.map((progress, index) => ({
-        userId: progress.user.toString(),
-        rank: index + 1,
-        score: progress.score || 0,
-        completionTime: progress.completionTime || undefined
-      }));
+      // 각 플레이어의 첫 클리어 여부 확인 및 경험치 데이터 준비
+      console.log(`🔍 [finalizeArena] Checking first clear for EXP - scenarioId: ${arena.scenarioId}, arenaId: ${arenaId}`);
+      const expData = await Promise.all(
+        qualifiedProgress.map(async (progress, index) => {
+          const userId = progress.user.toString();
+          const isFirstClear = await isFirstScenarioCompletion(userId, arena.scenarioId.toString(), arenaId);
+          console.log(`   🔍 [EXP] User ${userId}: isFirstClear = ${isFirstClear}`);
+
+          return {
+            userId,
+            rank: index + 1,
+            score: progress.score || 0,
+            completionTime: progress.completionTime || undefined,
+            isFirstClear
+          };
+        })
+      );
 
       // GameMode 변환
       const gameMode = convertArenaModeToGameMode(arena.mode);
@@ -475,7 +500,8 @@ async function finalizeArena(arenaId: string, io: Server) {
           }
         );
 
-        console.log(`   ✅ User ${result.userId}: Rank ${expData.find(d => d.userId === result.userId)?.rank} → +${result.expResult.totalExp} EXP (Level ${result.previousLevel} → ${result.newLevel}${result.leveledUp ? ' 🎉 LEVEL UP!' : ''})`);
+        const userData = expData.find(d => d.userId === result.userId);
+        console.log(`   ✅ User ${result.userId}: Rank ${userData?.rank} → +${result.expResult.totalExp} EXP (Level ${result.previousLevel} → ${result.newLevel}${result.leveledUp ? ' 🎉 LEVEL UP!' : ''}${!userData?.isFirstClear ? ' [재클리어]' : ''})`);
       }
 
       console.log('✨ [finalizeArena] Experience assignment completed\n');

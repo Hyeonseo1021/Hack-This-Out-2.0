@@ -36,5 +36,6 @@ export const verifyToken = async (
 		next(); // Proceed to the next middleware or route handler
 	} catch (err) {
 		res.status(401).json({ message: "Token Expired" });
+		return; // Terminate the function to prevent further execution
 	}
 };

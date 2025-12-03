@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getLeaderboard, getMyRank } from '../../api/axiosUser';
 import Main from '../../components/main/Main';
-import Loading from '../../components/public/Loading';
 import { User } from '../../types/User';
 import { CurrentUser } from '../../types/CurrentUser';
 import "../../assets/scss/leaderboard/LearderboardPage.scss";
@@ -11,13 +10,11 @@ const LeaderBoardPage: React.FC = () => {
   const { t } = useTranslation('common');
   const [leaderboard, setLeaderboard] = useState<Partial<User>[]>([]);
   const [myRank, setMyRank] = useState<CurrentUser | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
         const [leaderboardData, myRankData] = await Promise.all([
           getLeaderboard(),
           getMyRank()
@@ -36,8 +33,6 @@ const LeaderBoardPage: React.FC = () => {
       } catch (err: any) {
         console.error('❌ Error fetching leaderboard:', err);
         setError(err?.response?.data?.message || 'Failed to load leaderboard');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -45,8 +40,13 @@ const LeaderBoardPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <Loading />;
+    return (
+      <Main>
+        <Loading />
+      </Main>
+    );
   }
+
 
   return (
     <Main>

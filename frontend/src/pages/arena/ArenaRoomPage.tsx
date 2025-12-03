@@ -426,6 +426,8 @@ const ArenaRoomPage: React.FC = () => {
                     value={currentMessage}
                     onChange={(e) => setCurrentMessage(e.target.value)}
                     onKeyDown={(e) => {
+                      // IME 조합 중이면 무시 (한글 입력 시 중복 방지)
+                      if (e.nativeEvent.isComposing) return;
                       if (e.key === 'Enter' && currentMessage.trim()) {
                         handleSendMessage();
                       }
