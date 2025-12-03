@@ -105,18 +105,9 @@ ${exploitPatterns.map(p => `- "${p}"`).join('\n')}
 
 >>> BEHAVIOR WHEN EXPLOIT IS DETECTED: <<<
 1. Show the FLAG visually on the page: "${flag}"
-2. Send postMessage to parent with the flag
-3. The FLAG should look like it's "leaked" data (e.g., "Admin password: ${flag}" or "Secret: ${flag}")
-
->>> MANDATORY postMessage CODE WHEN EXPLOIT SUCCEEDS: <<<
-\`\`\`javascript
-// When exploit is detected, send flag to parent:
-window.parent.postMessage({
-  type: 'flag_captured',
-  vulnType: '${v.vulnType}',
-  flag: '${flag}'
-}, '*');
-\`\`\``;
+2. The FLAG should look like it's "leaked" data (e.g., "Admin password: ${flag}" or "Secret: ${flag}")
+3. Make the FLAG clearly visible so the user can copy it manually
+4. DO NOT use postMessage - the user must manually copy and submit the FLAG`;
       })
       .join('\n\n');
 
