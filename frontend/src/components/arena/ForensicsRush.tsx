@@ -18,6 +18,7 @@ interface ForensicsRushProps {
   socket: Socket;
   currentUserId: string | null;
   participants: Participant[];
+  onComplete?: () => void; // 게임 완료 시 콜백
 }
 
 interface Question {
@@ -68,7 +69,8 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
   arena,
   socket,
   currentUserId,
-  participants: _participants
+  participants: _participants,
+  onComplete
 }) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation('arena');
@@ -391,6 +393,7 @@ const ForensicsRush: React.FC<ForensicsRushProps> = ({
           console.log('🎉 [ForensicsRush] All questions completed!');
           setAllCompleted(true);
           isCompletedRef.current = true; // ✅ 완료 ref도 업데이트
+          onComplete?.(); // ✅ 부모 컴포넌트에 완료 알림
         }
         
         setTimeout(() => setFeedback(null), 3000);
