@@ -6,10 +6,8 @@ interface Hint {
   hintId: string;
   vulnId: string;
   level: 1 | 2 | 3;
-  text: {
-    ko: string;
-    en: string;
-  };
+  text: string;
+  cost: number;
 }
 
 interface Vulnerability {
@@ -54,6 +52,10 @@ interface Props {
 
 const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficulty = 'EASY' }) => {
 
+  // 🔥 DEBUG: 현재 data 상태 확인
+  console.log('🔥 VulnerabilityScannerRaceForm RENDER - data.hints:', data.hints);
+  console.log('🔥 VulnerabilityScannerRaceForm RENDER - data.vulnerabilities:', data.vulnerabilities?.map(v => v.vulnId));
+
   // 난이도 기반 모드 확인 (초기값 설정용)
   const isEasyOrMedium = difficulty === 'EASY' || difficulty === 'MEDIUM';
 
@@ -90,11 +92,15 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
   const switchToFormMode = () => {
     try {
       const parsed = JSON.parse(jsonText);
+      console.log('✅ Parsed JSON:', parsed);
+      console.log('✅ Parsed hints:', parsed.hints);
+      console.log('✅ Parsed vulnerabilities vulnIds:', parsed.vulnerabilities?.map((v: any) => v.vulnId));
       onChange(parsed);
       setJsonError('');
       setEditMode('form');
-    } catch (error) {
-      setJsonError('Invalid JSON format. Please fix errors before switching to Form mode.');
+    } catch (error: any) {
+      console.error('❌ JSON Parse Error:', error);
+      setJsonError(`Invalid JSON: ${error.message}`);
     }
   };
 
@@ -147,6 +153,9 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
     const nextLevel = (existingHints.length + 1) as 1 | 2 | 3;
     if (nextLevel > 3) return; // 최대 3개
 
+    // 레벨에 따른 기본 코스트: level 1 = 10, level 2 = 20, level 3 = 30
+    const defaultCost = nextLevel * 10;
+
     onChange({
       ...data,
       hints: [
@@ -155,7 +164,8 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           hintId: `hint_${vulnId}_${nextLevel}_${Date.now()}`,
           vulnId,
           level: nextLevel,
-          text: { ko: '', en: '' }
+          text: '',
+          cost: defaultCost
         }
       ]
     });
@@ -170,18 +180,25 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
   };
 
   // 힌트 업데이트
-  const updateHint = (hintId: string, field: 'ko' | 'en', value: string) => {
+  const updateHint = (hintId: string, field: 'text' | 'cost', value: string | number) => {
     onChange({
       ...data,
       hints: (data.hints || []).map(h =>
-        h.hintId === hintId ? { ...h, text: { ...h.text, [field]: value } } : h
+        h.hintId === hintId ? { ...h, [field]: value } : h
       )
     });
   };
 
   // 특정 취약점의 힌트 가져오기
   const getHintsForVuln = (vulnId: string) => {
-    return (data.hints || []).filter(h => h.vulnId === vulnId).sort((a, b) => a.level - b.level);
+    const allHints = data.hints || [];
+    const filtered = allHints.filter(h => h.vulnId === vulnId);
+    console.log(`🔍 getHintsForVuln("${vulnId}"):`, {
+      allHints: allHints.length,
+      allHintVulnIds: allHints.map(h => h.vulnId),
+      filtered: filtered.length
+    });
+    return filtered.sort((a, b) => a.level - b.level);
   };
 
   return (
@@ -566,6 +583,12 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
           <p className="section-description">
             각 취약점에 대해 최대 3개의 힌트를 설정할 수 있습니다. 플레이어가 힌트 아이템을 사용하면 순서대로 공개됩니다.
           </p>
+          {/* DEBUG: 힌트 현황 */}
+          <div style={{ background: '#1a1a2e', padding: '10px', borderRadius: '6px', marginBottom: '15px', fontSize: '12px', fontFamily: 'monospace' }}>
+            <div style={{ color: '#0f0' }}>📊 DEBUG: data.hints = {JSON.stringify(data.hints?.length || 0)}개</div>
+            <div style={{ color: '#ff0' }}>📊 hints vulnIds: {JSON.stringify(data.hints?.map(h => h.vulnId) || [])}</div>
+            <div style={{ color: '#0ff' }}>📊 vuln vulnIds: {JSON.stringify(data.vulnerabilities?.map(v => v.vulnId) || [])}</div>
+          </div>
 
           {data.vulnerabilities.map((vuln) => {
             const vulnHints = getHintsForVuln(vuln.vulnId);
@@ -596,21 +619,23 @@ const VulnerabilityScannerRaceForm: React.FC<Props> = ({ data, onChange, difficu
                         <div className="hint-level-badge">Hint {hint.level}</div>
                         <div className="hint-inputs">
                           <div className="hint-input-row">
-                            <label>한글</label>
+                            <label>힌트 내용</label>
                             <input
                               type="text"
                               placeholder="이 취약점은 로그인 폼에서 발생합니다..."
-                              value={hint.text.ko}
-                              onChange={e => updateHint(hint.hintId, 'ko', e.target.value)}
+                              value={hint.text}
+                              onChange={e => updateHint(hint.hintId, 'text', e.target.value)}
                             />
                           </div>
                           <div className="hint-input-row">
-                            <label>English</label>
+                            <label>코스트 (점수 차감)</label>
                             <input
-                              type="text"
-                              placeholder="This vulnerability occurs in the login form..."
-                              value={hint.text.en}
-                              onChange={e => updateHint(hint.hintId, 'en', e.target.value)}
+                              type="number"
+                              min={0}
+                              placeholder="10"
+                              value={hint.cost}
+                              onChange={e => updateHint(hint.hintId, 'cost', Number(e.target.value))}
+                              style={{ width: '80px' }}
                             />
                           </div>
                         </div>

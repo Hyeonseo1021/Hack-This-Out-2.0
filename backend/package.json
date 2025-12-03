@@ -6,7 +6,8 @@
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/server.js\" ",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed:vuln-scanner": "npx ts-node src/scripts/seedVulnerabilityScannerScenarios.ts"
   },
   "author": "flynn park",
   "license": "MIT",

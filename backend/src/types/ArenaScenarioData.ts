@@ -18,36 +18,27 @@ export interface TerminalHackingRaceData {
 }
 
 export interface VulnerabilityScannerRaceData {
-  targetUrl: string;                  
-  targetName: string;                  
-  targetDescription: string;        
-  
-  features: string[];                  
-  
+  mode: 'SIMULATED' | 'REAL';           // SIMULATED: AI 생성 HTML, REAL: 실제 URL
+  targetUrl: string;                     // SIMULATED일 때는 내부 URL, REAL일 때는 실제 URL
+  targetName: {                          // 대상 이름 (다국어)
+    ko: string;
+    en: string;
+  };
+  targetDescription: {                   // 대상 설명 (다국어)
+    ko: string;
+    en: string;
+  };
+
+  features: string[];                    // AI가 생성할 기능들 (SIMULATED 모드)
+
   vulnerabilities: {
-    vulnId: string;                   
-    vulnType: VulnType;               
-    vulnName: string;                  
-    endpoint: string;                  
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-    parameter: string;                
-    
-    validation: {
-      expectedPayload?: string;        
-      validationUrl?: string;         
-      validationMethod?: 'contains' | 'exact' | 'regex' | 'stored' | 'unauthorized_access' | 'missing_token';
-      validationCriteria?: {
-        responseContains?: string;
-        statusCode?: number;
-        differentUserId?: boolean;
-        accessDenied?: boolean;
-        balanceRevealed?: boolean;
-        checkUrl?: string;
-        pattern?: string;
-        noCSRFToken?: boolean;
-      };
+    vulnId: string;                      // 고유 ID
+    vulnType: VulnType;                  // 취약점 타입
+    vulnName: string | {                 // 취약점 이름 (단일 문자열 또는 다국어 객체)
+      ko: string;
+      en: string;
     };
-    
+    flag: string;                        // FLAG (예: "FLAG{sql_injection_success}")
     difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     basePoints: number;
     category: string;
@@ -58,14 +49,15 @@ export interface VulnerabilityScannerRaceData {
     hintId: string;
     vulnId: string;
     level: 1 | 2 | 3;
-    text: string | { ko: string; en: string };
+    text: string;                        // 힌트 텍스트 (단일 문자열)
+    cost: number;                        // 힌트 사용 비용 (점수 차감)
   }[];
 
   scoring: {
     invalidSubmissionPenalty: number;
   };
 
-  totalVulnerabilities: number;         
+  totalVulnerabilities: number;
 }
 
 // 취약점 타입 정의

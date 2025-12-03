@@ -90,7 +90,9 @@
     "hideSidebar": "Hide sidebar",
     "showSidebar": "Show sidebar",
     "left": "Left",
-    "active": "Active"
+    "active": "Active",
+    "exit": "Exit Arena",
+    "exitConfirm": "Are you sure you want to leave the arena?"
   },
   "game": {
     "missionComplete": "Mission complete",
