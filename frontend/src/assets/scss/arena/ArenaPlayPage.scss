@@ -597,21 +597,27 @@
         .exit-section {
           margin-top: auto;
           padding-top: 0.8rem;
+          border-top: 1px solid rgba(255, 100, 100, 0.1);
 
           .exit-arena-btn {
             width: 100%;
-            padding: 0.5rem;
-            background: transparent;
-            border: none;
-            color: rgba(255, 100, 100, 0.6);
+            padding: 0.5rem 0.8rem;
+            background: rgba(255, 100, 100, 0.08);
+            border: 1px solid rgba(255, 100, 100, 0.25);
+            border-radius: 6px;
+            color: rgba(255, 100, 100, 0.7);
             font-size: 0.8rem;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: color 0.2s;
+            transition: all 0.3s;
             font-family: var(--font-display);
+            letter-spacing: 0.5px;
 
             &:hover {
+              background: rgba(255, 100, 100, 0.15);
+              border-color: rgba(255, 100, 100, 0.4);
               color: #ff6b6b;
+              box-shadow: 0 0 10px rgba(255, 100, 100, 0.2);
             }
           }
         }
