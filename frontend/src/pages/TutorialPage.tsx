@@ -86,33 +86,47 @@ const TutorialPage: React.FC = () => {
                   <strong>머신</strong><br />
                   기본 모드! 취약한 머신을 해킹해야 합니다.<br />
                   <strong>깃발</strong>을 찾아 머신을 완료하세요.<br /><br />
+
                   <strong>컨테스트</strong><br />
                   경쟁 모드! 다른 플레이어와 경쟁하세요.<br />
                   각 컨테스트에는 <strong>기간</strong>이 있습니다.<br />
-                  기간 내에 모든 주어진 머신들을 가장 빨리 완료한 플레이어가 <strong>승리</strong>합니다.
+                  기간 내에 모든 주어진 머신들을 가장 빨리 완료한 플레이어가 <strong>승리</strong>합니다.<br /><br />
+
+                  <strong>아레나</strong><br />
+                  실시간 대전 모드! 3가지 모드로 즐기세요.<br />
+                  • <strong>스피드런</strong>: 제한 시간 내에 가장 빨리 클리어!<br />
+                  • <strong>블라인드</strong>: 힌트 없이 도전하는 하드코어 모드!<br />
+                  • <strong>서바이벌</strong>: 탈락 없이 끝까지 살아남아라!
                 </>
               ) : (
                 <>
                   <strong>Machine</strong><br />
                   The Basic! You have to hack vulnerable machines.<br />
                   Find the <strong>Flag</strong> and complete the machine.<br /><br />
+
                   <strong>Contest</strong><br />
                   The Competition! Compete against other players.<br />
                   Each contest has a <strong>Period</strong>.<br />
-                  The <strong>Quickest</strong> player who completes all given tasks in the period, gets to <strong>Win</strong>.
+                  The <strong>Quickest</strong> player who completes all given tasks in the period, gets to <strong>Win</strong>.<br /><br />
+
+                  <strong>Arena</strong><br />
+                  Real-time Battle Mode! Enjoy 3 different modes.<br />
+                  • <strong>Speedrun</strong>: Clear it as fast as you can within the time limit!<br />
+                  • <strong>Blind</strong>: Hardcore mode with no hints!<br />
+                  • <strong>Survival</strong>: Survive until the end without getting eliminated!
                 </>
               )}
             </p>
           </article>
 
           <article className={articleClass(3)}>
+            <h2>{isKo ? '튜토리얼 영상' : 'Tutorial Video'}</h2>
             <div className="tutorial-video-container">
-              <h3>{isKo ? '튜토리얼 영상' : 'Tutorial Video'}</h3>
               <iframe
                 width="560"
                 height="315"
-                src="https://www.youtube.com/embed/videoseries?si=kgEJ4ZhlcCpcSSF6&amp;list=PLUK26CwhrfoZVjnUkSWtrds8nvh4VUY59"
-                title="HTO Tutorial Playlist"
+                src="https://www.youtube.com/embed/hLYsIWroee8"
+                title="HTO Tutorial Video"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
