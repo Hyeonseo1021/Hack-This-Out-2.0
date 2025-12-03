@@ -26,21 +26,17 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
    */
   socket.on('scannerRace:submit', async ({
     vulnType,
-    endpoint,
-    parameter,
-    payload
+    flag
   }: {
     vulnType: string;
-    endpoint: string;
-    parameter: string;
-    payload: string;
+    flag: string;
   }) => {
 
     const arenaId = (socket as any).arenaId;
     const userId = (socket as any).userId;
 
     console.log(`\n🔍 [scannerRace:submit] Arena: ${arenaId}, User: ${userId}`);
-    console.log(`   VulnType: ${vulnType}, Endpoint: ${endpoint}`);
+    console.log(`   VulnType: ${vulnType}, Flag: ${flag}`);
 
     if (!arenaId || !userId) {
       socket.emit('scannerRace:error', { message: 'Invalid request' });
@@ -63,9 +59,7 @@ export const registerVulnerabilityScannerRaceHandlers = (io: Server, socket: Soc
         arenaId,
         userId,
         vulnType,
-        endpoint,
-        parameter,
-        payload
+        flag
       });
 
       console.log('📤 [scannerRace:submit] Result:', result);
@@ -552,8 +546,7 @@ export async function initializeScannerRace(arenaId: string): Promise<void> {
             vulnerabilities: vulnerabilities.map((v: any) => ({
               vulnId: v.vulnId,
               vulnType: v.vulnType,
-              endpoint: v.endpoint,
-              parameter: v.parameter,
+              flag: v.flag || `FLAG{${v.vulnType}_${v.vulnId}}`,
               basePoints: v.basePoints,
               difficulty: v.difficulty,
               discovered: []

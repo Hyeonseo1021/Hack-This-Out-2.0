@@ -252,7 +252,7 @@ const AddArenaForm: React.FC = () => {
               <div className="target-header">
                 <div className="header-title">
                   <h3>{t('preview.scanner.targetApp')}</h3>
-                  <span className="vulns-remaining">0/4 {t('preview.scanner.found')}</span>
+                  <span className="vulns-remaining">0/2 {t('preview.scanner.found')}</span>
                 </div>
               </div>
               <div className="target-iframe">
@@ -278,7 +278,7 @@ const AddArenaForm: React.FC = () => {
               <div className="vulnerabilities-section">
                 <div className="section-header">
                   <h3>{t('preview.scanner.vulnerabilities')}</h3>
-                  <span className="count">0/4</span>
+                  <span className="count">0/2</span>
                 </div>
                 <div className="vuln-list">
                   <div className="vuln-item">

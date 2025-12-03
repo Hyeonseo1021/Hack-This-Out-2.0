@@ -82,8 +82,7 @@ const ArenaSchema = new mongoose.Schema({
       vulnerabilities: [{
         vulnId: String,           // 취약점 고유 ID
         vulnType: String,         // 'SQLi', 'XSS', 'IDOR', etc.
-        endpoint: String,         // '/api/login', '/search', etc.
-        parameter: String,        // 'username', 'id', etc.
+        flag: String,             // FLAG{...} - exploit 성공 시 노출되는 플래그
         basePoints: Number,       // 기본 점수
         difficulty: String,       // 'EASY', 'MEDIUM', 'HARD'
         discovered: [{

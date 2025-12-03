@@ -187,7 +187,7 @@
       "selectType": "취약점 유형 선택...",
       "enterPayload": "Payload 또는 PoC 입력...",
       "submit": "제출",
-      "hint": "웹 애플리케이션의 취약점을 찾아 PoC 코드를 제출하세요",
+      "hint": "웹 애플리케이션의 취약점을 찾아 코드를 제출하세요",
       "loginPortal": "로그인 포털",
       "username": "사용자명",
       "password": "비밀번호",
